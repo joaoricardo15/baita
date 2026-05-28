@@ -20,8 +20,8 @@ jobs:
       - name: Type-check shared schemas
         run: cd packages/shared && npx tsc --noEmit
 
-  frontend:
-    name: Frontend
+  frontend-quality:
+    name: Frontend Quality
     needs: shared
     runs-on: ubuntu-latest
     steps:
@@ -41,8 +41,26 @@ jobs:
       - name: Test
         run: cd apps/frontend && npm run test:run
 
-  backend:
-    name: Backend
+  frontend-deploy:
+    name: Frontend Deploy
+    needs: frontend-quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Trigger Amplify Build
+        run: |
+          aws amplify start-job \
+            --app-id d35kx8fgop2qtf \
+            --branch-name master \
+            --job-type RELEASE
+
+  backend-quality:
+    name: Backend Quality
     needs: shared
     runs-on: ubuntu-latest
     steps:
@@ -60,9 +78,9 @@ jobs:
       - name: Test
         run: cd apps/backend && npx jest --no-coverage
 
-  deploy-backend:
-    name: Deploy Backend
-    needs: backend
+  backend-deploy:
+    name: Backend Deploy
+    needs: backend-quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -82,7 +100,7 @@ jobs:
 
   e2e:
     name: E2E Tests
-    needs: [deploy-backend, frontend]
+    needs: [frontend-deploy, backend-deploy]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
