@@ -19,8 +19,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     audience={authConfig.audience}
     redirectUri={window.location.origin}
     cacheLocation="localstorage"
-    useRefreshTokens={true}
-    scope="offline_access"
     onRedirectCallback={onRedirectCallback}
   >
     <App />
