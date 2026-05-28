@@ -1,7 +1,1 @@
-export {
-  type IApp,
-  type IAppConfig,
-  type IAppConnection,
-  type IAppService,
-  type ICredential,
-} from '@baita/shared'
+export { type IApp, type IAppConnection, type IAppService } from '@baita/shared'

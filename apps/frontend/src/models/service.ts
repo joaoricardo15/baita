@@ -1,7 +1,5 @@
 export {
   type DataType,
-  type IService,
-  type IServiceConfig,
   type IServiceApp,
   type IVariable,
   MethodName,
