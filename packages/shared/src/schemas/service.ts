@@ -1,48 +1,57 @@
 import { z } from 'zod'
 
-export const ServiceTypeSchema = z.enum(['invoke', 'trigger'])
-export type ServiceType = z.infer<typeof ServiceTypeSchema>
+export enum ServiceType {
+  invoke = 'invoke',
+  trigger = 'trigger',
+}
+export const ServiceTypeSchema = z.nativeEnum(ServiceType)
 
-export const ServiceNameSchema = z.enum([
-  'code-execute',
-  'http-request',
-  'queue-publish',
-  'oauth2-request',
-  'method-execute',
-  'webhook',
-  'schedule',
-])
-export type ServiceName = z.infer<typeof ServiceNameSchema>
+export enum ServiceName {
+  code = 'code-execute',
+  http = 'http-request',
+  queue = 'queue-publish',
+  oauth2 = 'oauth2-request',
+  method = 'method-execute',
+  webhook = 'webhook',
+  schedule = 'schedule',
+}
+export const ServiceNameSchema = z.nativeEnum(ServiceName)
 
-export const MethodNameSchema = z.enum([
-  'getTodo',
-  'publishToFeed',
-  'sendNotification',
-  'httpRequest',
-  'oauth2Request',
-])
-export type MethodName = z.infer<typeof MethodNameSchema>
+export enum MethodName {
+  getTodo = 'getTodo',
+  publishToFeed = 'publishToFeed',
+  sendNotification = 'sendNotification',
+  httpRequest = 'httpRequest',
+  oauth2Request = 'oauth2Request',
+}
+export const MethodNameSchema = z.nativeEnum(MethodName)
 
-export const VariableTypeSchema = z.enum([
-  'code',
-  'user',
-  'text',
-  'output',
-  'options',
-  'boolean',
-  'constant',
-  'environment',
-])
-export type VariableType = z.infer<typeof VariableTypeSchema>
+export enum VariableType {
+  code = 'code',
+  user = 'user',
+  text = 'text',
+  output = 'output',
+  options = 'options',
+  boolean = 'boolean',
+  constant = 'constant',
+  environment = 'environment',
+}
+export const VariableTypeSchema = z.nativeEnum(VariableType)
 
-export const DataTypeSchema: z.ZodType = z.union([
+export type DataType =
+  | string
+  | number
+  | boolean
+  | object
+  | Array<string | number | boolean | object>
+
+export const DataTypeSchema: z.ZodType<DataType> = z.union([
   z.string(),
   z.number(),
   z.boolean(),
   z.record(z.unknown()),
   z.array(z.union([z.string(), z.number(), z.boolean(), z.record(z.unknown())])),
 ])
-export type DataType = z.infer<typeof DataTypeSchema>
 
 export const VariableSchema = z.object({
   type: VariableTypeSchema,
@@ -78,3 +87,8 @@ export const ServiceSchema = z.object({
   config: ServiceConfigSchema,
 })
 export type IService = z.infer<typeof ServiceSchema>
+
+export interface IServiceApp {
+  service: IService
+  app: import('./app').IApp
+}

@@ -9,7 +9,7 @@ export const AppConfigSchema = z.object({
       type: z.string(),
       method: z.string(),
       url: z.string(),
-      headers: z.record(z.string()).optional(),
+      headers: z.record(z.unknown()).optional(),
       fields: z
         .object({
           username: z.string(),
@@ -28,12 +28,12 @@ export const AppSchema = z.object({
 })
 export type IApp = z.infer<typeof AppSchema>
 
-export const CredentialSchema = z.object({
-  accessToken: z.string().optional(),
-  refreshToken: z.string().optional(),
-  expiresAt: z.number().optional(),
-})
-export type ICredential = z.infer<typeof CredentialSchema>
+export interface IAppService extends IApp {
+  services: import('./service').IService[]
+}
+
+export const CredentialSchema = z.object({}).passthrough()
+export type ICredential = Record<string, unknown>
 
 export const AppConnectionSchema = z.object({
   appId: z.string(),

@@ -1,17 +1,11 @@
-import { JSONSchemaType } from 'ajv'
-
 import {
-  DataType,
-  IService,
-  IServiceConfig,
-  IVariable,
   MethodName,
   ServiceName,
   ServiceType,
   VariableType,
 } from './interface'
 
-export const dataSchema: JSONSchemaType<DataType> = {
+export const dataSchema: any = {
   anyOf: [
     { type: 'string' },
     { type: 'number' },
@@ -31,7 +25,7 @@ export const dataSchema: JSONSchemaType<DataType> = {
   ],
 }
 
-export const variableSchema: JSONSchemaType<IVariable> = {
+export const variableSchema: any = {
   type: 'object',
   properties: {
     type: {
@@ -90,7 +84,7 @@ export const variableSchema: JSONSchemaType<IVariable> = {
   required: ['type', 'name', 'label'],
 } as never // never added here as a workaround for the 'nullable cannot be used without type' issue
 
-export const serviceConfigSchema: JSONSchemaType<IServiceConfig> = {
+export const serviceConfigSchema: any = {
   type: 'object',
   properties: {
     methodName: {
@@ -119,7 +113,7 @@ export const serviceConfigSchema: JSONSchemaType<IServiceConfig> = {
   },
 }
 
-export const serviceSchema: JSONSchemaType<IService> = {
+export const serviceSchema: any = {
   type: 'object',
   properties: {
     type: {

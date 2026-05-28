@@ -3,19 +3,23 @@ import { z } from 'zod'
 import { AppSchema } from './app'
 import { DataTypeSchema, ServiceSchema, VariableSchema } from './service'
 
-export const TaskExecutionStatusSchema = z.enum(['success', 'fail', 'filtered'])
-export type TaskExecutionStatus = z.infer<typeof TaskExecutionStatusSchema>
+export enum TaskExecutionStatus {
+  fail = 'fail',
+  filtered = 'filtered',
+  success = 'success',
+}
+export const TaskExecutionStatusSchema = z.nativeEnum(TaskExecutionStatus)
 
-export const ConditionOperatorSchema = z.enum([
-  'Equals',
-  'Not equals',
-  'Exists',
-  'Do not exists',
-  'Contains',
-  'Starts with',
-  'Ends with',
-])
-export type ConditionOperator = z.infer<typeof ConditionOperatorSchema>
+export enum ConditionOperator {
+  equals = 'Equals',
+  notEquals = 'Not equals',
+  exists = 'Exists',
+  doNotExists = 'Do not exists',
+  contains = 'Contains',
+  startsWith = 'Starts with',
+  endsWith = 'Ends with',
+}
+export const ConditionOperatorSchema = z.nativeEnum(ConditionOperator)
 
 export const TaskConditionSchema = z.object({
   operator: ConditionOperatorSchema,
@@ -45,21 +49,25 @@ export const TaskSchema = z.object({
 export type ITask = z.infer<typeof TaskSchema>
 
 export const TaskLogSchema = z.object({
+  name: z.string(),
   timestamp: z.number(),
-  message: z.string(),
+  inputData: DataTypeSchema,
+  outputData: DataTypeSchema,
+  status: TaskExecutionStatusSchema,
 })
 export type ITaskLog = z.infer<typeof TaskLogSchema>
 
 export const BotLogSchema = z.object({
+  logs: z.array(TaskLogSchema),
+  usage: z.number(),
   botId: z.string(),
+  userId: z.string(),
   timestamp: z.number(),
-  tasks: z.array(TaskLogSchema),
 })
 export type IBotLog = z.infer<typeof BotLogSchema>
 
 export const BotUsageSchema = z.object({
-  date: z.string(),
-  count: z.number(),
+  total: z.number(),
 })
 export type IBotUsage = z.infer<typeof BotUsageSchema>
 
@@ -88,12 +96,11 @@ export const BotSchema = z.object({
 })
 export type IBot = z.infer<typeof BotSchema>
 
-export const TaskExecutionInputSchema = z.object({
-  userId: z.string(),
-  botId: z.string(),
-  appConfig: z.record(z.unknown()),
-  serviceConfig: z.record(z.unknown()),
-  connectionId: z.union([z.string(), z.number()]).optional(),
-  inputData: DataTypeSchema.optional(),
-})
-export type ITaskExecutionInput = z.infer<typeof TaskExecutionInputSchema>
+export interface ITaskExecutionInput<T = unknown> {
+  userId: string
+  botId: string
+  appConfig: import('./app').IAppConfig
+  serviceConfig: import('./service').IServiceConfig
+  connectionId?: string | number
+  inputData?: T
+}

@@ -48,9 +48,8 @@ export const TodoSchema = z.object({
 })
 export type ITodo = z.infer<typeof TodoSchema>
 
-export const TodoTaskGroupSchema: z.ZodType = z.object({
-  prefix: z.string(),
-  tasks: z.array(TodoTaskSchema),
-  groups: z.lazy(() => z.array(TodoTaskGroupSchema)).optional(),
-})
-export type ITodoTaskGroup = z.infer<typeof TodoTaskGroupSchema>
+export interface ITodoTaskGroup {
+  prefix: string
+  tasks: ITodoTask[]
+  groups?: ITodoTaskGroup[]
+}

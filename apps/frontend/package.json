@@ -57,7 +57,8 @@
     "react-slick": "^0.30.2",
     "react-swipe-to-delete-ios": "^2.1.0",
     "react-twitter-embed": "^4.0.4",
-    "react-type-animation": "^3.2.0"
+    "react-type-animation": "^3.2.0",
+    "@baita/shared": "workspace:*"
   },
   "devDependencies": {
     "@cspell/dict-pt-br": "^2.4.2",

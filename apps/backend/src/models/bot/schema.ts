@@ -1,13 +1,11 @@
-import Ajv, { JSONSchemaType } from 'ajv'
+import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
 import {
   ConditionOperator,
   IBotLog,
   ITask,
-  ITaskCondition,
   ITaskExecutionInput,
   ITaskExecutionResult,
-  ITaskLog,
   TaskExecutionStatus,
 } from 'src/models/bot/interface'
 import { DataType } from 'src/models/service/interface'
@@ -23,7 +21,7 @@ import {
 const ajv = new Ajv()
 addFormats(ajv)
 
-const taskConditionSchema: JSONSchemaType<ITaskCondition> = {
+const taskConditionSchema: any = {
   type: 'object',
   properties: {
     operator: {
@@ -39,7 +37,7 @@ const taskConditionSchema: JSONSchemaType<ITaskCondition> = {
   required: ['operator', 'operand'],
 }
 
-const taskResultSchema: JSONSchemaType<ITaskExecutionResult> = {
+const taskResultSchema: any = {
   type: 'object',
   properties: {
     status: {
@@ -57,7 +55,7 @@ const taskResultSchema: JSONSchemaType<ITaskExecutionResult> = {
   required: ['status', 'timestamp', 'inputData', 'outputData'],
 }
 
-const tasksSchema: JSONSchemaType<ITask[]> = {
+const tasksSchema: any = {
   type: 'array',
   items: {
     type: 'object',
@@ -102,8 +100,7 @@ const tasksSchema: JSONSchemaType<ITask[]> = {
   },
 }
 
-const taskExecutionInputSchema: JSONSchemaType<ITaskExecutionInput<DataType>> =
-  {
+const taskExecutionInputSchema: any = {
     type: 'object',
     properties: {
       userId: {
@@ -123,7 +120,7 @@ const taskExecutionInputSchema: JSONSchemaType<ITaskExecutionInput<DataType>> =
     required: ['userId', 'botId', 'appConfig', 'serviceConfig'],
   }
 
-const taskLogSchema: JSONSchemaType<ITaskLog> = {
+const taskLogSchema: any = {
   type: 'object',
   properties: {
     name: {
@@ -144,7 +141,7 @@ const taskLogSchema: JSONSchemaType<ITaskLog> = {
   required: ['name', 'status', 'timestamp'],
 }
 
-const botLogSchema: JSONSchemaType<IBotLog> = {
+const botLogSchema: any = {
   type: 'object',
   properties: {
     botId: {

@@ -1,9 +1,10 @@
-import Ajv, { JSONSchemaType } from 'ajv'
+import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
 
-import { IApp, IAppConfig, IAppConnection } from './interface'
+import { IAppConnection } from './interface'
 
-export const appConfigSchema: JSONSchemaType<IAppConfig> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const appConfigSchema: any = {
   type: 'object',
   properties: {
     apiUrl: {
@@ -54,7 +55,7 @@ export const appConfigSchema: JSONSchemaType<IAppConfig> = {
   },
 }
 
-export const appSchema: JSONSchemaType<IApp> = {
+export const appSchema: any = {
   type: 'object',
   properties: {
     name: {
@@ -68,7 +69,8 @@ export const appSchema: JSONSchemaType<IApp> = {
   required: ['name', 'appId', 'config'],
 }
 
-const connectionSchema: JSONSchemaType<IAppConnection> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const connectionSchema: any = {
   type: 'object',
   properties: {
     appId: {
