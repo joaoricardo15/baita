@@ -1,19 +1,17 @@
 {
-  "name": "baita-serverless",
+  "name": "@baita/backend",
   "version": "1.0.0",
   "author": "Joao Ricardo Cardoso",
   "scripts": {
     "start": "AWS_PROFILE=joao serverless offline --httpPort 5000",
     "deploy": "AWS_PROFILE=joao serverless deploy --stage prod",
     "test:run": "jest",
-    "test:e2e": "jest --config jest.e2e.config.js --no-coverage --runInBand",
     "docs": "serverless openapi generate --format json --output src/docs/openapi.json && aws s3 cp src/docs/openapi.json s3://baita-help-prod-docs",
     "test": "jest --watchAll",
     "lint": "eslint 'src/**/*.ts' --fix",
     "format": "prettier './**/*.{js,ts,json,yml}' --write",
     "spell": "cspell 'src/**/*.ts'",
-    "knip": "knip",
-    "prepare": "husky"
+    "knip": "knip"
   },
   "dependencies": {
     "@aws-sdk/client-apigatewayv2": "^3.948.0",

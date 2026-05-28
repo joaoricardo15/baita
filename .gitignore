@@ -5,3 +5,16 @@ dist
 .serverless
 .DS_Store
 *.log
+
+# Playwright
+playwright-report/
+test-results/
+playwright/.auth/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+Thumbs.db

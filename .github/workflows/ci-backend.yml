@@ -46,20 +46,3 @@ jobs:
           aws-region: us-east-1
       - name: Deploy
         run: cd apps/backend && npx serverless deploy --stage prod --verbose
-
-  smoke-tests:
-    name: Post-Deploy Smoke Tests
-    needs: deploy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install
-      - name: Run E2E smoke tests
-        env:
-          SMOKE_TEST_TOKEN: ${{ secrets.SMOKE_TEST_TOKEN }}
-        run: cd apps/backend && npm run test:e2e

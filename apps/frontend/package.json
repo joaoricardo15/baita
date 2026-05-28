@@ -1,5 +1,5 @@
 {
-  "name": "baita-frontend",
+  "name": "@baita/frontend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -16,8 +16,7 @@
     "lint": "eslint src --fix",
     "format": "prettier src --write",
     "spell": "cspell src/**/*.{ts,tsx}",
-    "knip": "knip",
-    "prepare": "husky"
+    "knip": "knip"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
