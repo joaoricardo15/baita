@@ -11,6 +11,17 @@ interface ExtendedNotificationOptions extends NotificationOptions {
   actions?: { action: string; title: string; icon?: string }[]
 }
 
+// Pass through Auth0 callback redirects (don't serve from cache)
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url)
+  if (
+    event.request.mode === 'navigate' &&
+    (url.searchParams.has('code') || url.searchParams.has('error'))
+  ) {
+    event.respondWith(fetch(event.request))
+  }
+})
+
 precacheAndRoute(self.__WB_MANIFEST)
 
 interface PushPayload {
