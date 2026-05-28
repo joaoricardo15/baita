@@ -92,6 +92,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/jsonwebtoken':
+        specifier: ^9.0.10
+        version: 9.0.10
       '@types/qs':
         specifier: ^6.15.1
         version: 6.15.1

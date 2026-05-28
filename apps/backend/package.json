@@ -23,6 +23,7 @@
     "@aws-sdk/client-sqs": "^3.948.0",
     "@aws-sdk/lib-dynamodb": "^3.948.0",
     "@aws-sdk/s3-request-presigner": "^3.948.0",
+    "@baita/shared": "workspace:*",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "axios": "^1.13.2",
@@ -31,8 +32,7 @@
     "jszip": "^3.10.1",
     "jwks-rsa": "^4.0.1",
     "qs": "^6.14.0",
-    "uuid": "^13.0.0",
-    "@baita/shared": "workspace:*"
+    "uuid": "^13.0.0"
   },
   "overrides": {
     "uuid": "$uuid",
@@ -43,6 +43,7 @@
     "@eslint/js": "^9.39.4",
     "@types/aws-lambda": "^8.10.161",
     "@types/jest": "^30.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/qs": "^6.15.1",
     "aws-sdk-client-mock": "^4.1.0",
     "aws-sdk-client-mock-jest": "^4.1.0",

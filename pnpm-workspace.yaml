@@ -2,15 +2,15 @@ packages:
   - 'packages/*'
   - 'apps/*'
   - 'tests/*'
-onlyBuiltDependencies:
-  - '@firebase/util'
-  - '@parcel/watcher'
-  - aws-sdk
-  - browser-tabs-lock
-  - core-js
-  - es5-ext
-  - esbuild
-  - msw
-  - protobufjs
-  - serverless
-  - unrs-resolver
+allowBuilds:
+  '@firebase/util': true
+  '@parcel/watcher': true
+  aws-sdk: true
+  browser-tabs-lock: true
+  core-js: true
+  es5-ext: true
+  esbuild: true
+  msw: true
+  protobufjs: true
+  serverless: true
+  unrs-resolver: true
