@@ -1,0 +1,9 @@
+{
+  "botId": "de8710d6-73f2-4e50-9688-d6186d96d4ac",
+  "userId": "110944657139284874166",
+  "appConfig": {},
+  "serviceConfig": {
+    "methodName": "getTodo"
+  },
+  "inputData": {}
+}

@@ -1,0 +1,343 @@
+import JSZip from 'jszip'
+import {
+  ConditionOperator,
+  ITask,
+  ITaskCondition,
+} from 'src/models/bot/interface'
+import { DataType, VariableType } from 'src/models/service/interface'
+
+import {
+  getDataFromService,
+  getValueFromInputVariable,
+  OUTPUT_CODE,
+} from './bot'
+
+const zip = new JSZip()
+
+const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
+
+export const sanitizeForCodeString = (value: string): string => {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/`/g, '\\`')
+    .replace(/\$/g, '\\$')
+}
+
+export const getInputString = (input: DataType = ''): string => {
+  return JSON.stringify(input)
+    .replace(new RegExp(`"${OUTPUT_CODE}`, 'g'), '')
+    .replace(new RegExp(`${OUTPUT_CODE}"`, 'g'), '')
+}
+
+export const getConditionsString = (
+  conditions?: ITaskCondition[][]
+): string | undefined => {
+  return conditions
+    ?.map((orConditions) =>
+      orConditions
+        .map((andCondition) => decodeCondition(andCondition))
+        .join(' && ')
+    )
+    .map((x) => `(${x})`)
+    .join(' || ')
+}
+
+export const decodeCondition = (condition: ITaskCondition): string => {
+  const {
+    operator,
+    operand,
+    comparisonOperand = { name: '', label: '', type: VariableType.constant },
+  } = condition
+
+  const stringOperand = getInputString(getValueFromInputVariable(operand))
+  const stringComparison = getInputString(
+    getValueFromInputVariable(comparisonOperand)
+  )
+
+  switch (operator) {
+    case ConditionOperator.equals:
+      return `${stringOperand} == ${stringComparison}`
+    case ConditionOperator.notEquals:
+      return `${stringOperand} != ${stringComparison}`
+    case ConditionOperator.contains:
+      return `${stringOperand}.includes(${stringComparison})`
+    case ConditionOperator.startsWith:
+      return `${stringOperand}.startsWith(${stringComparison})`
+    case ConditionOperator.endsWith:
+      return `${stringOperand}.endsWith(${stringComparison})`
+    case ConditionOperator.exists:
+      return `!!${stringOperand}`
+    case ConditionOperator.doNotExists:
+      return `!${stringOperand}`
+  }
+}
+
+export const getParseEventFunctionCode = (): string => {
+  return `(() => {
+    if (event.body) {
+      try {
+        if (event.isBase64Encoded &&
+            event.headers['Content-type'] &&
+            event.headers['Content-type'] === 'application/x-www-form-urlencoded'
+          ) {
+          const buffer = Buffer.from(event.body, 'base64');
+          const bodyString = buffer.toString('ascii').replace(/&/g, ",").replace(/=/g, ":");
+          const jsonBody = JSON.parse('{"' + decodeURI(bodyString) + '"}');
+          return jsonBody;
+        }
+        else {
+          return JSON.parse(event.body);
+        }
+      } catch (err) {
+        return event.body;
+      }
+    } else {
+      return event;
+    }
+  })()`
+}
+
+export const getBotSampleCode = (userId: string, botId: string): string => {
+  const safeUserId = sanitizeForCodeString(userId)
+  const safeBotId = sanitizeForCodeString(botId)
+
+  return `
+const { Lambda } = require('@aws-sdk/client-lambda');
+const lambda = new Lambda();
+
+module.exports.handler = async (event, context, callback) => {
+  ////////////////////////////////////////////////////////////////////////////////
+  // 1. Declare global variables
+
+  const botId = '${safeBotId}';
+  const userId = '${safeUserId}';
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // 2. Get input from event and save it as outputData
+
+  const inputData = event;
+
+  const outputData = ${getParseEventFunctionCode()};
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // 3. Publish trigger sample
+
+  await lambda.invoke({
+    FunctionName: '${SERVICE_PREFIX}-task-trigger-sample',
+    Payload: JSON.stringify({
+      botId,
+      userId,
+      appConfig: {},
+      serviceConfig: {},
+      inputData: {
+        inputData,
+        outputData,
+        status: 'success'
+      }
+    })
+  });
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // 4. Return success
+
+  callback(null, {
+    statusCode: 200,
+    headers: {
+      'Content-type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      success: true
+    })
+  });
+};
+    `
+}
+
+export const getCompleteBotCode = (
+  userId: string,
+  botId: string,
+  tasks: ITask[]
+): string => {
+  const safeUserId = sanitizeForCodeString(userId)
+  const safeBotId = sanitizeForCodeString(botId)
+  const safeTaskLabel = sanitizeForCodeString(tasks[0].service?.label || '')
+
+  return `
+const { Lambda } = require('@aws-sdk/client-lambda');
+const lambda = new Lambda();
+
+module.exports.handler = async (event, context, callback) => {
+  ////////////////////////////////////////////////////////////////////////////////
+  // 1. Declare global variables
+
+  const botId = '${safeBotId}';
+  const userId = '${safeUserId}';
+  let logs = [], usage = 0, errorData, outputData;
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // 2. Get input bot from event, and save it as task0_outputData
+
+  const task0_inputData = event;
+
+  const task0_outputData = ${getParseEventFunctionCode()};
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // 3. Register fist log and increment usage
+
+  usage += 1;
+  logs.push({
+    name: '${safeTaskLabel}',
+    inputData: task0_inputData,
+    outputData: task0_outputData,
+    timestamp: Date.now(),
+    status: 'success'
+  });
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // 4. Execute tasks
+
+  try {
+    ${getBotInnerCode(tasks)}
+  } catch (err) {
+    errorData = err.toString();
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // 5. Publish bot logs
+
+  console.log(JSON.stringify({
+    logs,
+    usage,
+    botId,
+    userId,
+    error: errorData,
+    timestamp: Date.now()
+  }));
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // 6. Return success
+
+  callback(null, {
+    statusCode: 200,
+    headers: {
+      'Content-type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      success: !errorData,
+      data: errorData || outputData
+    })
+  });
+};`
+}
+
+export const getBotInnerCode = (tasks: ITask[]): string => {
+  let innerCode = ''
+
+  for (let i = 1; i < tasks.length; i++) {
+    const task = tasks[i]
+
+    try {
+      const inputData = getDataFromService(
+        task.service?.config.inputFields || [],
+        task.inputData
+      )
+
+      const safeTaskLabel = sanitizeForCodeString(task.service?.label || '')
+
+      innerCode += `
+      ////////////////////////////////////////////////////////////////////////////////
+      // Task ${i} ///////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////
+      // Task: 4.${i}. Collect operation inputs
+
+      ////////////////////////////////////////////////////////////////////////////////
+      // 4.${i}.1. Collect operation inputs
+
+      const task${i}_inputData = ${getInputString(inputData)};
+
+      let task${i}_outputData;
+
+      ////////////////////////////////////////////////////////////////////////////////
+      // 4.${i}.2. Check conditions
+
+      if (${getConditionsString(task.conditions) || true}) {
+        ////////////////////////////////////////////////////////////////////////////////
+        // 4.${i}.3. If condition passes, execute operation
+
+        const { Payload: task${i}_lambda_payload } = await lambda.invoke({
+          FunctionName: '${SERVICE_PREFIX}-task-${task.service?.name}',
+          Payload: JSON.stringify({
+            botId,
+            userId,
+            inputData: task${i}_inputData,
+            appConfig: ${JSON.stringify(task.app?.config)},
+            serviceConfig: ${JSON.stringify(task.service?.config)},
+            connectionId: ${task.connectionId || 'undefined'}
+          }),
+        });
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // 4.${i}.4. Parse results
+
+        const task${i}_result = JSON.parse(Buffer.from(task${i}_lambda_payload).toString());
+
+        const task${i}_success = task${i}_result.success;
+
+        task${i}_outputData = task${i}_success && task${i}_result.data ? task${i}_result.data : { message: task${i}_result.message || task${i}_result.errorMessage || 'nothing for you this time : (' };
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // 4.${i}.5. Add result to logs
+
+        logs.push({
+          timestamp: Date.now(),
+          name: '${safeTaskLabel}',
+          inputData: task${i}_inputData,
+          outputData: task${i}_outputData,
+          status: task${i}_success ? 'success' : 'fail',
+        });
+
+        ////////////////////////////////////////////////////////////////////////////////
+        // 4.${i}.6. If task executed successfully, increment usage
+
+        if (task${i}_success) usage += 1;
+    ${
+      task.returnData
+        ? `
+        ////////////////////////////////////////////////////////////////////////////////
+        // 4.${i}.7. If task property returnData equals true, set outputData to task result
+
+        if (task${i}_success) outputData = task${i}_outputData;
+        `
+        : ''
+    }
+      } else {
+        ////////////////////////////////////////////////////////////////////////////////
+        // 4.${i}.8. If condition does not pass, add result to logs
+
+        logs.push({
+          timestamp: Date.now(),
+          name: '${safeTaskLabel}',
+          inputData: task${i}_inputData,
+          outputData: task${i}_outputData,
+          status: 'filtered',
+        });
+      }`
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      throw Error(`Error on task ${i}: ${message}`)
+    }
+  }
+
+  return innerCode
+}
+
+export const getCodeFile = async (code: string): Promise<Buffer> => {
+  zip.file('index.js', code)
+
+  const archive = await zip.generateAsync({ type: 'base64' })
+
+  return Buffer.from(archive, 'base64')
+}

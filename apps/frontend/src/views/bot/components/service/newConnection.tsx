@@ -1,0 +1,181 @@
+import { Add as AddIcon } from '@mui/icons-material'
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from '@mui/material'
+import { FC, useContext, useState } from 'react'
+import OauthPopup from 'react-oauth-popup'
+
+import { Button, OptionsInput, TextInput } from '../../../../components'
+import { IAppConnection } from '../../../../models/app'
+import { AuthContext } from '../../../../providers/auth'
+import { NotificationContext } from '../../../../providers/notification'
+import { UserContext } from '../../../../providers/user'
+import { createConnection } from '../../../../utils/connections'
+import { getLabels, Labels } from '../../../../utils/labels'
+
+const NewConnection: FC<{
+  botId: string
+  appId: string
+  appAuthUrl?: string
+  appLoginUrl?: string
+  connectionId?: string | number
+  taskIndex: number
+  onNewConnectionAttempt: () => void
+  onSelectConnection: (appConnection: IAppConnection) => void
+}> = ({
+  botId,
+  appId,
+  appAuthUrl,
+  appLoginUrl,
+  connectionId,
+  taskIndex,
+  onNewConnectionAttempt,
+  onSelectConnection,
+}) => {
+  const { user } = useContext(AuthContext)
+  const { showSnack } = useContext(NotificationContext)
+  const { connections } = useContext(UserContext)
+
+  const [connectionAuthInfo, setConnectionAuthInfo] = useState<{
+    username?: string
+    password?: string
+    url?: string
+  }>()
+
+  const authenticateNewSystem = () => {
+    if (connectionAuthInfo) {
+      const { url, username, password } = connectionAuthInfo
+
+      if (url && username && password) {
+        createConnection(url, { username, password })
+          .then(() => {
+            showSnack(labels.newConnectionSuccess, 'success')
+            setConnectionAuthInfo(undefined)
+          })
+          .catch(() => {
+            showSnack(labels.newConnectionError, 'error')
+            setConnectionAuthInfo((prevState) => ({
+              ...prevState,
+              username: '',
+              password: '',
+            }))
+          })
+      }
+    }
+  }
+
+  const newConnectionHandler = () => {
+    setConnectionAuthInfo({ url: appLoginUrl })
+  }
+
+  return (
+    <>
+      {connections &&
+        connections.filter((x) => x.appId === appId).length > 0 && (
+          <OptionsInput
+            key={connectionId}
+            className="mt-3"
+            label={labels.chooseAccount}
+            value={
+              connectionId
+                ? connections.find((x) => x.connectionId === connectionId)
+                    ?.name || ''
+                : ''
+            }
+            options={connections.filter((x) => x.appId === appId)}
+            optionLabelPath={'name'}
+            onChange={onSelectConnection}
+          />
+        )}
+
+      <div className="d-flex justify-content-center mt-3">
+        {appAuthUrl ? (
+          <OauthPopup
+            title=""
+            width={800}
+            height={600}
+            onCode={() => console.log('OauthPopup.onCode')}
+            onClose={() => console.log('OauthPopup.onClose')}
+            url={encodeURI(
+              `${appAuthUrl}${appId}:${user?.userId}:${botId}:${taskIndex}`
+            )}
+          >
+            <Button
+              type="text"
+              color="primary"
+              icon={<AddIcon />}
+              onClick={onNewConnectionAttempt}
+            >
+              {labels.newConnection}
+            </Button>
+          </OauthPopup>
+        ) : appLoginUrl ? (
+          <Button
+            type="text"
+            color="primary"
+            icon={<AddIcon />}
+            onClick={newConnectionHandler}
+          >
+            {labels.newConnection}
+          </Button>
+        ) : null}
+      </div>
+      <Dialog
+        open={!!connectionAuthInfo}
+        onClose={() => setConnectionAuthInfo(undefined)}
+        maxWidth={false}
+      >
+        <DialogTitle>{labels.login}</DialogTitle>
+        <DialogContent>
+          <div style={{ width: 300 }}>
+            <TextInput
+              value={connectionAuthInfo?.username || ''}
+              placeholder={labels.emailPlaceholder}
+              onChange={(email) =>
+                setConnectionAuthInfo((prev) => ({ ...prev, username: email }))
+              }
+            />
+            <TextInput
+              value={connectionAuthInfo?.password || ''}
+              placeholder={labels.botNamePlaceholder}
+              onChange={(password) =>
+                setConnectionAuthInfo((prev) => ({ ...prev, password }))
+              }
+            />
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={authenticateNewSystem}>{labels.login}</Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  )
+}
+
+export default NewConnection
+
+const LABELS: Labels = {
+  en: {
+    login: 'Login',
+    emailPlaceholder: 'E-mail',
+    botNamePlaceholder: 'Bot name',
+    chooseAccount: 'Choice a account',
+    newConnection: 'New connection',
+    newConnectionError: 'Connection could not be created :(',
+    newConnectionSuccess: 'Connection created successfully :)',
+  },
+  pt: {
+    login: 'Entrar',
+    emailPlaceholder: 'E-mail',
+    botNamePlaceholder: 'Nome do Bot',
+    chooseAccount: 'Escolha uma conta',
+    newConnection: 'Nova conexão',
+    newConnectionError: 'Conexão não pode ser criada :(',
+    newConnectionSuccess: 'Conexão criada com sucesso :)',
+  },
+}
+
+const labels = getLabels(LABELS)

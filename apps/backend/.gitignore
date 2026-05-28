@@ -1,0 +1,13 @@
+# package
+.build
+.webpack
+.serverless
+node_modules
+package-lock.json
+yarn.lock
+
+# secrets
+src/partners/*
+
+# docs
+src/docs/openapi.json

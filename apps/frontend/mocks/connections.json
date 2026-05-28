@@ -1,0 +1,36 @@
+{
+  "success": true,
+  "data": [
+    {
+      "credentials": {
+        "access_token": "ya29.REDACTED_MOCK_TOKEN",
+        "id_token": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImFmYzRmYmE2NTk5ZmY1ZjYzYjcyZGM1MjI0MjgyNzg2ODJmM2E3ZjEiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIxMDY2MTcwNDQ0OTUtazNuMGtvZWRoMzhmYW9jbGdqcWRzczd2cHRmb2lyanIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIxMDY2MTcwNDQ0OTUtazNuMGtvZWRoMzhmYW9jbGdqcWRzczd2cHRmb2lyanIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTA5NDQ2NTcxMzkyODQ4NzQxNjYiLCJlbWFpbCI6ImpvYW9yaWNhcmRvY2FyZG9zbzE1QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJhdF9oYXNoIjoiaHlkTmhGdzBsQTZtSUkwOFNNVG5nUSIsImlhdCI6MTY3NDY4NDQ5MSwiZXhwIjoxNjc0Njg4MDkxfQ.Ikx_EOhjSUD0QZlBnwMQqbLCbVHhXQtDko2-ZRXETtrVDTbzOXQS9AmMjP-UvF0IB5zC06VITO4vAValX6iNcXcZzbStZB7Vod_zlsfZmCC8ZSqb5XvN0q58BBUKJbkNoGeKmfEUuWu4tB8CnLXntq5jxVKuVpxexvxLqRtPYzrA9eri-kOP0pzfSG7P7QcvQ5Cz83yTfrtSbD93WssysPKMiTUM_WLZPDOsfZ9pzIG60KM59ITu0EqzP08xKaODOtsifRFWYF2hp5YxGbp4QYCuVYKQJO8FOC7-Mz4RVon24sbjjlVQsCQ2ufnAUtqN5idaaMbkqzp1RXr_g8oTug",
+        "token_type": "Bearer",
+        "expires_in": 3599,
+        "scope": "https://www.googleapis.com/auth/pubsub openid https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email"
+      },
+      "sortKey": "#CONNECTION#110944657139284874166",
+      "userId": "110944657139284874166",
+      "connectionId": "110944657139284874166",
+      "appId": "5c16e311-a65a-449c-ad82-1f23a41cf89c",
+      "email": "joaoricardocardoso15@gmail.com",
+      "name": "joaoricardocardoso15@gmail.com"
+    },
+    {
+      "credentials": {
+        "access_token": "7653029:11696187:eb7207f484a9ecc70a8678e09e74c154e2814187",
+        "refresh_token": "7653029:11696187:f352ba7cc61e95c8611d0a0b56956c9615e60971",
+        "api_domain": "https://baita-help.pipedrive.com",
+        "token_type": "Bearer",
+        "expires_in": 3599,
+        "scope": "base,deals:full,mail:full,activities:full,contacts:full,products:full,users:read,recents:read,search:read,goals:full"
+      },
+      "sortKey": "#CONNECTION#11696187",
+      "userId": "110944657139284874166",
+      "connectionId": "11696187",
+      "appId": "19c1921c-9a6b-4def-91c8-8bcba8239bf5",
+      "email": "joao@baita.help",
+      "name": "joao@baita.help"
+    }
+  ]
+}

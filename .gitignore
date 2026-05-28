@@ -1,0 +1,7 @@
+node_modules
+.turbo
+dist
+.build
+.serverless
+.DS_Store
+*.log

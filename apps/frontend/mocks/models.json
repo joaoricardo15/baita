@@ -1,0 +1,1523 @@
+{
+  "success": true,
+  "data": [
+    {
+      "modelId": "3700ed32-3e1d-407a-97c3-2d9d81f266b1",
+      "sortKey": "#MODEL#3700ed32-3e1d-407a-97c3-2d9d81f266b1",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/GNOME_Todo_icon_2019.svg/1200px-GNOME_Todo_icon_2019.svg.png",
+      "userId": "baita",
+      "tasks": [
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "expression",
+              "label": "Run every hour Monday to Friday between 9:00 am and 5:00 pm",
+              "type": "options",
+              "value": "cron(0 9-17 ? * MON-FRI *)",
+              "required": true
+            },
+            {
+              "name": "timeZone",
+              "label": "Time Zone",
+              "type": "user",
+              "value": "Europe/Amsterdam",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "schedule",
+            "label": "Schedule",
+            "type": "trigger",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "expression",
+                  "options": [
+                    {
+                      "value": "rate(10 minutes)",
+                      "label": "Run every 10 minutes"
+                    },
+                    {
+                      "value": "rate(30 minutes)",
+                      "label": "Run every 30 minutes"
+                    },
+                    {
+                      "value": "rate(1 hour)",
+                      "label": "Run every hour"
+                    },
+                    {
+                      "value": "cron(0 9 * * ? *)",
+                      "label": "Run every day at 9:00 am"
+                    },
+                    {
+                      "value": "cron(0 8,12,16,20 * * ? *)",
+                      "label": "Run every day at 8:00, 12:00, 16:00 and 20:00"
+                    },
+                    {
+                      "value": "cron(0 9 ? * MON-FRI *)",
+                      "label": "Run every Monday through Friday at 9:00 am"
+                    },
+                    {
+                      "value": "cron(0 9-17 ? * MON-FRI *)",
+                      "label": "Run every hour Monday to Friday between 9:00 am and 5:00 pm"
+                    }
+                  ],
+                  "label": "Expression",
+                  "type": "options",
+                  "required": true
+                },
+                {
+                  "name": "timeZone",
+                  "label": "Time Zone",
+                  "type": "user",
+                  "required": true
+                }
+              ]
+            }
+          },
+          "taskId": 1674673904129
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [],
+          "service": {
+            "name": "method-execute",
+            "label": "Get my \"To Do\" list",
+            "type": "invoke",
+            "config": {
+              "method": "getTodo"
+            }
+          },
+          "taskId": 1674866949037
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "tasks",
+              "outputIndex": 1,
+              "customFieldId": 1674673963656,
+              "label": "task 1: [ ... ]",
+              "type": "output",
+              "outputPath": ""
+            },
+            {
+              "name": "code",
+              "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+              "label": "Code",
+              "type": "code",
+              "value": "const todoTasks = tasks.filter(t => !t.done)\n\nconst firstTask = todoTasks[0]\n\nconst title = firstTask ? `📋 ${firstTask.title}` : `🔥 What's your next thing to do?`\n\nconst actions = firstTask ? [{ title: `⏰ Later`, action: `` }, { title: `✔️ Done`, action: `post###https://mm32a4e7me.execute-api.us-east-1.amazonaws.com/prod/user/${userId}/todo/${firstTask.taskId}/done` }] : undefined\n\nconst url = `/todo`\n\noutput = { todo: !!firstTask, title, actions, url };",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "code-execute",
+            "label": "Run Javascript",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "code",
+                  "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+                  "label": "Code",
+                  "type": "code",
+                  "value": "const id = '123';\nconst title = 'abc';\n\n\n\n\n\n\n\noutput = { id, title };",
+                  "required": true
+                }
+              ],
+              "customFields": true
+            }
+          },
+          "taskId": 1674673957668
+        },
+        {
+          "app": {
+            "name": "ChatGPT",
+            "config": {
+              "apiUrl": "https://api.openai.com/v1"
+            },
+            "appId": "f9686ea8-ac80-4f70-b35b-hggfhjhk"
+          },
+          "inputData": [
+            {
+              "name": "bodyParams.prompt",
+              "outputIndex": 2,
+              "label": "title: 📋 Handle Ios SDK not supported error",
+              "type": "output",
+              "outputPath": "title",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "http-request",
+            "label": "Create an image",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "path",
+                  "label": "Path",
+                  "type": "constant",
+                  "value": "images/generations"
+                },
+                {
+                  "name": "headers.Authorization",
+                  "label": "Authorization",
+                  "type": "environment",
+                  "value": "OPENAI_API_AUTHORIZATION"
+                },
+                {
+                  "name": "bodyParams.prompt",
+                  "label": "What kind of image?",
+                  "type": "output",
+                  "required": true
+                },
+                {
+                  "name": "bodyParams.size",
+                  "label": "Size",
+                  "type": "constant",
+                  "value": "256x256",
+                  "required": true
+                }
+              ],
+              "method": "post",
+              "outputPath": "data.0.url"
+            }
+          },
+          "taskId": 1674909608127
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "notification.title",
+              "outputIndex": 2,
+              "label": "title: 📋 Handle Ios SDK not supported error",
+              "type": "output",
+              "outputPath": "title",
+              "required": true
+            },
+            {
+              "name": "token",
+              "label": "Token",
+              "type": "user",
+              "value": "cQM8uPmN1XYnl-KfzXntGb:APA91bGf3DEHd3C8Fm-UGKu6ewp2lJVzjNjYpj7WpRF2QYTRl-l98qN1FCEUZkTtDcawRmEmjAfnVgPnoOANAsgEfkHEYVL-lzV-TsA_Ft-q6Wpui9Do6TRFOgYNe0AXucHV03-4m_EE",
+              "required": true
+            },
+            {
+              "name": "notification.image",
+              "outputIndex": 3,
+              "label": ": https://oaidalleapiprodscus.blob.core.windows.net/private/org-ldCu7y1poAXRpM41awEPW3mS/user-qb7zl1g2HDtcgBb475VcFO3D/img-fsPFH91uXKT5PZc2tsNBQ07G.png?st=2023-01-28T11%3A40%3A33Z&se=2023-01-28T13%3A40%3A33Z&sp=r&sv=2021-08-06&sr=b&rscd=inline&rsct=image/png&skoid=6aaadede-4fb3-4698-a8f6-684d7786b067&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2023-01-27T23%3A32%3A38Z&ske=2023-01-28T23%3A32%3A38Z&sks=b&skv=2021-08-06&sig=ZULbrFq3ruPi6tYTSNwXV7cMwOHjWuX%2B1D3g0uFuGUg%3D",
+              "type": "output",
+              "outputPath": ""
+            },
+            {
+              "name": "notification.actions",
+              "outputIndex": 2,
+              "label": "task 2.actions: [ ... ]",
+              "type": "output",
+              "outputPath": "actions"
+            },
+            {
+              "name": "url",
+              "outputIndex": 2,
+              "label": "url: /todo",
+              "type": "output",
+              "outputPath": "url"
+            }
+          ],
+          "taskId": 1675283242078,
+          "service": {
+            "name": "method-execute",
+            "label": "Send me a notification",
+            "type": "invoke",
+            "config": {
+              "method": "sendNotification",
+              "inputFields": [
+                {
+                  "name": "token",
+                  "label": "Token",
+                  "type": "user",
+                  "required": true
+                },
+                {
+                  "name": "notification.title",
+                  "label": "Title",
+                  "type": "output",
+                  "required": true
+                },
+                {
+                  "name": "notification.body",
+                  "type": "output",
+                  "label": "Body"
+                },
+                {
+                  "name": "notification.icon",
+                  "type": "output",
+                  "label": "Icon"
+                },
+                {
+                  "name": "notification.image",
+                  "type": "output",
+                  "label": "Image"
+                },
+                {
+                  "name": "notification.timestamp",
+                  "type": "output",
+                  "label": "Timestamp"
+                },
+                {
+                  "name": "notification.actions",
+                  "type": "output",
+                  "label": "Actions"
+                },
+                {
+                  "name": "url",
+                  "type": "output",
+                  "label": "On click Url"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "description": "Get the first task in my to do list and send me a reminder with an image created by DALL-E",
+      "name": "ToDo",
+      "author": "joaoricardocardoso15@gmail.com"
+    },
+    {
+      "modelId": "422bbb3c-9805-4b14-a213-6e949f96a2f0",
+      "sortKey": "#MODEL#422bbb3c-9805-4b14-a213-6e949f96a2f0",
+      "image": "https://cdn-icons-png.flaticon.com/512/342/342385.png",
+      "userId": "baita",
+      "tasks": [
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "expression",
+              "label": "Run every day at 9:00 am",
+              "type": "options",
+              "value": "cron(0 9 * * ? *)",
+              "required": true
+            },
+            {
+              "name": "timeZone",
+              "label": "Time Zone",
+              "type": "user",
+              "value": "Europe/Amsterdam",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "schedule",
+            "label": "Schedule",
+            "type": "trigger",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "expression",
+                  "options": [
+                    {
+                      "value": "rate(10 minutes)",
+                      "label": "Run every 10 minutes"
+                    },
+                    {
+                      "value": "rate(30 minutes)",
+                      "label": "Run every 30 minutes"
+                    },
+                    {
+                      "value": "rate(1 hour)",
+                      "label": "Run every hour"
+                    },
+                    {
+                      "value": "cron(0 9 * * ? *)",
+                      "label": "Run every day at 9:00 am"
+                    },
+                    {
+                      "value": "cron(0 8,12,16,20 * * ? *)",
+                      "label": "Run every day at 8:00, 12:00, 16:00 and 20:00"
+                    },
+                    {
+                      "value": "cron(0 9 ? * MON-FRI *)",
+                      "label": "Run every Monday through Friday at 9:00 am"
+                    },
+                    {
+                      "value": "cron(0 9-17 ? * MON-FRI *)",
+                      "label": "Run every hour Monday to Friday between 9:00 am and 5:00 pm"
+                    }
+                  ],
+                  "label": "Expression",
+                  "type": "options",
+                  "required": true
+                },
+                {
+                  "name": "timeZone",
+                  "label": "Time Zone",
+                  "type": "user",
+                  "required": true
+                }
+              ]
+            }
+          },
+          "taskId": 1674660049391
+        },
+        {
+          "app": {
+            "name": "NewsAPI",
+            "config": {
+              "apiUrl": "https://newsapi.org/v2"
+            },
+            "appId": "f9686ea8-ac80-4f70-b35b-asd"
+          },
+          "inputData": [
+            {
+              "name": "queryParams.language",
+              "label": "Portuguese",
+              "type": "options",
+              "value": "pt",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "http-request",
+            "label": "Get news",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "path",
+                  "label": "Path",
+                  "type": "constant",
+                  "value": "top-headlines"
+                },
+                {
+                  "name": "queryParams.language",
+                  "options": [
+                    {
+                      "value": "en",
+                      "label": "English"
+                    },
+                    {
+                      "value": "pt",
+                      "label": "Portuguese"
+                    }
+                  ],
+                  "label": "Language",
+                  "type": "options",
+                  "required": true
+                },
+                {
+                  "name": "queryParams.country",
+                  "options": [
+                    {
+                      "value": "us",
+                      "label": "United States"
+                    },
+                    {
+                      "value": "br",
+                      "label": "Brazil"
+                    }
+                  ],
+                  "label": "Country",
+                  "type": "options"
+                },
+                {
+                  "name": "queryParams.q",
+                  "type": "text",
+                  "label": "Key works"
+                },
+                {
+                  "name": "queryParams.apiKey",
+                  "label": "Api key",
+                  "type": "environment",
+                  "value": "NEWS_API_KEY"
+                },
+                {
+                  "name": "queryParams.pageSize",
+                  "label": "Page size",
+                  "type": "constant",
+                  "value": "30"
+                }
+              ],
+              "outputMapping": {
+                "date": "publishedAt",
+                "image": "urlToImage",
+                "author.name": "source.name",
+                "contentId": "publishedAt",
+                "header": "title",
+                "source": "###NewsAPI",
+                "body": "description",
+                "url": "url"
+              },
+              "method": "get",
+              "outputPath": "articles"
+            }
+          },
+          "taskId": 1674907990424
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "content",
+              "outputIndex": 1,
+              "label": "task 1: [ ... ]",
+              "type": "output",
+              "outputPath": "",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "method-execute",
+            "label": "Publish content to feed",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "content",
+                  "label": "content",
+                  "type": "output",
+                  "required": true
+                }
+              ],
+              "method": "publishToFeed"
+            }
+          },
+          "taskId": 1674908165904
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "news",
+              "outputIndex": 1,
+              "customFieldId": 1674660125997,
+              "label": "task 1: [ ... ]",
+              "type": "output",
+              "outputPath": ""
+            },
+            {
+              "name": "code",
+              "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+              "label": "Code",
+              "type": "code",
+              "value": "const firstNews = news[0]\n\nconst title = `📰 Novas notícias no feed!`\n\nconst body = firstNews.header\n\nconst image = firstNews.image\n\nconst url = `/content`\n\noutput = { title, body, image, url };",
+              "required": true
+            }
+          ],
+          "conditions": [
+            [
+              {
+                "operator": "exists",
+                "operand": {
+                  "name": "",
+                  "label": "0.image: https://s2.glbimg.com/9SfEg7MIgt2yzRZO4-kitpUk7Vg=/1200x/smart/filters:cover():strip_icc()/i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2023/6/V/74AtQ4SH2B4pAnLVqBPA/design-sem-nome-21-.png",
+                  "type": "output",
+                  "sampleValue": "https://s2.glbimg.com/9SfEg7MIgt2yzRZO4-kitpUk7Vg=/1200x/smart/filters:cover():strip_icc()/i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2023/6/V/74AtQ4SH2B4pAnLVqBPA/design-sem-nome-21-.png",
+                  "outputIndex": 1,
+                  "outputPath": "0.image"
+                }
+              }
+            ]
+          ],
+          "service": {
+            "name": "code-execute",
+            "label": "Run Javascript",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "code",
+                  "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+                  "label": "Code",
+                  "type": "code",
+                  "value": "const id = '123';\nconst title = 'abc';\n\n\n\n\n\n\n\noutput = { id, title };",
+                  "required": true
+                }
+              ],
+              "customFields": true
+            }
+          },
+          "taskId": 1674660122654
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "notification.title",
+              "outputIndex": 3,
+              "label": "title: 📰 Novas notícias no feed!",
+              "type": "output",
+              "outputPath": "title",
+              "required": true
+            },
+            {
+              "name": "notification.body",
+              "outputIndex": 3,
+              "label": "body: Chacina no DF: polícia identifica corpo de jovem de 19 anos, última vítima de assassinato de família - Globo",
+              "type": "output",
+              "outputPath": "body"
+            },
+            {
+              "name": "notification.image",
+              "outputIndex": 3,
+              "label": "image: https://s2.glbimg.com/9SfEg7MIgt2yzRZO4-kitpUk7Vg=/1200x/smart/filters:cover():strip_icc()/i.s3.glbimg.com/v1/AUTH_59edd422c0c84a879bd37670ae4f538a/internal_photos/bs/2023/6/V/74AtQ4SH2B4pAnLVqBPA/design-sem-nome-21-.png",
+              "type": "output",
+              "outputPath": "image"
+            },
+            {
+              "name": "url",
+              "outputIndex": 3,
+              "label": "url: /content",
+              "type": "output",
+              "outputPath": "url"
+            },
+            {
+              "name": "token",
+              "label": "Token",
+              "type": "user",
+              "value": "cQM8uPmN1XYnl-KfzXntGb:APA91bGf3DEHd3C8Fm-UGKu6ewp2lJVzjNjYpj7WpRF2QYTRl-l98qN1FCEUZkTtDcawRmEmjAfnVgPnoOANAsgEfkHEYVL-lzV-TsA_Ft-q6Wpui9Do6TRFOgYNe0AXucHV03-4m_EE",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "method-execute",
+            "label": "Send me a notification",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "token",
+                  "label": "Token",
+                  "type": "user",
+                  "required": true
+                },
+                {
+                  "name": "notification.title",
+                  "label": "Title",
+                  "type": "output",
+                  "required": true
+                },
+                {
+                  "name": "notification.body",
+                  "type": "output",
+                  "label": "Body"
+                },
+                {
+                  "name": "notification.icon",
+                  "type": "output",
+                  "label": "Icon"
+                },
+                {
+                  "name": "notification.image",
+                  "type": "output",
+                  "label": "Image"
+                },
+                {
+                  "name": "notification.timestamp",
+                  "type": "output",
+                  "label": "Timestamp"
+                },
+                {
+                  "name": "notification.actions",
+                  "type": "output",
+                  "label": "Actions"
+                },
+                {
+                  "name": "url",
+                  "type": "output",
+                  "label": "On click Url"
+                }
+              ],
+              "method": "sendNotification"
+            }
+          },
+          "taskId": 1675283582849
+        }
+      ],
+      "description": "Get the latest news from different sources and publish to you feed. It runs in the beginning of your day",
+      "name": "News",
+      "author": "joaoricardocardoso15@gmail.com"
+    },
+    {
+      "modelId": "715d67f0-02b8-469a-8e01-faaaaaaf8500",
+      "sortKey": "#MODEL#715d67f0-02b8-469a-8e01-faaaaaaf8500",
+      "image": "https://icon-library.com/images/jokes-icon/jokes-icon-3.jpg",
+      "userId": "baita",
+      "tasks": [
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "expression",
+              "label": "Run every hour",
+              "type": "options",
+              "value": "rate(1 hour)",
+              "required": true
+            },
+            {
+              "name": "timeZone",
+              "label": "Time Zone",
+              "type": "user",
+              "value": "Europe/Amsterdam",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "schedule",
+            "label": "Schedule",
+            "type": "trigger",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "expression",
+                  "options": [
+                    {
+                      "value": "rate(10 minutes)",
+                      "label": "Run every 10 minutes"
+                    },
+                    {
+                      "value": "rate(30 minutes)",
+                      "label": "Run every 30 minutes"
+                    },
+                    {
+                      "value": "rate(1 hour)",
+                      "label": "Run every hour"
+                    },
+                    {
+                      "value": "cron(0 9 * * ? *)",
+                      "label": "Run every day at 9:00 am"
+                    },
+                    {
+                      "value": "cron(0 8,12,16,20 * * ? *)",
+                      "label": "Run every day at 8:00, 12:00, 16:00 and 20:00"
+                    },
+                    {
+                      "value": "cron(0 9 ? * MON-FRI *)",
+                      "label": "Run every Monday through Friday at 9:00 am"
+                    },
+                    {
+                      "value": "cron(0 9-17 ? * MON-FRI *)",
+                      "label": "Run every hour Monday to Friday between 9:00 am and 5:00 pm"
+                    }
+                  ],
+                  "label": "Expression",
+                  "type": "options",
+                  "required": true
+                },
+                {
+                  "name": "timeZone",
+                  "label": "Time Zone",
+                  "type": "user",
+                  "required": true
+                }
+              ]
+            }
+          },
+          "taskId": 1674907135555
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "",
+              "customFieldId": 1674907147503,
+              "label": "Value",
+              "type": "output"
+            },
+            {
+              "name": "code",
+              "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+              "label": "Code",
+              "type": "code",
+              "value": "const prompt = `write s short joke about living abroad`\n\n\n\n\n\n\n\n\noutput = {prompt };",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "code-execute",
+            "label": "Run Javascript",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "code",
+                  "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+                  "label": "Code",
+                  "type": "code",
+                  "value": "const id = '123';\nconst title = 'abc';\n\n\n\n\n\n\n\noutput = { id, title };",
+                  "required": true
+                }
+              ],
+              "customFields": true
+            }
+          },
+          "taskId": 1674907143205
+        },
+        {
+          "app": {
+            "name": "ChatGPT",
+            "config": {
+              "apiUrl": "https://api.openai.com/v1"
+            },
+            "appId": "f9686ea8-ac80-4f70-b35b-hggfhjhk"
+          },
+          "inputData": [
+            {
+              "name": "bodyParams.prompt",
+              "outputIndex": 1,
+              "label": "prompt: write s short joke about living abroad",
+              "type": "output",
+              "outputPath": "prompt",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "http-request",
+            "label": "Get Text Completion",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "path",
+                  "label": "Path",
+                  "type": "constant",
+                  "value": "completions"
+                },
+                {
+                  "name": "headers.Authorization",
+                  "label": "Authorization",
+                  "type": "environment",
+                  "value": "OPENAI_API_AUTHORIZATION"
+                },
+                {
+                  "name": "bodyParams.prompt",
+                  "label": "Ask something to ChatGPT",
+                  "type": "output",
+                  "required": true
+                },
+                {
+                  "name": "bodyParams.model",
+                  "label": "Model",
+                  "type": "constant",
+                  "value": "text-davinci-003",
+                  "required": true
+                },
+                {
+                  "name": "bodyParams.temperature",
+                  "label": "Temperature",
+                  "type": "constant",
+                  "value": 0.9,
+                  "required": true
+                },
+                {
+                  "name": "bodyParams.max_tokens",
+                  "label": "Max tokens",
+                  "type": "constant",
+                  "value": 100,
+                  "required": true
+                }
+              ],
+              "method": "post",
+              "outputPath": "choices.0.text"
+            }
+          },
+          "taskId": 1674907210817
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "joke",
+              "outputIndex": 2,
+              "customFieldId": 1674907232750,
+              "label": ": \n\nQ: What did the fish say when it hit a wall while swimming abroad?\n\nA: \"Dam!\"",
+              "type": "output",
+              "outputPath": ""
+            },
+            {
+              "name": "code",
+              "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+              "label": "Code",
+              "type": "code",
+              "value": "const title = `🤖 Joke time`\n\nconst actions = [{ title: `📲 Send`, action: `open###https://wa.me/14159198304?text=${joke}` }]\n\n\n\n\n\noutput = { title, actions }",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "code-execute",
+            "label": "Run Javascript",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "code",
+                  "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+                  "label": "Code",
+                  "type": "code",
+                  "value": "const id = '123';\nconst title = 'abc';\n\n\n\n\n\n\n\noutput = { id, title };",
+                  "required": true
+                }
+              ],
+              "customFields": true
+            }
+          },
+          "taskId": 1674907228866
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "notification.title",
+              "outputIndex": 3,
+              "label": "title: 🤖 Joke time",
+              "type": "output",
+              "outputPath": "title",
+              "required": true
+            },
+            {
+              "name": "notification.body",
+              "outputIndex": 2,
+              "label": ": \n\nQ: What did the fish say when it hit a wall while swimming abroad?\n\nA: \"Dam!\"",
+              "type": "output",
+              "outputPath": ""
+            },
+            {
+              "name": "notification.actions",
+              "outputIndex": 3,
+              "label": "task 3.actions: [ ... ]",
+              "type": "output",
+              "outputPath": "actions"
+            },
+            {
+              "name": "token",
+              "label": "Token",
+              "type": "user",
+              "value": "cQM8uPmN1XYnl-KfzXntGb:APA91bGf3DEHd3C8Fm-UGKu6ewp2lJVzjNjYpj7WpRF2QYTRl-l98qN1FCEUZkTtDcawRmEmjAfnVgPnoOANAsgEfkHEYVL-lzV-TsA_Ft-q6Wpui9Do6TRFOgYNe0AXucHV03-4m_EE",
+              "required": true
+            }
+          ],
+          "taskId": 1675286178164,
+          "service": {
+            "name": "method-execute",
+            "label": "Send me a notification",
+            "type": "invoke",
+            "config": {
+              "method": "sendNotification",
+              "inputFields": [
+                {
+                  "name": "token",
+                  "label": "Token",
+                  "type": "user",
+                  "required": true
+                },
+                {
+                  "name": "notification.title",
+                  "label": "Title",
+                  "type": "output",
+                  "required": true
+                },
+                {
+                  "name": "notification.body",
+                  "type": "output",
+                  "label": "Body"
+                },
+                {
+                  "name": "notification.icon",
+                  "type": "output",
+                  "label": "Icon"
+                },
+                {
+                  "name": "notification.image",
+                  "type": "output",
+                  "label": "Image"
+                },
+                {
+                  "name": "notification.timestamp",
+                  "type": "output",
+                  "label": "Timestamp"
+                },
+                {
+                  "name": "notification.actions",
+                  "type": "output",
+                  "label": "Actions"
+                },
+                {
+                  "name": "url",
+                  "type": "output",
+                  "label": "On click Url"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "description": "Get a joke from ChatGPT and send it to a friend via Whatsapp",
+      "name": "Joke",
+      "author": "joaoricardocardoso15@gmail.com"
+    },
+    {
+      "modelId": "be3a97e8-0431-4a25-86e2-50933e7b9673",
+      "sortKey": "#MODEL#be3a97e8-0431-4a25-86e2-50933e7b9673",
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4n_urpJ9XpwOTdzBVbGvactwHrPagYQrTJPYjxfxLGkSyu7nJZVqRVGAeohnPgKMrnKE&usqp=CAU",
+      "userId": "baita",
+      "tasks": [
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "expression",
+              "label": "Run every day at 9:00 am",
+              "type": "options",
+              "value": "cron(0 9 * * ? *)",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "schedule",
+            "label": "Schedule",
+            "type": "trigger",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "expression",
+                  "options": [
+                    {
+                      "value": "rate(10 minutes)",
+                      "label": "Run every 10 minutes"
+                    },
+                    {
+                      "value": "rate(30 minutes)",
+                      "label": "Run every 30 minutes"
+                    },
+                    {
+                      "value": "rate(1 hour)",
+                      "label": "Run every hour"
+                    },
+                    {
+                      "value": "cron(0 9 * * ? *)",
+                      "label": "Run every day at 9:00 am"
+                    },
+                    {
+                      "value": "cron(0 9 ? * MON-FRI *)",
+                      "label": "Run every Monday through Friday at 9:00 am"
+                    },
+                    {
+                      "value": "cron(0 9-17 ? * MON-FRI *)",
+                      "label": "Run every hour Monday to Friday between 9:00 am and 5:00 pm"
+                    }
+                  ],
+                  "label": "Expression",
+                  "type": "options",
+                  "required": true
+                }
+              ]
+            }
+          },
+          "taskId": 1674660761674
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "",
+              "customFieldId": 1675285707862,
+              "label": "Value",
+              "type": "output"
+            },
+            {
+              "name": "keyword1",
+              "customFieldId": 1675285716034,
+              "label": "Value",
+              "type": "text",
+              "value": "tech"
+            },
+            {
+              "name": "keyword2",
+              "customFieldId": 1675285745322,
+              "label": "Value",
+              "type": "text",
+              "value": "amsterdam"
+            },
+            {
+              "name": "keyword3",
+              "customFieldId": 1675285747301,
+              "label": "Value",
+              "type": "text",
+              "value": "porto alegre"
+            },
+            {
+              "name": "code",
+              "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+              "label": "Code",
+              "type": "code",
+              "value": "\n\n\n\n\noutput = { keyword1, keyword2, keyword3 };",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "code-execute",
+            "label": "Run Javascript",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "code",
+                  "description": "1. Insert your Javascript code here.\n2. Access your variables with the same name as you declared them.\n3. The output will be what is attributed to \"output\" variable",
+                  "label": "Code",
+                  "type": "code",
+                  "value": "const id = '123';\nconst title = 'abc';\n\n\n\n\n\n\n\noutput = { id, title };",
+                  "required": true
+                }
+              ],
+              "customFields": true
+            }
+          },
+          "taskId": 1675285701808
+        },
+        {
+          "app": {
+            "name": "Twitter",
+            "config": {
+              "apiUrl": "https://api.twitter.com/1.1"
+            },
+            "appId": "f9686ea8-ac80-4f70-b35b-ddd"
+          },
+          "inputData": [
+            {
+              "name": "queryParams.q",
+              "outputIndex": 1,
+              "label": "keyword2: amsterdam",
+              "type": "output",
+              "outputPath": "keyword2",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "http-request",
+            "label": "Get popular tweets",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "path",
+                  "label": "Path",
+                  "type": "constant",
+                  "value": "search/tweets.json"
+                },
+                {
+                  "name": "headers.Authorization",
+                  "label": "Authorization",
+                  "type": "environment",
+                  "value": "TWITTER_API_AUTHORIZATION"
+                },
+                {
+                  "name": "queryParams.result_type",
+                  "label": "Query term",
+                  "type": "constant",
+                  "value": "popular"
+                },
+                {
+                  "name": "queryParams.count",
+                  "label": "Total results",
+                  "type": "constant",
+                  "value": "30"
+                },
+                {
+                  "name": "queryParams.q",
+                  "label": "Key words",
+                  "type": "output",
+                  "required": true
+                },
+                {
+                  "name": "queryParams.lang",
+                  "options": [
+                    {
+                      "value": "en",
+                      "label": "English"
+                    },
+                    {
+                      "value": "pt",
+                      "label": "Portuguese"
+                    }
+                  ],
+                  "label": "Language",
+                  "type": "options"
+                }
+              ],
+              "outputMapping": {
+                "date": "created_at",
+                "image": "entities.media[0].media_url",
+                "author.name": "user.name",
+                "comments": "retweet_count",
+                "author.accountName": "user.screen_name",
+                "contentId": "id_str",
+                "source": "###Twitter",
+                "body": "text",
+                "author.followers": "user.followers_count",
+                "url": "###https://twitter.com/{{user.screen_name}}/status/{{id_str}}",
+                "author.image": "user.profile_image_url",
+                "author.descripion": "user.description",
+                "author.location": "user.location",
+                "author.url": "user.url",
+                "likes": "favorite_count"
+              },
+              "method": "get",
+              "outputPath": "statuses"
+            }
+          },
+          "taskId": 1675285996304
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "content",
+              "outputIndex": 1,
+              "label": "task 1: [ ... ]",
+              "type": "output",
+              "outputPath": "",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "method-execute",
+            "label": "Publish content to feed",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "content",
+                  "label": "content",
+                  "type": "output",
+                  "required": true
+                }
+              ],
+              "method": "publishToFeed"
+            }
+          },
+          "taskId": 1674867468922
+        },
+        {
+          "app": {
+            "name": "Twitter",
+            "config": {
+              "apiUrl": "https://api.twitter.com/1.1"
+            },
+            "appId": "f9686ea8-ac80-4f70-b35b-ddd"
+          },
+          "inputData": [
+            {
+              "name": "queryParams.q",
+              "outputIndex": 1,
+              "label": "keyword1: tech",
+              "type": "output",
+              "outputPath": "keyword1",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "http-request",
+            "label": "Get popular tweets",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "path",
+                  "label": "Path",
+                  "type": "constant",
+                  "value": "search/tweets.json"
+                },
+                {
+                  "name": "headers.Authorization",
+                  "label": "Authorization",
+                  "type": "environment",
+                  "value": "TWITTER_API_AUTHORIZATION"
+                },
+                {
+                  "name": "queryParams.result_type",
+                  "label": "Query term",
+                  "type": "constant",
+                  "value": "popular"
+                },
+                {
+                  "name": "queryParams.count",
+                  "label": "Total results",
+                  "type": "constant",
+                  "value": "30"
+                },
+                {
+                  "name": "queryParams.q",
+                  "label": "Key words",
+                  "type": "output",
+                  "required": true
+                },
+                {
+                  "name": "queryParams.lang",
+                  "options": [
+                    {
+                      "value": "en",
+                      "label": "English"
+                    },
+                    {
+                      "value": "pt",
+                      "label": "Portuguese"
+                    }
+                  ],
+                  "label": "Language",
+                  "type": "options"
+                }
+              ],
+              "outputMapping": {
+                "date": "created_at",
+                "image": "entities.media[0].media_url",
+                "author.name": "user.name",
+                "comments": "retweet_count",
+                "author.accountName": "user.screen_name",
+                "contentId": "id_str",
+                "source": "###Twitter",
+                "body": "text",
+                "author.followers": "user.followers_count",
+                "url": "###https://twitter.com/{{user.screen_name}}/status/{{id_str}}",
+                "author.image": "user.profile_image_url",
+                "author.descripion": "user.description",
+                "author.location": "user.location",
+                "author.url": "user.url",
+                "likes": "favorite_count"
+              },
+              "method": "get",
+              "outputPath": "statuses"
+            }
+          },
+          "taskId": 1675286025161
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "content",
+              "outputIndex": 3,
+              "label": "task 3: [ ... ]",
+              "type": "output",
+              "outputPath": "",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "method-execute",
+            "label": "Publish content to feed",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "content",
+                  "label": "content",
+                  "type": "output",
+                  "required": true
+                }
+              ],
+              "method": "publishToFeed"
+            }
+          },
+          "taskId": 1674867481123
+        },
+        {
+          "app": {
+            "name": "Twitter",
+            "config": {
+              "apiUrl": "https://api.twitter.com/1.1"
+            },
+            "appId": "f9686ea8-ac80-4f70-b35b-ddd"
+          },
+          "inputData": [
+            {
+              "name": "queryParams.q",
+              "outputIndex": 1,
+              "label": "keyword3: porto alegre",
+              "type": "output",
+              "outputPath": "keyword3",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "http-request",
+            "label": "Get popular tweets",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "path",
+                  "label": "Path",
+                  "type": "constant",
+                  "value": "search/tweets.json"
+                },
+                {
+                  "name": "headers.Authorization",
+                  "label": "Authorization",
+                  "type": "environment",
+                  "value": "TWITTER_API_AUTHORIZATION"
+                },
+                {
+                  "name": "queryParams.result_type",
+                  "label": "Query term",
+                  "type": "constant",
+                  "value": "popular"
+                },
+                {
+                  "name": "queryParams.count",
+                  "label": "Total results",
+                  "type": "constant",
+                  "value": "30"
+                },
+                {
+                  "name": "queryParams.q",
+                  "label": "Key words",
+                  "type": "output",
+                  "required": true
+                },
+                {
+                  "name": "queryParams.lang",
+                  "options": [
+                    {
+                      "value": "en",
+                      "label": "English"
+                    },
+                    {
+                      "value": "pt",
+                      "label": "Portuguese"
+                    }
+                  ],
+                  "label": "Language",
+                  "type": "options"
+                }
+              ],
+              "outputMapping": {
+                "date": "created_at",
+                "image": "entities.media[0].media_url",
+                "author.name": "user.name",
+                "comments": "retweet_count",
+                "author.accountName": "user.screen_name",
+                "contentId": "id_str",
+                "source": "###Twitter",
+                "body": "text",
+                "author.followers": "user.followers_count",
+                "url": "###https://twitter.com/{{user.screen_name}}/status/{{id_str}}",
+                "author.image": "user.profile_image_url",
+                "author.descripion": "user.description",
+                "author.location": "user.location",
+                "author.url": "user.url",
+                "likes": "favorite_count"
+              },
+              "method": "get",
+              "outputPath": "statuses"
+            }
+          },
+          "taskId": 1675286064680
+        },
+        {
+          "app": {
+            "name": "Baita",
+            "config": {},
+            "appId": "2d12accb-4b7c-4d22-bdbc-4875a404b929"
+          },
+          "inputData": [
+            {
+              "name": "content",
+              "outputIndex": 5,
+              "label": "task 5: [ ... ]",
+              "type": "output",
+              "outputPath": "",
+              "required": true
+            }
+          ],
+          "service": {
+            "name": "method-execute",
+            "label": "Publish content to feed",
+            "type": "invoke",
+            "config": {
+              "inputFields": [
+                {
+                  "name": "content",
+                  "label": "content",
+                  "type": "output",
+                  "required": true
+                }
+              ],
+              "method": "publishToFeed"
+            }
+          },
+          "taskId": 1674867508270
+        }
+      ],
+      "description": "Get popular tweets and publish to your feed. It runs 4 times a day.",
+      "name": "Twitter",
+      "author": "joaoricardocardoso15@gmail.com"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+@import './variables.scss';
+
+:export {
+  infoColor: $color-info;
+  errorColor: $color-error;
+  warningColor: $color-warning;
+  successColor: $color-success;
+  primaryColor: $color-primary;
+  secondaryColor: $color-secondary;
+  backgroundColor: $color-background;
+  contrastColor: $color-contrast;
+}

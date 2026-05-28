@@ -1,0 +1,10 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+  - 'tests/*'
+onlyBuiltDependencies:
+  - esbuild
+  - serverless
+  - msw
+  - '@parcel/watcher'
+  - unrs-resolver

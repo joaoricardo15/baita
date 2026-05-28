@@ -1,0 +1,80 @@
+{
+  "botId": "73450839-e2d9-4b7f-bc3c-5648c22c9a98",
+  "userId": "110944657139284874166",
+  "appConfig": {
+    "apiUrl": "https://newsapi.org/v2"
+  },
+  "serviceConfig": {
+    "methodName": "httpRequest",
+    "inputFields": [
+      {
+        "name": "method",
+        "label": "Method",
+        "type": "constant",
+        "value": "get"
+      },
+      {
+        "name": "path",
+        "label": "Path",
+        "type": "constant",
+        "value": "top-headlines"
+      },
+      {
+        "name": "queryParams.country",
+        "label": "Country",
+        "type": "options",
+        "options": [
+          {
+            "label": "United States",
+            "value": "us"
+          },
+          {
+            "label": "Brazil",
+            "value": "br"
+          },
+          {
+            "label": "Netherlands",
+            "value": "nl"
+          }
+        ]
+      },
+      {
+        "name": "queryParams.q",
+        "label": "Key words",
+        "type": "output"
+      },
+      {
+        "name": "queryParams.apiKey",
+        "label": "Api key",
+        "type": "environment",
+        "value": "NEWS_API_KEY"
+      },
+      {
+        "name": "queryParams.pageSize",
+        "label": "Page size",
+        "type": "constant",
+        "value": "30"
+      }
+    ],
+    "outputPath": "articles",
+    "outputMapping": {
+      "source": "###NewsAPI",
+      "contentId": "publishedAt",
+      "header": "title",
+      "body": "description",
+      "image": "urlToImage",
+      "date": "publishedAt",
+      "url": "url",
+      "author.name": "source.name"
+    }
+  },
+  "inputData": {
+    "method": "get",
+    "path": "top-headlines",
+    "queryParams": {
+      "country": "us",
+      "apiKey": "ed62172b723f4a598514e9a0aec3d2ae",
+      "pageSize": "30"
+    }
+  }
+}

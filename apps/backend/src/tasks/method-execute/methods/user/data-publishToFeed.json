@@ -1,0 +1,29 @@
+{
+  "botId": "de8710d6-73f2-4e50-9688-d6186d96d4ac",
+  "userId": "110944657139284874166",
+  "appConfig": {},
+  "serviceConfig": {
+    "methodName": "publishToFeed",
+    "inputFields": [
+      {
+        "name": "content",
+        "label": "content",
+        "type": "output",
+        "required": true
+      }
+    ]
+  },
+  "inputData": {
+    "content": [
+      {
+        "date": "2024-09-26T17:58:46Z",
+        "image": "https://s.yimg.com/ny/api/res/1.2/sik4uGNdCv6Ghm7wfiEBsQ--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyMDA7aD04MDA-/https://s.yimg.com/os/creatr-uploaded-images/2024-04/8d2f4820-f57c-11ee-94f9-c987175f6892",
+        "author": { "name": "yahoo" },
+        "contentId": "2024-09-30T17:58:46Z",
+        "header": "Stock market today: S&P 500, Nasdaq gain as US GDP data, chip stocks lift mood - Yahoo Finance",
+        "body": "A double dose of optimism for the AI trade and for China's stimulus push is buoying the market ahead of Jerome Powell's comments.",
+        "url": "https://finance.yahoo.com/news/live/stock-market-today-sp-500-nasdaq-gain-as-us-gdp-data-chip-stocks-lift-mood-133011116.html"
+      }
+    ]
+  }
+}

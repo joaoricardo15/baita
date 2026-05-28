@@ -1,0 +1,6 @@
+{
+  "inputData": {
+    "code": "// Insert your code here.\\n// You will be able to access your input data as 'input' variable's properties\\n// and your output data as 'output' variables's properties\\n\\n\\n\\n//asd\\n\\n\\n output = { cpf: 2 };",
+    "cpf": "123.456.789-10"
+  }
+}
