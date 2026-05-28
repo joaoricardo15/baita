@@ -6,7 +6,9 @@ on:
     paths:
       - 'apps/frontend/**'
       - 'packages/shared/**'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/ci-frontend.yml'
+  workflow_dispatch:
 
 jobs:
   test:
