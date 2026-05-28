@@ -10,10 +10,17 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@cspell/dict-pt-br": "^2.4.2",
+    "@eslint/js": "^9.39.4",
+    "cspell": "^10.0.0",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-simple-import-sort": "^13.0.0",
     "husky": "^9",
     "lint-staged": "^15",
     "prettier": "^3",
-    "turbo": "^2"
+    "turbo": "^2",
+    "typescript-eslint": "^8.60.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
