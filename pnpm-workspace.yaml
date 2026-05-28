@@ -3,8 +3,14 @@ packages:
   - 'apps/*'
   - 'tests/*'
 onlyBuiltDependencies:
-  - esbuild
-  - serverless
-  - msw
+  - '@firebase/util'
   - '@parcel/watcher'
+  - aws-sdk
+  - browser-tabs-lock
+  - core-js
+  - es5-ext
+  - esbuild
+  - msw
+  - protobufjs
+  - serverless
   - unrs-resolver
