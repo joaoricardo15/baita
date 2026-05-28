@@ -1,0 +1,65 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/backend/**'
+      - 'packages/shared/**'
+      - '.github/workflows/ci-backend.yml'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+      - name: Lint
+        run: cd apps/backend && npx eslint 'src/**/*.ts'
+      - name: Type Check
+        run: cd apps/backend && npx tsc --noEmit
+      - name: Test
+        run: cd apps/backend && npx jest --no-coverage
+
+  deploy:
+    name: Deploy
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Deploy
+        run: cd apps/backend && npx serverless deploy --stage prod --verbose
+
+  smoke-tests:
+    name: Post-Deploy Smoke Tests
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install
+      - name: Run E2E smoke tests
+        env:
+          SMOKE_TEST_TOKEN: ${{ secrets.SMOKE_TEST_TOKEN }}
+        run: cd apps/backend && npm run test:e2e

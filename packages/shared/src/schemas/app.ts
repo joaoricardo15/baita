@@ -9,7 +9,7 @@ export const AppConfigSchema = z.object({
       type: z.string(),
       method: z.string(),
       url: z.string(),
-      headers: z.record(z.unknown()).optional(),
+      headers: z.record(z.string()).optional(),
       fields: z
         .object({
           username: z.string(),

@@ -102,5 +102,5 @@ export interface ITaskExecutionInput<T = unknown> {
   appConfig: import('./app').IAppConfig
   serviceConfig: import('./service').IServiceConfig
   connectionId?: string | number
-  inputData?: T
+  inputData: T
 }
