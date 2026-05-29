@@ -419,23 +419,23 @@ resources:
               method.response.header.Content-Type: true
 
     # Smoke test user SQS queues (E2E tests)
-    smokeTestDlq:
+    SmokeTestDLQ:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:provider.environment.SERVICE_PREFIX}-${self:provider.environment.SMOKE_TEST_USER_ID}-dlq
         MessageRetentionPeriod: 1209600
-    smokeTestQueue:
+    SmokeTestQueue:
       Type: AWS::SQS::Queue
-      DependsOn: smokeTestDlq
+      DependsOn: SmokeTestDLQ
       Properties:
         QueueName: ${self:provider.environment.SERVICE_PREFIX}-${self:provider.environment.SMOKE_TEST_USER_ID}
         MessageRetentionPeriod: 172800
         RedrivePolicy:
-          deadLetterTargetArn: !GetAtt smokeTestDlq.Arn
+          deadLetterTargetArn: !GetAtt SmokeTestDLQ.Arn
           maxReceiveCount: 3
 
     # CloudWatch Alarms
-    lambdaErrorAlarm:
+    LambdaErrorAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
         AlarmName: ${self:provider.environment.SERVICE_PREFIX}-lambda-errors
@@ -447,7 +447,7 @@ resources:
         Threshold: 5
         ComparisonOperator: GreaterThanThreshold
         TreatMissingData: notBreaching
-    dynamoThrottleAlarm:
+    DynamoDBThrottleAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
         AlarmName: ${self:provider.environment.SERVICE_PREFIX}-dynamodb-throttle
@@ -461,7 +461,7 @@ resources:
         EvaluationPeriods: 1
         Threshold: 1
         ComparisonOperator: GreaterThanOrEqualToThreshold
-    api5xxAlarm:
+    Api5xxAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
         AlarmName: ${self:provider.environment.SERVICE_PREFIX}-api-5xx
