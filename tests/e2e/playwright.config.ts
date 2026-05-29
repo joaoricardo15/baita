@@ -11,13 +11,8 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'browser',
-      testMatch: /auth-flow\.spec\.ts/,
+      name: 'e2e',
       use: { browserName: 'chromium' },
-    },
-    {
-      name: 'api',
-      testMatch: /api-health\.spec\.ts/,
     },
   ],
 })
