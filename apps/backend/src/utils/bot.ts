@@ -109,6 +109,16 @@ export const getOutputVariableString = (
     .join('')}`
 }
 
+export const getOutputVariableStringById = (
+  taskId: number,
+  path: string,
+  tasks: { taskId: number }[]
+): string => {
+  const index = tasks.findIndex((t) => t.taskId === taskId)
+  if (index === -1) return `undefined`
+  return getOutputVariableString(index, path)
+}
+
 export const getValueFromInputVariable = (
   variable: IVariable,
   testData?: boolean

@@ -1,7 +1,16 @@
-import { ConditionOperator } from 'src/models/bot/interface'
-import { VariableType } from 'src/models/service/interface'
+import { ConditionOperator, ITask } from 'src/models/bot/interface'
+import {
+  ServiceName,
+  ServiceType,
+  VariableType,
+} from 'src/models/service/interface'
 
-import { getConditionsString, getInputString } from '../code'
+import {
+  getBotInnerCode,
+  getCompleteBotCode,
+  getConditionsString,
+  getInputString,
+} from '../code'
 
 describe('getInputString', () => {
   test('should return string version of properties', () => {
@@ -262,5 +271,129 @@ describe('getConditionsString', () => {
     expect(getConditionsString(conditions)).toBe(
       "(!!task1_outputData['person']['name'] && !!task2_outputData['person']['name']) || (!!task3_outputData['person']['name'] && !!task4_outputData['person']['name'])"
     )
+  })
+})
+
+describe('getCompleteBotCode', () => {
+  const triggerTask: ITask = {
+    taskId: 1000,
+    inputData: [],
+    service: {
+      type: ServiceType.trigger,
+      name: ServiceName.webhook,
+      label: 'Webhook',
+      config: {},
+    },
+  }
+
+  test('generates handler with bot metadata', () => {
+    const code = getCompleteBotCode('user-1', 'bot-abc', [triggerTask])
+    expect(code).toContain("const botId = 'bot-abc'")
+    expect(code).toContain("const userId = 'user-1'")
+    expect(code).toContain('module.exports.handler')
+  })
+
+  test('includes structured log output', () => {
+    const code = getCompleteBotCode('user-1', 'bot-abc', [triggerTask])
+    expect(code).toContain('console.log(JSON.stringify(')
+    expect(code).toContain('logs')
+    expect(code).toContain('usage')
+    expect(code).toContain('timestamp')
+  })
+})
+
+describe('getBotInnerCode', () => {
+  const triggerTask: ITask = {
+    taskId: 1000,
+    inputData: [],
+    service: {
+      type: ServiceType.trigger,
+      name: ServiceName.webhook,
+      label: 'Webhook',
+      config: {},
+    },
+  }
+
+  test('generates task invocation with Lambda call', () => {
+    const tasks: ITask[] = [
+      triggerTask,
+      {
+        taskId: 2000,
+        inputData: [],
+        service: {
+          type: ServiceType.invoke,
+          name: ServiceName.code,
+          label: 'Run Code',
+          config: { inputFields: [] },
+        },
+      },
+    ]
+
+    const code = getBotInnerCode(tasks)
+    expect(code).toContain('task1_inputData')
+    expect(code).toContain('lambda.invoke')
+    expect(code).toContain('task-code-execute')
+  })
+
+  test('includes timing instrumentation', () => {
+    const tasks: ITask[] = [
+      triggerTask,
+      {
+        taskId: 2000,
+        inputData: [],
+        service: {
+          type: ServiceType.invoke,
+          name: ServiceName.code,
+          label: 'Code',
+          config: { inputFields: [] },
+        },
+      },
+    ]
+
+    const code = getBotInnerCode(tasks)
+    expect(code).toContain('task1_startedAt = Date.now()')
+    expect(code).toContain('durationMs: Date.now() - task1_startedAt')
+  })
+
+  test('generates retry loop when retryPolicy is set', () => {
+    const tasks: ITask[] = [
+      triggerTask,
+      {
+        taskId: 2000,
+        inputData: [],
+        retryPolicy: { maxAttempts: 3, backoffMs: 2000 },
+        service: {
+          type: ServiceType.invoke,
+          name: ServiceName.http,
+          label: 'HTTP',
+          config: { inputFields: [] },
+        },
+      },
+    ]
+
+    const code = getBotInnerCode(tasks)
+    expect(code).toContain('task1_maxAttempts = 3')
+    expect(code).toContain('task1_backoffMs = 2000')
+    expect(code).toContain('while (task1_attempts < task1_maxAttempts)')
+  })
+
+  test('does not generate retry loop without retryPolicy', () => {
+    const tasks: ITask[] = [
+      triggerTask,
+      {
+        taskId: 2000,
+        inputData: [],
+        service: {
+          type: ServiceType.invoke,
+          name: ServiceName.code,
+          label: 'Code',
+          config: { inputFields: [] },
+        },
+      },
+    ]
+
+    const code = getBotInnerCode(tasks)
+    expect(code).not.toContain('_maxAttempts')
+    expect(code).not.toContain('_backoffMs')
   })
 })

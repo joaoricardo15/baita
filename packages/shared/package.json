@@ -7,10 +7,17 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "scripts": {
+    "test": "jest --watchAll",
+    "test:run": "jest"
+  },
   "dependencies": {
     "zod": "^3"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30",
+    "ts-jest": "^29",
     "typescript": "^5.9"
   }
 }

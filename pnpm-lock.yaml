@@ -298,6 +298,15 @@ importers:
         specifier: ^3
         version: 3.25.76
     devDependencies:
+      '@types/jest':
+        specifier: ^30.0.0
+        version: 30.0.0
+      jest:
+        specifier: ^30
+        version: 30.4.2(@types/node@25.9.1)(babel-plugin-macros@3.1.0)
+      ts-jest:
+        specifier: ^29
+        version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@30.4.1(@babel/core@7.29.7))(esbuild@0.28.0)(jest-util@30.4.1)(jest@30.4.2(@types/node@25.9.1)(babel-plugin-macros@3.1.0))(typescript@5.9.3)
       typescript:
         specifier: ^5.9
         version: 5.9.3

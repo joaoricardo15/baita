@@ -17,6 +17,16 @@ Each app has its own `CLAUDE.md` with specific conventions. This file governs cr
 4. **Don't reinvent the wheel** — Search for best practices and existing tools first.
 5. **Plan thoroughly, review extensively** — Plan before implementing. Review before claiming ready.
 
+### Pre-Commit Checklist (Automatic — Do Not Skip)
+
+Before EVERY commit, verify ALL of these automatically:
+
+1. All affected test suites pass (`pnpm turbo run test`)
+2. Type-check passes (`npx tsc --noEmit` on affected packages)
+3. Documentation reflects new features (CLAUDE.md, README.md)
+4. New logic has unit test coverage
+5. No stale references in docs (paths, branch names, API shapes)
+
 ### Feature Development Methodology
 
 1. Use case mapping → 2. Code review → 3. Propose solutions → 4. Plan → 5. Implement → 6. Document → 7. Test → 8. Final review → 9. Functional E2E testing
@@ -40,10 +50,21 @@ Each app has its own `CLAUDE.md` with specific conventions. This file governs cr
 All domain models are defined ONCE in `packages/shared/src/schemas/` using Zod. Both apps import from `@baita/shared`:
 
 ```typescript
-import { IBot, ITask, TaskSchema, BotSchema } from '@baita/shared'
+import { IBot, ITask, TaskSchema, BotSchema, validateBot } from '@baita/shared'
 ```
 
 When a model changes, update it in `packages/shared/` — both apps get the change automatically.
+
+### Bot Schema Features
+
+The bot schema includes validation and integrity helpers that protect against common workflow building errors:
+
+- **`validateBot(bot)`** — Pre-deploy validation. Catches forward references, missing services, orphaned output mappings, stale sample data. Returns `{ valid, errors, warnings }`.
+- **`removeStepReferences(tasks, deletedTaskId)`** — Called when a step is deleted. Removes broken variable mappings in downstream steps and adjusts positional indices.
+- **`clearDownstreamSamples(tasks, changedIndex)`** — Invalidates test data in steps that reference a step whose output shape changed.
+- **`computeStepConfigHash(task)`** — Fingerprints a step's config (service + inputs) to detect when sample data becomes stale.
+- **`RetryPolicySchema`** — Optional per-task retry config (`{ maxAttempts, backoffMs }`). Code generation emits retry loops with exponential backoff.
+- **`StepExecutionSchema`** — Structured per-step execution logging with timing (`durationMs`), status, input/output snapshots.
 
 ### API Contract
 
@@ -53,15 +74,14 @@ When a model changes, update it in `packages/shared/` — both apps get the chan
 
 ## CI/CD Pipeline
 
-All workflows live in `.github/workflows/` and trigger on push to `main`:
+Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main`:
 
-| Workflow          | Triggers On                              | Steps                                           |
-| ----------------- | ---------------------------------------- | ----------------------------------------------- |
-| `ci-backend.yml`  | `apps/backend/**`, `packages/shared/**`  | lint → type-check → test → deploy → smoke-tests |
-| `ci-frontend.yml` | `apps/frontend/**`, `packages/shared/**` | lint → spell → build → test → Amplify deploy    |
-| `e2e.yml`         | After either CI completes                | Playwright E2E tests against production         |
+```
+shared → frontend-quality → frontend-deploy ─┐
+       ↘ backend-quality  → backend-deploy  ──┤→ e2e (23 tests)
+```
 
-Changes to `packages/shared/` trigger BOTH app pipelines.
+Changes to `packages/shared/` trigger BOTH branches.
 
 ## E2E Testing
 
