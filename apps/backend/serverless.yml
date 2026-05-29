@@ -464,18 +464,6 @@ functions:
       - http:
           path: connectors/oauth
           method: get
-  connector-pipedrive:
-    handler: src/connectors/pipedrive/index.handler
-    events:
-      - http:
-          path: connectors/pipedrive
-          method: get
-  connector-google:
-    handler: src/connectors/google/index.handler
-    events:
-      - http:
-          path: connectors/google
-          method: get
 
 resources:
   Resources:
