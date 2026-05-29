@@ -458,6 +458,12 @@ functions:
             type: token
 
   ### connectors ###
+  connector-oauth:
+    handler: src/connectors/oauth/index.handler
+    events:
+      - http:
+          path: connectors/oauth
+          method: get
   connector-pipedrive:
     handler: src/connectors/pipedrive/index.handler
     events:
