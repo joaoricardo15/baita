@@ -1,4 +1,3 @@
-// cspell:disable-next-line
 const VAPID_PUBLIC_KEY =
   'BM2CDMNWEL_XeDj-iTASTb-Uxl5Yo-M7WCQvBFCNuI5DkH5TBNPupLcnfppxWqi2ViZIyr0NyFFOEcous8hCUNI'
 
