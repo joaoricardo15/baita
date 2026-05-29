@@ -82,7 +82,7 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 ## AWS / Deployment
 
 - **AWS Profile**: Always use `--profile joao` for AWS CLI commands in this repo
-- **CI/CD**: GitHub Actions (push to `master` → test → lint → deploy)
+- **CI/CD**: GitHub Actions (unified pipeline in monorepo root `.github/workflows/ci.yml`)
 - **Region**: `us-east-1`
 - **Custom Domain**: `api.baita.help` (Route53 + serverless-domain-manager)
 - **Stage**: `prod` (single production stage)
@@ -91,10 +91,12 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 
 ### CI/CD Pipeline
 
-The GitHub Actions workflow (`.github/workflows/main.yml`) runs on push to `master`:
+Part of the monorepo unified workflow (`.github/workflows/ci.yml`) on push to `main`:
 
-1. **Test job**: Install → Lint → Run Jest tests
-2. **Deploy job** (only if tests pass): Install → Configure AWS → `serverless deploy` (secrets resolved from SSM at deploy time)
+1. **Shared Checks**: Type-check `@baita/shared`
+2. **Backend Quality**: Lint → Type-check → Jest tests
+3. **Backend Deploy**: `serverless deploy --stage prod`
+4. **E2E Tests**: Playwright against production (37 tests)
 
 ### Local Development Requirements
 

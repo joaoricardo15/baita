@@ -109,27 +109,14 @@ SMOKE_TEST_TOKEN=<token> npx playwright test
 
 ## CI/CD Pipeline
 
-All pipelines run on push to `main` via GitHub Actions:
+Single unified workflow (`.github/workflows/ci.yml`) on push to `main`:
 
 ```
-Push to main
-    │
-    ├── apps/backend/** changed?
-    │   └── Backend CI: lint → type-check → test → deploy (serverless)
-    │
-    ├── apps/frontend/** changed?
-    │   └── Frontend CI: lint → spell → build → test
-    │
-    ├── packages/shared/** changed?
-    │   └── BOTH backend + frontend CIs trigger
-    │
-    └── After successful CI
-        └── E2E Tests: Playwright (18 tests against production)
+shared checks → frontend-quality → frontend-deploy ─┐
+              ↘ backend-quality  → backend-deploy  ──┤→ e2e (37 Playwright tests)
 ```
 
-### Manual Trigger
-
-All workflows support `workflow_dispatch` for manual execution via GitHub Actions UI.
+All jobs support `workflow_dispatch` for manual trigger.
 
 ## Shared Schemas (`@baita/shared`)
 

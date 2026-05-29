@@ -1,6 +1,110 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { buildMessagesWithContext, parseTasksFromResponse } from '../ai'
+import {
+  buildMessagesWithContext,
+  getAiService,
+  parseTasksFromResponse,
+} from '../ai'
+
+afterEach(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete (window as any).ai
+})
+
+describe('getAiService', () => {
+  it('returns AiService when Chrome AI is available', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).ai = {
+      languageModel: {
+        capabilities: vi.fn().mockResolvedValue({ available: 'readily' }),
+        create: vi.fn(),
+      },
+    }
+    const service = await getAiService()
+    expect(service).not.toBeNull()
+    expect(service?.provider).toBe('chrome-ai')
+  })
+
+  it('returns null when window.ai is undefined', async () => {
+    const service = await getAiService()
+    expect(service).toBeNull()
+  })
+
+  it('returns null when languageModel is undefined', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).ai = {}
+    const service = await getAiService()
+    expect(service).toBeNull()
+  })
+
+  it('returns null when available is not readily', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).ai = {
+      languageModel: {
+        capabilities: vi.fn().mockResolvedValue({ available: 'no' }),
+      },
+    }
+    const service = await getAiService()
+    expect(service).toBeNull()
+  })
+
+  it('returns null when capabilities() throws', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).ai = {
+      languageModel: {
+        capabilities: vi.fn().mockRejectedValue(new Error('fail')),
+      },
+    }
+    const service = await getAiService()
+    expect(service).toBeNull()
+  })
+})
+
+describe('AiService.generate', () => {
+  it('creates session with system prompt and calls prompt()', async () => {
+    const mockPrompt = vi.fn().mockResolvedValue('response text')
+    const mockCreate = vi.fn().mockResolvedValue({ prompt: mockPrompt })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).ai = {
+      languageModel: {
+        capabilities: vi.fn().mockResolvedValue({ available: 'readily' }),
+        create: mockCreate,
+      },
+    }
+
+    const service = await getAiService()
+    const result = await service!.generate([
+      { role: 'user', content: 'make a bot' },
+    ])
+
+    expect(mockCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ systemPrompt: expect.any(String) })
+    )
+    expect(mockPrompt).toHaveBeenCalledWith('user: make a bot')
+    expect(result).toBe('response text')
+  })
+
+  it('filters system messages from prompt', async () => {
+    const mockPrompt = vi.fn().mockResolvedValue('ok')
+    const mockCreate = vi.fn().mockResolvedValue({ prompt: mockPrompt })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(window as any).ai = {
+      languageModel: {
+        capabilities: vi.fn().mockResolvedValue({ available: 'readily' }),
+        create: mockCreate,
+      },
+    }
+
+    const service = await getAiService()
+    await service!.generate([
+      { role: 'system', content: 'system msg' },
+      { role: 'user', content: 'hello' },
+      { role: 'assistant', content: 'hi' },
+    ])
+
+    expect(mockPrompt).toHaveBeenCalledWith('user: hello\nassistant: hi')
+  })
+})
 
 describe('parseTasksFromResponse', () => {
   it('parses JSON from markdown code block', () => {

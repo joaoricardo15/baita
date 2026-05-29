@@ -2,7 +2,7 @@
 
 Personal automation app (Zapier-inspired, aimed at normal people) available at https://baita.help.
 
-**Companion repo**: `baita-serverless` (backend API at https://api.baita.help) — both repos share the same Core Philosophies, Feature Development Methodology, code style (Prettier config), and TypeScript model interfaces. Changes to shared conventions must be reflected in both CLAUDE.md files.
+Part of the Baita monorepo. Backend lives at `apps/backend/`, shared schemas at `packages/shared/`. See root `CLAUDE.md` for cross-workspace conventions.
 
 ## Core Philosophies
 
@@ -87,8 +87,8 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 - **AWS Profile:** Always use `--profile joao` for AWS CLI commands in this repo
 - **Amplify App ID:** `d35kx8fgop2qtf`
 - **Region:** `us-east-1`
-- **Branch:** `master` (production)
-- **Fetch build logs:** `aws amplify list-jobs --app-id d35kx8fgop2qtf --branch-name master --profile joao --region us-east-1`
+- **Branch:** `main` (production)
+- **Fetch build logs:** `aws amplify list-jobs --app-id d35kx8fgop2qtf --branch-name main --profile joao --region us-east-1`
 - **Before pushing:** Always `git pull --rebase` to sync with remote
 
 ## Architecture Decisions
@@ -329,4 +329,3 @@ The system prompt in `ai.ts` teaches the LLM the bot schema structure (services,
 - No lazy loading / code splitting on routes
 - No memoization (React.memo, useMemo, useCallback) applied yet
 - Admin detection is hardcoded (email check)
-- CI/CD config only in AWS Amplify console (not in code)
