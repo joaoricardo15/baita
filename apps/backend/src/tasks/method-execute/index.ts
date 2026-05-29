@@ -7,8 +7,8 @@ import { validateTaskExecutionInput } from 'src/models/bot/schema'
 import { DataType, MethodName } from 'src/models/service/interface'
 import Api from 'src/utils/api'
 
-import { sendNotification } from './methods/push'
 import { httpRequest, oauth2Request } from './methods/http'
+import { sendNotification } from './methods/push'
 import { getTodo, publishToFeed } from './methods/user'
 
 const METHODS: Record<

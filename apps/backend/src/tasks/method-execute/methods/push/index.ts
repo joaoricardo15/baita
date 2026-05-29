@@ -1,5 +1,5 @@
-import webpush from 'web-push'
 import { ITaskExecutionInput } from 'src/models/bot/interface'
+import webpush from 'web-push'
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || ''
