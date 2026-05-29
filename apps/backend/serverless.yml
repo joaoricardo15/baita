@@ -387,12 +387,9 @@ resources:
               Version: '2012-10-17'
               Statement:
                 - Effect: Allow
-                  Action: [lambda:InvokeFunction]
-                  Resource:
-                    - arn:aws:lambda:us-east-1:*:function:${self:provider.environment.SERVICE_PREFIX}-task-*
-                - Effect: Allow
                   Action:
                     [
+                      lambda:InvokeFunction,
                       logs:CreateLogStream,
                       logs:CreateLogGroup,
                       logs:PutLogEvents,
