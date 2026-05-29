@@ -44,12 +44,6 @@ provider:
   stage: ${opt:stage, 'dev'}
   apiName: ${self:provider.environment.SERVICE_PREFIX}
   logRetentionInDays: 14
-  apiGateway:
-    methodSettings:
-      - HttpMethod: '*'
-        ResourcePath: '/*'
-        ThrottlingBurstLimit: 50
-        ThrottlingRateLimit: 100
   deploymentBucket:
     name: ${self:provider.environment.SERVICE_PREFIX}
     blockPublicAccess: true
@@ -120,8 +114,8 @@ provider:
     - Effect: Allow
       Action: [apigateway:POST, apigateway:DELETE, apigateway:GET]
       Resource:
-        - !Sub 'arn:aws:apigateway:${AWS::Region}::/apis'
-        - !Sub 'arn:aws:apigateway:${AWS::Region}::/apis/*'
+        - arn:aws:apigateway:us-east-1::/apis
+        - arn:aws:apigateway:us-east-1::/apis/*
     - Effect: Allow
       Action: [iam:PassRole]
       Resource:
@@ -395,7 +389,7 @@ resources:
                 - Effect: Allow
                   Action: [lambda:InvokeFunction]
                   Resource:
-                    - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:provider.environment.SERVICE_PREFIX}-task-*'
+                    - arn:aws:lambda:us-east-1:*:function:${self:provider.environment.SERVICE_PREFIX}-task-*
                 - Effect: Allow
                   Action:
                     [

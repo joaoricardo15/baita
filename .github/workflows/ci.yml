@@ -56,7 +56,7 @@ jobs:
         run: |
           aws amplify start-job \
             --app-id d35kx8fgop2qtf \
-            --branch-name master \
+            --branch-name main \
             --job-type RELEASE
 
   backend-quality:
