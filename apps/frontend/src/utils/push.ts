@@ -70,7 +70,25 @@ export async function unsubscribeFromPush(): Promise<boolean> {
 
 export async function checkSubscriptionHealth(): Promise<PushSubscription | null> {
   const subscription = await getExistingSubscription()
-  if (subscription) return subscription
+
+  if (subscription) {
+    const currentKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    const subscriptionKey = subscription.options?.applicationServerKey
+      ? new Uint8Array(subscription.options.applicationServerKey)
+      : null
+
+    if (
+      subscriptionKey &&
+      currentKey.length === subscriptionKey.length &&
+      !currentKey.every((v, i) => v === subscriptionKey[i])
+    ) {
+      await subscription.unsubscribe()
+      return subscribeToPush()
+    }
+
+    return subscription
+  }
+
   if (Notification.permission === 'granted') {
     return subscribeToPush()
   }

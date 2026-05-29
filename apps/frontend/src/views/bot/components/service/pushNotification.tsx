@@ -12,7 +12,7 @@ import { NotificationContext } from '../../../../providers/notification'
 import { getLabels, Labels } from '../../../../utils/labels'
 import {
   canUsePushNotifications,
-  getExistingSubscription,
+  checkSubscriptionHealth,
   isInstalledPWA,
   isIOSDevice,
   subscribeToPush,
@@ -71,7 +71,7 @@ const PushNotificationService: FC<{
       return
     }
 
-    getExistingSubscription().then((subscription) => {
+    checkSubscriptionHealth().then((subscription) => {
       if (subscription) {
         setState('subscribed')
         storeSubscription(subscription)
