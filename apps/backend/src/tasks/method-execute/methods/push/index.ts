@@ -53,7 +53,7 @@ export const sendNotification = async (
     })
 
     const result = await webpush.sendNotification(subscription, payload, {
-      topic: botId,
+      topic: botId.replace(/-/g, ''),
       urgency: 'high',
     })
 
