@@ -1,0 +1,74 @@
+# E2E Test Suite
+
+Post-deploy integration tests that verify the live production system works correctly. Run automatically after every deploy via GitHub Actions CI.
+
+## Test Files
+
+| File                      | Responsibility                               | Tests |
+| ------------------------- | -------------------------------------------- | ----- |
+| `user-auth.spec.ts`       | User login flow (Baita auth via Auth0)       | 10    |
+| `connector-oauth.spec.ts` | Partner connections (3rd party OAuth)        | 9     |
+| `api-health.spec.ts`      | API endpoints, bot lifecycle, CRUD, security | 18    |
+
+## Use Cases Covered
+
+### User Authentication (`user-auth.spec.ts`)
+
+| Use Case                | What's Tested                               | Why It Matters                                    |
+| ----------------------- | ------------------------------------------- | ------------------------------------------------- |
+| Unauthenticated landing | Login button visible when not logged in     | Users must be able to find the login              |
+| Route protection        | Protected pages redirect to login           | Security — no data leaks to unauthenticated users |
+| API rejection           | 401 for requests without token              | Backend security gate works                       |
+| Login redirect          | Click login → navigates to Auth0            | OAuth flow starts correctly                       |
+| Callback with code      | App renders after ?code=x&state=y redirect  | Auth0 callback doesn't crash the app              |
+| SW bypass               | Service worker doesn't cache auth callbacks | Mobile PWA auth works (was a real bug)            |
+| Callback with error     | App handles ?error=access_denied gracefully | Users see the app, not a blank page               |
+| Valid token → 200       | Smoke test token accepted by API            | Authorizer + Lambda cold start work               |
+| Invalid token → 401     | Bad tokens rejected                         | Security enforcement                              |
+| CORS on errors          | 401 responses include CORS headers          | Frontend can read error responses                 |
+
+### OAuth Connector (`connector-oauth.spec.ts`)
+
+| Use Case                    | What's Tested                         | Why It Matters                            |
+| --------------------------- | ------------------------------------- | ----------------------------------------- |
+| List connections            | Returns array (empty or populated)    | Page loads without error                  |
+| Create + read               | Store credentials, verify persistence | Connections actually save                 |
+| Token refresh persist       | Updated credentials survive           | Prevents stale token bug (was real issue) |
+| Endpoint without params     | /connectors/oauth responds (no 500)   | Endpoint deployed correctly               |
+| Endpoint with error         | Handles OAuth denial gracefully       | User canceling auth doesn't crash backend |
+| Endpoint with invalid state | Bad state doesn't crash               | Security + resilience                     |
+| Full lifecycle              | Create → read → update → delete       | Complete CRUD works end-to-end            |
+
+### API Health (`api-health.spec.ts`)
+
+| Use Case          | What's Tested                           | Why It Matters                  |
+| ----------------- | --------------------------------------- | ------------------------------- |
+| Content feed      | GET /content returns valid response     | Home page data loads            |
+| Todo list         | POST /resource/todo/list                | Todo page works                 |
+| Bot list          | POST /resource/bot/list                 | Bots page works                 |
+| Connection list   | POST /resource/connection/list          | Connections available           |
+| Resource CRUD     | create → read → update → list → delete  | DynamoDB operations work        |
+| Bot create        | POST /bots creates Lambda + API Gateway | Bot infrastructure provisioning |
+| Bot logs          | GET /bots/{id}/logs                     | Observability works             |
+| Bot read          | POST /resource/bot/read                 | Bot data accessible             |
+| Bot delete        | DELETE /bots/{id}/api/{apiId}           | Cleanup works                   |
+| No auth → 401     | Rejects unsigned requests               | Security                        |
+| Bad auth → 401    | Rejects invalid tokens                  | Security                        |
+| CORS headers      | Present on error responses              | Frontend can handle errors      |
+| Invalid operation | Returns structured error (not 500)      | Error handling works            |
+
+## Running Locally
+
+```bash
+cd tests/e2e
+SMOKE_TEST_TOKEN=<token> npx playwright test
+```
+
+## Adding New Tests
+
+1. Create a new `.spec.ts` file with ONE clear responsibility
+2. Add a JSDoc header explaining what the file tests and why
+3. Use `test.describe()` to group related use cases
+4. Each test should be independent (create its own data, clean up after)
+5. Use `smoke-` prefix for test resource IDs to avoid collision with real data
+6. Update this README with the new use cases

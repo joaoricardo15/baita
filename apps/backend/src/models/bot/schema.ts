@@ -10,16 +10,17 @@ import {
 } from 'src/models/bot/interface'
 import { DataType } from 'src/models/service/interface'
 
-import { appConfigSchema, appSchema } from '../app/schema'
-import {
-  dataSchema,
-  serviceConfigSchema,
-  serviceSchema,
-  variableSchema,
-} from '../service/schema'
-
 const ajv = new Ajv()
 addFormats(ajv)
+
+const dataSchema: any = {
+  type: ['string', 'number', 'boolean', 'object', 'array'],
+}
+const variableSchema: any = { type: 'object' }
+const serviceConfigSchema: any = { type: 'object' }
+const serviceSchema: any = { type: 'object' }
+const appConfigSchema: any = { type: 'object' }
+const appSchema: any = { type: 'object' }
 
 const taskConditionSchema: any = {
   type: 'object',
@@ -101,24 +102,24 @@ const tasksSchema: any = {
 }
 
 const taskExecutionInputSchema: any = {
-    type: 'object',
-    properties: {
-      userId: {
-        type: 'string',
-      },
-      botId: {
-        type: 'string',
-      },
-      connectionId: {
-        type: ['string', 'number'],
-        nullable: true,
-      },
-      appConfig: appConfigSchema,
-      serviceConfig: serviceConfigSchema,
-      inputData: dataSchema,
+  type: 'object',
+  properties: {
+    userId: {
+      type: 'string',
     },
-    required: ['userId', 'botId', 'appConfig', 'serviceConfig'],
-  }
+    botId: {
+      type: 'string',
+    },
+    connectionId: {
+      type: ['string', 'number'],
+      nullable: true,
+    },
+    appConfig: appConfigSchema,
+    serviceConfig: serviceConfigSchema,
+    inputData: dataSchema,
+  },
+  required: ['userId', 'botId', 'appConfig', 'serviceConfig'],
+}
 
 const taskLogSchema: any = {
   type: 'object',
