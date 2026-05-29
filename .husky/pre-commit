@@ -1,1 +1,12 @@
+# Check for secrets in staged files
+SECRETS_PATTERN='(sk-[a-zA-Z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC )?PRIVATE KEY-----|ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|GOCSPX-[a-zA-Z0-9_-]+)'
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -v 'node_modules\|\.lock$\|\.md$' || true)
+
+if [ -n "$STAGED_FILES" ]; then
+  if echo "$STAGED_FILES" | xargs grep -lE "$SECRETS_PATTERN" 2>/dev/null; then
+    echo "ERROR: Potential secrets detected in staged files. Please remove them before committing."
+    exit 1
+  fi
+fi
+
 npx lint-staged

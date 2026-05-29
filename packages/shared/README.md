@@ -1,6 +1,14 @@
 # @baita/shared
 
-Single source of truth for all TypeScript models and validation logic. Both `apps/frontend` and `apps/backend` import from this package.
+Single source of truth for all TypeScript models, validation logic, and connector definitions. Both `apps/frontend` and `apps/backend` import from this package.
+
+## Installation
+
+Referenced as a workspace dependency (no manual install needed):
+
+```json
+"@baita/shared": "workspace:*"
+```
 
 ## Schemas
 
@@ -14,6 +22,17 @@ All schemas are defined with [Zod](https://zod.dev) — providing both TypeScrip
 | `schemas/app.ts`     | `IApp`, `IAppConnection`          | OAuth app definitions                         |
 | `schemas/api.ts`     | `ApiResponseSchema`               | Standard API response envelope                |
 
+## Connectors
+
+OAuth connector manifests define how Baita integrates with third-party services:
+
+| File                      | Connector | Capabilities                      |
+| ------------------------- | --------- | --------------------------------- |
+| `connectors/google.ts`    | Google    | OAuth2, Calendar, Gmail, Drive    |
+| `connectors/pipedrive.ts` | Pipedrive | OAuth2, CRM data, deals, contacts |
+
+Each connector exports its OAuth2 config, available scopes, and input/output variable definitions.
+
 ## Bot Validation & Integrity
 
 The bot schema includes functions that protect workflow integrity:
@@ -23,6 +42,7 @@ import {
   validateBot,
   removeStepReferences,
   clearDownstreamSamples,
+  computeStepConfigHash,
 } from '@baita/shared'
 
 // Before deploying a bot
@@ -34,12 +54,9 @@ const { tasks, removedCount } = removeStepReferences(bot.tasks, deletedTaskId)
 
 // When a step's service changes
 const updatedTasks = clearDownstreamSamples(bot.tasks, changedStepIndex)
-```
 
-## Testing
-
-```bash
-npm run test:run    # 16 tests covering validation, reference integrity, hashing
+// Detect when sample data becomes stale
+const hash = computeStepConfigHash(task)
 ```
 
 ## Usage
@@ -47,5 +64,22 @@ npm run test:run    # 16 tests covering validation, reference integrity, hashing
 Both apps import via workspace reference:
 
 ```typescript
-import { IBot, ITask, validateBot, VariableType } from '@baita/shared'
+// Types
+import { IBot, ITask, IUser, IApp, IAppConnection } from '@baita/shared'
+
+// Validation
+import { validateBot, BotSchema, TaskSchema } from '@baita/shared'
+
+// Enums
+import { VariableType, DataType, TaskExecutionStatus } from '@baita/shared'
+
+// Connectors
+import { googleConnector, pipedriveConnector } from '@baita/shared'
+```
+
+## Commands
+
+```bash
+npm run test:run    # Unit tests (validation, reference integrity, hashing)
+npm run build       # TypeScript compilation
 ```

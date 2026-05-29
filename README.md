@@ -113,7 +113,7 @@ Single unified workflow (`.github/workflows/ci.yml`) on push to `main`:
 
 ```
 shared checks → frontend-quality → frontend-deploy ─┐
-              ↘ backend-quality  → backend-deploy  ──┤→ e2e (37 Playwright tests)
+              ↘ backend-quality  → backend-deploy  ──┤→ e2e (Playwright)
 ```
 
 All jobs support `workflow_dispatch` for manual trigger.

@@ -4,11 +4,12 @@ Post-deploy integration tests that verify the live production system works corre
 
 ## Test Files
 
-| File                      | Responsibility                               | Tests |
-| ------------------------- | -------------------------------------------- | ----- |
-| `user-auth.spec.ts`       | User login flow (Baita auth via Auth0)       | 10    |
-| `connector-oauth.spec.ts` | Partner connections (3rd party OAuth)        | 9     |
-| `api-health.spec.ts`      | API endpoints, bot lifecycle, CRUD, security | 18    |
+| File                            | Responsibility                               |
+| ------------------------------- | -------------------------------------------- |
+| `tests/user-auth.spec.ts`       | User login flow (Baita auth via Auth0)       |
+| `tests/connector-oauth.spec.ts` | Partner connections (3rd party OAuth)        |
+| `tests/api-health.spec.ts`      | API endpoints, bot lifecycle, CRUD, security |
+| `tests/bot-page.spec.ts`        | Bot page UI (AI Assistant tab visibility)    |
 
 ## Use Cases Covered
 
@@ -57,6 +58,13 @@ Post-deploy integration tests that verify the live production system works corre
 | CORS headers      | Present on error responses              | Frontend can handle errors      |
 | Invalid operation | Returns structured error (not 500)      | Error handling works            |
 
+### Bot Page (`bot-page.spec.ts`)
+
+| Use Case                 | What's Tested                              | Why It Matters             |
+| ------------------------ | ------------------------------------------ | -------------------------- |
+| AI Assistant tab visible | Tab shows on bot page (even when disabled) | UI renders correctly       |
+| Info icon on unavailable | Shows info icon when Chrome AI unavailable | Graceful degradation works |
+
 ## Running Locally
 
 ```bash
@@ -64,11 +72,20 @@ cd tests/e2e
 SMOKE_TEST_TOKEN=<token> npx playwright test
 ```
 
+The token is stored in AWS SSM at `/baita/prod/smoke-test-token`.
+
 ## Adding New Tests
 
-1. Create a new `.spec.ts` file with ONE clear responsibility
+1. Create a new `.spec.ts` file in `tests/` with ONE clear responsibility
 2. Add a JSDoc header explaining what the file tests and why
 3. Use `test.describe()` to group related use cases
 4. Each test should be independent (create its own data, clean up after)
 5. Use `smoke-` prefix for test resource IDs to avoid collision with real data
-6. Update this README with the new use cases
+6. Update this README with the new use cases and test count
+
+## Infrastructure
+
+- **Auth**: Smoke test token stored in SSM (`/baita/prod/smoke-test-token`)
+- **Test user**: DynamoDB record `smoke-test-ci` with SQS queue `baita-help-prod-smoke-test-ci`
+- **Secrets**: `SMOKE_TEST_TOKEN` in GitHub Secrets
+- **Config**: `playwright.config.ts` in project root

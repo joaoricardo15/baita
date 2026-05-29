@@ -23,9 +23,18 @@ export const Feed: FC = () => {
 
       if (direction === 'up') {
         if (content.url) {
-          setTimeout(() => {
-            window.open(content.url, '_blank', 'noreferrer')
-          })
+          try {
+            const parsed = new URL(content.url)
+            if (['http:', 'https:'].includes(parsed.protocol)) {
+              setTimeout(() => {
+                window.open(content.url, '_blank', 'noreferrer')
+              })
+            } else {
+              showSnack('Invalid URL protocol', 'error')
+            }
+          } catch {
+            showSnack('Invalid URL', 'error')
+          }
         } else {
           showSnack('No URL for this content 😫', 'error')
         }

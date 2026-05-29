@@ -1,108 +1,122 @@
-# Baita frontend
+# Baita Frontend
 
-Frontend application for BaitaHelp: the app that helps you to automate your life. This is a personal project that was inspired by Zapier's architecture, but aimed at normal people.
+Frontend application for Baita: a personal automation platform (Zapier-inspired, aimed at normal people).
 
-Available at: **https://baita.help**
+**Live at**: https://baita.help
 
-## Tech stack
+## Tech Stack
 
 - **Framework**: React 18 + TypeScript 6 (strict mode)
-- **Build tool**: Vite 8 with @vitejs/plugin-react
+- **Build**: Vite 8 + @vitejs/plugin-react
 - **Routing**: React Router v6
-- **State management**: React Context API
+- **State**: React Context API
 - **UI**: MUI Material v5, SCSS, Bootstrap 5 utilities
-- **HTTP client**: Axios
-- **Authentication**: Auth0 (@auth0/auth0-react)
-- **Push notifications & Analytics**: Firebase (production only)
+- **HTTP**: Axios (wrapped in custom hook)
+- **Auth**: Auth0 (@auth0/auth0-react)
+- **Push Notifications**: Web Push API (VAPID-based, works on all platforms including iOS PWA)
+- **Analytics**: Firebase Analytics (production only)
 - **PWA**: vite-plugin-pwa (Workbox-based service worker)
-- **Testing**: Vitest + React Testing Library
-- **Linting & Formatting**: ESLint + Prettier
-- **CI/CD**: AWS Amplify
-- **Domain**: AWS Route53 (baita.help)
+- **Drag & Drop**: @dnd-kit
+- **Maps**: @vis.gl/react-google-maps
+- **Testing**: Vitest + React Testing Library + MSW
+- **Linting**: ESLint + Prettier + CSpell
+- **CI/CD**: AWS Amplify (auto-deploy on push to `main`)
 
-## Project status
+## Features
 
-This project is currently in development. For now, users are able to:
+- Progressive Web App (installable on desktop, Android, iOS)
+- Multi-language with automatic detection (en-US, pt-BR)
+- OAuth login via Auth0 (Google, email/password)
+- Visual bot builder (drag & drop workflow editor)
+- AI Assistant for natural language bot creation (Chrome Built-in AI)
+- Push notifications (VAPID-based, cross-platform including iOS PWA)
+- Content feed with real-time updates via SQS
+- Todo list management
+- Notes with file attachments
+- Places/maps integration
+- Centralized error handling (react-error-boundary)
+- Local mock server for offline development (Vite plugin)
 
-- Login using e-mail/password and also via 3rd party login platforms like Google.
-- Manage your TO DO list
-- Check personal info and daily progress
-- Manage automation bots and follow its activities
-- Check and interact with your favorite content
+## Getting Started
 
-## Key capabilities
+```bash
+# Install dependencies (from monorepo root)
+pnpm install
 
-- Install app (progressive web app)
-- Multi language with automatic detection (en-US, pt-BR)
-- Login using 3rd party authentication services (Auth0)
-- State management (React Context)
-- Local mock server (Vite plugin)
-- Receiving push notifications (Firebase)
-- Centralized collection of usage analytics (Firebase)
-- Centralized error handling and logging (react-error-boundary + Firebase)
-- CI/CD fully managed (AWS Amplify)
-- Custom domain https://baita.help (AWS Route53)
-- Code linting and formatting (ESLint + Prettier)
+# Start dev server (localhost:3000)
+npm start
 
-## Installation and Setup Instructions
+# Run tests
+npm run test:run
 
-Clone down this repository. You will need `node` and `npm` installed globally on your machine.
+# Production build
+npm run build
 
-Installation:
+# Preview production build
+npm run preview
 
-`npm install`
+# Code quality
+npm run lint       # ESLint with auto-fix
+npm run format     # Prettier formatting
+npm run spell      # CSpell spell check
+npm run knip       # Dead code detection
+```
 
-To start the dev server:
+## Project Structure
 
-`npm run dev`
+```
+src/
+├── assets/        # SCSS styles + images
+├── components/    # Shared reusable UI components
+├── defines/       # Static app/service definitions
+├── models/        # TypeScript interfaces (re-exported from @baita/shared)
+├── providers/     # React Context providers (auth, user, bot, apps, error, notification)
+├── utils/         # Helpers (API client, AI service, firebase, config, push, dates)
+├── views/         # Page-level components (each feature has index.tsx + components/)
+├── test/          # Test utilities (renderWithProviders, MSW setup)
+├── app.tsx        # Theme + provider composition
+├── router.tsx     # Route definitions + LINKS constants
+├── navBar.tsx     # Navigation bar
+├── sw.ts          # Service worker (Workbox precaching + push handling)
+└── index.tsx      # Entry point (Auth0Provider wrapping)
+```
 
-To visit the app:
+## Pages
 
-`localhost:3000`
+| Route               | Page    | Description                                     |
+| ------------------- | ------- | ----------------------------------------------- |
+| `/`                 | Landing | Welcome page for unauthenticated users          |
+| `/todo`             | Todo    | Task management (default page after login)      |
+| `/feed`             | Feed    | Content feed from bot executions                |
+| `/bots`             | Bots    | List and manage automation bots                 |
+| `/bots/:botId`      | Bot     | Visual builder + AI Assistant for editing a bot |
+| `/bots/:botId/logs` | Logs    | Bot execution history and logs                  |
+| `/notes`            | Notes   | Personal notes with file attachments            |
+| `/place`            | Places  | Location-based features (Google Maps)           |
+| `/profile`          | Profile | User info and daily progress                    |
 
-To run the production build:
+## Environment
 
-`npm run build`
+- **Production**: `www.baita.help` → API at `https://api.baita.help`
+- **Local dev**: `localhost:3000` → API at `http://localhost:5000/dev`
+- **Config**: Auto-detected from `window.location.hostname` (no `.env` file)
+- **Language**: Auto-detected from `navigator.language`
 
-To preview the production build:
+## Architecture Decisions
 
-`npm run preview`
+- **Auth0** — Simpler multi-provider OAuth than Firebase Auth
+- **Context API** — Simpler than Redux for current scale (providers: Auth → Error → Notification → User → Apps → Bot)
+- **No `.env` file** — Environment auto-detected from hostname
+- **Vite** — Faster dev/build than CRA, actively maintained
+- **Web Push API (VAPID)** — Works cross-platform without Firebase Cloud Messaging dependency
+- **@baita/shared** — All domain models defined once with Zod, imported by both frontend and backend
 
-To run tests:
+## Screenshots
 
-`npm run test:run`
-
-To run tests in watch mode:
-
-`npm run test`
-
-To run code linting:
-
-`npm run lint`
-
-To run code formatting:
-
-`npm run format`
-
-## Main pages
-
-**Landing page**: Welcome message (initial page for not authenticated users)
-![Alt text](src/assets/readme/landingPage.png)
-
-**Todo page**: Manage your TO DO list (initial page for authenticated users)
-![Alt text](src/assets/readme/todoPage.png)
-
-**Profile page**: Check personal info and daily progress
-![Alt text](src/assets/readme/profilePage.png)
-
-**Bots page**: Manage automation bots
-![Alt text](src/assets/readme/botsPage.png)
-
-**Logs page**: Check automation bots activities
-![Alt text](src/assets/readme/logsPage.png)
-
-**New Bot page**: Create new automation bot
-![Alt text](src/assets/readme/newBotPage.png)
-
-**Feed page**: Check and interact with your favorite content
-![Alt text](src/assets/readme/feedPage.png)
+![Landing Page](src/assets/readme/landingPage.png)
+![Todo Page](src/assets/readme/todoPage.png)
+![Bots Page](src/assets/readme/botsPage.png)
+![Bot Builder](src/assets/readme/newBotPage.png)
+![Feed Page](src/assets/readme/feedPage.png)
+![Profile Page](src/assets/readme/profilePage.png)
+![Logs Page](src/assets/readme/logsPage.png)

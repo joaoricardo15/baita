@@ -96,7 +96,7 @@ Part of the monorepo unified workflow (`.github/workflows/ci.yml`) on push to `m
 1. **Shared Checks**: Type-check `@baita/shared`
 2. **Backend Quality**: Lint → Type-check → Jest tests
 3. **Backend Deploy**: `serverless deploy --stage prod`
-4. **E2E Tests**: Playwright against production (37 tests)
+4. **E2E Tests**: Playwright against production
 
 ### Local Development Requirements
 

@@ -78,7 +78,7 @@ Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main
 
 ```
 shared → frontend-quality → frontend-deploy ─┐
-       ↘ backend-quality  → backend-deploy  ──┤→ e2e (23 tests)
+       ↘ backend-quality  → backend-deploy  ──┤→ e2e
 ```
 
 Changes to `packages/shared/` trigger BOTH branches.
@@ -115,7 +115,7 @@ cd tests/e2e && SMOKE_TEST_TOKEN=<token> npx playwright test
 ## AWS Context
 
 - **Profile**: Always use `--profile joao --region us-east-1`
-- **Frontend (Amplify)**: App ID `d35kx8fgop2qtf`, branch `master`
+- **Frontend (Amplify)**: App ID `d35kx8fgop2qtf`, branch `main`
 - **Backend (Serverless)**: Deployed via GitHub Actions on push to `main`
 - **Region**: `us-east-1` for everything
 

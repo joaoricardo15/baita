@@ -44,6 +44,10 @@ provider:
   stage: ${opt:stage, 'dev'}
   apiName: ${self:provider.environment.SERVICE_PREFIX}
   logRetentionInDays: 14
+  apiGateway:
+    throttling:
+      burstLimit: 50
+      rateLimit: 100
   deploymentBucket:
     name: ${self:provider.environment.SERVICE_PREFIX}
     blockPublicAccess: true
@@ -114,8 +118,7 @@ provider:
     - Effect: Allow
       Action: [apigateway:POST, apigateway:DELETE, apigateway:GET]
       Resource:
-        - arn:aws:apigateway:us-east-1::/apis
-        - arn:aws:apigateway:us-east-1::/apis/*
+        - !Sub 'arn:aws:apigateway:${AWS::Region}::/restapis/${ApiGatewayRestApi}/*'
     - Effect: Allow
       Action: [iam:PassRole]
       Resource:
@@ -387,9 +390,12 @@ resources:
               Version: '2012-10-17'
               Statement:
                 - Effect: Allow
+                  Action: [lambda:InvokeFunction]
+                  Resource:
+                    - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:provider.environment.SERVICE_PREFIX}-task-*'
+                - Effect: Allow
                   Action:
                     [
-                      lambda:InvokeFunction,
                       logs:CreateLogStream,
                       logs:CreateLogGroup,
                       logs:PutLogEvents,
