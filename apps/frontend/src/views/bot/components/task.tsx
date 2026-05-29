@@ -18,7 +18,9 @@ import TaskTest from './test'
 
 const Task: FC<{
   taskIndex: number
-}> = ({ taskIndex }) => {
+  isSelected?: boolean
+  onSelect?: () => void
+}> = ({ taskIndex, isSelected, onSelect }) => {
   const { bot, updateBot } = useContext(BotContext)
 
   const [task, setTask] = useState<ITask>()
@@ -54,7 +56,15 @@ const Task: FC<{
   }, [bot])
 
   return (
-    <div className="mt-4">
+    <div
+      className="mt-4"
+      onClick={onSelect}
+      style={{
+        borderLeft: isSelected ? '2px solid #90caf9' : '2px solid transparent',
+        paddingLeft: 8,
+        cursor: 'pointer',
+      }}
+    >
       {bot && task && (
         <>
           <div className="d-flex justify-content-between">

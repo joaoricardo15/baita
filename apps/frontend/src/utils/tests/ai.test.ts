@@ -2,13 +2,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   buildMessagesWithContext,
+  buildRetryMessage,
   getAiService,
-  parseTasksFromResponse,
+  parseTaskFromResponse,
 } from '../ai'
 
 afterEach(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (window as any).ai
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  delete (window as any).LanguageModel
 })
 
 describe('getAiService', () => {
@@ -48,134 +51,104 @@ describe('getAiService', () => {
     expect(service).toBeNull()
   })
 
-  it('returns null when capabilities() throws', async () => {
+  it('returns service when LanguageModel global exists', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).ai = {
-      languageModel: {
-        capabilities: vi.fn().mockRejectedValue(new Error('fail')),
-      },
-    }
+    ;(window as any).LanguageModel = class {}
     const service = await getAiService()
-    expect(service).toBeNull()
+    expect(service).not.toBeNull()
   })
 })
 
-describe('AiService.generate', () => {
-  it('creates session with system prompt and calls prompt()', async () => {
-    const mockPrompt = vi.fn().mockResolvedValue('response text')
-    const mockCreate = vi.fn().mockResolvedValue({ prompt: mockPrompt })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).ai = {
-      languageModel: {
-        capabilities: vi.fn().mockResolvedValue({ available: 'readily' }),
-        create: mockCreate,
-      },
-    }
-
-    const service = await getAiService()
-    const result = await service!.generate([
-      { role: 'user', content: 'make a bot' },
-    ])
-
-    expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ systemPrompt: expect.any(String) })
-    )
-    expect(mockPrompt).toHaveBeenCalledWith('user: make a bot')
-    expect(result).toBe('response text')
+describe('parseTaskFromResponse', () => {
+  it('parses a task object from markdown code block', () => {
+    const response =
+      '```json\n{"taskId": 1, "service": {"name": "schedule"}, "inputData": []}\n```'
+    const result = parseTaskFromResponse(response)
+    expect(result).toEqual({
+      taskId: 1,
+      service: { name: 'schedule' },
+      inputData: [],
+    })
   })
 
-  it('filters system messages from prompt', async () => {
-    const mockPrompt = vi.fn().mockResolvedValue('ok')
-    const mockCreate = vi.fn().mockResolvedValue({ prompt: mockPrompt })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any).ai = {
-      languageModel: {
-        capabilities: vi.fn().mockResolvedValue({ available: 'readily' }),
-        create: mockCreate,
-      },
-    }
-
-    const service = await getAiService()
-    await service!.generate([
-      { role: 'system', content: 'system msg' },
-      { role: 'user', content: 'hello' },
-      { role: 'assistant', content: 'hi' },
-    ])
-
-    expect(mockPrompt).toHaveBeenCalledWith('user: hello\nassistant: hi')
-  })
-})
-
-describe('parseTasksFromResponse', () => {
-  it('parses JSON from markdown code block', () => {
-    const response = '```json\n[{"taskId": 1, "inputData": []}]\n```'
-    const result = parseTasksFromResponse(response)
-    expect(result).toEqual([{ taskId: 1, inputData: [] }])
+  it('parses raw JSON object', () => {
+    const response = '{"taskId": 1, "inputData": []}'
+    const result = parseTaskFromResponse(response)
+    expect(result).toEqual({ taskId: 1, inputData: [] })
   })
 
-  it('parses raw JSON array', () => {
+  it('handles single-element array (extracts first)', () => {
     const response = '[{"taskId": 1, "inputData": []}]'
-    const result = parseTasksFromResponse(response)
-    expect(result).toEqual([{ taskId: 1, inputData: [] }])
-  })
-
-  it('parses object with tasks property', () => {
-    const response = '{"tasks": [{"taskId": 1, "inputData": []}]}'
-    const result = parseTasksFromResponse(response)
-    expect(result).toEqual([{ taskId: 1, inputData: [] }])
+    const result = parseTaskFromResponse(response)
+    expect(result).toEqual({ taskId: 1, inputData: [] })
   })
 
   it('returns null for invalid JSON', () => {
-    expect(parseTasksFromResponse('not json')).toBeNull()
-    expect(parseTasksFromResponse('')).toBeNull()
-    expect(parseTasksFromResponse('{ broken')).toBeNull()
+    expect(parseTaskFromResponse('not json')).toBeNull()
+    expect(parseTaskFromResponse('')).toBeNull()
   })
 
-  it('returns null for non-array JSON', () => {
-    expect(parseTasksFromResponse('{"key": "value"}')).toBeNull()
+  it('returns null for multi-element arrays', () => {
+    const response = '[{"taskId": 1}, {"taskId": 2}]'
+    expect(parseTaskFromResponse(response)).toBeNull()
   })
 
   it('handles markdown with surrounding text', () => {
     const response =
-      'Here is your bot:\n```json\n[{"taskId": 1000, "inputData": []}]\n```\nLet me know if you need changes.'
-    const result = parseTasksFromResponse(response)
-    expect(result).toEqual([{ taskId: 1000, inputData: [] }])
+      'Here:\n```json\n{"taskId": 1, "inputData": []}\n```\nDone.'
+    const result = parseTaskFromResponse(response)
+    expect(result).toEqual({ taskId: 1, inputData: [] })
   })
 })
 
 describe('buildMessagesWithContext', () => {
-  it('creates messages with user input only', () => {
-    const result = buildMessagesWithContext('make a bot')
+  it('creates message with task context and user request', () => {
+    const task = {
+      taskId: 1,
+      inputData: [{ name: 'expression', value: 'cron(0 9 * * ? *)' }],
+      service: {
+        name: 'schedule',
+        config: { inputFields: [{ name: 'expression', type: 'options' }] },
+      },
+    } as any
+    const result = buildMessagesWithContext('change to every 30 minutes', task)
     expect(result).toHaveLength(1)
-    expect(result[0]).toEqual({ role: 'user', content: 'make a bot' })
+    expect(result[0].content).toContain('Current task:')
+    expect(result[0].content).toContain('change to every 30 minutes')
+    expect(result[0].content).toContain('"expression"')
+    expect(result[0].content).toContain('inputFields')
   })
 
-  it('includes existing tasks as context when more than one task', () => {
-    const tasks = [
-      { taskId: 1, inputData: [] },
-      { taskId: 2, inputData: [] },
-    ]
-    const result = buildMessagesWithContext('edit this', tasks as any)
-    expect(result).toHaveLength(2)
-    expect(result[0].content).toContain('Current bot tasks')
-    expect(result[1]).toEqual({ role: 'user', content: 'edit this' })
+  it('strips sampleResult from task context', () => {
+    const task = {
+      taskId: 1,
+      inputData: [],
+      sampleResult: { outputData: { big: 'data' } },
+      sampleConfigHash: 'abc123',
+    } as any
+    const result = buildMessagesWithContext('edit', task)
+    expect(result[0].content).not.toContain('sampleResult')
+    expect(result[0].content).not.toContain('sampleConfigHash')
   })
 
   it('includes conversation history', () => {
+    const task = { taskId: 1, inputData: [] } as any
     const history = [
-      { role: 'user' as const, content: 'hello' },
-      { role: 'assistant' as const, content: 'hi' },
+      { role: 'user' as const, content: 'prev' },
+      { role: 'assistant' as const, content: 'reply' },
     ]
-    const result = buildMessagesWithContext('next message', undefined, history)
+    const result = buildMessagesWithContext('next', task, history)
     expect(result).toHaveLength(3)
-    expect(result[0].content).toBe('hello')
-    expect(result[1].content).toBe('hi')
-    expect(result[2].content).toBe('next message')
+    expect(result[0].content).toBe('prev')
+    expect(result[1].content).toBe('reply')
   })
+})
 
-  it('does not include tasks context for single-task bots', () => {
-    const tasks = [{ taskId: 1, inputData: [] }]
-    const result = buildMessagesWithContext('create', tasks as any)
-    expect(result).toHaveLength(1)
+describe('buildRetryMessage', () => {
+  it('returns a user message with formatted errors', () => {
+    const result = buildRetryMessage('bad', ['Missing service field'])
+    expect(result.role).toBe('user')
+    expect(result.content).toContain('Missing service field')
+    expect(result.content).toContain('```json')
   })
 })

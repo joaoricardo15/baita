@@ -10,35 +10,26 @@ interface AiService {
   generate(messages: AiMessage[]): Promise<string>
 }
 
-const SYSTEM_PROMPT = `You are a bot builder assistant for Baita, a personal automation platform.
-Users describe automations in natural language. You generate valid bot task definitions as JSON.
+const SYSTEM_PROMPT = `You ONLY output JSON. No text. No explanations. Respond with a single JSON object in a \`\`\`json code block.`
 
-Available trigger services (first task only):
-- webhook: receives HTTP data from external sources
-- schedule: fires on a cron expression (e.g., "0 8 * * *" for daily at 8am)
+const TASK_INSTRUCTIONS = `You modify a task's inputData. Output ONLY the complete modified task as JSON in a \`\`\`json code block. NO text.
 
-Available action services (subsequent tasks):
-- code-execute: runs JavaScript code. inputData needs a "code" field with the JS string.
-- http-request: calls an external API. inputData needs: method, path, headers, bodyParams.
-- method-execute: built-in methods. Config methodName options: getTodo, publishToFeed, sendNotification, httpRequest, oauth2Request.
+HOW TO FILL inputData:
+Copy ALL fields from service.config.inputFields into the inputData array. Keep every property (name, label, type, required, options, description) and ADD a "value" field to each based on the user's request.
 
-Task structure:
-{
-  "taskId": <unique number, use Date.now() + index>,
-  "service": { "type": "trigger"|"invoke", "name": "<service-name>", "label": "<display name>", "config": { "inputFields": [] } },
-  "inputData": [{ "type": "text"|"output"|"code", "name": "<field-name>", "label": "<display>", "value": "<static value>" }],
-  "returnData": true  // only on the last task if it should return output
-}
+Example: if service.config.inputFields is:
+[{"name":"expression","options":[{"value":"rate(10 minutes)","label":"Run every 10 minutes"},{"value":"rate(30 minutes)","label":"Run every 30 minutes"}],"label":"Expression","type":"options","required":true},{"name":"timeZone","label":"Time Zone","type":"user","required":true}]
 
-To reference a previous task's output:
-{ "type": "output", "name": "<field>", "label": "<display>", "outputIndex": <0-based task index>, "outputPath": "<dot.path.to.field>" }
+And user says "every 10 minutes", then inputData should be:
+[{"name":"expression","options":[{"value":"rate(10 minutes)","label":"Run every 10 minutes"},{"value":"rate(30 minutes)","label":"Run every 30 minutes"}],"label":"Expression","type":"options","required":true,"value":"rate(10 minutes)"},{"name":"timeZone","label":"Time Zone","type":"user","required":true,"value":"Europe/Amsterdam"}]
 
 Rules:
-- First task MUST be a trigger (webhook or schedule)
-- Generate valid JSON array of tasks (ITask[])
-- Wrap response in a JSON code block: \`\`\`json ... \`\`\`
-- If editing existing tasks, return the full updated array
-- Keep it simple: use the minimum tasks needed`
+- Copy the FULL field object from inputFields into inputData (keep options, label, required, description, etc.)
+- ADD "value" with the appropriate value based on user request
+- For type "options": value must be one of the option values listed
+- For type "user": value is user-provided text
+- For type "constant"/"environment": value is already defined in the field, keep it
+- Keep taskId, app, and service unchanged`
 
 export async function getAiService(): Promise<AiService | null> {
   if (await isChromeAiAvailable()) {
@@ -51,9 +42,19 @@ async function isChromeAiAvailable(): Promise<boolean> {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ai = (window as any).ai
-    if (!ai?.languageModel) return false
-    const caps = await ai.languageModel.capabilities()
-    return caps?.available === 'readily'
+    if (ai?.canCreateGenericSession) {
+      const availability = await ai.canCreateGenericSession()
+      return availability === 'readily'
+    }
+    if (ai?.languageModel) {
+      const caps = await ai.languageModel.capabilities()
+      return caps?.available === 'readily'
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof (window as any).LanguageModel !== 'undefined') {
+      return true
+    }
+    return false
   } catch {
     return false
   }
@@ -63,29 +64,54 @@ function createChromeAiService(): AiService {
   return {
     provider: 'chrome-ai',
     async generate(messages: AiMessage[]): Promise<string> {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ai = (window as any).ai
-      const session = await ai.languageModel.create({
-        systemPrompt: SYSTEM_PROMPT,
-      })
       const prompt = messages
         .filter((m) => m.role !== 'system')
         .map((m) => `${m.role}: ${m.content}`)
         .join('\n')
+
+      console.warn(
+        `[AI Assistant] Prompt to Nano (${prompt.length} chars):`,
+        prompt
+      )
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ai = (window as any).ai
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const LM = (window as any).LanguageModel
+
+      if (LM?.create) {
+        const session = await LM.create({
+          systemPrompt: SYSTEM_PROMPT,
+          expectedOutputLanguages: ['en'],
+        })
+        return await session.prompt(prompt)
+      }
+      if (ai?.createGenericSession) {
+        const session = await ai.createGenericSession({
+          systemPrompt: SYSTEM_PROMPT,
+        })
+        return await session.prompt(prompt)
+      }
+      const session = await ai.languageModel.create({
+        systemPrompt: SYSTEM_PROMPT,
+      })
       return await session.prompt(prompt)
     },
   }
 }
 
-export function parseTasksFromResponse(response: string): ITask[] | null {
+export function parseTaskFromResponse(response: string): ITask | null {
   const jsonMatch = response.match(/```json\s*([\s\S]*?)```/)
   const jsonStr = jsonMatch ? jsonMatch[1].trim() : response.trim()
 
   try {
     const parsed = JSON.parse(jsonStr)
-    if (Array.isArray(parsed)) return parsed as ITask[]
-    if (parsed.tasks && Array.isArray(parsed.tasks))
-      return parsed.tasks as ITask[]
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as ITask
+    }
+    if (Array.isArray(parsed) && parsed.length === 1) {
+      return parsed[0] as ITask
+    }
     return null
   } catch {
     return null
@@ -94,7 +120,7 @@ export function parseTasksFromResponse(response: string): ITask[] | null {
 
 export function buildMessagesWithContext(
   userMessage: string,
-  existingTasks?: ITask[],
+  task: ITask,
   history?: AiMessage[]
 ): AiMessage[] {
   const messages: AiMessage[] = []
@@ -103,13 +129,32 @@ export function buildMessagesWithContext(
     messages.push(...history.filter((m) => m.role !== 'system'))
   }
 
-  if (existingTasks && existingTasks.length > 1) {
-    messages.push({
-      role: 'user',
-      content: `Current bot tasks:\n\`\`\`json\n${JSON.stringify(existingTasks, null, 2)}\n\`\`\`\nModify this bot based on my next message.`,
-    })
-  }
+  const { sampleResult: _sr, sampleConfigHash: _sh, ...stripped } = task
+  const strippedInputData = stripped.inputData?.map(
+    ({ sampleValue: _sv, ...rest }) => rest
+  )
+  const taskJson = JSON.stringify({ ...stripped, inputData: strippedInputData })
 
-  messages.push({ role: 'user', content: userMessage })
+  const inputFields = task.service?.config?.inputFields
+  const fieldsInfo = inputFields
+    ? `\n\nThis task's service.config.inputFields (copy these into inputData and add "value" to each):\n${JSON.stringify(inputFields)}`
+    : ''
+
+  messages.push({
+    role: 'user',
+    content: `${TASK_INSTRUCTIONS}${fieldsInfo}\n\nCurrent task:\n\`\`\`json\n${taskJson}\n\`\`\`\n\nUser request: ${userMessage}`,
+  })
+
   return messages
+}
+
+export function buildRetryMessage(
+  _rawResponse: string,
+  errors: string[]
+): AiMessage {
+  const errorList = errors.map((e) => `- ${e}`).join('\n')
+  return {
+    role: 'user',
+    content: `Your previous response had errors:\n${errorList}\n\nFix these issues and return the corrected task JSON object. Output ONLY JSON in a \`\`\`json code block.`,
+  }
 }

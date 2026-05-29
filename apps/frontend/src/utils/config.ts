@@ -40,11 +40,11 @@ export interface Labels {
 export const configMapping: { [key in Environment]: EnvConfig } = {
   [Environment.local]: {
     isProduction: false,
-    apiUrl: ApiUrl.remote
+    apiUrl: ApiUrl.local,
   },
   [Environment.production]: {
     isProduction: true,
-    apiUrl: ApiUrl.remote
+    apiUrl: ApiUrl.remote,
   },
 }
 

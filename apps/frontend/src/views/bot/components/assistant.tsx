@@ -1,209 +1,263 @@
-import { Send as SendIcon } from '@mui/icons-material'
+import { AutoAwesome as AiIcon, Send as SendIcon } from '@mui/icons-material'
 import {
   Box,
-  Chip,
+  Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   Paper,
   TextField,
   Typography,
 } from '@mui/material'
-import { FC, useContext, useEffect, useRef, useState } from 'react'
+import { FC, useContext, useState } from 'react'
 
-import { IBot, ITask, validateBot } from '../../../models/bot'
+import { IBot, ITask } from '../../../models/bot'
 import { BotContext } from '../../../providers/bot'
 import {
   AiMessage,
   buildMessagesWithContext,
+  buildRetryMessage,
   getAiService,
-  parseTasksFromResponse,
+  parseTaskFromResponse,
 } from '../../../utils/ai'
 import { getLabels, Labels } from '../../../utils/labels'
 
-const BotAssistant: FC<{
-  bot: IBot
-  onTasksGenerated: (tasks: ITask[]) => void
-}> = ({ bot, onTasksGenerated }) => {
-  const { deployBot, updateBot } = useContext(BotContext)
-  const [messages, setMessages] = useState<AiMessage[]>([])
+const MAX_ATTEMPTS = 3
+
+interface GenerateResult {
+  success: boolean
+  task?: ITask
+  errors?: string[]
+  rawResponse: string
+}
+
+async function generateAndValidate(
+  service: { generate: (messages: AiMessage[]) => Promise<string> },
+  messages: AiMessage[],
+  taskIndex: number
+): Promise<GenerateResult> {
+  console.warn('[AI Assistant] Sending messages to LLM:', messages)
+  const rawResponse = await service.generate(messages)
+  console.warn('[AI Assistant] Raw LLM response:', rawResponse)
+
+  const task = parseTaskFromResponse(rawResponse)
+  console.warn('[AI Assistant] Parsed task:', task)
+
+  if (!task) {
+    return {
+      success: false,
+      errors: [
+        'Failed to parse JSON. Output must be a single task object in a ```json code block.',
+      ],
+      rawResponse,
+    }
+  }
+
+  if (!task.service) {
+    return {
+      success: false,
+      errors: ['Task is missing "service" field.'],
+      rawResponse,
+    }
+  }
+
+  if (taskIndex === 0 && task.service.type !== 'trigger') {
+    return {
+      success: false,
+      errors: ['First task must have service.type="trigger".'],
+      rawResponse,
+    }
+  }
+
+  if (taskIndex > 0 && task.service.type !== 'invoke') {
+    return {
+      success: false,
+      errors: ['This task must have service.type="invoke".'],
+      rawResponse,
+    }
+  }
+
+  return { success: true, task, rawResponse }
+}
+
+const BotAssistant: FC<{ bot: IBot; task: ITask; taskIndex: number }> = ({
+  bot,
+  task,
+  taskIndex,
+}) => {
+  const { updateBotTask } = useContext(BotContext)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [generatedTasks, setGeneratedTasks] = useState<ITask[] | null>(null)
-  const [validationErrors, setValidationErrors] = useState<string[]>([])
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [proposedTask, setProposedTask] = useState<ITask | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const labels = getLabels(LABELS)
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
 
   const handleSend = async () => {
     if (!input.trim() || loading) return
 
     const userMessage = input.trim()
     setInput('')
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
     setLoading(true)
+    setError(null)
 
     try {
-      const aiMessages = buildMessagesWithContext(
-        userMessage,
-        bot.tasks.length > 1 ? bot.tasks : undefined,
-        messages
-      )
-
       const service = await getAiService()
       if (!service) throw new Error('AI not available')
 
-      const response = await service.generate(aiMessages)
-      setMessages((prev) => [...prev, { role: 'assistant', content: response }])
+      let currentMessages = buildMessagesWithContext(userMessage, task)
+      let lastResult: GenerateResult | null = null
 
-      const tasks = parseTasksFromResponse(response)
-      if (tasks) {
-        setGeneratedTasks(tasks)
-        const validation = validateBot({ ...bot, tasks })
-        setValidationErrors(validation.errors)
-        if (validation.valid) {
-          onTasksGenerated(tasks)
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+        lastResult = await generateAndValidate(
+          service,
+          currentMessages,
+          taskIndex
+        )
+
+        console.warn(
+          `[AI Assistant] Attempt ${i + 1}/${MAX_ATTEMPTS}`,
+          lastResult.success ? 'SUCCESS' : 'FAILED',
+          { errors: lastResult.errors }
+        )
+
+        if (lastResult.success && lastResult.task) {
+          setProposedTask(lastResult.task)
+          setDialogOpen(true)
+          break
+        }
+
+        if (i < MAX_ATTEMPTS - 1) {
+          currentMessages = [
+            ...currentMessages,
+            { role: 'assistant' as const, content: lastResult.rawResponse },
+            buildRetryMessage(lastResult.rawResponse, lastResult.errors || []),
+          ]
         }
       }
+
+      if (lastResult && !lastResult.success) {
+        setError(lastResult.errors?.[0] || labels.error)
+      }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: labels.error },
-      ])
+      setError(labels.error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDeploy = async () => {
-    if (!generatedTasks) return
-    const updatedBot = { ...bot, tasks: generatedTasks }
-    await updateBot(updatedBot)
-    await deployBot(updatedBot)
+  const handleApply = () => {
+    if (!proposedTask) return
+    updateBotTask(bot.botId, taskIndex, proposedTask)
+    setDialogOpen(false)
+    setProposedTask(null)
   }
 
   return (
-    <Box className="d-flex flex-column" sx={{ height: '100%', minHeight: 400 }}>
+    <>
       <Paper
-        variant="outlined"
-        className="flex-grow-1 p-3 mb-2"
-        sx={{ overflow: 'auto', maxHeight: 400 }}
+        elevation={3}
+        sx={{
+          position: 'fixed',
+          bottom: 8,
+          left: 8,
+          right: 8,
+          p: 1,
+          borderRadius: 2,
+          zIndex: 1000,
+        }}
       >
-        {messages.length === 0 && (
-          <Typography color="text.secondary" className="text-center mt-4">
-            {labels.placeholder}
+        {error && (
+          <Typography
+            variant="caption"
+            color="error"
+            sx={{ display: 'block', mb: 0.5 }}
+          >
+            {error}
           </Typography>
         )}
-        {messages
-          .filter((m) => m.role !== 'system')
-          .map((msg, i) => (
-            <Box
-              key={i}
-              className={`mb-2 d-flex ${msg.role === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
-            >
-              <Paper
-                elevation={0}
-                className="p-2 px-3"
-                sx={{
-                  maxWidth: '80%',
-                  bgcolor: msg.role === 'user' ? 'primary.light' : 'grey.100',
-                  color:
-                    msg.role === 'user'
-                      ? 'primary.contrastText'
-                      : 'text.primary',
-                  borderRadius: 2,
-                }}
-              >
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {msg.content}
-                </Typography>
-              </Paper>
-            </Box>
-          ))}
-        {loading && (
-          <Box className="d-flex justify-content-start mb-2">
+        <Box className="d-flex align-items-center gap-1">
+          <AiIcon fontSize="small" color="primary" sx={{ mx: 0.5 }} />
+          <TextField
+            fullWidth
+            size="small"
+            variant="standard"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            placeholder={labels.inputPlaceholder}
+            disabled={loading}
+            InputProps={{ disableUnderline: true }}
+          />
+          {loading ? (
             <CircularProgress size={20} />
-          </Box>
-        )}
-        <div ref={messagesEndRef} />
+          ) : (
+            <IconButton
+              onClick={handleSend}
+              disabled={!input.trim()}
+              color="primary"
+              size="small"
+            >
+              <SendIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
       </Paper>
 
-      {generatedTasks && validationErrors.length === 0 && (
-        <Paper variant="outlined" className="p-2 mb-2">
-          <Typography variant="body2" color="success.main">
-            {labels.ready} ({generatedTasks.length} {labels.tasks})
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{labels.dialogTitle}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" className="mb-2">
+            {labels.dialogBody}
           </Typography>
-          <Box className="d-flex gap-2 mt-1">
-            <Chip
-              label={labels.deploy}
-              color="primary"
-              onClick={handleDeploy}
-              clickable
-            />
-            <Chip
-              label={labels.openBuilder}
-              variant="outlined"
-              onClick={() => onTasksGenerated(generatedTasks)}
-              clickable
-            />
-          </Box>
-        </Paper>
-      )}
-
-      {validationErrors.length > 0 && (
-        <Paper variant="outlined" className="p-2 mb-2">
-          <Typography variant="body2" color="error">
-            {validationErrors[0]}
-          </Typography>
-        </Paper>
-      )}
-
-      <Box className="d-flex gap-1">
-        <TextField
-          fullWidth
-          size="small"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-          placeholder={labels.inputPlaceholder}
-          disabled={loading}
-          multiline
-          maxRows={3}
-        />
-        <IconButton
-          onClick={handleSend}
-          disabled={loading || !input.trim()}
-          color="primary"
-        >
-          <SendIcon />
-        </IconButton>
-      </Box>
-    </Box>
+          <Paper
+            variant="outlined"
+            sx={{ p: 1.5, maxHeight: 300, overflow: 'auto' }}
+          >
+            <Typography
+              variant="caption"
+              component="pre"
+              sx={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}
+            >
+              {JSON.stringify(proposedTask, null, 2)}
+            </Typography>
+          </Paper>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDialogOpen(false)}>{labels.cancel}</Button>
+          <Button onClick={handleApply} variant="contained">
+            {labels.apply}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   )
 }
 
 const LABELS: Labels = {
   en: {
-    placeholder: 'Describe what you want your bot to do...',
-    inputPlaceholder:
-      'e.g., "Check the weather every morning and send me a notification"',
-    error: 'Something went wrong. Please try again.',
-    ready: 'Bot ready!',
-    tasks: 'tasks',
-    deploy: 'Deploy',
-    openBuilder: 'Open in Builder',
+    inputPlaceholder: 'Edit this task...',
+    error: 'Something went wrong. Try again.',
+    dialogTitle: 'Apply changes?',
+    dialogBody: 'Review the modified task:',
+    apply: 'Apply',
+    cancel: 'Cancel',
   },
   pt: {
-    placeholder: 'Descreva o que você quer que seu bot faça...',
-    inputPlaceholder:
-      'ex: "Verificar notícias toda manhã e me enviar uma notificação"',
+    inputPlaceholder: 'Editar esta tarefa...',
     error: 'Algo deu errado. Tente novamente.',
-    ready: 'Bot pronto!',
-    tasks: 'tarefas',
-    deploy: 'Publicar',
-    openBuilder: 'Abrir no Editor',
+    dialogTitle: 'Aplicar mudanças?',
+    dialogBody: 'Revise a tarefa modificada:',
+    apply: 'Aplicar',
+    cancel: 'Cancelar',
   },
 }
 

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeAll, vi } from 'vitest'
 
-import { IBot } from '../../../models/bot'
+import { IBot, ITask } from '../../../models/bot'
 import { BotContext } from '../../../providers/bot'
 import BotAssistant from '../components/assistant'
 
@@ -19,31 +19,36 @@ vi.mock('../../../utils/labels', () => ({
 }))
 
 const mockGetAiService = vi.fn()
-const mockParseTasksFromResponse = vi.fn()
+const mockParseTaskFromResponse = vi.fn()
 const mockBuildMessagesWithContext = vi.fn()
+const mockBuildRetryMessage = vi.fn()
 
 vi.mock('../../../utils/ai', () => ({
   getAiService: (...args: any[]) => mockGetAiService(...args),
-  parseTasksFromResponse: (...args: any[]) =>
-    mockParseTasksFromResponse(...args),
+  parseTaskFromResponse: (...args: any[]) => mockParseTaskFromResponse(...args),
   buildMessagesWithContext: (...args: any[]) =>
     mockBuildMessagesWithContext(...args),
+  buildRetryMessage: (...args: any[]) => mockBuildRetryMessage(...args),
 }))
 
-const mockValidateBot = vi.fn()
-vi.mock('../../../models/bot', async () => {
-  const actual = await vi.importActual('../../../models/bot')
-  return {
-    ...actual,
-    validateBot: (...args: any[]) => mockValidateBot(...args),
-  }
-})
+const mockTask: ITask = {
+  taskId: 1,
+  inputData: [
+    { name: 'expression', value: 'cron(0 9 * * ? *)', type: 'options' },
+  ],
+  service: { type: 'trigger', name: 'schedule', label: 'Schedule', config: {} },
+  app: {
+    name: 'Baita',
+    appId: '2d12accb-4b7c-4d22-bdbc-4875a404b929',
+    config: {},
+  },
+} as any
 
 const mockBot: IBot = {
   botId: 'bot-1',
   userId: 'user-1',
   name: 'Test Bot',
-  tasks: [],
+  tasks: [mockTask],
   active: true,
 } as any
 
@@ -59,7 +64,7 @@ const createBotContextValue = (overrides = {}) => ({
   updateBot: vi.fn().mockResolvedValue(undefined),
   deployBot: vi.fn().mockResolvedValue({}),
   testBotTask: vi.fn(),
-  updateBotTask: vi.fn(),
+  updateBotTask: vi.fn().mockResolvedValue(undefined),
   botModels: undefined as any,
   getBotModels: vi.fn(),
   deleteBotModel: vi.fn(),
@@ -68,390 +73,105 @@ const createBotContextValue = (overrides = {}) => ({
   ...overrides,
 })
 
-const renderAssistant = (
-  options: {
-    bot?: IBot
-    onTasksGenerated?: any
-    botContextOverrides?: any
-  } = {}
-) => {
-  const {
-    bot = mockBot,
-    onTasksGenerated = vi.fn(),
-    botContextOverrides = {},
-  } = options
+const renderAssistant = (options: { botContextOverrides?: any } = {}) => {
+  const { botContextOverrides = {} } = options
   const botContext = createBotContextValue(botContextOverrides)
 
   return {
     ...render(
       <BotContext.Provider value={botContext}>
-        <BotAssistant bot={bot} onTasksGenerated={onTasksGenerated} />
+        <BotAssistant bot={mockBot} task={mockTask} taskIndex={0} />
       </BotContext.Provider>
     ),
     botContext,
-    onTasksGenerated,
   }
 }
 
-describe('BotAssistant', () => {
+describe('BotAssistant (task-level)', () => {
   beforeEach(() => {
     mockBuildMessagesWithContext.mockImplementation((msg) => [
       { role: 'user', content: msg },
     ])
-    mockValidateBot.mockReturnValue({ valid: true, errors: [], warnings: [] })
+    mockBuildRetryMessage.mockImplementation((_raw, errors) => ({
+      role: 'user',
+      content: `Fix: ${errors.join(', ')}`,
+    }))
   })
 
   afterEach(() => {
     vi.clearAllMocks()
   })
 
-  it('renders empty state with placeholder text', () => {
+  it('renders input with placeholder', () => {
     renderAssistant()
-    expect(
-      screen.getByText('Describe what you want your bot to do...')
-    ).toBeDefined()
+    expect(screen.getByPlaceholderText('Edit this task...')).toBeDefined()
   })
 
-  it('renders input field with placeholder', () => {
-    renderAssistant()
-    expect(
-      screen.getByPlaceholderText(
-        'e.g., "Check the weather every morning and send me a notification"'
-      )
-    ).toBeDefined()
-  })
-
-  it('sends a message on Enter and displays it', async () => {
-    const mockGenerate = vi.fn().mockResolvedValue('AI response')
+  it('shows confirmation dialog on valid result', async () => {
+    const modifiedTask = {
+      ...mockTask,
+      inputData: [
+        { name: 'expression', value: 'rate(30 minutes)', type: 'options' },
+      ],
+    }
     mockGetAiService.mockResolvedValue({
       provider: 'chrome-ai',
-      generate: mockGenerate,
+      generate: vi.fn().mockResolvedValue('```json\n{}\n```'),
     })
-    mockParseTasksFromResponse.mockReturnValue(null)
+    mockParseTaskFromResponse.mockReturnValue(modifiedTask)
 
     renderAssistant()
 
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'make a weather bot' } })
+    const input = screen.getByPlaceholderText('Edit this task...')
+    fireEvent.change(input, { target: { value: 'change to every 30 min' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
 
     await waitFor(() => {
-      expect(screen.getByText('make a weather bot')).toBeDefined()
+      expect(screen.getByText('Apply changes?')).toBeDefined()
     })
   })
 
-  it('shows loading spinner while AI is generating', async () => {
-    let resolveGenerate: (v: string) => void
-    const generatePromise = new Promise<string>((r) => {
-      resolveGenerate = r
-    })
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: () => generatePromise,
-    })
-
-    renderAssistant()
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'test' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(screen.getByRole('progressbar')).toBeDefined()
-    })
-
-    resolveGenerate!('done')
-    mockParseTasksFromResponse.mockReturnValue(null)
-
-    await waitFor(() => {
-      expect(screen.queryByRole('progressbar')).toBeNull()
-    })
-  })
-
-  it('displays AI response after generation', async () => {
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: vi.fn().mockResolvedValue('Here is your bot config'),
-    })
-    mockParseTasksFromResponse.mockReturnValue(null)
-
-    renderAssistant()
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'hello' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(screen.getByText('Here is your bot config')).toBeDefined()
-    })
-  })
-
-  it('shows "Bot ready!" when valid tasks are generated', async () => {
-    const tasks = [{ taskId: 1, inputData: [] }]
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: vi.fn().mockResolvedValue('```json\n[]\n```'),
-    })
-    mockParseTasksFromResponse.mockReturnValue(tasks)
-    mockValidateBot.mockReturnValue({ valid: true, errors: [], warnings: [] })
-
-    const onTasksGenerated = vi.fn()
-    renderAssistant({ onTasksGenerated })
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'create bot' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(screen.getByText('Bot ready! (1 tasks)')).toBeDefined()
-    })
-  })
-
-  it('calls onTasksGenerated when valid tasks are parsed', async () => {
-    const tasks = [{ taskId: 1, inputData: [] }]
+  it('Apply calls updateBotTask with modified task', async () => {
+    const modifiedTask = { ...mockTask, inputData: [] }
     mockGetAiService.mockResolvedValue({
       provider: 'chrome-ai',
       generate: vi.fn().mockResolvedValue('json'),
     })
-    mockParseTasksFromResponse.mockReturnValue(tasks)
-    mockValidateBot.mockReturnValue({ valid: true, errors: [], warnings: [] })
+    mockParseTaskFromResponse.mockReturnValue(modifiedTask)
 
-    const onTasksGenerated = vi.fn()
-    renderAssistant({ onTasksGenerated })
+    const updateBotTask = vi.fn().mockResolvedValue(undefined)
+    renderAssistant({ botContextOverrides: { updateBotTask } })
 
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'go' } })
+    const input = screen.getByPlaceholderText('Edit this task...')
+    fireEvent.change(input, { target: { value: 'remove inputs' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
 
     await waitFor(() => {
-      expect(onTasksGenerated).toHaveBeenCalledWith(tasks)
+      expect(screen.getByText('Apply')).toBeDefined()
+    })
+
+    fireEvent.click(screen.getByText('Apply'))
+
+    await waitFor(() => {
+      expect(updateBotTask).toHaveBeenCalledWith('bot-1', 0, modifiedTask)
     })
   })
 
-  it('shows validation errors when validateBot returns errors', async () => {
-    const tasks = [{ taskId: 1, inputData: [] }]
+  it('shows error after 3 failed attempts', async () => {
     mockGetAiService.mockResolvedValue({
       provider: 'chrome-ai',
-      generate: vi.fn().mockResolvedValue('json'),
+      generate: vi.fn().mockResolvedValue('invalid'),
     })
-    mockParseTasksFromResponse.mockReturnValue(tasks)
-    mockValidateBot.mockReturnValue({
-      valid: false,
-      errors: ['First task must be a trigger'],
-      warnings: [],
-    })
+    mockParseTaskFromResponse.mockReturnValue(null)
 
     renderAssistant()
 
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'go' } })
+    const input = screen.getByPlaceholderText('Edit this task...')
+    fireEvent.change(input, { target: { value: 'do something' } })
     fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
 
     await waitFor(() => {
-      expect(screen.getByText('First task must be a trigger')).toBeDefined()
+      expect(screen.getByText(/Failed to parse JSON/)).toBeDefined()
     })
-  })
-
-  it('does not call onTasksGenerated when validation fails', async () => {
-    const tasks = [{ taskId: 1, inputData: [] }]
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: vi.fn().mockResolvedValue('json'),
-    })
-    mockParseTasksFromResponse.mockReturnValue(tasks)
-    mockValidateBot.mockReturnValue({
-      valid: false,
-      errors: ['error'],
-      warnings: [],
-    })
-
-    const onTasksGenerated = vi.fn()
-    renderAssistant({ onTasksGenerated })
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'go' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(screen.getByText('error')).toBeDefined()
-    })
-    expect(onTasksGenerated).not.toHaveBeenCalled()
-  })
-
-  it('shows error message when AI service throws', async () => {
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: vi.fn().mockRejectedValue(new Error('network')),
-    })
-
-    renderAssistant()
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'go' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('Something went wrong. Please try again.')
-      ).toBeDefined()
-    })
-  })
-
-  it('shows error when getAiService returns null', async () => {
-    mockGetAiService.mockResolvedValue(null)
-
-    renderAssistant()
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'go' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(
-        screen.getByText('Something went wrong. Please try again.')
-      ).toBeDefined()
-    })
-  })
-
-  it('Deploy chip calls updateBot and deployBot', async () => {
-    const tasks = [{ taskId: 1, inputData: [] }]
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: vi.fn().mockResolvedValue('json'),
-    })
-    mockParseTasksFromResponse.mockReturnValue(tasks)
-    mockValidateBot.mockReturnValue({ valid: true, errors: [], warnings: [] })
-
-    const updateBot = vi.fn().mockResolvedValue(undefined)
-    const deployBot = vi.fn().mockResolvedValue({})
-
-    renderAssistant({ botContextOverrides: { updateBot, deployBot } })
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'go' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(screen.getByText('Deploy')).toBeDefined()
-    })
-
-    fireEvent.click(screen.getByText('Deploy'))
-
-    await waitFor(() => {
-      expect(updateBot).toHaveBeenCalledWith(expect.objectContaining({ tasks }))
-      expect(deployBot).toHaveBeenCalledWith(expect.objectContaining({ tasks }))
-    })
-  })
-
-  it('Open in Builder chip calls onTasksGenerated', async () => {
-    const tasks = [{ taskId: 1, inputData: [] }]
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: vi.fn().mockResolvedValue('json'),
-    })
-    mockParseTasksFromResponse.mockReturnValue(tasks)
-    mockValidateBot.mockReturnValue({ valid: true, errors: [], warnings: [] })
-
-    const onTasksGenerated = vi.fn()
-    renderAssistant({ onTasksGenerated })
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'go' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(screen.getByText('Open in Builder')).toBeDefined()
-    })
-
-    fireEvent.click(screen.getByText('Open in Builder'))
-
-    expect(onTasksGenerated).toHaveBeenCalledWith(tasks)
-  })
-
-  it('disables send button and input while loading', async () => {
-    let resolveGenerate: (v: string) => void
-    const generatePromise = new Promise<string>((r) => {
-      resolveGenerate = r
-    })
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: () => generatePromise,
-    })
-
-    renderAssistant()
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    ) as HTMLInputElement
-    fireEvent.change(input, { target: { value: 'test' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    await waitFor(() => {
-      expect(input.disabled).toBe(true)
-    })
-
-    resolveGenerate!('done')
-    mockParseTasksFromResponse.mockReturnValue(null)
-
-    await waitFor(() => {
-      expect(input.disabled).toBe(false)
-    })
-  })
-
-  it('does not send on Shift+Enter (allows multiline)', () => {
-    const mockGenerate = vi.fn()
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: mockGenerate,
-    })
-
-    renderAssistant()
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.change(input, { target: { value: 'line 1' } })
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true })
-
-    expect(mockGetAiService).not.toHaveBeenCalled()
-    expect(mockGenerate).not.toHaveBeenCalled()
-  })
-
-  it('does not send when input is empty', () => {
-    mockGetAiService.mockResolvedValue({
-      provider: 'chrome-ai',
-      generate: vi.fn(),
-    })
-
-    renderAssistant()
-
-    const input = screen.getByPlaceholderText(
-      'e.g., "Check the weather every morning and send me a notification"'
-    )
-    fireEvent.keyDown(input, { key: 'Enter', shiftKey: false })
-
-    expect(mockGetAiService).not.toHaveBeenCalled()
   })
 })
