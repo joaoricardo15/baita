@@ -297,6 +297,32 @@ Pages that break silently (show infinite loading with no error feedback) are the
 - Providers: catch errors and either update error state or propagate to NotificationProvider
 - API calls: the `getApiResponse` wrapper in `src/utils/requests.ts` rejects on `success: false` — callers must handle this
 
+## AI Assistant (Bot Creation)
+
+The bot page has an "AI Assistant" tab (shown only when Chrome Built-in AI is available) that lets users describe automations in natural language instead of using the visual builder.
+
+**Architecture:**
+
+- `src/utils/ai.ts` — AI service abstraction (Chrome AI detection, system prompt, response parsing)
+- `src/views/bot/components/assistant.tsx` — Chat UI component
+- Uses `window.ai.languageModel` (Chrome Built-in AI / Gemini Nano)
+- If browser doesn't support it, the AI tab is hidden (graceful degradation)
+
+**Flow:**
+
+1. User describes bot in chat → Chrome AI generates ITask[] JSON
+2. `parseTasksFromResponse()` extracts JSON from markdown code blocks
+3. `validateBot()` checks the generated tasks for errors
+4. User can deploy directly or open in visual builder to refine
+
+**System Prompt:**
+The system prompt in `ai.ts` teaches the LLM the bot schema structure (services, variables, output references). It must stay in sync with the actual `@baita/shared` schema. When the schema changes, update the prompt.
+
+**Testing:**
+
+- `src/utils/tests/ai.test.ts` — Tests for `parseTasksFromResponse` and `buildMessagesWithContext`
+- The AI assistant does NOT modify the deployment flow — same `deployBot()` API call
+
 ## Known Limitations
 
 - API logic is coupled to Context providers (no separate service layer)

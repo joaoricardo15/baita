@@ -9,4 +9,5 @@ export {
   type ITaskExecutionResult,
   removeStepReferences,
   TaskExecutionStatus,
+  validateBot,
 } from '@baita/shared'
