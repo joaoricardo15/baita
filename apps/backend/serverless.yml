@@ -37,15 +37,10 @@ custom:
   documentation:
     version: 1.0.0
     title: Baita Help API
-    description: Backend application for BaitaHelp
+    description: Personal automation platform API
     servers:
       - url: https://api.baita.help
-        description: Production server
-    models:
-      - name: Response
-        schema: ${file(src/models/api/schema.json)}
-      - name: CreateUserRequest
-        schema: ${file(src/models/user/schema.json)}
+        description: Production
 
 provider:
   name: aws
@@ -185,14 +180,6 @@ functions:
           documentation:
             summary: Create User
             description: Creates a new user account
-            requestBody:
-              description: A user information object
-            requestModels:
-              application/json: CreateUserRequest
-            methodResponses:
-              - statusCode: 200
-                responseModels:
-                  application/json: Response
   endpoint-content-get:
     handler: src/endpoints/content/index.handler
     events:
@@ -201,6 +188,9 @@ functions:
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Get Content Feed
+            description: Retrieves queued content items from the user's SQS feed
   endpoint-resource-operation:
     handler: src/endpoints/resource/index.handler
     events:
@@ -209,35 +199,14 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Resource Operation
+            description: Performs CRUD on user resources (list, read, create, update, delete, upload, remove)
       - http:
           path: user/{userId}/resource/{resourceName}/{operation}/{resourceId}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Resource Operation
-            description: Performs CRUD operations on user resources (list, read, delete, create, update, upload, remove).
-            pathParams:
-              - name: userId
-                description: ID of the user
-                schema: { type: string }
-              - name: resourceName
-                description: Name of the resource
-                schema: { type: string }
-              - name: operation
-                description: Operation to perform
-                schema:
-                  {
-                    type: string,
-                    enum: [list, read, delete, create, update, upload, remove],
-                  }
-              - name: resourceId
-                description: ID of the resource
-                schema: { type: string }
-            methodResponses:
-              - statusCode: 200
-                responseModels:
-                  application/json: Response
   endpoint-bot-create:
     handler: src/endpoints/bot/create/index.handler
     events:
@@ -246,6 +215,9 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Create Bot
+            description: Creates a new bot with Lambda, API Gateway, and Scheduler
   endpoint-bot-bud:
     handler: src/endpoints/bot/bud/index.handler
     events:
@@ -254,6 +226,9 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Deploy Bot Model
+            description: Deploys a bot from a pre-built model/template
   endpoint-bot-update:
     handler: src/endpoints/bot/update/index.handler
     events:
@@ -262,6 +237,9 @@ functions:
           method: put
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Update Bot
+            description: Updates bot name, description, image, or task configuration
   endpoint-bot-delete:
     handler: src/endpoints/bot/delete/index.handler
     events:
@@ -270,6 +248,9 @@ functions:
           method: delete
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Delete Bot
+            description: Deletes bot and cleans up Lambda, API Gateway, Scheduler, and S3
   endpoint-bot-deploy:
     handler: src/endpoints/bot/deploy/index.handler
     events:
@@ -278,6 +259,9 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Deploy Bot
+            description: Generates Lambda code from task definitions and deploys to AWS
   endpoint-bot-test:
     handler: src/endpoints/bot/test/index.handler
     events:
@@ -286,6 +270,9 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Test Bot Task
+            description: Executes a single task with sample data and returns the result
   endpoint-bot-logs:
     handler: src/endpoints/bot/logs/index.handler
     events:
@@ -294,6 +281,9 @@ functions:
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+          documentation:
+            summary: Get Bot Logs
+            description: Retrieves execution logs from CloudWatch for a specific bot
 
   # OAuth connector (generic handler for all partners)
   connector-oauth:
