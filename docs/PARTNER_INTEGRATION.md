@@ -209,3 +209,25 @@ Then test:
 
 - Check that the Lambda has the environment variables (deploy after adding to serverless.yml)
 - Verify the connection credentials in DynamoDB aren't stale
+
+### "redirect_uri_mismatch" on OAuth callback
+
+The `redirect_uri` must match EXACTLY in three places:
+
+1. **Frontend** `authorizeUrl` parameter in `apps/frontend/src/defines/apps.ts`
+2. **Backend** `redirect_uri` sent during token exchange (in the connector handler)
+3. **Provider dashboard** registered redirect URI (Google Cloud Console, Pipedrive, etc.)
+
+If ANY mismatch, the provider rejects the token exchange silently.
+
+**For existing partners** (Google, Pipedrive): Use `/connectors/google` and `/connectors/pipedrive` — these are registered in the provider dashboards.
+
+**For NEW partners**: Use `/connectors/oauth` (generic handler) and register that URL in the provider's dashboard when creating the OAuth app.
+
+**Migration path**: To move an existing partner to `/connectors/oauth`:
+
+1. Add `https://api.baita.help/connectors/oauth` in the provider's dashboard (keep old URL too)
+2. Update frontend `authorizeUrl` to use `/connectors/oauth`
+3. Verify OAuth flow works
+4. Remove old URL from provider dashboard
+5. Remove old handler from serverless.yml

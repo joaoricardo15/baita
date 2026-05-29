@@ -453,7 +453,7 @@ const apps: IAppService[] = [
     config: {
       apiUrl: 'https://api.pipedrive.com/v1',
       authorizeUrl:
-        'https://oauth.pipedrive.com/oauth/authorize?client_id=987a469172b3ac62&redirect_uri=https://api.baita.help/connectors/oauth&state=',
+        'https://oauth.pipedrive.com/oauth/authorize?client_id=987a469172b3ac62&redirect_uri=https://api.baita.help/connectors/pipedrive&state=',
       auth: {
         type: 'basic',
         method: 'post',
@@ -594,7 +594,7 @@ const apps: IAppService[] = [
     config: {
       apiUrl: 'https://gmail.googleapis.com',
       authorizeUrl:
-        'https://accounts.google.com/o/oauth2/auth?client_id=106617044495-k3n0koedh38faoclgjqdss7vptfoirjr.apps.googleusercontent.com&redirect_uri=https://api.baita.help/connectors/oauth&response_type=code&scope=https://www.googleapis.com/auth/userinfo.email+https://mail.google.com/+https://www.googleapis.com/auth/pubsub&access_type=offline&prompt=consent&state=',
+        'https://accounts.google.com/o/oauth2/auth?client_id=106617044495-k3n0koedh38faoclgjqdss7vptfoirjr.apps.googleusercontent.com&redirect_uri=https://api.baita.help/connectors/google&response_type=code&scope=https://www.googleapis.com/auth/userinfo.email+https://mail.google.com/+https://www.googleapis.com/auth/pubsub&access_type=offline&prompt=consent&state=',
       auth: {
         type: 'body',
         method: 'post',
