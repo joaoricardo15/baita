@@ -1,5 +1,6 @@
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 import Bot from 'src/controllers/bot'
+import { validateBot } from 'src/models/bot/interface'
 import { validateTasks } from 'src/models/bot/schema'
 import Api, { ApiRequestStatus } from 'src/utils/api'
 
@@ -23,6 +24,20 @@ exports.handler = async (
     const { name, active, tasks } = body
 
     validateTasks(tasks)
+
+    const validation = validateBot({
+      botId,
+      userId,
+      apiId: '',
+      name: name || '',
+      active: active || false,
+      triggerUrl: '',
+      triggerSamples: [],
+      tasks,
+    })
+    if (!validation.valid) {
+      throw new Error(validation.errors.join('; '))
+    }
 
     const data = await bot.deployBot(userId, botId, name, active, tasks)
 

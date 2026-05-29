@@ -7,7 +7,7 @@ import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 
 import { Button, Text } from '../../../components'
-import { ITask } from '../../../models/bot'
+import { ITask, removeStepReferences } from '../../../models/bot'
 import { ServiceName, ServiceType } from '../../../models/service'
 import { BotContext } from '../../../providers/bot'
 import { getLabels, Labels } from '../../../utils/labels'
@@ -42,11 +42,8 @@ const Task: FC<{
 
   const deleteTask = (taskId: number) => {
     if (bot) {
-      const updatedBot = {
-        ...bot,
-        tasks: bot.tasks.filter((x) => x.taskId !== taskId),
-      }
-      updateBot(updatedBot)
+      const { tasks } = removeStepReferences(bot.tasks, taskId)
+      updateBot({ ...bot, tasks })
     }
   }
 

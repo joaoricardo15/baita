@@ -1,4 +1,5 @@
 export {
+  clearDownstreamSamples,
   ConditionOperator,
   type IBot,
   type IBotLog,
@@ -6,5 +7,6 @@ export {
   type ITask,
   type ITaskCondition,
   type ITaskExecutionResult,
+  removeStepReferences,
   TaskExecutionStatus,
 } from '@baita/shared'
