@@ -266,7 +266,18 @@ export const getBotInnerCode = (tasks: ITask[]): string => {
       if (${getConditionsString(task.conditions) || true}) {
         ////////////////////////////////////////////////////////////////////////////////
         // 4.${i}.3. If condition passes, execute operation
-
+${
+  task.retryPolicy && task.retryPolicy.maxAttempts > 1
+    ? `
+        let task${i}_attempts = 0;
+        const task${i}_maxAttempts = ${task.retryPolicy.maxAttempts};
+        const task${i}_backoffMs = ${task.retryPolicy.backoffMs || 1000};
+        let task${i}_lastError;
+        while (task${i}_attempts < task${i}_maxAttempts) {
+          task${i}_attempts++;
+          try {`
+    : ''
+}
         const { Payload: task${i}_lambda_payload } = await lambda.invoke({
           FunctionName: '${SERVICE_PREFIX}-task-${task.service?.name}',
           Payload: JSON.stringify({
@@ -287,6 +298,23 @@ export const getBotInnerCode = (tasks: ITask[]): string => {
         const task${i}_success = task${i}_result.success;
 
         task${i}_outputData = task${i}_success && task${i}_result.data ? task${i}_result.data : { message: task${i}_result.message || task${i}_result.errorMessage || 'nothing for you this time : (' };
+${
+  task.retryPolicy && task.retryPolicy.maxAttempts > 1
+    ? `
+            if (task${i}_success) break;
+            task${i}_lastError = task${i}_result.message;
+          } catch (retryErr) {
+            task${i}_lastError = retryErr.message || retryErr;
+          }
+          if (task${i}_attempts < task${i}_maxAttempts) {
+            await new Promise(r => setTimeout(r, task${i}_backoffMs * task${i}_attempts));
+          }
+        }
+        if (!task${i}_outputData) {
+          task${i}_outputData = { message: task${i}_lastError || 'Max retries exceeded' };
+        }`
+    : ''
+}
 
         ////////////////////////////////////////////////////////////////////////////////
         // 4.${i}.5. Add result to logs
