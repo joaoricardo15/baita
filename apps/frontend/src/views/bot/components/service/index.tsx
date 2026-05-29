@@ -125,6 +125,7 @@ const TaskService: FC<{
               botId={bot.botId}
               taskIndex={taskIndex}
               appId={task.app?.appId}
+              appName={task.app?.name}
               connectionId={task.connectionId}
               appAuthUrl={task.app?.config?.authorizeUrl}
               appLoginUrl={task.app?.config?.loginUrl}

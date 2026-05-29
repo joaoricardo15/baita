@@ -19,6 +19,7 @@ import { getLabels, Labels } from '../../../../utils/labels'
 const NewConnection: FC<{
   botId: string
   appId: string
+  appName?: string
   appAuthUrl?: string
   appLoginUrl?: string
   connectionId?: string | number
@@ -28,6 +29,7 @@ const NewConnection: FC<{
 }> = ({
   botId,
   appId,
+  appName,
   appAuthUrl,
   appLoginUrl,
   connectionId,
@@ -100,7 +102,7 @@ const NewConnection: FC<{
             onCode={() => console.log('OauthPopup.onCode')}
             onClose={() => console.log('OauthPopup.onClose')}
             url={encodeURI(
-              `${appAuthUrl}${appId}:${user?.userId}:${botId}:${taskIndex}`
+              `${appAuthUrl}${appId}:${user?.userId}:${botId}:${taskIndex}:${(appName || '').toLowerCase()}`
             )}
           >
             <Button
