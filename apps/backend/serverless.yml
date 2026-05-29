@@ -45,9 +45,11 @@ provider:
   apiName: ${self:provider.environment.SERVICE_PREFIX}
   logRetentionInDays: 14
   apiGateway:
-    throttling:
-      burstLimit: 50
-      rateLimit: 100
+    methodSettings:
+      - HttpMethod: '*'
+        ResourcePath: '/*'
+        ThrottlingBurstLimit: 50
+        ThrottlingRateLimit: 100
   deploymentBucket:
     name: ${self:provider.environment.SERVICE_PREFIX}
     blockPublicAccess: true
@@ -118,7 +120,8 @@ provider:
     - Effect: Allow
       Action: [apigateway:POST, apigateway:DELETE, apigateway:GET]
       Resource:
-        - !Sub 'arn:aws:apigateway:${AWS::Region}::/restapis/${ApiGatewayRestApi}/*'
+        - !Sub 'arn:aws:apigateway:${AWS::Region}::/apis'
+        - !Sub 'arn:aws:apigateway:${AWS::Region}::/apis/*'
     - Effect: Allow
       Action: [iam:PassRole]
       Resource:
