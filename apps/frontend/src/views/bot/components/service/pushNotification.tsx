@@ -35,9 +35,9 @@ const PushNotificationService: FC<{
 
   const storeSubscription = (subscription: PushSubscription) => {
     const subscriptionJSON = JSON.stringify(subscription.toJSON())
-    updateBotInputField('pushSubscription', {
-      name: 'pushSubscription',
-      label: 'Push Subscription',
+    updateBotInputField('token', {
+      name: 'token',
+      label: 'Token',
       type: VariableType.constant,
       value: subscriptionJSON,
       sampleValue: subscriptionJSON,

@@ -184,9 +184,11 @@ export const getDataFromService = (
     const serviceVariableValue = getValueFromServiceVariable(serviceVariable)
 
     if (serviceVariableValue === undefined) {
-      const inputVariable = inputData.find(
-        (x) => x.name === serviceVariable.name
-      )
+      let inputVariable = inputData.find((x) => x.name === serviceVariable.name)
+
+      if (inputVariable === undefined && serviceVariable.name === 'token') {
+        inputVariable = inputData.find((x) => x.name === 'pushSubscription')
+      }
 
       if (inputVariable === undefined) {
         if (serviceVariable.required) {
