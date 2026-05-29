@@ -1,0 +1,38 @@
+{
+  "botId": "de8710d6-73f2-4e50-9688-d6186d96d4ac",
+  "userId": "110944657139284874166",
+  "appConfig": {},
+  "serviceConfig": {
+    "methodName": "sendNotification",
+    "inputFields": [
+      { "name": "token", "label": "Token", "type": "user", "required": true },
+      {
+        "name": "notification.title",
+        "label": "Title",
+        "type": "output",
+        "required": true
+      },
+      { "name": "notification.body", "type": "output", "label": "Body" },
+      { "name": "notification.icon", "type": "output", "label": "Icon" },
+      { "name": "notification.image", "type": "output", "label": "Image" },
+      {
+        "name": "notification.timestamp",
+        "type": "output",
+        "label": "Timestamp"
+      },
+      { "name": "notification.actions", "type": "output", "label": "Actions" },
+      { "name": "url", "type": "output", "label": "On click Url" }
+    ]
+  },
+  "inputData": {
+    "token": "{\"endpoint\":\"https://fcm.googleapis.com/fcm/send/test-token\",\"keys\":{\"p256dh\":\"test-p256dh-key\",\"auth\":\"test-auth-key\"}}",
+    "notification": {
+      "title": "Test notification",
+      "body": "This is a test push notification",
+      "timestamp": 1674405502774,
+      "image": "https://www.baita.help/logo.png",
+      "icon": "https://www.baita.help/logo.png"
+    },
+    "url": "/feed"
+  }
+}

@@ -100,14 +100,19 @@ const BotProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }
 
   const testBotTask = (bot: IBot, taskIndex: number) => {
-    return apiRequest.updateBot(bot.botId, bot).then(() =>
-      apiRequest.testBot(bot.botId, bot.tasks[taskIndex], taskIndex).then(() =>
-        apiRequest.getBot(bot.botId).then((bot) => {
-          setBot(bot)
-          return
-        })
+    return parseUserInputs(bot.tasks).then((tasks) => {
+      const updatedBot = { ...bot, tasks }
+      return apiRequest.updateBot(updatedBot.botId, updatedBot).then(() =>
+        apiRequest
+          .testBot(updatedBot.botId, tasks[taskIndex], taskIndex)
+          .then(() =>
+            apiRequest.getBot(updatedBot.botId).then((bot) => {
+              setBot(bot)
+              return
+            })
+          )
       )
-    )
+    })
   }
 
   const updateBotTask = (
@@ -275,13 +280,13 @@ const parseUserInputs = async (tasks: ITask[]) => {
         const token = subscription ? JSON.stringify(subscription.toJSON()) : ''
         updatedTokenField = {
           taskId: task.taskId,
-          field: { ...field, value: token },
+          field: { ...field, value: token, sampleValue: token },
         }
       } else if (field.label === 'Time Zone') {
         const { timeZone } = Intl.DateTimeFormat().resolvedOptions()
         updatedTimeZoneField = {
           taskId: task.taskId,
-          field: { ...field, value: timeZone },
+          field: { ...field, value: timeZone, sampleValue: timeZone },
         }
       }
     }
