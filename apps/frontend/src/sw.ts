@@ -109,18 +109,6 @@ self.addEventListener('push', (event: PushEvent) => {
         const options = buildNotificationOptions(payload)
 
         await self.registration.showNotification(title, options)
-
-        const clients = await self.clients.matchAll({ type: 'window' })
-        clients.forEach((client) => {
-          client.postMessage({
-            type: 'PUSH_RECEIVED',
-            payload: {
-              title,
-              body: payload.body,
-              image: payload.image,
-            },
-          })
-        })
       } catch {
         await self.registration.showNotification('Baita', {
           body: 'New notification',

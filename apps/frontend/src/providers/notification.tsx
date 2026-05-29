@@ -1,15 +1,7 @@
 import { Alert, Modal, Snackbar } from '@mui/material'
-import {
-  createContext,
-  FC,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react'
+import { createContext, FC, ReactNode, useState } from 'react'
 
 import { Loading, Logo, Text } from '../components'
-import { AuthContext } from './auth'
 
 type MessageType = 'success' | 'info' | 'warning' | 'error'
 
@@ -24,8 +16,6 @@ export const NotificationContext = createContext<{
 })
 
 const SnackProvider: FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useContext(AuthContext)
-
   const [snack, setSnack] = useState<{
     message: string
     type: MessageType
@@ -38,23 +28,6 @@ const SnackProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }>()
 
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!('serviceWorker' in navigator) || !user) return undefined
-
-    const handleSWMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'PUSH_RECEIVED') {
-        const { title, body, image } = event.data.payload
-        setModal({ title, body: <>{body}</>, image })
-      }
-    }
-
-    navigator.serviceWorker.addEventListener('message', handleSWMessage)
-
-    return () => {
-      navigator.serviceWorker.removeEventListener('message', handleSWMessage)
-    }
-  }, [user])
 
   return (
     <NotificationContext.Provider
