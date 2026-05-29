@@ -19,6 +19,21 @@ custom:
   customDomain:
     domainName: api.baita.help
     stage: prod
+  # Shared HTTP event defaults (referenced via ${self:custom.cors} and ${self:custom.authorizer})
+  cors:
+    origins:
+      - ${self:provider.environment.SERVICE_SITE_URL}
+      - ${self:provider.environment.SERVICE_LOCAL_URL}
+    headers:
+      - Content-Type
+      - Authorization
+      - Accept
+    allowCredentials: true
+  authorizer:
+    name: authorizer
+    resultTtlInSeconds: 300
+    identitySource: method.request.header.Authorization
+    type: token
   documentation:
     version: 1.0.0
     title: Baita Help API
@@ -41,151 +56,116 @@ provider:
   versionFunctions: false
   stage: ${opt:stage, 'dev'}
   apiName: ${self:provider.environment.SERVICE_PREFIX}
+  logRetentionInDays: 14
   deploymentBucket:
     name: ${self:provider.environment.SERVICE_PREFIX}
     blockPublicAccess: true
   iamRoleStatements:
-    # DynamoDB — core table + indexes
     - Effect: Allow
       Action:
-        - dynamodb:PutItem
-        - dynamodb:GetItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-        - dynamodb:Query
-        - dynamodb:Scan
+        [
+          dynamodb:PutItem,
+          dynamodb:GetItem,
+          dynamodb:UpdateItem,
+          dynamodb:DeleteItem,
+          dynamodb:Query,
+          dynamodb:Scan,
+        ]
       Resource:
         - arn:aws:dynamodb:us-east-1:*:table/${self:provider.environment.CORE_TABLE}
         - arn:aws:dynamodb:us-east-1:*:table/${self:provider.environment.CORE_TABLE}/index/*
-
-    # S3 — only app buckets
     - Effect: Allow
-      Action:
-        - s3:PutObject
-        - s3:GetObject
-        - s3:DeleteObject
+      Action: [s3:PutObject, s3:GetObject, s3:DeleteObject]
       Resource:
         - arn:aws:s3:::${self:provider.environment.BOTS_BUCKET}/*
         - arn:aws:s3:::${self:provider.environment.FILES_BUCKET}/*
         - arn:aws:s3:::${self:provider.environment.DOCS_BUCKET}/*
-
-    # SQS — user queues matching prefix
     - Effect: Allow
       Action:
-        - sqs:CreateQueue
-        - sqs:GetQueueUrl
-        - sqs:SendMessage
-        - sqs:SendMessageBatch
-        - sqs:ReceiveMessage
-        - sqs:DeleteMessage
-        - sqs:DeleteMessageBatch
-        - sqs:GetQueueAttributes
-        - sqs:SetQueueAttributes
+        [
+          sqs:CreateQueue,
+          sqs:GetQueueUrl,
+          sqs:SendMessage,
+          sqs:SendMessageBatch,
+          sqs:ReceiveMessage,
+          sqs:DeleteMessage,
+          sqs:DeleteMessageBatch,
+          sqs:GetQueueAttributes,
+          sqs:SetQueueAttributes,
+        ]
       Resource:
         - arn:aws:sqs:us-east-1:*:${self:provider.environment.SERVICE_PREFIX}-*
-
-    # Lambda — bot Lambdas only
     - Effect: Allow
       Action:
-        - lambda:CreateFunction
-        - lambda:UpdateFunctionCode
-        - lambda:DeleteFunction
-        - lambda:InvokeFunction
+        [
+          lambda:CreateFunction,
+          lambda:UpdateFunctionCode,
+          lambda:DeleteFunction,
+          lambda:InvokeFunction,
+        ]
       Resource:
         - arn:aws:lambda:us-east-1:*:function:${self:provider.environment.SERVICE_PREFIX}-*
-
-    # CloudWatch Logs — bot Lambda log groups
     - Effect: Allow
       Action:
-        - logs:CreateLogGroup
-        - logs:DeleteLogGroup
-        - logs:StartQuery
-        - logs:GetQueryResults
+        [
+          logs:CreateLogGroup,
+          logs:DeleteLogGroup,
+          logs:StartQuery,
+          logs:GetQueryResults,
+        ]
       Resource:
         - arn:aws:logs:us-east-1:*:log-group:/aws/lambda/${self:provider.environment.SERVICE_PREFIX}-*:*
-
-    # EventBridge Scheduler — bot schedules
     - Effect: Allow
       Action:
-        - scheduler:CreateSchedule
-        - scheduler:UpdateSchedule
-        - scheduler:DeleteSchedule
+        [
+          scheduler:CreateSchedule,
+          scheduler:UpdateSchedule,
+          scheduler:DeleteSchedule,
+        ]
       Resource:
         - arn:aws:scheduler:us-east-1:*:schedule/default/${self:provider.environment.SERVICE_PREFIX}-*
-
-    # API Gateway V2 — bot HTTP APIs
     - Effect: Allow
-      Action:
-        - apigateway:POST
-        - apigateway:DELETE
-        - apigateway:GET
+      Action: [apigateway:POST, apigateway:DELETE, apigateway:GET]
       Resource:
         - arn:aws:apigateway:us-east-1::/apis
         - arn:aws:apigateway:us-east-1::/apis/*
-
-    # IAM — pass the bot execution role only
     - Effect: Allow
-      Action:
-        - iam:PassRole
+      Action: [iam:PassRole]
       Resource:
         - ${self:provider.environment.BOTS_PERMISSION}
-
-    # SSM — parameter store
     - Effect: Allow
-      Action:
-        - ssm:GetParameter
-        - ssm:GetParameters
-      Resource: 'arn:aws:ssm:us-east-1:*:parameter/baita/prod/*'
+      Action: [ssm:GetParameter, ssm:GetParameters]
+      Resource: arn:aws:ssm:us-east-1:*:parameter/baita/prod/*
   environment:
-    # Service
     SERVICE_PREFIX: ${self:service}-prod
     SERVICE_API_URL: https://api.baita.help
     SERVICE_SITE_URL: https://www.baita.help
     SERVICE_LOCAL_URL: http://localhost:3000
-
-    # Core Database
     CORE_TABLE: ${self:provider.environment.SERVICE_PREFIX}
-
-    # Bot resources
     DOCS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-docs
     BOTS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-bots
     FILES_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-files
     BOTS_PERMISSION: arn:aws:iam::${aws:accountId}:role/${self:provider.environment.SERVICE_PREFIX}
-
-    ####################
-    ##### Partners #####
-    ####################
-
-    # Pipedrive
+    # Partners (OAuth secrets resolved from SSM at deploy time)
     PIPEDRIVE_AUTH_URL: ${ssm:/baita/prod/pipedrive-auth-url}
     PIPEDRIVE_CLIENT_ID: ${ssm:/baita/prod/pipedrive-client-id}
     PIPEDRIVE_CLIENT_SECRET: ${ssm:/baita/prod/pipedrive-client-secret}
-
-    # Google
     GOOGLE_AUTH_URL: ${ssm:/baita/prod/google-auth-url}
     GOOGLE_CLIENT_ID: ${ssm:/baita/prod/google-client-id}
     GOOGLE_CLIENT_SECRET: ${ssm:/baita/prod/google-client-secret}
-
-    # NewsAPI
     NEWS_API_KEY: ${ssm:/baita/prod/news-api-key}
-
-    # OpenAI
     OPENAI_API_AUTHORIZATION: ${ssm:/baita/prod/openai-authorization}
-
-    # Firebase
     FIREBASE_SERVICE_ACCOUNT: ${ssm(raw):/baita/prod/firebase-service-account}
-
     # Smoke Tests
     SMOKE_TEST_TOKEN: ${ssm:/baita/prod/smoke-test-token}
     SMOKE_TEST_USER_ID: smoke-test-ci
 
 functions:
-  ### authorizer ###
   authorizer:
     handler: src/authorizer/index.handler
     timeout: 10
 
-  ### tasks ###
+  # Background task handlers (invoked by deployed bot Lambdas)
   task-code-execute:
     handler: src/tasks/code-execute/index.handler
   task-method-execute:
@@ -193,32 +173,20 @@ functions:
   task-trigger-sample:
     handler: src/tasks/trigger-sample/index.handler
 
-  ### endpoints ###
+  # API endpoints (all use shared CORS + authorizer from custom section)
   endpoint-user-create:
     handler: src/endpoints/user/create/index.handler
     events:
       - http:
           path: user
           method: post
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
           documentation:
             summary: Create User
             description: Creates a new user account
             requestBody:
-              description: 'A user information object'
+              description: A user information object
             requestModels:
               application/json: CreateUserRequest
             methodResponses:
@@ -231,87 +199,41 @@ functions:
       - http:
           path: user/{userId}/content
           method: get
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
   endpoint-resource-operation:
     handler: src/endpoints/resource/index.handler
     events:
       - http:
           path: user/{userId}/resource/{resourceName}/{operation}
           method: post
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
       - http:
           path: user/{userId}/resource/{resourceName}/{operation}/{resourceId}
           method: post
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
           documentation:
             summary: Resource Operation
-            description: Performs an operation on a resource. A resource can be any json object that will be stored under the user's id and indexed with the resource name of your choice. The operation are list, read, delete, create, update, upload (file) and remove (file).
-            requestBody:
-              description: Resource data for create and update operations
+            description: Performs CRUD operations on user resources (list, read, delete, create, update, upload, remove).
             pathParams:
               - name: userId
                 description: ID of the user
-                schema:
-                  type: string
+                schema: { type: string }
               - name: resourceName
                 description: Name of the resource
-                schema:
-                  type: string
+                schema: { type: string }
               - name: operation
-                description: Operation to be performed on the resource
+                description: Operation to perform
                 schema:
-                  type: string
-                  enum:
-                    - list
-                    - read
-                    - delete
-                    - create
-                    - update
-                    - upload
-                    - remove
+                  {
+                    type: string,
+                    enum: [list, read, delete, create, update, upload, remove],
+                  }
               - name: resourceId
-                description: ID of the resource (required for read, delete, update, remove)
-                schema:
-                  type: string
+                description: ID of the resource
+                schema: { type: string }
             methodResponses:
               - statusCode: 200
                 responseModels:
@@ -322,142 +244,58 @@ functions:
       - http:
           path: user/{userId}/bots
           method: post
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
   endpoint-bot-bud:
     handler: src/endpoints/bot/bud/index.handler
     events:
       - http:
           path: user/{userId}/bots/{botId}/bud
           method: post
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
   endpoint-bot-update:
     handler: src/endpoints/bot/update/index.handler
     events:
       - http:
           path: user/{userId}/bots/{botId}
           method: put
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
   endpoint-bot-delete:
     handler: src/endpoints/bot/delete/index.handler
     events:
       - http:
           path: user/{userId}/bots/{botId}/api/{apiId}
           method: delete
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
   endpoint-bot-deploy:
     handler: src/endpoints/bot/deploy/index.handler
     events:
       - http:
           path: user/{userId}/bots/{botId}/deploy
           method: post
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
   endpoint-bot-test:
     handler: src/endpoints/bot/test/index.handler
     events:
       - http:
           path: user/{userId}/bots/{botId}/test/{taskIndex}
           method: post
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
   endpoint-bot-logs:
     handler: src/endpoints/bot/logs/index.handler
     events:
       - http:
           path: user/{userId}/bots/{botId}/logs
           method: get
-          cors:
-            origins:
-              - https://www.baita.help
-              - http://localhost:3000
-            headers:
-              - Content-Type
-              - Authorization
-              - Accept
-            allowCredentials: true
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 300
-            identitySource: method.request.header.Authorization
-            type: token
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
 
-  ### connectors ###
+  # OAuth connector (generic handler for all partners)
   connector-oauth:
     handler: src/connectors/oauth/index.handler
     events:
@@ -467,28 +305,27 @@ functions:
 
 resources:
   Resources:
-    # API Gateway — CORS on error responses (authorizer 403, throttle 429, etc.)
+    # CORS headers on API Gateway error responses (4XX/5XX)
     GatewayResponseDefault4XX:
       Type: AWS::ApiGateway::GatewayResponse
       Properties:
         RestApiId: !Ref ApiGatewayRestApi
         ResponseType: DEFAULT_4XX
         ResponseParameters:
-          gatewayresponse.header.Access-Control-Allow-Origin: "'https://www.baita.help'"
+          gatewayresponse.header.Access-Control-Allow-Origin: "'${self:provider.environment.SERVICE_SITE_URL}'"
           gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,Accept'"
           gatewayresponse.header.Access-Control-Allow-Credentials: "'true'"
-
     GatewayResponseDefault5XX:
       Type: AWS::ApiGateway::GatewayResponse
       Properties:
         RestApiId: !Ref ApiGatewayRestApi
         ResponseType: DEFAULT_5XX
         ResponseParameters:
-          gatewayresponse.header.Access-Control-Allow-Origin: "'https://www.baita.help'"
+          gatewayresponse.header.Access-Control-Allow-Origin: "'${self:provider.environment.SERVICE_SITE_URL}'"
           gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,Authorization,Accept'"
           gatewayresponse.header.Access-Control-Allow-Credentials: "'true'"
 
-    # Database
+    # DynamoDB (single-table design)
     coreTable:
       Type: AWS::DynamoDB::Table
       DeletionPolicy: Retain
@@ -498,7 +335,7 @@ resources:
           - AttributeName: userId
             KeyType: HASH
           - AttributeName: sortKey
-            KeyType: 'RANGE'
+            KeyType: RANGE
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
@@ -506,14 +343,15 @@ resources:
             AttributeType: S
         BillingMode: PAY_PER_REQUEST
 
-    # Butckets
+    # S3 Buckets
     botsBucket:
       Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
       Properties:
         BucketName: ${self:provider.environment.BOTS_BUCKET}
-
     filesBucket:
       Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
       Properties:
         BucketName: ${self:provider.environment.FILES_BUCKET}
         PublicAccessBlockConfiguration:
@@ -523,32 +361,30 @@ resources:
           RestrictPublicBuckets: false
         CorsConfiguration:
           CorsRules:
-            - AllowedMethods:
-                - PUT
+            - AllowedMethods: [PUT]
               AllowedOrigins:
                 - ${self:provider.environment.SERVICE_SITE_URL}
                 - ${self:provider.environment.SERVICE_LOCAL_URL}
-
     filesBucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
-        Bucket:
-          Ref: filesBucket
+        Bucket: !Ref filesBucket
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal: '*'
-              Action: 's3:GetObject'
-              Resource: 'arn:aws:s3:::${self:provider.environment.FILES_BUCKET}/*'
+              Action: s3:GetObject
+              Resource: arn:aws:s3:::${self:provider.environment.FILES_BUCKET}/*
               Condition:
                 StringLike:
                   aws:Referer:
                     - ${self:provider.environment.SERVICE_SITE_URL}/*
                     - ${self:provider.environment.SERVICE_LOCAL_URL}/*
-
+    # Docs bucket: public read for hosting OpenAPI docs
     docsBucket:
       Type: AWS::S3::Bucket
+      DeletionPolicy: Retain
       Properties:
         BucketName: ${self:provider.environment.DOCS_BUCKET}
         WebsiteConfiguration:
@@ -561,25 +397,22 @@ resources:
           RestrictPublicBuckets: false
         CorsConfiguration:
           CorsRules:
-            - AllowedMethods:
-                - GET
+            - AllowedMethods: [GET]
               AllowedOrigins:
                 - ${self:provider.environment.SERVICE_API_URL}
-
     docsBucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:
-        Bucket:
-          Ref: docsBucket
+        Bucket: !Ref docsBucket
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal: '*'
-              Action: 's3:GetObject'
-              Resource: 'arn:aws:s3:::${self:provider.environment.DOCS_BUCKET}/*'
+              Action: s3:GetObject
+              Resource: arn:aws:s3:::${self:provider.environment.DOCS_BUCKET}/*
 
-    # Iam
+    # IAM role assumed by deployed bot Lambdas
     botsRole:
       Type: AWS::IAM::Role
       Properties:
@@ -591,9 +424,11 @@ resources:
               Action: sts:AssumeRole
               Principal:
                 Service:
-                  - lambda.amazonaws.com
-                  - scheduler.amazonaws.com
-                  - apigateway.amazonaws.com
+                  [
+                    lambda.amazonaws.com,
+                    scheduler.amazonaws.com,
+                    apigateway.amazonaws.com,
+                  ]
         Policies:
           - PolicyName: ${self:provider.environment.SERVICE_PREFIX}
             PolicyDocument:
@@ -601,13 +436,15 @@ resources:
               Statement:
                 - Effect: Allow
                   Action:
-                    - lambda:InvokeFunction
-                    - logs:CreateLogStream
-                    - logs:CreateLogGroup
-                    - logs:PutLogEvents
+                    [
+                      lambda:InvokeFunction,
+                      logs:CreateLogStream,
+                      logs:CreateLogGroup,
+                      logs:PutLogEvents,
+                    ]
                   Resource: '*'
 
-    # API Gateway - Docs Route
+    # API Gateway docs route (serves OpenAPI spec at root /)
     docsRootMethod:
       Type: AWS::ApiGateway::Method
       Properties:
@@ -629,25 +466,24 @@ resources:
             ResponseParameters:
               method.response.header.Content-Type: true
 
-    # Smoke Test User (E2E tests — queues provisioned as IaC)
-    SmokeTestDLQ:
+    # Smoke test user SQS queues (E2E tests)
+    smokeTestDlq:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: ${self:provider.environment.SERVICE_PREFIX}-${self:provider.environment.SMOKE_TEST_USER_ID}-dlq
         MessageRetentionPeriod: 1209600
-
-    SmokeTestQueue:
+    smokeTestQueue:
       Type: AWS::SQS::Queue
-      DependsOn: SmokeTestDLQ
+      DependsOn: smokeTestDlq
       Properties:
         QueueName: ${self:provider.environment.SERVICE_PREFIX}-${self:provider.environment.SMOKE_TEST_USER_ID}
         MessageRetentionPeriod: 172800
         RedrivePolicy:
-          deadLetterTargetArn: !GetAtt SmokeTestDLQ.Arn
+          deadLetterTargetArn: !GetAtt smokeTestDlq.Arn
           maxReceiveCount: 3
 
     # CloudWatch Alarms
-    LambdaErrorAlarm:
+    lambdaErrorAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
         AlarmName: ${self:provider.environment.SERVICE_PREFIX}-lambda-errors
@@ -659,8 +495,7 @@ resources:
         Threshold: 5
         ComparisonOperator: GreaterThanThreshold
         TreatMissingData: notBreaching
-
-    DynamoDBThrottleAlarm:
+    dynamoThrottleAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
         AlarmName: ${self:provider.environment.SERVICE_PREFIX}-dynamodb-throttle
@@ -674,8 +509,7 @@ resources:
         EvaluationPeriods: 1
         Threshold: 1
         ComparisonOperator: GreaterThanOrEqualToThreshold
-
-    Api5xxAlarm:
+    api5xxAlarm:
       Type: AWS::CloudWatch::Alarm
       Properties:
         AlarmName: ${self:provider.environment.SERVICE_PREFIX}-api-5xx
