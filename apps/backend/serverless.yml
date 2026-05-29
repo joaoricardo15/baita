@@ -5,7 +5,6 @@ plugins:
   - serverless-esbuild
   - serverless-domain-manager
   - serverless-deployment-bucket
-  - serverless-openapi-documentation
 
 package:
   individually: true
@@ -34,13 +33,6 @@ custom:
     resultTtlInSeconds: 300
     identitySource: method.request.header.Authorization
     type: token
-  documentation:
-    version: 1.0.0
-    title: Baita Help API
-    description: Personal automation platform API
-    servers:
-      - url: https://api.baita.help
-        description: Production
 
 provider:
   name: aws
@@ -177,9 +169,6 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Create User
-            description: Creates a new user account
   endpoint-content-get:
     handler: src/endpoints/content/index.handler
     events:
@@ -188,9 +177,6 @@ functions:
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Get Content Feed
-            description: Retrieves queued content items from the user's SQS feed
   endpoint-resource-operation:
     handler: src/endpoints/resource/index.handler
     events:
@@ -199,9 +185,6 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Resource Operation
-            description: Performs CRUD on user resources (list, read, create, update, delete, upload, remove)
       - http:
           path: user/{userId}/resource/{resourceName}/{operation}/{resourceId}
           method: post
@@ -215,9 +198,6 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Create Bot
-            description: Creates a new bot with Lambda, API Gateway, and Scheduler
   endpoint-bot-bud:
     handler: src/endpoints/bot/bud/index.handler
     events:
@@ -226,9 +206,6 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Deploy Bot Model
-            description: Deploys a bot from a pre-built model/template
   endpoint-bot-update:
     handler: src/endpoints/bot/update/index.handler
     events:
@@ -237,9 +214,6 @@ functions:
           method: put
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Update Bot
-            description: Updates bot name, description, image, or task configuration
   endpoint-bot-delete:
     handler: src/endpoints/bot/delete/index.handler
     events:
@@ -248,9 +222,6 @@ functions:
           method: delete
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Delete Bot
-            description: Deletes bot and cleans up Lambda, API Gateway, Scheduler, and S3
   endpoint-bot-deploy:
     handler: src/endpoints/bot/deploy/index.handler
     events:
@@ -259,9 +230,6 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Deploy Bot
-            description: Generates Lambda code from task definitions and deploys to AWS
   endpoint-bot-test:
     handler: src/endpoints/bot/test/index.handler
     events:
@@ -270,9 +238,6 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Test Bot Task
-            description: Executes a single task with sample data and returns the result
   endpoint-bot-logs:
     handler: src/endpoints/bot/logs/index.handler
     events:
@@ -281,9 +246,6 @@ functions:
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-          documentation:
-            summary: Get Bot Logs
-            description: Retrieves execution logs from CloudWatch for a specific bot
 
   # OAuth connector (generic handler for all partners)
   connector-oauth:

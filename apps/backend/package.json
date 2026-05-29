@@ -6,7 +6,7 @@
     "start": "AWS_PROFILE=joao serverless offline --httpPort 5000",
     "deploy": "AWS_PROFILE=joao serverless deploy --stage prod",
     "test:run": "jest",
-    "docs": "serverless openapi generate --format json --output src/docs/openapi.json && aws s3 cp src/docs/openapi.json s3://baita-help-prod-docs",
+    "docs": "aws s3 cp src/docs/openapi.json s3://baita-help-prod-docs/openapi.json --profile joao --region us-east-1",
     "test": "jest --watchAll",
     "lint": "eslint 'src/**/*.ts' --fix",
     "format": "prettier './**/*.{js,ts,json,yml}' --write",
@@ -53,7 +53,6 @@
     "serverless-domain-manager": "^8.0.0",
     "serverless-esbuild": "^1.56.1",
     "serverless-offline": "^13.10.0",
-    "serverless-openapi-documentation": "^0.4.0",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   }
