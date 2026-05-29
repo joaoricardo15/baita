@@ -79,6 +79,19 @@ export const oauth2Request = async (
 
     const authResponse = await Axios(axiosAuthInput)
 
+    // Persist refreshed credentials back to DynamoDB
+    const updatedCredentials = {
+      ...credentialsResponse.credentials,
+      access_token: authResponse.data.access_token,
+      ...(authResponse.data.refresh_token && {
+        refresh_token: authResponse.data.refresh_token,
+      }),
+    }
+    await resource.update(connectionId as string, {
+      ...credentialsResponse,
+      credentials: updatedCredentials,
+    })
+
     const axiosInput = {
       url: appConfig.apiUrl + (inputData.path ? `/${inputData.path}` : ''),
       method: inputData.method,
