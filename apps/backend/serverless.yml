@@ -142,7 +142,6 @@ provider:
     GOOGLE_CLIENT_SECRET: ${ssm:/baita/prod/google-client-secret}
     NEWS_API_KEY: ${ssm:/baita/prod/news-api-key}
     OPENAI_API_AUTHORIZATION: ${ssm:/baita/prod/openai-authorization}
-    FIREBASE_SERVICE_ACCOUNT: ${ssm(raw):/baita/prod/firebase-service-account}
     VAPID_PUBLIC_KEY: ${ssm:/baita/prod/vapid-public-key}
     VAPID_PRIVATE_KEY: ${ssm:/baita/prod/vapid-private-key}
     # Smoke Tests
