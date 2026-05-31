@@ -416,22 +416,6 @@ resources:
             ResponseParameters:
               method.response.header.Content-Type: true
 
-    # Smoke test user SQS queues (E2E tests)
-    SmokeTestDLQ:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: ${self:provider.environment.SERVICE_PREFIX}-${self:provider.environment.SMOKE_TEST_USER_ID}-dlq
-        MessageRetentionPeriod: 1209600
-    SmokeTestQueue:
-      Type: AWS::SQS::Queue
-      DependsOn: SmokeTestDLQ
-      Properties:
-        QueueName: ${self:provider.environment.SERVICE_PREFIX}-${self:provider.environment.SMOKE_TEST_USER_ID}
-        MessageRetentionPeriod: 172800
-        RedrivePolicy:
-          deadLetterTargetArn: !GetAtt SmokeTestDLQ.Arn
-          maxReceiveCount: 3
-
     # CloudWatch Alarms
     LambdaErrorAlarm:
       Type: AWS::CloudWatch::Alarm
