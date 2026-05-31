@@ -38,6 +38,7 @@ const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
       .then((contents) =>
         setContents((prev) => (!prev ? contents : [...contents, ...prev]))
       )
+      .catch(() => setContents([]))
   }
 
   const reactToContent = (content: IContent, reaction: string) => {
@@ -54,7 +55,10 @@ const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }
 
   const retrieveTodoTasks = () => {
-    return apiRequest.getTodo().then((todo) => setTodoTasks(todo.tasks))
+    return apiRequest
+      .getTodo()
+      .then((todo) => setTodoTasks(todo?.tasks ?? []))
+      .catch(() => setTodoTasks([]))
   }
 
   const updateTodoTasks = (tasks: ITodoTask[]) => {
@@ -62,9 +66,12 @@ const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }
 
   const retrieveConnections = () => {
-    return apiRequest.getAppConnections().then((connections) => {
-      setConnections(connections)
-    })
+    return apiRequest
+      .getAppConnections()
+      .then((connections) => {
+        setConnections(connections)
+      })
+      .catch(() => setConnections([]))
   }
 
   useEffect(() => {

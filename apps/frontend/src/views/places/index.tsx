@@ -22,6 +22,7 @@ import {
   Text,
   TextInput,
 } from '../../components'
+import { getLabels, Labels } from '../../utils/labels'
 import ApiRequest from '../../utils/requests'
 
 const googleMapsApiKey = 'AIzaSyDtemIhgSV-6K1y4jGStXVSKTKeEUY2Vh8'
@@ -209,9 +210,12 @@ export const Places: FC = () => {
   }
 
   useEffect(() => {
-    apiRequest.listPlaces().then((places: any) => {
-      setPlaces(places)
-    })
+    apiRequest
+      .listPlaces()
+      .then((places: any) => {
+        setPlaces(places ?? [])
+      })
+      .catch(() => setPlaces([]))
   }, [])
 
   return (
@@ -220,6 +224,34 @@ export const Places: FC = () => {
         <div className="d-flex m-2">
           <Skeleton elements={5} width={36} height={36} />
           <Skeleton elements={5} height={36} className="w-100 mx-2" />
+        </div>
+      ) : places.length === 0 ? (
+        <div className="d-flex flex-column align-items-center justify-content-center mt-5 p-4">
+          <AddLocationAltOutlinedIcon
+            style={{ fontSize: 64 }}
+            className="text-secondary mb-3"
+          />
+          <Text className="fs-4 fw-bold text-center mb-2">
+            {labels.emptyTitle}
+          </Text>
+          <Text className="text-center text-secondary mb-4">
+            {labels.emptyDescription}
+          </Text>
+          <Fab
+            color="primary"
+            variant="extended"
+            onClick={() =>
+              setPlace({
+                placeId: '',
+                name: '',
+                pictures: [],
+                position: { lat: 0, lng: 0 },
+              })
+            }
+          >
+            <AddIcon className="me-1" />
+            {labels.addFirst}
+          </Fab>
         </div>
       ) : (
         <>
@@ -289,3 +321,20 @@ export const Places: FC = () => {
 export default withAuthenticationRequired(Places, {
   onRedirecting: () => <Loading />,
 })
+
+const LABELS: Labels = {
+  en: {
+    emptyTitle: 'No places yet',
+    emptyDescription:
+      'Save your favorite spots and they will appear here on the map.',
+    addFirst: 'Add your first place',
+  },
+  pt: {
+    emptyTitle: 'Nenhum lugar ainda',
+    emptyDescription:
+      'Salve seus lugares favoritos e eles aparecerão aqui no mapa.',
+    addFirst: 'Adicione seu primeiro lugar',
+  },
+}
+
+const labels = getLabels(LABELS)
