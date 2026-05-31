@@ -1,4 +1,16 @@
+import fs from 'fs'
+import path from 'path'
+
 import { defineConfig } from '@playwright/test'
+
+// Load .env file if it exists (local dev credentials)
+const envFile = path.join(__dirname, '.env')
+if (fs.existsSync(envFile)) {
+  for (const line of fs.readFileSync(envFile, 'utf-8').split('\n')) {
+    const [key, ...val] = line.split('=')
+    if (key && !process.env[key]) process.env[key.trim()] = val.join('=').trim()
+  }
+}
 
 const isLocal = process.env.TEST_ENV === 'local'
 

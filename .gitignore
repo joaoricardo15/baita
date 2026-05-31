@@ -5,6 +5,7 @@ dist
 .serverless
 .DS_Store
 *.log
+.env
 
 # Playwright
 playwright-report/
