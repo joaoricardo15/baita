@@ -9,7 +9,7 @@ dist
 # Playwright
 playwright-report/
 test-results/
-playwright/.auth/
+**/playwright/.auth/
 
 # IDE
 .idea/

@@ -13,14 +13,22 @@
  * - Frontend config: redirect URLs point to the generic /connectors/oauth handler
  */
 import { expect, test } from '@playwright/test'
+import fs from 'fs'
+import path from 'path'
 
-const API_URL = 'https://api.baita.help'
+const API_URL = process.env.API_URL || 'https://api.baita.help'
+const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
 
 let token: string
+let userId: string
 
 test.beforeAll(() => {
-  token = process.env.SMOKE_TEST_TOKEN || ''
-  if (!token) throw new Error('SMOKE_TEST_TOKEN env var is required')
+  if (fs.existsSync(tokenFile)) {
+    const data = JSON.parse(fs.readFileSync(tokenFile, 'utf-8'))
+    token = data.accessToken
+    userId = data.userId
+  }
+  if (!token) throw new Error('No access token found. Run auth.setup.ts first.')
 })
 
 function authHeaders() {
@@ -33,7 +41,7 @@ function authHeaders() {
 test.describe('Connection Storage', () => {
   test('list connections returns array', async ({ request }) => {
     const res = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/list`,
+      `${API_URL}/user/${userId}/resource/connection/list`,
       { headers: authHeaders(), data: {} }
     )
     expect(res.status()).toBe(200)
@@ -56,13 +64,13 @@ test.describe('Connection Storage', () => {
     }
 
     const createRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/create/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
       { headers: authHeaders(), data: connection }
     )
     expect((await createRes.json()).success).toBe(true)
 
     const readRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/read/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
       { headers: authHeaders(), data: {} }
     )
     const readBody = await readRes.json()
@@ -71,7 +79,7 @@ test.describe('Connection Storage', () => {
 
     // Cleanup
     await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/delete/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
       { headers: authHeaders(), data: {} }
     )
   })
@@ -85,7 +93,7 @@ test.describe('Token Refresh Persistence', () => {
 
     // Create with initial token
     await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/create/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
       {
         headers: authHeaders(),
         data: {
@@ -100,7 +108,7 @@ test.describe('Token Refresh Persistence', () => {
 
     // Simulate token refresh (update credentials)
     const updateRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/update/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/update/${connectionId}`,
       {
         headers: authHeaders(),
         data: {
@@ -116,7 +124,7 @@ test.describe('Token Refresh Persistence', () => {
 
     // Verify refreshed token persisted
     const readRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/read/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
       { headers: authHeaders(), data: {} }
     )
     expect((await readRes.json()).data.credentials.access_token).toBe(
@@ -125,7 +133,7 @@ test.describe('Token Refresh Persistence', () => {
 
     // Cleanup
     await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/delete/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
       { headers: authHeaders(), data: {} }
     )
   })
@@ -158,7 +166,7 @@ test.describe('Connection Lifecycle', () => {
 
     // Create
     const createRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/create/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
       {
         headers: authHeaders(),
         data: {
@@ -174,14 +182,14 @@ test.describe('Connection Lifecycle', () => {
 
     // Read
     const readRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/read/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
       { headers: authHeaders(), data: {} }
     )
     expect((await readRes.json()).data.name).toBe('Lifecycle Test')
 
     // Update
     const updateRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/update/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/update/${connectionId}`,
       {
         headers: authHeaders(),
         data: {
@@ -197,14 +205,14 @@ test.describe('Connection Lifecycle', () => {
 
     // Delete
     const deleteRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/delete/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
       { headers: authHeaders(), data: {} }
     )
     expect((await deleteRes.json()).success).toBe(true)
 
     // Verify gone
     const goneRes = await request.post(
-      `${API_URL}/user/smoke-test-ci/resource/connection/read/${connectionId}`,
+      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
       { headers: authHeaders(), data: {} }
     )
     expect((await goneRes.json()).data).toBeFalsy()

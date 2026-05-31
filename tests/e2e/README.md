@@ -65,14 +65,13 @@ Post-deploy integration tests that verify the live production system works corre
 | AI Assistant tab visible | Tab shows on bot page (even when disabled) | UI renders correctly       |
 | Info icon on unavailable | Shows info icon when Chrome AI unavailable | Graceful degradation works |
 
-## Running Locally
+## Running
 
 ```bash
-cd tests/e2e
-SMOKE_TEST_TOKEN=<token> npx playwright test
+cd tests/e2e && npm test
 ```
 
-The token is stored in AWS SSM at `/baita/prod/smoke-test-token`.
+Logs in via Auth0 (test credentials in `package.json`), then runs all tests against localhost. Auto-starts Vite dev server if not running. Requires backend on port 5000.
 
 ## Adding New Tests
 
@@ -80,12 +79,12 @@ The token is stored in AWS SSM at `/baita/prod/smoke-test-token`.
 2. Add a JSDoc header explaining what the file tests and why
 3. Use `test.describe()` to group related use cases
 4. Each test should be independent (create its own data, clean up after)
-5. Use `smoke-` prefix for test resource IDs to avoid collision with real data
+5. Use `test-` prefix for test resource IDs to avoid collision with real data
 6. Update this README with the new use cases and test count
 
 ## Infrastructure
 
-- **Auth**: Smoke test token stored in SSM (`/baita/prod/smoke-test-token`)
-- **Test user**: DynamoDB record `smoke-test-ci` with SQS queue `baita-help-prod-smoke-test-ci`
-- **Secrets**: `SMOKE_TEST_TOKEN` in GitHub Secrets
-- **Config**: `playwright.config.ts` in project root
+- **Auth**: Real Auth0 login via Playwright (test user: `test@baita.help`)
+- **Token extraction**: `auth.setup.ts` saves storageState + access token from localStorage
+- **Config**: `playwright.config.ts` — auto-detects `TEST_ENV=local` to point at localhost
+- **CI**: GitHub Actions uses `TEST_EMAIL` + `TEST_PASSWORD` secrets

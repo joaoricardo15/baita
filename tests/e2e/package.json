@@ -2,7 +2,7 @@
   "name": "@baita/e2e",
   "private": true,
   "scripts": {
-    "test": "playwright test",
+    "test": "TEST_ENV=local TEST_EMAIL=test@baita.help TEST_PASSWORD='Test123$' playwright test",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report"
   },
