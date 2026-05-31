@@ -85,11 +85,11 @@ Changes to `packages/shared/` trigger BOTH branches.
 
 ## E2E Testing
 
-Shared E2E tests in `tests/e2e/` use Playwright and simulate real user flows against production. They run automatically after any deploy.
+Shared E2E tests in `tests/e2e/` use Playwright and simulate real user flows. They log in via Auth0 (real credentials), then test pages, API endpoints, security, and bot lifecycle.
 
 ```bash
-# Run locally
-cd tests/e2e && SMOKE_TEST_TOKEN=<token> npx playwright test
+# Run E2E tests (starts Vite automatically, logs in via Auth0)
+cd tests/e2e && npm test
 ```
 
 ## Quick Commands
@@ -108,8 +108,8 @@ pnpm turbo run test
 # Type-check everything
 pnpm turbo run type-check
 
-# Run E2E against prod
-cd tests/e2e && SMOKE_TEST_TOKEN=<token> npx playwright test
+# Run E2E tests
+cd tests/e2e && npm test
 ```
 
 ## AWS Context
@@ -128,6 +128,35 @@ Before pushing, verify:
 - [ ] Schema changes in `packages/shared/` don't break either app
 - [ ] Both apps' CLAUDE.md files are consistent with this root file
 - [ ] Every page handles API failures gracefully (no infinite loading)
+
+## Self-Verification with Playwright MCP
+
+After implementing frontend changes, verify them using the Playwright MCP browser tools:
+
+1. Start the Vite dev server: `cd apps/frontend && npx vite --port 3000 --open false &`
+2. Navigate: `browser_navigate` to `http://localhost:3000`
+3. Check for errors: `browser_console_messages` (filter by `error` level)
+4. Check network: `browser_network_requests` (look for failed requests)
+5. Verify content: `browser_snapshot` (accessibility tree shows rendered page structure)
+6. If errors found → fix them → repeat from step 2
+
+The frontend dev server includes a mock API plugin (see `vite.config.ts`) that serves local JSON data — no backend needed for UI verification.
+
+## Testing Strategy
+
+Single unified Playwright test suite in `tests/e2e/`:
+
+```bash
+cd tests/e2e && npm test
+```
+
+- Logs in via Auth0 (`auth.setup.ts`), saves token + storageState
+- Tests all pages for JS errors and network failures (`pages.spec.ts`)
+- Tests API contracts, CRUD, bot lifecycle (`api-health.spec.ts`)
+- Tests OAuth connector operations (`connector-oauth.spec.ts`)
+- Tests auth flow, security gates, CORS (`user-auth.spec.ts`)
+- Auto-starts Vite dev server, points API to `localhost:5000/dev`
+- Same suite runs in CI against production (set `TEST_ENV` unset + provide credentials)
 
 ## Live Feedback Loop
 

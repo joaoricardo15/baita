@@ -351,14 +351,12 @@ Consistency is enforced at 3 levels:
 
 - `npm run knip` — detects unused files, exports, and dependencies
 
-## Post-Deploy E2E Smoke Tests
+## E2E Tests
 
-Production smoke tests run automatically after every deploy in CI (`smoke-tests` job in GitHub Actions). They hit the live API at `https://api.baita.help` using an Auth0 M2M token.
-
-### Running Locally
+E2E tests live in `tests/e2e/` at the monorepo root. They use Playwright with real Auth0 login (test user: `test@baita.help`) — no token bypass.
 
 ```bash
-SMOKE_TEST_TOKEN=<token-from-ssm> npm run test:e2e
+cd tests/e2e && npm test
 ```
 
 ### Test Coverage
@@ -384,17 +382,16 @@ SMOKE_TEST_TOKEN=<token-from-ssm> npm run test:e2e
 
 When adding a new endpoint or feature:
 
-1. Add the test case to `tests/e2e/smoke.e2e.test.ts`
+1. Add the test case to the relevant `.spec.ts` file in `tests/e2e/tests/`
 2. Update the coverage table above
 3. Ensure tests clean up after themselves (delete created resources)
-4. Use `smoke-` prefix for test resource names to avoid collision with real data
+4. Use `test-` prefix for test resource names to avoid collision with real data
 
 ### Infrastructure
 
-- **Auth**: Smoke test token stored in SSM (`/baita/prod/smoke-test-token`), recognized by authorizer
-- **Test user**: DynamoDB record `smoke-test-ci` with SQS queue `baita-help-prod-smoke-test-ci`
-- **Secrets**: `SMOKE_TEST_TOKEN` in GitHub Secrets (same value as SSM parameter)
-- **Config**: `jest.e2e.config.ts` (separate from unit test config)
+- **Auth**: Real Auth0 login via Playwright (`auth.setup.ts` extracts token from localStorage)
+- **Test user**: `test@baita.help` (Auth0 database connection `baita-users`)
+- **CI**: GitHub Actions uses `TEST_EMAIL` + `TEST_PASSWORD` secrets
 
 ## Known Limitations
 

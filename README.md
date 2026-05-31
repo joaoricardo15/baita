@@ -103,8 +103,7 @@ pnpm turbo run type-check
 ### E2E Tests
 
 ```bash
-cd tests/e2e
-SMOKE_TEST_TOKEN=<token> npx playwright test
+cd tests/e2e && npm test
 ```
 
 ## CI/CD Pipeline
