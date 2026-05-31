@@ -35,7 +35,7 @@ describe('Authorizer', () => {
     mockVerify.mockReturnValue({
       sub: 'auth0|user123',
       aud: 'https://dev-yc4pbydg.us.auth0.com/api/v2/',
-      iss: 'https://dev-yc4pbydg.us.auth0.com/',
+      iss: 'https://auth.baita.help/',
     })
   })
 
@@ -107,7 +107,7 @@ describe('Authorizer', () => {
   test('should use "user" as default principalId when sub is missing', async () => {
     mockVerify.mockReturnValue({
       aud: 'https://dev-yc4pbydg.us.auth0.com/api/v2/',
-      iss: 'https://dev-yc4pbydg.us.auth0.com/',
+      iss: 'https://auth.baita.help/',
     })
 
     const result = await handler(mockEvent)

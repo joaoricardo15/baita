@@ -5,7 +5,7 @@ import {
 import * as jwt from 'jsonwebtoken'
 import jwksRsa from 'jwks-rsa'
 
-const AUTH0_DOMAIN = 'dev-yc4pbydg.us.auth0.com'
+const AUTH0_DOMAIN = 'auth.baita.help'
 const AUTH0_AUDIENCE = 'https://dev-yc4pbydg.us.auth0.com/api/v2/'
 
 const jwksClient = jwksRsa({
@@ -31,27 +31,6 @@ export const handler = async (
 
   if (!token) {
     throw new Error('Unauthorized')
-  }
-
-  // Smoke test bypass — matches a secret stored in SSM
-  const smokeToken = process.env.SMOKE_TEST_TOKEN
-  if (smokeToken && token === smokeToken) {
-    const userId = process.env.SMOKE_TEST_USER_ID || 'smoke-test-ci'
-    const arnBase = event.methodArn.split('/').slice(0, 2).join('/')
-    return {
-      principalId: userId,
-      policyDocument: {
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Action: 'execute-api:Invoke',
-            Effect: 'Allow',
-            Resource: `${arnBase}/*/*`,
-          },
-        ],
-      },
-      context: { userId },
-    }
   }
 
   const decoded = jwt.decode(token, { complete: true })

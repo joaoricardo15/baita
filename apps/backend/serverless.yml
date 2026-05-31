@@ -144,9 +144,6 @@ provider:
     OPENAI_API_AUTHORIZATION: ${ssm:/baita/prod/openai-authorization}
     VAPID_PUBLIC_KEY: ${ssm:/baita/prod/vapid-public-key}
     VAPID_PRIVATE_KEY: ${ssm:/baita/prod/vapid-private-key}
-    # Smoke Tests
-    SMOKE_TEST_TOKEN: ${ssm:/baita/prod/smoke-test-token}
-    SMOKE_TEST_USER_ID: smoke-test-ci
 
 functions:
   authorizer:

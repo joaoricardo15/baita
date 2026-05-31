@@ -25,8 +25,9 @@ Auth0 callback → App receives JWT → API calls with Bearer token
 **Configuration**:
 
 - Client ID: `Pq5VTtkIhUSfe9bqkoPsLvGCw1JBNf4c`
+- Custom domain: `auth.baita.help`
 - Callback URLs: `https://www.baita.help`, `http://localhost:3000`
-- Smoke test: bypass token in authorizer (`SMOKE_TEST_TOKEN` env var)
+- E2E testing: real Auth0 login via Playwright (test user: `test@baita.help`)
 
 **Key behaviors**:
 
@@ -91,4 +92,3 @@ Credentials stored in DynamoDB → Connection linked to bot task
 - **Connector tokens**: Stored encrypted-at-rest in DynamoDB
 - **OAuth state**: Encodes context (no HMAC yet — future improvement)
 - **CORS**: Gateway-level headers on all 4XX/5XX responses
-- **Smoke test token**: Only bypasses auth for `smoke-test-ci` user
