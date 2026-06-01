@@ -55,6 +55,7 @@ export const slackConnector: ConnectorManifest = {
     userIdField: 'user_id',
     clientIdEnvVar: 'SLACK_CLIENT_ID',
     clientSecretEnvVar: 'SLACK_CLIENT_SECRET',
+    tokenAuthMethod: 'body',
   },
   base: { url: 'https://slack.com/api' },
   healthCheck: { url: '/auth.test', method: 'POST' },
@@ -160,29 +161,30 @@ Then test:
 
 ## Connector Manifest Schema Reference
 
-| Field                      | Type                           | Required | Description                                   |
-| -------------------------- | ------------------------------ | -------- | --------------------------------------------- |
-| `id`                       | string                         | Yes      | Unique identifier (kebab-case)                |
-| `name`                     | string                         | Yes      | Display name                                  |
-| `icon`                     | string                         | No       | Icon identifier                               |
-| `category`                 | string                         | Yes      | Grouping category                             |
-| `auth.type`                | 'oauth2' \| 'apiKey' \| 'none' | Yes      | Authentication method                         |
-| `auth.authorizationUrl`    | string                         | OAuth2   | Provider's authorize endpoint                 |
-| `auth.tokenUrl`            | string                         | OAuth2   | Token exchange endpoint                       |
-| `auth.refreshUrl`          | string                         | No       | Token refresh endpoint (defaults to tokenUrl) |
-| `auth.scopes`              | string[]                       | OAuth2   | Required permissions                          |
-| `auth.userInfoUrl`         | string                         | OAuth2   | Endpoint to fetch user identity               |
-| `auth.userIdField`         | string                         | OAuth2   | JSON path to user ID in userInfo response     |
-| `auth.clientIdEnvVar`      | string                         | OAuth2   | Environment variable name for client ID       |
-| `auth.clientSecretEnvVar`  | string                         | OAuth2   | Environment variable name for client secret   |
-| `base.url`                 | string                         | Yes      | Base URL for all API calls                    |
-| `healthCheck.url`          | string                         | No       | Endpoint to verify connection is alive        |
-| `operations[].id`          | string                         | Yes      | Unique operation ID                           |
-| `operations[].name`        | string                         | Yes      | Display name                                  |
-| `operations[].method`      | string                         | Yes      | HTTP method                                   |
-| `operations[].path`        | string                         | Yes      | API path (appended to base.url)               |
-| `operations[].inputFields` | IVariable[]                    | Yes      | Input parameters                              |
-| `operations[].outputPath`  | string                         | No       | JSON path to extract from response            |
+| Field                      | Type                           | Required | Description                                                      |
+| -------------------------- | ------------------------------ | -------- | ---------------------------------------------------------------- |
+| `id`                       | string                         | Yes      | Unique identifier (kebab-case)                                   |
+| `name`                     | string                         | Yes      | Display name                                                     |
+| `icon`                     | string                         | No       | Icon identifier                                                  |
+| `category`                 | string                         | Yes      | Grouping category                                                |
+| `auth.type`                | 'oauth2' \| 'apiKey' \| 'none' | Yes      | Authentication method                                            |
+| `auth.authorizationUrl`    | string                         | OAuth2   | Provider's authorize endpoint                                    |
+| `auth.tokenUrl`            | string                         | OAuth2   | Token exchange endpoint                                          |
+| `auth.refreshUrl`          | string                         | No       | Token refresh endpoint (defaults to tokenUrl)                    |
+| `auth.scopes`              | string[]                       | OAuth2   | Required permissions                                             |
+| `auth.userInfoUrl`         | string                         | OAuth2   | Endpoint to fetch user identity                                  |
+| `auth.userIdField`         | string                         | OAuth2   | JSON path to user ID in userInfo response                        |
+| `auth.clientIdEnvVar`      | string                         | OAuth2   | Environment variable name for client ID                          |
+| `auth.clientSecretEnvVar`  | string                         | OAuth2   | Environment variable name for client secret                      |
+| `auth.tokenAuthMethod`     | 'basic' \| 'body'              | No       | How credentials are sent during token exchange (default: 'body') |
+| `base.url`                 | string                         | Yes      | Base URL for all API calls                                       |
+| `healthCheck.url`          | string                         | No       | Endpoint to verify connection is alive                           |
+| `operations[].id`          | string                         | Yes      | Unique operation ID                                              |
+| `operations[].name`        | string                         | Yes      | Display name                                                     |
+| `operations[].method`      | string                         | Yes      | HTTP method                                                      |
+| `operations[].path`        | string                         | Yes      | API path (appended to base.url)                                  |
+| `operations[].inputFields` | IVariable[]                    | Yes      | Input parameters                                                 |
+| `operations[].outputPath`  | string                         | No       | JSON path to extract from response                               |
 
 ---
 
@@ -221,3 +223,50 @@ The `redirect_uri` must match EXACTLY in three places:
 If ANY mismatch, the provider rejects the token exchange silently.
 
 **All partners** use the generic callback URL: `https://api.baita.help/connectors/oauth`. Register this exact URL in each provider's OAuth app dashboard.
+
+---
+
+## Architecture: Two Auth Systems
+
+There are **two separate systems** handling OAuth for a partner — understand both:
+
+### 1. Initial Connection (Connector Manifest)
+
+When a user clicks "New Connection", the **connector manifest** (`packages/shared/src/connectors/{partner}.ts`) drives:
+
+- Authorization URL construction (frontend builds the popup URL)
+- Token exchange (backend handler at `apps/backend/src/connectors/oauth/index.ts`)
+- User info fetching and connection storage
+
+The `tokenAuthMethod` field in the manifest controls how `client_id`/`client_secret` are sent during the initial code-for-tokens exchange:
+
+- `'body'` (default) — credentials in POST body as form fields
+- `'basic'` — credentials as `Authorization: Basic base64(id:secret)` header
+
+### 2. Token Refresh During Bot Execution (App Config)
+
+When a deployed bot runs a task using the connection, the **app config** from `apps/frontend/src/defines/apps.ts` (serialized into the bot's task JSON) drives:
+
+- Token refresh before each API call
+- Auth method for refresh (`config.auth.type`: `'basic'` or `'body'`)
+- Bearer token injection into the actual API request
+
+**Both systems must agree** on how to authenticate with the provider's token endpoint. If the manifest says `tokenAuthMethod: 'basic'`, the frontend app config `auth.type` must also be `'basic'`.
+
+### Token Auth Methods by Provider
+
+| Provider  | Token Exchange | Token Refresh | Notes                       |
+| --------- | -------------- | ------------- | --------------------------- |
+| Google    | body           | body          | Standard OAuth2 body params |
+| Pipedrive | basic          | basic         | Requires Basic auth header  |
+
+---
+
+## Testing a New Partner
+
+After integrating a new partner, verify these flows:
+
+1. **Unit tests** — OAuth handler + token refresh (`apps/backend/src/connectors/oauth/tests/`)
+2. **E2E tests** — Connection CRUD with partner-specific credential shape (`tests/e2e/tests/connector-oauth.spec.ts`)
+3. **Manual test** — Open bot builder → add task → click "New Connection" → authorize → verify connection saved
+4. **Bot execution test** — Deploy a bot with the partner task → run it → verify API call succeeds with refreshed token

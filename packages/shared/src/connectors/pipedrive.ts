@@ -16,6 +16,7 @@ export const pipedriveConnector: ConnectorManifest = {
     userIdField: 'data.id',
     clientIdEnvVar: 'PIPEDRIVE_CLIENT_ID',
     clientSecretEnvVar: 'PIPEDRIVE_CLIENT_SECRET',
+    tokenAuthMethod: 'basic',
   },
   base: { url: 'https://api.pipedrive.com/v1' },
   healthCheck: { url: '/users/me', method: 'GET' },

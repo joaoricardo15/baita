@@ -12,6 +12,7 @@ export const OAuth2AuthSchema = z.object({
   userIdField: z.string(),
   clientIdEnvVar: z.string(),
   clientSecretEnvVar: z.string(),
+  tokenAuthMethod: z.enum(['basic', 'body']).default('body').optional(),
 })
 
 export const ApiKeyAuthSchema = z.object({

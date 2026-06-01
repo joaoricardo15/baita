@@ -46,6 +46,7 @@ exports.handler = async (
       clientId,
       clientSecret,
       redirectUri: `${SERVICE_API_URL}/connectors/oauth`,
+      tokenAuthMethod: auth.tokenAuthMethod || 'body',
     })
 
     const { connectionId, email } = await fetchUserInfo({
@@ -97,18 +98,33 @@ async function exchangeCodeForTokens(params: {
   clientId: string
   clientSecret: string
   redirectUri: string
+  tokenAuthMethod: 'basic' | 'body'
 }): Promise<Record<string, string>> {
-  const data = qs.stringify({
+  const body: Record<string, string> = {
     code: params.code,
     grant_type: 'authorization_code',
     redirect_uri: params.redirectUri,
-    client_id: params.clientId,
-    client_secret: params.clientSecret,
-  })
+  }
 
-  const response = await axios.post(params.tokenUrl, data, {
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  })
+  if (params.tokenAuthMethod === 'body') {
+    body.client_id = params.clientId
+    body.client_secret = params.clientSecret
+  }
+
+  const data = qs.stringify(body)
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+  }
+
+  if (params.tokenAuthMethod === 'basic') {
+    const encoded = Buffer.from(
+      `${params.clientId}:${params.clientSecret}`
+    ).toString('base64')
+    headers['Authorization'] = `Basic ${encoded}`
+  }
+
+  const response = await axios.post(params.tokenUrl, data, { headers })
 
   return response.data
 }

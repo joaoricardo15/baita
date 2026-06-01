@@ -195,3 +195,115 @@ test.describe('Connection Lifecycle', () => {
     expect((await goneRes.json()).data).toBeFalsy()
   })
 })
+
+test.describe('Pipedrive Connection', () => {
+  const pipedriveAppId = '19c1921c-9a6b-4def-91c8-8bcba8239bf5'
+
+  test('create Pipedrive connection with OAuth credentials shape', async ({
+    request,
+  }) => {
+    const connectionId = `smoke-pipedrive-${Date.now()}`
+
+    const createRes = await request.post(
+      `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
+      {
+        headers: authHeaders(token),
+        data: {
+          appId: pipedriveAppId,
+          connectionId,
+          name: 'Pipedrive Test User',
+          email: 'pd-user@company.com',
+          credentials: {
+            access_token: 'pd-test-access-token',
+            refresh_token: 'pd-test-refresh-token',
+            token_type: 'bearer',
+            scope: '',
+            api_domain: 'https://mycompany.pipedrive.com',
+          },
+        },
+      }
+    )
+    expect((await createRes.json()).success).toBe(true)
+
+    const readRes = await request.post(
+      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
+      { headers: authHeaders(token), data: {} }
+    )
+    const readBody = await readRes.json()
+    expect(readBody.data.appId).toBe(pipedriveAppId)
+    expect(readBody.data.credentials.refresh_token).toBe(
+      'pd-test-refresh-token'
+    )
+    expect(readBody.data.credentials.api_domain).toBe(
+      'https://mycompany.pipedrive.com'
+    )
+
+    await request.post(
+      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
+      { headers: authHeaders(token), data: {} }
+    )
+  })
+
+  test('Pipedrive connection token refresh persistence', async ({
+    request,
+  }) => {
+    const connectionId = `smoke-pd-refresh-${Date.now()}`
+
+    await request.post(
+      `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
+      {
+        headers: authHeaders(token),
+        data: {
+          appId: pipedriveAppId,
+          connectionId,
+          name: 'PD Refresh Test',
+          email: 'pd-refresh@company.com',
+          credentials: {
+            access_token: 'pd-token-v1',
+            refresh_token: 'pd-refresh-v1',
+          },
+        },
+      }
+    )
+
+    const updateRes = await request.post(
+      `${API_URL}/user/${userId}/resource/connection/update/${connectionId}`,
+      {
+        headers: authHeaders(token),
+        data: {
+          appId: pipedriveAppId,
+          connectionId,
+          name: 'PD Refresh Test',
+          email: 'pd-refresh@company.com',
+          credentials: {
+            access_token: 'pd-token-v2',
+            refresh_token: 'pd-refresh-v2',
+          },
+        },
+      }
+    )
+    expect((await updateRes.json()).success).toBe(true)
+
+    const readRes = await request.post(
+      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
+      { headers: authHeaders(token), data: {} }
+    )
+    const body = await readRes.json()
+    expect(body.data.credentials.access_token).toBe('pd-token-v2')
+    expect(body.data.credentials.refresh_token).toBe('pd-refresh-v2')
+
+    await request.post(
+      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
+      { headers: authHeaders(token), data: {} }
+    )
+  })
+
+  test('OAuth callback rejects with Pipedrive-shaped invalid state', async ({
+    request,
+  }) => {
+    const res = await request.get(
+      `${API_URL}/connectors/oauth?code=fake-code&state=${pipedriveAppId}:${userId}:fake-bot:0:pipedrive`
+    )
+    expect(res.status()).toBe(200)
+  })
+})
