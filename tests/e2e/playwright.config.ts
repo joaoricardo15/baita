@@ -25,7 +25,9 @@ export default defineConfig({
   retries: 1,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: isLocal ? 'http://localhost:3000' : 'https://www.baita.help',
+    baseURL: isLocalBackend
+      ? 'http://localhost:3000'
+      : 'https://www.baita.help',
     trace: 'on-first-retry',
   },
   projects: [
