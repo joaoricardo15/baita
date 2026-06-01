@@ -52,28 +52,34 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-      - name: Wait for Amplify Deploy
+      - name: Deploy to Amplify
         run: |
           APP_ID="d35kx8fgop2qtf"
           BRANCH="main"
-          echo "Waiting for Amplify build to complete..."
-          for i in $(seq 1 30); do
-            STATUS=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" \
-              --query 'jobSummaries[0].status' --output text | head -1 | tr -d '[:space:]')
+
+          echo "Starting Amplify build..."
+          JOB_ID=$(aws amplify start-job --app-id "$APP_ID" --branch-name "$BRANCH" \
+            --job-type RELEASE --query 'jobSummary.jobId' --output text)
+          echo "Build started: job $JOB_ID"
+
+          echo "Waiting for build to complete..."
+          for i in $(seq 1 40); do
+            STATUS=$(aws amplify get-job --app-id "$APP_ID" --branch-name "$BRANCH" \
+              --job-id "$JOB_ID" --query 'job.summary.status' --output text)
             echo "  Attempt $i: status=[$STATUS]"
             case "$STATUS" in
               SUCCEED)
-                echo "Amplify build succeeded!"
+                echo "Amplify build $JOB_ID succeeded!"
                 exit 0
                 ;;
               FAILED|CANCELLED)
-                echo "Amplify build failed with status: $STATUS"
+                echo "Amplify build $JOB_ID failed with status: $STATUS"
                 exit 1
                 ;;
             esac
-            sleep 20
+            sleep 15
           done
-          echo "Timeout waiting for Amplify build (10 min)"
+          echo "Timeout waiting for Amplify build $JOB_ID (10 min)"
           exit 1
 
   backend-quality:
