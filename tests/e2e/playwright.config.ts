@@ -13,8 +13,9 @@ if (fs.existsSync(envFile)) {
 }
 
 const isLocal = process.env.TEST_ENV === 'local'
+const isLocalBackend = isLocal && !process.env.API_URL
 
-if (isLocal && !process.env.API_URL) {
+if (isLocalBackend) {
   process.env.API_URL = 'http://localhost:5000/dev'
 }
 
@@ -40,7 +41,7 @@ export default defineConfig({
       ...(isLocal ? { dependencies: ['setup'] } : {}),
     },
   ],
-  ...(isLocal
+  ...(isLocalBackend
     ? {
         webServer: {
           command: 'npx vite --port 3000 --open false',

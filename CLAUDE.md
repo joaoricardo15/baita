@@ -129,6 +129,7 @@ Before pushing, verify:
 - [ ] Schema changes in `packages/shared/` don't break either app
 - [ ] Both apps' CLAUDE.md files are consistent with this root file
 - [ ] Every page handles API failures gracefully (no infinite loading)
+- [ ] E2E test changes are compatible with CI environment (tests hit `https://api.baita.help` in CI, not localhost)
 
 ## Self-Verification with Playwright MCP
 

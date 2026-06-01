@@ -115,6 +115,7 @@ jobs:
       - name: Run E2E Tests
         env:
           TEST_ENV: local
+          API_URL: https://api.baita.help
           TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
         run: cd tests/e2e && npx playwright test
