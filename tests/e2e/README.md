@@ -2,19 +2,22 @@
 
 Integration tests that verify the full system works correctly — authentication, API contracts, page rendering, and security. Uses real Auth0 login via Playwright.
 
+**For the complete user journey map and use cases that these tests protect, see [`USER-JOURNEYS.md`](./USER-JOURNEYS.md).**
+
 ## Test Files
 
-| File                            | Responsibility                               |
-| ------------------------------- | -------------------------------------------- |
-| `tests/pages.spec.ts`           | All pages render without JS errors           |
-| `tests/user-auth.spec.ts`       | User login flow (Baita auth via Auth0)       |
-| `tests/connector-oauth.spec.ts` | Partner connections (3rd party OAuth)        |
-| `tests/api-health.spec.ts`      | API endpoints, bot lifecycle, CRUD, security |
-| `tests/bot-page.spec.ts`        | Bot page UI (AI Assistant tab visibility)    |
+| File                            | Responsibility                                     |
+| ------------------------------- | -------------------------------------------------- |
+| `tests/pages.spec.ts`           | All pages render without JS errors                 |
+| `tests/user-auth.spec.ts`       | User login flow + security (Auth0, 401s, CORS)     |
+| `tests/connector-oauth.spec.ts` | Partner connections (3rd party OAuth)              |
+| `tests/resource-crud.spec.ts`   | Resource CRUD, bot lifecycle, content feed, errors |
+| `tests/todo-journey.spec.ts`    | To-Do task lifecycle (create, complete, verify)    |
+| `tests/helpers.ts`              | Shared utilities (auth loading, headers, API URL)  |
 
 ## Use Cases Covered
 
-### User Authentication (`user-auth.spec.ts`)
+### User Authentication & Security (`user-auth.spec.ts`)
 
 | Use Case                | What's Tested                               | Why It Matters                                    |
 | ----------------------- | ------------------------------------------- | ------------------------------------------------- |
@@ -27,6 +30,7 @@ Integration tests that verify the full system works correctly — authentication
 | Callback with error     | App handles ?error=access_denied gracefully | Users see the app, not a blank page               |
 | Valid token → 200       | Real Auth0 token accepted by API            | Authorizer + Lambda cold start work               |
 | Invalid token → 401     | Bad tokens rejected                         | Security enforcement                              |
+| No token → 401          | Missing auth header rejected                | Security enforcement                              |
 | CORS on errors          | 401 responses include CORS headers          | Frontend can read error responses                 |
 
 ### OAuth Connector (`connector-oauth.spec.ts`)
@@ -41,30 +45,28 @@ Integration tests that verify the full system works correctly — authentication
 | Endpoint with invalid state | Bad state doesn't crash               | Security + resilience                     |
 | Full lifecycle              | Create → read → update → delete       | Complete CRUD works end-to-end            |
 
-### API Health (`api-health.spec.ts`)
+### Resource CRUD & Bot Lifecycle (`resource-crud.spec.ts`)
 
 | Use Case          | What's Tested                           | Why It Matters                  |
 | ----------------- | --------------------------------------- | ------------------------------- |
 | Content feed      | GET /content returns valid response     | Home page data loads            |
 | Todo list         | POST /resource/todo/list                | Todo page works                 |
 | Bot list          | POST /resource/bot/list                 | Bots page works                 |
-| Connection list   | POST /resource/connection/list          | Connections available           |
 | Resource CRUD     | create → read → update → list → delete  | DynamoDB operations work        |
 | Bot create        | POST /bots creates Lambda + API Gateway | Bot infrastructure provisioning |
 | Bot logs          | GET /bots/{id}/logs                     | Observability works             |
 | Bot read          | POST /resource/bot/read                 | Bot data accessible             |
 | Bot delete        | DELETE /bots/{id}/api/{apiId}           | Cleanup works                   |
-| No auth → 401     | Rejects unsigned requests               | Security                        |
-| Bad auth → 401    | Rejects invalid tokens                  | Security                        |
-| CORS headers      | Present on error responses              | Frontend can handle errors      |
 | Invalid operation | Returns structured error (not 500)      | Error handling works            |
 
-### Bot Page (`bot-page.spec.ts`)
+### To-Do Journey (`todo-journey.spec.ts`)
 
-| Use Case                 | What's Tested                              | Why It Matters             |
-| ------------------------ | ------------------------------------------ | -------------------------- |
-| AI Assistant tab visible | Tab shows on bot page (even when disabled) | UI renders correctly       |
-| Info icon on unavailable | Shows info icon when Chrome AI unavailable | Graceful degradation works |
+| Use Case      | What's Tested                          | Why It Matters            |
+| ------------- | -------------------------------------- | ------------------------- |
+| Read state    | GET current todo tasks                 | Page data loads correctly |
+| Add task      | Update with new task, verify persisted | Users can add tasks       |
+| Complete task | Mark as done, verify state persisted   | Core daily workflow works |
+| Remove task   | Delete test task, verify gone          | Cleanup works             |
 
 ## Running
 
@@ -81,11 +83,13 @@ Logs in via Auth0 (test credentials in `.env` file, gitignored), then runs all t
 3. Use `test.describe()` to group related use cases
 4. Each test should be independent (create its own data, clean up after)
 5. Use `test-` prefix for test resource IDs to avoid collision with real data
-6. Update this README with the new use cases and test count
+6. Use shared helpers from `tests/helpers.ts` (API URL, token loading, auth headers)
+7. Update this README with the new use cases and test count
 
 ## Infrastructure
 
 - **Auth**: Real Auth0 login via Playwright (test user: `test@baita.help`)
 - **Token extraction**: `auth.setup.ts` saves storageState + access token from localStorage
+- **Shared helpers**: `tests/helpers.ts` — DRY token loading, auth headers, API URL
 - **Config**: `playwright.config.ts` — auto-detects `TEST_ENV=local` to point at localhost
 - **CI**: GitHub Actions uses `TEST_EMAIL` + `TEST_PASSWORD` secrets

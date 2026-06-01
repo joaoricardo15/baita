@@ -1,48 +1,35 @@
 /**
  * OAuth Connector E2E Tests
  *
+ * User Journey: OAuth Connections
  * Tests the partner connection system — users authorizing Baita to access
  * their 3rd-party accounts (Google, Pipedrive, etc.).
  * This is SEPARATE from user authentication (Baita login via Auth0).
  *
- * Use cases covered:
+ * Covers:
  * - Connection CRUD: create, read, update, delete in DynamoDB
  * - Token refresh persistence: updated credentials survive between executions
  * - OAuth callback endpoint: handles errors, missing params, invalid state gracefully
  * - Connection lifecycle: full create → use → update → delete flow
- * - Frontend config: redirect URLs point to the generic /connectors/oauth handler
  */
 import { expect, test } from '@playwright/test'
-import fs from 'fs'
-import path from 'path'
 
-const API_URL = process.env.API_URL || 'https://api.baita.help'
-const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
+import { API_URL, authHeaders, loadAuthData } from './helpers'
 
 let token: string
 let userId: string
 
 test.beforeAll(() => {
-  if (fs.existsSync(tokenFile)) {
-    const data = JSON.parse(fs.readFileSync(tokenFile, 'utf-8'))
-    token = data.accessToken
-    userId = data.userId
-  }
-  if (!token) throw new Error('No access token found. Run auth.setup.ts first.')
+  const data = loadAuthData()
+  token = data.accessToken
+  userId = data.userId
 })
-
-function authHeaders() {
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  }
-}
 
 test.describe('Connection Storage', () => {
   test('list connections returns array', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/connection/list`,
-      { headers: authHeaders(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     expect(res.status()).toBe(200)
     const body = await res.json()
@@ -65,22 +52,21 @@ test.describe('Connection Storage', () => {
 
     const createRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
-      { headers: authHeaders(), data: connection }
+      { headers: authHeaders(token), data: connection }
     )
     expect((await createRes.json()).success).toBe(true)
 
     const readRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
-      { headers: authHeaders(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     const readBody = await readRes.json()
     expect(readBody.data.email).toBe('test@example.com')
     expect(readBody.data.credentials.access_token).toBe('test-access-token')
 
-    // Cleanup
     await request.post(
       `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
-      { headers: authHeaders(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
   })
 })
@@ -91,11 +77,10 @@ test.describe('Token Refresh Persistence', () => {
   }) => {
     const connectionId = `smoke-refresh-${Date.now()}`
 
-    // Create with initial token
     await request.post(
       `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
       {
-        headers: authHeaders(),
+        headers: authHeaders(token),
         data: {
           appId: 'test-app',
           connectionId,
@@ -106,11 +91,10 @@ test.describe('Token Refresh Persistence', () => {
       }
     )
 
-    // Simulate token refresh (update credentials)
     const updateRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/update/${connectionId}`,
       {
-        headers: authHeaders(),
+        headers: authHeaders(token),
         data: {
           appId: 'test-app',
           connectionId,
@@ -122,19 +106,17 @@ test.describe('Token Refresh Persistence', () => {
     )
     expect((await updateRes.json()).success).toBe(true)
 
-    // Verify refreshed token persisted
     const readRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
-      { headers: authHeaders(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     expect((await readRes.json()).data.credentials.access_token).toBe(
       'refreshed-token'
     )
 
-    // Cleanup
     await request.post(
       `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
-      { headers: authHeaders(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
   })
 })
@@ -164,11 +146,10 @@ test.describe('Connection Lifecycle', () => {
   test('create → read → update → delete', async ({ request }) => {
     const connectionId = `smoke-lifecycle-${Date.now()}`
 
-    // Create
     const createRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
       {
-        headers: authHeaders(),
+        headers: authHeaders(token),
         data: {
           appId: 'lifecycle-test',
           connectionId,
@@ -180,18 +161,16 @@ test.describe('Connection Lifecycle', () => {
     )
     expect((await createRes.json()).success).toBe(true)
 
-    // Read
     const readRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
-      { headers: authHeaders(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     expect((await readRes.json()).data.name).toBe('Lifecycle Test')
 
-    // Update
     const updateRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/update/${connectionId}`,
       {
-        headers: authHeaders(),
+        headers: authHeaders(token),
         data: {
           appId: 'lifecycle-test',
           connectionId,
@@ -203,17 +182,15 @@ test.describe('Connection Lifecycle', () => {
     )
     expect((await updateRes.json()).success).toBe(true)
 
-    // Delete
     const deleteRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
-      { headers: authHeaders(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     expect((await deleteRes.json()).success).toBe(true)
 
-    // Verify gone
     const goneRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
-      { headers: authHeaders(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     expect((await goneRes.json()).data).toBeFalsy()
   })

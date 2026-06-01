@@ -54,7 +54,7 @@ describe('App smoke test', () => {
   it('renders without crashing when authenticated', () => {
     render(<App />)
 
-    expect(screen.getByText('Baita')).toBeDefined()
+    expect(screen.getByText('Baita')).toBeInTheDocument()
   })
 
   it('renders navigation bar with logo', () => {
@@ -67,10 +67,10 @@ describe('App smoke test', () => {
   it('renders authenticated navigation menu with icons', () => {
     render(<App />)
 
-    expect(screen.getByText('Test User')).toBeDefined()
-    expect(screen.getByText('To Do')).toBeDefined()
-    expect(screen.getByText('Feed')).toBeDefined()
-    expect(screen.getByText('Bots')).toBeDefined()
-    expect(screen.getByText('Logout')).toBeDefined()
+    expect(screen.getByText('Test User')).toBeInTheDocument()
+    expect(screen.getByText('To Do')).toBeInTheDocument()
+    expect(screen.getByText('Feed')).toBeInTheDocument()
+    expect(screen.getByText('Bots')).toBeInTheDocument()
+    expect(screen.getByText('Logout')).toBeInTheDocument()
   })
 })

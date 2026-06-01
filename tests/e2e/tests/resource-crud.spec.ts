@@ -1,33 +1,32 @@
+/**
+ * Resource CRUD & Bot Lifecycle E2E Tests
+ *
+ * User Journeys: To-Do, Bots, Notes, Content Feed
+ * Tests the API contracts that back the core product features:
+ * - Content feed endpoint (backing the Feed page)
+ * - Todo resource listing (backing the To-Do page)
+ * - Bot resource listing (backing the Bots page)
+ * - Generic resource CRUD lifecycle (backing Notes, Places, etc.)
+ * - Bot lifecycle: create → logs → read → delete
+ * - Error handling: invalid operations return structured errors
+ */
 import { expect, test } from '@playwright/test'
-import fs from 'fs'
-import path from 'path'
 
-const API_URL = process.env.API_URL || 'https://api.baita.help'
-const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
+import { API_URL, authHeaders, loadAuthData } from './helpers'
 
 let token: string
 let userId: string
 
 test.beforeAll(() => {
-  if (fs.existsSync(tokenFile)) {
-    const data = JSON.parse(fs.readFileSync(tokenFile, 'utf-8'))
-    token = data.accessToken
-    userId = data.userId
-  }
-  if (!token) throw new Error('No access token found. Run auth.setup.ts first.')
+  const data = loadAuthData()
+  token = data.accessToken
+  userId = data.userId
 })
 
-function headers() {
-  return {
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  }
-}
-
-test.describe('Content Feed (Home Page)', () => {
-  test('GET /content — returns valid response', async ({ request }) => {
+test.describe('Content Feed', () => {
+  test('GET /content returns valid response', async ({ request }) => {
     const res = await request.get(`${API_URL}/user/${userId}/content`, {
-      headers: headers(),
+      headers: authHeaders(token),
     })
     expect(res.status()).toBe(200)
     const body = await res.json()
@@ -36,10 +35,10 @@ test.describe('Content Feed (Home Page)', () => {
 })
 
 test.describe('Todo Page', () => {
-  test('POST /resource/todo/list — returns array', async ({ request }) => {
+  test('list todo returns array', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/todo/list`,
-      { headers: headers(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     expect(res.status()).toBe(200)
     const body = await res.json()
@@ -48,26 +47,11 @@ test.describe('Todo Page', () => {
   })
 })
 
-test.describe('Bots List Page', () => {
-  test('POST /resource/bot/list — returns array', async ({ request }) => {
+test.describe('Bots Page', () => {
+  test('list bots returns array', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/bot/list`,
-      { headers: headers(), data: {} }
-    )
-    expect(res.status()).toBe(200)
-    const body = await res.json()
-    expect(body.success).toBe(true)
-    expect(Array.isArray(body.data)).toBe(true)
-  })
-})
-
-test.describe('Connections Page', () => {
-  test('POST /resource/connection/list — returns array', async ({
-    request,
-  }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/list`,
-      { headers: headers(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     expect(res.status()).toBe(200)
     const body = await res.json()
@@ -83,7 +67,7 @@ test.describe('Resource CRUD Lifecycle', () => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/smoke-note/create/${resourceId}`,
       {
-        headers: headers(),
+        headers: authHeaders(token),
         data: { title: 'Smoke Test', body: 'Created by E2E', ts: Date.now() },
       }
     )
@@ -94,7 +78,7 @@ test.describe('Resource CRUD Lifecycle', () => {
   test('read resource', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/smoke-note/read/${resourceId}`,
-      { headers: headers(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -104,7 +88,10 @@ test.describe('Resource CRUD Lifecycle', () => {
   test('update resource', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/smoke-note/update/${resourceId}`,
-      { headers: headers(), data: { title: 'Updated', body: 'Modified' } }
+      {
+        headers: authHeaders(token),
+        data: { title: 'Updated', body: 'Modified' },
+      }
     )
     expect((await res.json()).success).toBe(true)
   })
@@ -112,7 +99,7 @@ test.describe('Resource CRUD Lifecycle', () => {
   test('list includes resource', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/smoke-note/list`,
-      { headers: headers(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
     expect(body.data.length).toBeGreaterThanOrEqual(1)
@@ -121,15 +108,15 @@ test.describe('Resource CRUD Lifecycle', () => {
   test('delete resource', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/smoke-note/delete/${resourceId}`,
-      { headers: headers(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     expect((await res.json()).success).toBe(true)
   })
 
-  test('read after delete — empty', async ({ request }) => {
+  test('read after delete returns empty', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/smoke-note/read/${resourceId}`,
-      { headers: headers(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
     expect(body.data).toBeFalsy()
@@ -140,9 +127,19 @@ test.describe('Bot Lifecycle', () => {
   let botId: string
   let apiId: string
 
+  test.afterAll(async ({ request }) => {
+    if (botId && apiId) {
+      await request
+        .delete(`${API_URL}/user/${userId}/bots/${botId}/api/${apiId}`, {
+          headers: authHeaders(token),
+        })
+        .catch(() => {})
+    }
+  })
+
   test('create bot', async ({ request }) => {
     const res = await request.post(`${API_URL}/user/${userId}/bots`, {
-      headers: headers(),
+      headers: authHeaders(token),
       data: {},
     })
     const body = await res.json()
@@ -156,15 +153,15 @@ test.describe('Bot Lifecycle', () => {
   test('get bot logs', async ({ request }) => {
     const res = await request.get(
       `${API_URL}/user/${userId}/bots/${botId}/logs`,
-      { headers: headers() }
+      { headers: authHeaders(token) }
     )
     expect(res.status()).toBe(200)
   })
 
-  test('read bot from DynamoDB', async ({ request }) => {
+  test('read bot from resource API', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
-      { headers: headers(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -174,35 +171,9 @@ test.describe('Bot Lifecycle', () => {
   test('delete bot', async ({ request }) => {
     const res = await request.delete(
       `${API_URL}/user/${userId}/bots/${botId}/api/${apiId}`,
-      { headers: headers() }
+      { headers: authHeaders(token) }
     )
     expect((await res.json()).success).toBe(true)
-  })
-})
-
-test.describe('Security', () => {
-  test('request without token returns 401', async ({ request }) => {
-    const res = await request.get(`${API_URL}/user/${userId}/content`)
-    expect(res.status()).toBe(401)
-  })
-
-  test('invalid token returns 401', async ({ request }) => {
-    const res = await request.get(`${API_URL}/user/${userId}/content`, {
-      headers: { Authorization: 'Bearer invalid.token' },
-    })
-    expect(res.status()).toBe(401)
-  })
-
-  test('CORS headers on error responses', async ({ request }) => {
-    const res = await request.get(`${API_URL}/user/${userId}/content`, {
-      headers: {
-        Authorization: 'Bearer bad',
-        Origin: 'https://www.baita.help',
-      },
-    })
-    expect(res.headers()['access-control-allow-origin']).toBe(
-      'https://www.baita.help'
-    )
   })
 })
 
@@ -210,7 +181,7 @@ test.describe('Error Handling', () => {
   test('invalid operation returns structured error', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/smoke-note/invalid-op`,
-      { headers: headers(), data: {} }
+      { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
     expect(body.success).toBe(false)

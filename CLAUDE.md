@@ -16,6 +16,7 @@ Each app has its own `CLAUDE.md` with specific conventions. This file governs cr
 3. **Document changes** — ALL relevant docs updated before claiming done.
 4. **Don't reinvent the wheel** — Search for best practices and existing tools first.
 5. **Plan thoroughly, review extensively** — Plan before implementing. Review before claiming ready.
+6. **Think in user journeys** — Every change, test, and review must be framed in terms of the user journey it protects. See `tests/e2e/USER-JOURNEYS.md` for the complete map.
 
 ### Pre-Commit Checklist (Automatic — Do Not Skip)
 
@@ -144,7 +145,18 @@ The frontend dev server includes a mock API plugin (see `vite.config.ts`) that s
 
 ## Testing Strategy
 
-Single unified Playwright test suite in `tests/e2e/`:
+Tests are organized around **user journeys** — every test file maps to a customer-facing flow. See `tests/e2e/USER-JOURNEYS.md` for the complete reference.
+
+### Test Layers
+
+| Layer               | Location                          | Purpose                                             |
+| ------------------- | --------------------------------- | --------------------------------------------------- |
+| **Unit (Frontend)** | `apps/frontend/src/**/*.test.tsx` | Component rendering, provider state, utility logic  |
+| **Unit (Backend)**  | `apps/backend/src/**/*.test.ts`   | Controller logic, endpoint handlers, task execution |
+| **Unit (Shared)**   | `packages/shared/src/tests/`      | Schema validation, integrity helpers                |
+| **E2E**             | `tests/e2e/tests/*.spec.ts`       | Full user journeys against real API + Auth0         |
+
+### E2E Test Suite
 
 ```bash
 cd tests/e2e && npm test
@@ -152,11 +164,33 @@ cd tests/e2e && npm test
 
 - Logs in via Auth0 (`auth.setup.ts`), saves token + storageState
 - Tests all pages for JS errors and network failures (`pages.spec.ts`)
-- Tests API contracts, CRUD, bot lifecycle (`api-health.spec.ts`)
+- Tests resource CRUD, bot lifecycle, content feed (`resource-crud.spec.ts`)
+- Tests todo task lifecycle end-to-end (`todo-journey.spec.ts`)
 - Tests OAuth connector operations (`connector-oauth.spec.ts`)
 - Tests auth flow, security gates, CORS (`user-auth.spec.ts`)
+- Shared helpers in `tests/helpers.ts` (token loading, auth headers)
 - Auto-starts Vite dev server, points API to `localhost:5000/dev`
-- Same suite runs in CI against production (set `TEST_ENV` unset + provide credentials)
+
+### Test Cleanup Rules
+
+Tests that create resources in DynamoDB **MUST** clean up:
+
+- Use `test.afterAll()` hooks for guaranteed cleanup even on test failure
+- Use timestamp-based IDs (`smoke-${Date.now()}`) to avoid collisions
+- Never leave orphaned bots (they cost Lambda/API Gateway resources)
+
+## User Journey Mindset
+
+**This is a mandatory operating principle.** When working in this repo:
+
+1. **Before implementing** — Ask: "Which user journey does this change serve?" If you can't answer, the scope is unclear.
+2. **Before writing tests** — Frame tests as: "User does X, expects Y." Not: "Function returns Z."
+3. **Before reviewing** — Check: "Are all affected user journeys still protected by tests?"
+4. **Before claiming done** — Verify: "Would a user completing this journey notice the change works?"
+5. **When adding features** — Update `tests/e2e/USER-JOURNEYS.md` with new use cases and coverage.
+6. **When deleting tests** — Only delete if the user journey it protected is no longer valid.
+
+The full journey map lives at `tests/e2e/USER-JOURNEYS.md`. Keep it current.
 
 ## Live Feedback Loop
 
