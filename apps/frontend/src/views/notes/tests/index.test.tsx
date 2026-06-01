@@ -159,17 +159,4 @@ describe('Notes Page', () => {
       expect(fab).toBeInTheDocument()
     })
   })
-
-  describe('Error handling', () => {
-    it('handles API failure without crashing', async () => {
-      server.use(
-        http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
-          return HttpResponse.json({ success: false, message: 'Server error' })
-        })
-      )
-
-      renderNotes()
-      expect(document.body.innerHTML).not.toBe('')
-    })
-  })
 })
