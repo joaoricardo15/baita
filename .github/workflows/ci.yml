@@ -58,9 +58,8 @@ jobs:
           BRANCH="main"
           echo "Waiting for Amplify build to complete..."
           for i in $(seq 1 30); do
-            STATUS=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 1 \
-              --query 'jobSummaries[0].status' --output text 2>/dev/null || echo "UNKNOWN")
-            STATUS=$(echo "$STATUS" | tr -d '[:space:]')
+            STATUS=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" \
+              --query 'jobSummaries[0].status' --output text | head -1 | tr -d '[:space:]')
             echo "  Attempt $i: status=[$STATUS]"
             case "$STATUS" in
               SUCCEED)
