@@ -13,7 +13,7 @@ Backend API for Baita: a personal automation platform (Zapier-inspired, aimed at
 - **Validation**: AJV (JSON Schema)
 - **HTTP Client**: Axios (external API calls)
 - **Auth**: Auth0 (JWT verification via Lambda authorizer)
-- **Push Notifications**: web-push (VAPID) + Firebase Admin SDK (legacy)
+- **Push Notifications**: web-push (VAPID-based, standard Web Push API)
 - **Testing**: Jest 30 + ts-jest
 - **Linting**: ESLint 9 (flat config) + Prettier + CSpell
 - **CI/CD**: GitHub Actions (unified monorepo pipeline, deploys on push to `main`)

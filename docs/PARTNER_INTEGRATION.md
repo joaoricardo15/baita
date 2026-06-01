@@ -220,14 +220,4 @@ The `redirect_uri` must match EXACTLY in three places:
 
 If ANY mismatch, the provider rejects the token exchange silently.
 
-**For existing partners** (Google, Pipedrive): Use `/connectors/google` and `/connectors/pipedrive` — these are registered in the provider dashboards.
-
-**For NEW partners**: Use `/connectors/oauth` (generic handler) and register that URL in the provider's dashboard when creating the OAuth app.
-
-**Migration path**: To move an existing partner to `/connectors/oauth`:
-
-1. Add `https://api.baita.help/connectors/oauth` in the provider's dashboard (keep old URL too)
-2. Update frontend `authorizeUrl` to use `/connectors/oauth`
-3. Verify OAuth flow works
-4. Remove old URL from provider dashboard
-5. Remove old handler from serverless.yml
+**All partners** use the generic callback URL: `https://api.baita.help/connectors/oauth`. Register this exact URL in each provider's OAuth app dashboard.

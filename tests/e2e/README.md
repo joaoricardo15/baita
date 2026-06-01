@@ -1,11 +1,12 @@
 # E2E Test Suite
 
-Post-deploy integration tests that verify the live production system works correctly. Run automatically after every deploy via GitHub Actions CI.
+Integration tests that verify the full system works correctly — authentication, API contracts, page rendering, and security. Uses real Auth0 login via Playwright.
 
 ## Test Files
 
 | File                            | Responsibility                               |
 | ------------------------------- | -------------------------------------------- |
+| `tests/pages.spec.ts`           | All pages render without JS errors           |
 | `tests/user-auth.spec.ts`       | User login flow (Baita auth via Auth0)       |
 | `tests/connector-oauth.spec.ts` | Partner connections (3rd party OAuth)        |
 | `tests/api-health.spec.ts`      | API endpoints, bot lifecycle, CRUD, security |
@@ -24,7 +25,7 @@ Post-deploy integration tests that verify the live production system works corre
 | Callback with code      | App renders after ?code=x&state=y redirect  | Auth0 callback doesn't crash the app              |
 | SW bypass               | Service worker doesn't cache auth callbacks | Mobile PWA auth works (was a real bug)            |
 | Callback with error     | App handles ?error=access_denied gracefully | Users see the app, not a blank page               |
-| Valid token → 200       | Smoke test token accepted by API            | Authorizer + Lambda cold start work               |
+| Valid token → 200       | Real Auth0 token accepted by API            | Authorizer + Lambda cold start work               |
 | Invalid token → 401     | Bad tokens rejected                         | Security enforcement                              |
 | CORS on errors          | 401 responses include CORS headers          | Frontend can read error responses                 |
 
@@ -71,7 +72,7 @@ Post-deploy integration tests that verify the live production system works corre
 cd tests/e2e && npm test
 ```
 
-Logs in via Auth0 (test credentials in `package.json`), then runs all tests against localhost. Auto-starts Vite dev server if not running. Requires backend on port 5000.
+Logs in via Auth0 (test credentials in `.env` file, gitignored), then runs all tests against localhost. Auto-starts Vite dev server if not running. Requires backend on port 5000.
 
 ## Adding New Tests
 

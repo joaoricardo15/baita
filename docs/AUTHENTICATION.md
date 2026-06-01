@@ -9,24 +9,25 @@ Baita has two distinct authentication systems that serve different purposes:
 **Flow**:
 
 ```
-User clicks "Log in" → Auth0 Universal Login → Google/Email auth →
+User clicks "Log in" → Auth0 Universal Login (auth.baita.help) → Google/Email auth →
 Auth0 callback → App receives JWT → API calls with Bearer token
 ```
 
 **Components**:
 
 - **Provider**: Auth0 (`@auth0/auth0-react`)
-- **Domain**: `auth.baita.help` (custom domain, tenant: `dev-yc4pbydg`)
+- **Domain**: `auth.baita.help` (custom domain)
 - **Frontend**: `apps/frontend/src/index.tsx` (Auth0Provider config)
 - **Backend**: `apps/backend/src/authorizer/index.ts` (JWT verification)
 - **Token storage**: localStorage (via Auth0 SDK `cacheLocation: 'localstorage'`)
-- **Refresh**: `useRefreshTokens: true` (rotating refresh tokens)
+- **Refresh**: Rotating refresh tokens (`useRefreshTokens: true`, 30-day lifetime)
 
 **Configuration**:
 
 - Client ID: `Pq5VTtkIhUSfe9bqkoPsLvGCw1JBNf4c`
 - Custom domain: `auth.baita.help`
 - Callback URLs: `https://www.baita.help`, `http://localhost:3000`
+- Connections: `baita-users` (email/password), `google-oauth2`
 - E2E testing: real Auth0 login via Playwright (test user: `test@baita.help`)
 
 **Key behaviors**:
@@ -78,11 +79,12 @@ Credentials stored in DynamoDB → Connection linked to bot task
 
 ## E2E Test Coverage
 
-| Flow           | Test File                                     | Tests | What's Verified                                                      |
-| -------------- | --------------------------------------------- | ----- | -------------------------------------------------------------------- |
-| User Auth      | `tests/e2e/tests/auth-and-connectors.spec.ts` | 12    | Login button, Auth0 redirect, callback handling, SW bypass, API auth |
-| Connector Auth | `tests/e2e/tests/auth-and-connectors.spec.ts` | 10    | Connection CRUD, token persistence, OAuth endpoint, error handling   |
-| API Health     | `tests/e2e/tests/api-health.spec.ts`          | 18    | All endpoints, bot lifecycle, security                               |
+| Flow           | Test File                                 | What's Verified                                                    |
+| -------------- | ----------------------------------------- | ------------------------------------------------------------------ |
+| User Auth      | `tests/e2e/tests/user-auth.spec.ts`       | Login button, Auth0 redirect, callback handling, token validation  |
+| Connector Auth | `tests/e2e/tests/connector-oauth.spec.ts` | Connection CRUD, token persistence, OAuth endpoint, error handling |
+| API Health     | `tests/e2e/tests/api-health.spec.ts`      | All endpoints, bot lifecycle, security, CORS                       |
+| Page Health    | `tests/e2e/tests/pages.spec.ts`           | All pages render without JS errors or network failures             |
 
 ---
 

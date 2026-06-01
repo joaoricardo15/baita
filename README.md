@@ -14,7 +14,7 @@ Personal automation platform — a Zapier-inspired tool aimed at normal people. 
 ├──────────────┬──────────────┬────────────────┬───────────────┤
 │ apps/frontend│ apps/backend │ packages/shared│ tests/e2e     │
 │ React + Vite │ Serverless FW│ Zod Schemas    │ Playwright    │
-│ → Amplify    │ → Lambda+API │ → TypeScript   │ → Post-deploy │
+│ → Amplify    │ → Lambda+API │ → TypeScript   │ → E2E tests   │
 └──────────────┴──────────────┴────────────────┴───────────────┘
                               │
                     ┌─────────┴─────────┐
@@ -61,7 +61,7 @@ baita/
 ├── packages/
 │   └── shared/            # @baita/shared — Zod schemas, types, enums
 ├── tests/
-│   └── e2e/               # Playwright E2E tests against production
+│   └── e2e/               # Playwright E2E tests (auth + pages + API)
 ├── .github/workflows/     # CI/CD pipelines
 ├── CLAUDE.md              # AI assistant instructions (conventions, rules)
 ├── turbo.json             # Turborepo task config

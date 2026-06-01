@@ -39,7 +39,7 @@ Before reporting a task as done, self-check:
 - **Validation**: AJV (JSON Schema)
 - **HTTP Client**: Axios (external API calls)
 - **Auth**: Auth0 (JWT verification)
-- **Push Notifications**: Firebase Admin SDK
+- **Push Notifications**: web-push (VAPID-based, standard Web Push API)
 - **Testing**: Jest 30 + ts-jest
 - **Linting**: ESLint 9 (flat config) + Prettier
 - **Spell Check**: CSpell
@@ -132,7 +132,8 @@ Parameters:
 - `/baita/prod/google-client-secret` — Google OAuth client secret
 - `/baita/prod/google-auth-url` — Google OAuth token URL
 - `/baita/prod/news-api-key` — NewsAPI key
-- `/baita/prod/firebase-service-account` — Firebase service account JSON (full JSON string)
+- `/baita/prod/vapid-public-key` — Web Push VAPID public key
+- `/baita/prod/vapid-private-key` — Web Push VAPID private key
 
 ### Test User (for local development)
 
