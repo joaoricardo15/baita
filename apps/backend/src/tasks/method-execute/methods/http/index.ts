@@ -87,8 +87,9 @@ export const oauth2Request = async (
         refresh_token: authResponse.data.refresh_token,
       }),
     }
+    const { userId: _u, sortKey: _s, ...connectionData } = credentialsResponse
     await resource.update(connectionId as string, {
-      ...credentialsResponse,
+      ...connectionData,
       credentials: updatedCredentials,
     })
 

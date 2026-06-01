@@ -8,7 +8,7 @@ enum Environment {
 
 enum ApiUrl {
   remote = 'https://api.baita.help',
-  local = 'http://localhost:5000/dev',
+  local = 'http://localhost:5000/prod',
   mock = 'http://localhost:3000',
 }
 

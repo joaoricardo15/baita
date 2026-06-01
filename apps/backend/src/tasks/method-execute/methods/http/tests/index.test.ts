@@ -106,6 +106,8 @@ describe('oauth2Request', () => {
   describe('Token refresh with Basic auth (Pipedrive)', () => {
     beforeEach(() => {
       mockResourceRead.mockResolvedValue({
+        userId: 'user-123',
+        sortKey: '#CONNECTION#conn-pd-1',
         credentials: {
           access_token: 'old-access-token',
           refresh_token: 'pd-refresh-token',
@@ -170,6 +172,9 @@ describe('oauth2Request', () => {
           }),
         })
       )
+      const updatePayload = mockResourceUpdate.mock.calls[0][1]
+      expect(updatePayload).not.toHaveProperty('userId')
+      expect(updatePayload).not.toHaveProperty('sortKey')
     })
 
     test('injects Bearer token into API request', async () => {

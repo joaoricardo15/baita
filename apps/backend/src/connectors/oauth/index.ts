@@ -49,7 +49,7 @@ exports.handler = async (
       tokenAuthMethod: auth.tokenAuthMethod || 'body',
     })
 
-    const { connectionId, email } = await fetchUserInfo({
+    const { connectionId, email, name } = await fetchUserInfo({
       userInfoUrl: auth.userInfoUrl,
       accessToken: credentials.access_token,
       userIdField: auth.userIdField,
@@ -61,7 +61,7 @@ exports.handler = async (
       appId,
       connectionId,
       credentials,
-      name: email,
+      name,
       email,
     }
 
@@ -134,7 +134,7 @@ async function fetchUserInfo(params: {
   accessToken: string
   userIdField: string
   baseUrl: string
-}): Promise<{ connectionId: string; email: string }> {
+}): Promise<{ connectionId: string; email: string; name: string }> {
   const url = params.userInfoUrl.startsWith('http')
     ? params.userInfoUrl
     : `${params.baseUrl}${params.userInfoUrl}`
@@ -145,10 +145,24 @@ async function fetchUserInfo(params: {
 
   const data = response.data
   const connectionId = getNestedValue(data, params.userIdField)
-  const email =
-    data.email || data.mail || data.user?.email || String(connectionId)
 
-  return { connectionId: String(connectionId), email }
+  const parentPath = params.userIdField.split('.').slice(0, -1).join('.')
+  const userObj = parentPath
+    ? (getNestedValue(data, parentPath) as Record<string, unknown>)
+    : data
+
+  const email =
+    (userObj?.email as string) ||
+    (userObj?.mail as string) ||
+    data.email ||
+    String(connectionId)
+
+  const name =
+    (userObj?.name as string) ||
+    (userObj?.email as string) ||
+    String(connectionId)
+
+  return { connectionId: String(connectionId), email, name }
 }
 
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {

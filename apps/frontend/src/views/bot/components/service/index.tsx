@@ -1,4 +1,4 @@
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useContext, useEffect, useRef, useState } from 'react'
 
 import { OptionsInput } from '../../../../components'
 import { IAppConnection } from '../../../../models/app'
@@ -13,6 +13,7 @@ import {
 import { AppsContext } from '../../../../providers/apps'
 import { BotContext } from '../../../../providers/bot'
 import { NotificationContext } from '../../../../providers/notification'
+import { UserContext } from '../../../../providers/user'
 import { getLabels, Labels } from '../../../../utils/labels'
 import NewConnection from './newConnection'
 import PushNotificationService from './pushNotification'
@@ -24,6 +25,7 @@ const TaskService: FC<{
   const { services } = useContext(AppsContext)
   const { bot, getBot, updateBotTask } = useContext(BotContext)
   const { showSnack } = useContext(NotificationContext)
+  const { retrieveConnections } = useContext(UserContext)
 
   const [task, setTask] = useState<ITask>()
 
@@ -75,23 +77,23 @@ const TaskService: FC<{
     }
   }
 
+  const pollRef = useRef(false)
+
   const pollBot = () => {
-    if (bot && task) {
+    if (bot) {
+      pollRef.current = true
       let attempts = 0
 
-      const checkNewConnection = () => {
+      const check = () => {
+        if (!pollRef.current) return
         getBot(bot.botId).then(() => {
           attempts++
-          if (attempts >= 20) return
-          else if (!bot.tasks[taskIndex].connectionId) {
-            setTimeout(checkNewConnection, 1000, taskIndex)
-          } else {
-            showSnack(labels.newConnectionSuccess, 'success')
-          }
+          if (attempts >= 20) pollRef.current = false
+          else if (pollRef.current) setTimeout(check, 1000)
         })
       }
 
-      checkNewConnection()
+      setTimeout(check, 2000)
     }
   }
 
@@ -100,6 +102,14 @@ const TaskService: FC<{
       setTask(bot.tasks[taskIndex])
     }
   }, [bot])
+
+  useEffect(() => {
+    if (pollRef.current && task?.connectionId) {
+      pollRef.current = false
+      retrieveConnections()
+      showSnack(labels.newConnectionSuccess, 'success')
+    }
+  }, [task?.connectionId])
 
   return (
     <>

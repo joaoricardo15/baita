@@ -6,6 +6,7 @@ import ApiRequest from '../utils/requests'
 
 export const UserContext = createContext<{
   connections: IAppConnection[] | undefined
+  retrieveConnections: () => Promise<void>
   contents: IContent[] | undefined
   retrieveContent: () => Promise<void>
   reactToContent: (content: IContent, reaction: string) => Promise<void>
@@ -16,6 +17,7 @@ export const UserContext = createContext<{
   setTodoTasks: (tasks?: ITodoTask[]) => void
 }>({
   connections: undefined,
+  retrieveConnections: () => new Promise((resolve) => resolve()),
   contents: undefined,
   retrieveContent: () => new Promise((resolve) => resolve()),
   reactToContent: () => new Promise((resolve) => resolve()),
@@ -84,6 +86,7 @@ const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
     <UserContext.Provider
       value={{
         connections,
+        retrieveConnections,
         contents,
         retrieveContent,
         reactToContent,

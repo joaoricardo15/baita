@@ -5,8 +5,7 @@ import {
   DialogContent,
   DialogTitle,
 } from '@mui/material'
-import { FC, useContext, useState } from 'react'
-import OauthPopup from 'react-oauth-popup'
+import { FC, useContext, useEffect, useRef, useState } from 'react'
 
 import { Button, OptionsInput, TextInput } from '../../../../components'
 import { IAppConnection } from '../../../../models/app'
@@ -15,6 +14,39 @@ import { NotificationContext } from '../../../../providers/notification'
 import { UserContext } from '../../../../providers/user'
 import { createConnection } from '../../../../utils/connections'
 import { getLabels, Labels } from '../../../../utils/labels'
+
+function useOauthPopup(onClose: () => void) {
+  const popupRef = useRef<Window | null>(null)
+  const timerRef = useRef<number>()
+
+  const open = (url: string) => {
+    const width = 800
+    const height = 600
+    const left = window.screenX + (window.outerWidth - width) / 2
+    const top = window.screenY + (window.outerHeight - height) / 2.5
+    popupRef.current = window.open(
+      url,
+      '',
+      `width=${width},height=${height},left=${left},top=${top}`
+    )
+
+    timerRef.current = window.setInterval(() => {
+      if (!popupRef.current || popupRef.current.closed) {
+        window.clearInterval(timerRef.current)
+        onClose()
+      }
+    }, 700)
+  }
+
+  useEffect(() => {
+    return () => {
+      window.clearInterval(timerRef.current)
+      popupRef.current?.close()
+    }
+  }, [])
+
+  return open
+}
 
 const NewConnection: FC<{
   botId: string
@@ -46,6 +78,16 @@ const NewConnection: FC<{
     password?: string
     url?: string
   }>()
+
+  const openOauth = useOauthPopup(onNewConnectionAttempt)
+
+  const handleOauthClick = () => {
+    const url = encodeURI(
+      `${appAuthUrl}${appId}:${user?.userId}:${botId}:${taskIndex}:${(appName || '').toLowerCase()}`
+    )
+    openOauth(url)
+    onNewConnectionAttempt()
+  }
 
   const authenticateNewSystem = () => {
     if (connectionAuthInfo) {
@@ -95,25 +137,14 @@ const NewConnection: FC<{
 
       <div className="d-flex justify-content-center mt-3">
         {appAuthUrl ? (
-          <OauthPopup
-            title=""
-            width={800}
-            height={600}
-            onCode={() => console.log('OauthPopup.onCode')}
-            onClose={() => console.log('OauthPopup.onClose')}
-            url={encodeURI(
-              `${appAuthUrl}${appId}:${user?.userId}:${botId}:${taskIndex}:${(appName || '').toLowerCase()}`
-            )}
+          <Button
+            type="text"
+            color="primary"
+            icon={<AddIcon />}
+            onClick={handleOauthClick}
           >
-            <Button
-              type="text"
-              color="primary"
-              icon={<AddIcon />}
-              onClick={onNewConnectionAttempt}
-            >
-              {labels.newConnection}
-            </Button>
-          </OauthPopup>
+            {labels.newConnection}
+          </Button>
         ) : appLoginUrl ? (
           <Button
             type="text"

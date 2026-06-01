@@ -12,17 +12,32 @@
  * - OAuth callback endpoint: handles errors, missing params, invalid state gracefully
  * - Connection lifecycle: full create → use → update → delete flow
  */
-import { expect, test } from '@playwright/test'
+import { APIRequestContext, expect, test } from '@playwright/test'
 
 import { API_URL, authHeaders, loadAuthData } from './helpers'
 
 let token: string
 let userId: string
 
+const createdConnections: string[] = []
+
+async function deleteConnection(request: APIRequestContext, id: string) {
+  await request.post(
+    `${API_URL}/user/${userId}/resource/connection/delete/${id}`,
+    { headers: authHeaders(token), data: {} }
+  )
+}
+
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
   userId = data.userId
+})
+
+test.afterAll(async ({ request }) => {
+  for (const id of createdConnections) {
+    await deleteConnection(request, id).catch(() => {})
+  }
 })
 
 test.describe('Connection Storage', () => {
@@ -39,20 +54,23 @@ test.describe('Connection Storage', () => {
 
   test('create and read connection with credentials', async ({ request }) => {
     const connectionId = `smoke-conn-${Date.now()}`
-    const connection = {
-      appId: 'test-app',
-      connectionId,
-      name: 'Test Connection',
-      email: 'test@example.com',
-      credentials: {
-        access_token: 'test-access-token',
-        refresh_token: 'test-refresh-token',
-      },
-    }
+    createdConnections.push(connectionId)
 
     const createRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
-      { headers: authHeaders(token), data: connection }
+      {
+        headers: authHeaders(token),
+        data: {
+          appId: 'test-app',
+          connectionId,
+          name: 'Test Connection',
+          email: 'test@example.com',
+          credentials: {
+            access_token: 'test-access-token',
+            refresh_token: 'test-refresh-token',
+          },
+        },
+      }
     )
     expect((await createRes.json()).success).toBe(true)
 
@@ -63,11 +81,6 @@ test.describe('Connection Storage', () => {
     const readBody = await readRes.json()
     expect(readBody.data.email).toBe('test@example.com')
     expect(readBody.data.credentials.access_token).toBe('test-access-token')
-
-    await request.post(
-      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
-      { headers: authHeaders(token), data: {} }
-    )
   })
 })
 
@@ -76,6 +89,7 @@ test.describe('Token Refresh Persistence', () => {
     request,
   }) => {
     const connectionId = `smoke-refresh-${Date.now()}`
+    createdConnections.push(connectionId)
 
     await request.post(
       `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
@@ -113,11 +127,6 @@ test.describe('Token Refresh Persistence', () => {
     expect((await readRes.json()).data.credentials.access_token).toBe(
       'refreshed-token'
     )
-
-    await request.post(
-      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
-      { headers: authHeaders(token), data: {} }
-    )
   })
 })
 
@@ -145,6 +154,7 @@ test.describe('OAuth Callback Endpoint', () => {
 test.describe('Connection Lifecycle', () => {
   test('create → read → update → delete', async ({ request }) => {
     const connectionId = `smoke-lifecycle-${Date.now()}`
+    createdConnections.push(connectionId)
 
     const createRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
@@ -203,6 +213,7 @@ test.describe('Pipedrive Connection', () => {
     request,
   }) => {
     const connectionId = `smoke-pipedrive-${Date.now()}`
+    createdConnections.push(connectionId)
 
     const createRes = await request.post(
       `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
@@ -237,17 +248,13 @@ test.describe('Pipedrive Connection', () => {
     expect(readBody.data.credentials.api_domain).toBe(
       'https://mycompany.pipedrive.com'
     )
-
-    await request.post(
-      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
-      { headers: authHeaders(token), data: {} }
-    )
   })
 
   test('Pipedrive connection token refresh persistence', async ({
     request,
   }) => {
     const connectionId = `smoke-pd-refresh-${Date.now()}`
+    createdConnections.push(connectionId)
 
     await request.post(
       `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
@@ -291,11 +298,6 @@ test.describe('Pipedrive Connection', () => {
     const body = await readRes.json()
     expect(body.data.credentials.access_token).toBe('pd-token-v2')
     expect(body.data.credentials.refresh_token).toBe('pd-refresh-v2')
-
-    await request.post(
-      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
-      { headers: authHeaders(token), data: {} }
-    )
   })
 
   test('OAuth callback rejects with Pipedrive-shaped invalid state', async ({
