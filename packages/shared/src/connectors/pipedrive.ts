@@ -11,7 +11,7 @@ export const pipedriveConnector: ConnectorManifest = {
     authorizationUrl: 'https://oauth.pipedrive.com/oauth/authorize',
     tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
     refreshUrl: 'https://oauth.pipedrive.com/oauth/token',
-    scopes: [],
+    scopes: ['contacts:full', 'deals:full'],
     userInfoUrl: 'https://api.pipedrive.com/v1/users/me',
     userIdField: 'data.id',
     clientIdEnvVar: 'PIPEDRIVE_CLIENT_ID',

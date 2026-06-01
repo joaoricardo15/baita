@@ -453,7 +453,7 @@ const apps: IAppService[] = [
     config: {
       apiUrl: 'https://api.pipedrive.com/v1',
       authorizeUrl:
-        'https://oauth.pipedrive.com/oauth/authorize?client_id=987a469172b3ac62&redirect_uri=https://api.baita.help/connectors/oauth&state=',
+        'https://oauth.pipedrive.com/oauth/authorize?client_id=987a469172b3ac62&redirect_uri=https://api.baita.help/connectors/oauth&response_type=code&state=',
       auth: {
         type: 'basic',
         method: 'post',
