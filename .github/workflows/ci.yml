@@ -52,12 +52,26 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-      - name: Trigger Amplify Build
+      - name: Wait for Amplify Deploy
         run: |
-          aws amplify start-job \
-            --app-id d35kx8fgop2qtf \
-            --branch-name main \
-            --job-type RELEASE
+          APP_ID="d35kx8fgop2qtf"
+          BRANCH="main"
+          echo "Waiting for Amplify build to complete..."
+          for i in $(seq 1 30); do
+            STATUS=$(aws amplify list-jobs --app-id $APP_ID --branch-name $BRANCH --max-items 1 \
+              --query 'jobSummaries[0].status' --output text)
+            echo "  Attempt $i: status=$STATUS"
+            if [ "$STATUS" = "SUCCEED" ]; then
+              echo "Amplify build succeeded!"
+              exit 0
+            elif [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELLED" ]; then
+              echo "Amplify build failed with status: $STATUS"
+              exit 1
+            fi
+            sleep 20
+          done
+          echo "Timeout waiting for Amplify build"
+          exit 1
 
   backend-quality:
     name: Backend Quality
