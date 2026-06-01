@@ -101,7 +101,6 @@ const VariableInput: FC<
         <OptionsInput
           label={getLabel(variable.label)}
           optionLabelPath="label"
-          groupLabelPath="groupName"
           value={label}
           onChange={(result) => onOptionChange(variable, result)}
           onBlur={onBlur}
