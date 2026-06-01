@@ -29,7 +29,7 @@ vi.mock('../../../utils/labels', () => ({
   Labels: {},
 }))
 
-const API_BASE = 'http://localhost:5000/dev'
+const API_BASE = 'http://localhost:5000/prod'
 
 const mockAuthValue = {
   user: {

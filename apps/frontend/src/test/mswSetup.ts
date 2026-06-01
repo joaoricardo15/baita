@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 
-const API_BASE = 'http://localhost:5000/dev'
+const API_BASE = 'http://localhost:5000/prod'
 
 export const handlers = [
   http.post(`${API_BASE}/user/:userId/resource/bot/list`, () => {
