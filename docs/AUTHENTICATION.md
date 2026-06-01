@@ -16,7 +16,7 @@ Auth0 callback → App receives JWT → API calls with Bearer token
 **Components**:
 
 - **Provider**: Auth0 (`@auth0/auth0-react`)
-- **Domain**: `dev-yc4pbydg.us.auth0.com`
+- **Domain**: `auth.baita.help` (custom domain, tenant: `dev-yc4pbydg`)
 - **Frontend**: `apps/frontend/src/index.tsx` (Auth0Provider config)
 - **Backend**: `apps/backend/src/authorizer/index.ts` (JWT verification)
 - **Token storage**: localStorage (via Auth0 SDK `cacheLocation: 'localstorage'`)
