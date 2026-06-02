@@ -3,10 +3,12 @@ import {
   SmartToyOutlined as SmartToyOutlinedIcon,
 } from '@mui/icons-material'
 import { FC, useContext, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { TypeAnimation } from 'react-type-animation'
 
 import { Logo, Text } from '../components'
 import { AuthContext } from '../providers/auth'
+import { LINKS } from '../router'
 import { getLabels, Labels } from '../utils/labels'
 
 const LandingPage: FC = () => {
@@ -20,6 +22,7 @@ const LandingPage: FC = () => {
         <div className="d-flex justify-content-center mt-4">
           <Logo size={150} />
         </div>
+        <p className="text-center text-secondary mt-3 mx-3">{labels.purpose}</p>
         {!isLoading && (
           <div className="text-center m-4">
             <TypeAnimation
@@ -62,6 +65,14 @@ const LandingPage: FC = () => {
             )}
           </div>
         )}
+        <div className="text-center mt-5">
+          <Link to={LINKS.privacy} className="text-secondary mx-2">
+            {labels.privacy}
+          </Link>
+          <Link to={LINKS.terms} className="text-secondary mx-2">
+            {labels.terms}
+          </Link>
+        </div>
       </div>
     </div>
   )
@@ -71,20 +82,28 @@ export default LandingPage
 
 const LABELS: Labels = {
   en: {
+    purpose:
+      'Baita is a personal automation platform that helps you manage tasks, connect your favorite services, and create bots to automate your daily workflows.',
     earlyAdopters: '\n\nThanks for being an early adopter 🥳',
     greetings: 'This is how it works:',
     step1:
       'Create to do tasks and see them at "To Do" page. You can also set bots to help you with that 😉.',
     step2: 'Create bots to make your life easier.',
     enjoy: 'Enjoy 🎉🎉🎉',
+    privacy: 'Privacy Policy',
+    terms: 'Terms of Service',
   },
   pt: {
+    purpose:
+      'Baita é uma plataforma de automação pessoal que ajuda você a gerenciar tarefas, conectar seus serviços favoritos e criar robôs para automatizar seu dia a dia.',
     earlyAdopters: '\n\nMuito obrigado por testar nosso produto 🥳',
     greetings: 'É assim que funciona:',
     step1:
       'Crie tarefas e as veja na tela "To Do". Você também pode configurar um robô para te ajudar 😉.',
     step2: 'Crie robôs para facilitar a sua vida.',
     enjoy: 'Aproveite 🎉🎉🎉',
+    privacy: 'Política de Privacidade',
+    terms: 'Termos de Serviço',
   },
 }
 
