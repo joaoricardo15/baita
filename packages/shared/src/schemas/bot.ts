@@ -36,8 +36,9 @@ export type ITaskCondition = z.infer<typeof TaskConditionSchema>
 export const TaskExecutionResultSchema = z.object({
   timestamp: z.number(),
   inputData: DataTypeSchema,
-  outputData: DataTypeSchema,
+  outputData: DataTypeSchema.nullable(),
   status: TaskExecutionStatusSchema,
+  message: z.string().optional(),
 })
 export type ITaskExecutionResult = z.infer<typeof TaskExecutionResultSchema>
 

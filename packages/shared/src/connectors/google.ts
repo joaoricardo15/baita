@@ -15,6 +15,7 @@ export const googleConnector: ConnectorManifest = {
     scopes: [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/gmail.send',
     ],
     userInfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo',
     userIdField: 'sub',
@@ -29,60 +30,6 @@ export const googleConnector: ConnectorManifest = {
     method: 'GET',
   },
   operations: [
-    {
-      id: 'search-emails',
-      name: 'Search emails',
-      description: 'Search for emails using Gmail search syntax',
-      method: 'GET',
-      path: '/gmail/v1/users/me/messages',
-      inputFields: [
-        {
-          name: 'q',
-          label: 'Search query',
-          type: VariableType.output,
-          description:
-            'Gmail search syntax (e.g. from:boss is:unread subject:invoice)',
-        },
-        {
-          name: 'maxResults',
-          label: 'Max results',
-          type: VariableType.options,
-          value: '10',
-          options: [
-            { label: '5', value: '5' },
-            { label: '10', value: '10' },
-            { label: '20', value: '20' },
-          ],
-        },
-      ],
-      outputPath: 'messages',
-    },
-    {
-      id: 'get-message',
-      name: 'Get email details',
-      description: 'Get full details of an email by its ID',
-      method: 'GET',
-      path: '/gmail/v1/users/me/messages/{id}',
-      inputFields: [
-        {
-          name: 'id',
-          label: 'Message ID',
-          type: VariableType.output,
-          required: true,
-        },
-        {
-          name: 'format',
-          label: 'Format',
-          type: VariableType.options,
-          value: 'full',
-          options: [
-            { label: 'Full', value: 'full' },
-            { label: 'Metadata only', value: 'metadata' },
-          ],
-        },
-      ],
-      outputPath: 'payload',
-    },
     {
       id: 'send-message',
       name: 'Send email',
@@ -110,15 +57,6 @@ export const googleConnector: ConnectorManifest = {
         },
       ],
       outputPath: 'id',
-    },
-    {
-      id: 'list-labels',
-      name: 'List labels',
-      description: 'Get all Gmail labels',
-      method: 'GET',
-      path: '/gmail/v1/users/me/labels',
-      inputFields: [],
-      outputPath: 'labels',
     },
   ],
 }

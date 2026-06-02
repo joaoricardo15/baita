@@ -226,7 +226,9 @@ describe('oauth2Request', () => {
     test('throws when connectionId is missing', async () => {
       const input = { ...basePipedriveInput, connectionId: undefined }
 
-      await expect(oauth2Request(input)).rejects.toThrow('No connectionId')
+      await expect(oauth2Request(input)).rejects.toThrow(
+        'No connection selected'
+      )
     })
 
     test('throws when auth config is missing', async () => {
@@ -235,7 +237,9 @@ describe('oauth2Request', () => {
         appConfig: { apiUrl: 'https://api.test.com' },
       }
 
-      await expect(oauth2Request(input)).rejects.toThrow('No appConfig.auth')
+      await expect(oauth2Request(input)).rejects.toThrow(
+        'App auth configuration missing'
+      )
     })
 
     test('throws when refresh_token is missing from credentials', async () => {
@@ -244,7 +248,7 @@ describe('oauth2Request', () => {
       })
 
       await expect(oauth2Request(basePipedriveInput)).rejects.toThrow(
-        'No refresh token'
+        'no refresh token'
       )
     })
 

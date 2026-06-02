@@ -15,108 +15,94 @@ interface IHttpRequest {
 export const httpRequest = async (
   taskInput: ITaskExecutionInput<IHttpRequest>
 ) => {
-  try {
-    const { appConfig, serviceConfig, inputData } = taskInput
+  const { appConfig, serviceConfig, inputData } = taskInput
 
-    const axiosInput = {
-      url: appConfig.apiUrl + (inputData.path ? `/${inputData.path}` : ''),
-      method: inputData.method,
-      headers: inputData.headers,
-      data: inputData.bodyParams,
-      params: inputData.queryParams,
-    }
-
-    const response = await Axios(axiosInput)
-
-    const initialData = getDataFromPath(response.data, serviceConfig.outputPath)
-
-    const mappedData = getMappedData(
-      initialData || response.data,
-      serviceConfig.outputMapping
-    )
-
-    return mappedData
-  } catch (err: unknown) {
-    throw err instanceof Error ? err : new Error(String(err))
+  const axiosInput = {
+    url: appConfig.apiUrl + (inputData.path ? `/${inputData.path}` : ''),
+    method: inputData.method,
+    headers: inputData.headers,
+    data: inputData.bodyParams,
+    params: inputData.queryParams,
   }
+
+  const response = await Axios(axiosInput)
+
+  const initialData = getDataFromPath(response.data, serviceConfig.outputPath)
+
+  return getMappedData(
+    initialData || response.data,
+    serviceConfig.outputMapping
+  )
 }
 
 export const oauth2Request = async (
   taskInput: ITaskExecutionInput<IHttpRequest>
 ) => {
-  try {
-    const { userId, appConfig, serviceConfig, inputData, connectionId } =
-      taskInput
+  const { userId, appConfig, serviceConfig, inputData, connectionId } =
+    taskInput
 
-    if (!connectionId) {
-      throw new Error('No connectionId')
-    }
-
-    if (!appConfig.auth) {
-      throw new Error('No appConfig.auth')
-    }
-
-    const resource = new Resource(userId, 'connection')
-
-    const credentialsResponse = await resource.read(connectionId as string)
-
-    if (!credentialsResponse?.credentials?.refresh_token) {
-      throw new Error('No refresh token')
-    }
-
-    const axiosAuthInput = {
-      url: appConfig.auth.url,
-      method: appConfig.auth.method,
-      headers: appConfig.auth.headers,
-      auth: getAuthParamsFromApp(appConfig.auth.type, appConfig.auth.fields),
-      data: getAuthDataFromApp(
-        appConfig.auth.type,
-        appConfig.auth.fields,
-        appConfig.auth.headers as Record<string, string> | undefined,
-        credentialsResponse.credentials.refresh_token
-      ),
-    }
-
-    const authResponse = await Axios(axiosAuthInput)
-
-    // Persist refreshed credentials back to DynamoDB
-    const updatedCredentials = {
-      ...credentialsResponse.credentials,
-      access_token: authResponse.data.access_token,
-      ...(authResponse.data.refresh_token && {
-        refresh_token: authResponse.data.refresh_token,
-      }),
-    }
-    const { userId: _u, sortKey: _s, ...connectionData } = credentialsResponse
-    await resource.update(connectionId as string, {
-      ...connectionData,
-      credentials: updatedCredentials,
-    })
-
-    const axiosInput = {
-      url: appConfig.apiUrl + (inputData.path ? `/${inputData.path}` : ''),
-      method: inputData.method,
-      headers: {
-        ...inputData.headers,
-        Authorization: `Bearer ${authResponse.data.access_token}`,
-      },
-      data: inputData.bodyParams,
-      params: inputData.queryParams,
-    }
-
-    const response = await Axios(axiosInput)
-
-    const initialData = getDataFromPath(response.data, serviceConfig.outputPath)
-
-    const mappedData = getMappedData(
-      initialData || response.data,
-      serviceConfig.outputMapping
-    )
-
-    return mappedData
-  } catch (err: unknown) {
-    throw err instanceof Error ? err : new Error(String(err))
+  if (!connectionId) {
+    throw new Error('No connection selected — connect an account first')
   }
+
+  if (!appConfig.auth) {
+    throw new Error('App auth configuration missing')
+  }
+
+  const resource = new Resource(userId, 'connection')
+  const credentialsResponse = await resource.read(connectionId as string)
+
+  if (!credentialsResponse?.credentials?.refresh_token) {
+    throw new Error('Connection has no refresh token — reconnect the account')
+  }
+
+  const axiosAuthInput = {
+    url: appConfig.auth.url,
+    method: appConfig.auth.method,
+    headers: appConfig.auth.headers,
+    auth: getAuthParamsFromApp(appConfig.auth.type, appConfig.auth.fields),
+    data: getAuthDataFromApp(
+      appConfig.auth.type,
+      appConfig.auth.fields,
+      appConfig.auth.headers as Record<string, string> | undefined,
+      credentialsResponse.credentials.refresh_token
+    ),
+  }
+
+  const authResponse = await Axios(axiosAuthInput)
+
+  const updatedCredentials = {
+    ...credentialsResponse.credentials,
+    access_token: authResponse.data.access_token,
+    ...(authResponse.data.refresh_token && {
+      refresh_token: authResponse.data.refresh_token,
+    }),
+  }
+  const { userId: _u, sortKey: _s, ...connectionData } = credentialsResponse
+  await resource.update(connectionId as string, {
+    ...connectionData,
+    credentials: updatedCredentials,
+  })
+
+  const axiosInput = {
+    url: appConfig.apiUrl + (inputData.path ? `/${inputData.path}` : ''),
+    method: inputData.method,
+    headers: {
+      ...inputData.headers,
+      Authorization: `Bearer ${authResponse.data.access_token}`,
+    },
+    data: inputData.bodyParams,
+    params: inputData.queryParams,
+  }
+
+  const response = await Axios(axiosInput)
+
+  const initialData = getDataFromPath(response.data, serviceConfig.outputPath)
+
+  return getMappedData(
+    initialData || response.data,
+    serviceConfig.outputMapping
+  )
 }
 
 interface IAuthFields {

@@ -32,7 +32,23 @@ class Api {
     if (!err) return ''
     if (typeof err === 'string') return err
     if (typeof err === 'number') return String(err)
-    if (err instanceof Error) return err.message
+
+    if (err instanceof Error) {
+      const axiosErr = err as Error & {
+        response?: { status?: number; data?: unknown }
+      }
+      if (axiosErr.response) {
+        const { status, data } = axiosErr.response
+        const detail =
+          typeof data === 'string'
+            ? data
+            : data && typeof data === 'object'
+              ? JSON.stringify(data)
+              : ''
+        return `HTTP ${status}: ${detail || err.message}`
+      }
+      return err.message
+    }
 
     if (typeof err === 'object') {
       const obj = err as Record<string, unknown>
