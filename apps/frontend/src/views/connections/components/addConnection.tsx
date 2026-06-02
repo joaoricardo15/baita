@@ -7,15 +7,13 @@ import {
   ListItemText,
   ListSubheader,
 } from '@mui/material'
-import { FC, useContext, useRef } from 'react'
+import { FC, useContext } from 'react'
 import { getAllConnectors } from '@baita/shared'
 
 import { AuthContext } from '../../../providers/auth'
-import { UserContext } from '../../../providers/user'
 import { NotificationContext } from '../../../providers/notification'
 import { configMapping } from '../../../utils/config'
 import { getLabels, Labels } from '../../../utils/labels'
-import ApiRequest from '../../../utils/requests'
 import { useOauthPopup } from '../../../utils/useOauthPopup'
 
 const OAUTH_CALLBACK_URL = `${configMapping['www.baita.help'].apiUrl}/connectors/oauth`
@@ -25,35 +23,21 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
   onClose,
 }) => {
   const { user } = useContext(AuthContext)
-  const { connections, retrieveConnections } = useContext(UserContext)
   const { showSnack } = useContext(NotificationContext)
-  const apiRequest = ApiRequest()
 
   const connectors = getAllConnectors()
-  const countBeforeRef = useRef(0)
 
-  const onPopupClose = () => {
-    apiRequest
-      .getAppConnections()
-      .then((freshConnections) => {
-        if (freshConnections.length > countBeforeRef.current) {
-          showSnack(labels.success, 'success')
-        } else {
-          showSnack(labels.cancelled, 'warning')
-        }
-        retrieveConnections()
-      })
-      .catch(() => retrieveConnections())
+  const openOauth = useOauthPopup((created) => {
+    showSnack(
+      created ? labels.success : labels.cancelled,
+      created ? 'success' : 'warning'
+    )
     onClose()
-  }
-
-  const openOauth = useOauthPopup(onPopupClose)
+  })
 
   const handleConnect = (connectorId: string) => {
     const connector = connectors.find((c) => c.id === connectorId)
     if (!connector || connector.auth.type !== 'oauth2') return
-
-    countBeforeRef.current = connections?.length ?? 0
 
     const { auth, appId } = connector
     const state = `${appId}:${user?.userId}::0:${connectorId}`

@@ -1,10 +1,18 @@
-import { useEffect, useRef } from 'react'
+import { useContext, useEffect, useRef } from 'react'
 
-export function useOauthPopup(onClose: () => void) {
+import { UserContext } from '../providers/user'
+import ApiRequest from './requests'
+
+export function useOauthPopup(onComplete?: (created: boolean) => void) {
+  const { connections, retrieveConnections } = useContext(UserContext)
+  const apiRequest = ApiRequest()
   const popupRef = useRef<Window | null>(null)
   const timerRef = useRef<number>()
+  const countBeforeRef = useRef(0)
 
   const open = (url: string) => {
+    countBeforeRef.current = connections?.length ?? 0
+
     const width = 800
     const height = 600
     const left = window.screenX + (window.outerWidth - width) / 2
@@ -18,7 +26,17 @@ export function useOauthPopup(onClose: () => void) {
     timerRef.current = window.setInterval(() => {
       if (!popupRef.current || popupRef.current.closed) {
         window.clearInterval(timerRef.current)
-        onClose()
+        apiRequest
+          .getAppConnections()
+          .then((freshConnections) => {
+            const created = freshConnections.length > countBeforeRef.current
+            onComplete?.(created)
+            retrieveConnections()
+          })
+          .catch(() => {
+            onComplete?.(false)
+            retrieveConnections()
+          })
       }
     }, 700)
   }

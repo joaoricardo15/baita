@@ -47,14 +47,20 @@ const NewConnection: FC<{
     url?: string
   }>()
 
-  const openOauth = useOauthPopup(onNewConnectionAttempt)
+  const openOauth = useOauthPopup((created) => {
+    if (created) {
+      showSnack(labels.newConnectionSuccess, 'success')
+    } else {
+      showSnack(labels.newConnectionCancelled, 'warning')
+    }
+    onNewConnectionAttempt()
+  })
 
   const handleOauthClick = () => {
     const url = encodeURI(
       `${appAuthUrl}${appId}:${user?.userId}:${botId}:${taskIndex}:${(appName || '').toLowerCase()}`
     )
     openOauth(url)
-    onNewConnectionAttempt()
   }
 
   const authenticateNewSystem = () => {
@@ -167,6 +173,7 @@ const LABELS: Labels = {
     newConnection: 'New connection',
     newConnectionError: 'Connection could not be created :(',
     newConnectionSuccess: 'Connection created successfully :)',
+    newConnectionCancelled: 'Connection was not completed',
   },
   pt: {
     login: 'Entrar',
@@ -176,6 +183,7 @@ const LABELS: Labels = {
     newConnection: 'Nova conexão',
     newConnectionError: 'Conexão não pode ser criada :(',
     newConnectionSuccess: 'Conexão criada com sucesso :)',
+    newConnectionCancelled: 'Conexão não foi concluída',
   },
 }
 
