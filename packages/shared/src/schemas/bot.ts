@@ -38,7 +38,6 @@ export const TaskExecutionResultSchema = z.object({
   inputData: DataTypeSchema,
   outputData: DataTypeSchema.nullable(),
   status: TaskExecutionStatusSchema,
-  message: z.string().optional(),
 })
 export type ITaskExecutionResult = z.infer<typeof TaskExecutionResultSchema>
 

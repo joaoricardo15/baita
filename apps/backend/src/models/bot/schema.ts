@@ -14,7 +14,7 @@ const ajv = new Ajv()
 addFormats(ajv)
 
 const dataSchema: any = {
-  type: ['string', 'number', 'boolean', 'object', 'array'],
+  type: ['string', 'number', 'boolean', 'object', 'array', 'null'],
 }
 const variableSchema: any = { type: 'object' }
 const serviceConfigSchema: any = { type: 'object' }

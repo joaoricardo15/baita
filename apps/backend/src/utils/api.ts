@@ -39,13 +39,10 @@ class Api {
       }
       if (axiosErr.response) {
         const { status, data } = axiosErr.response
-        const detail =
-          typeof data === 'string'
-            ? data
-            : data && typeof data === 'object'
-              ? JSON.stringify(data)
-              : ''
-        return `HTTP ${status}: ${detail || err.message}`
+        const message = this.extractApiErrorMessage(data)
+        return message
+          ? `HTTP ${status}: ${message}`
+          : `HTTP ${status}: ${err.message}`
       }
       return err.message
     }
@@ -66,6 +63,23 @@ class Api {
     }
 
     return 'An unexpected error occurred'
+  }
+
+  private extractApiErrorMessage(data: unknown): string {
+    if (!data || typeof data !== 'object') return ''
+
+    const obj = data as Record<string, unknown>
+
+    if (obj.error && typeof obj.error === 'object') {
+      const error = obj.error as Record<string, unknown>
+      if (typeof error.message === 'string') return error.message
+    }
+
+    if (typeof obj.error === 'string') return obj.error
+    if (typeof obj.message === 'string') return obj.message
+    if (typeof obj.error_description === 'string') return obj.error_description
+
+    return ''
   }
 
   log(

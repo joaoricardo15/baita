@@ -493,11 +493,12 @@ class Bot {
 
         sample = {
           inputData,
-          outputData: testLambdaPayload.data ?? null,
+          outputData: testLambdaPayload.success
+            ? testLambdaPayload.data
+            : testLambdaPayload.message || null,
           status: testLambdaPayload.success
             ? TaskExecutionStatus.success
             : TaskExecutionStatus.fail,
-          message: testLambdaPayload.message,
           timestamp: Date.now(),
         }
       }

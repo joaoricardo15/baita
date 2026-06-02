@@ -60,14 +60,18 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
             ></Button>
           </div>
           {task.sampleResult && (
-            <Highlight
-              className="mt-4"
-              data={
-                task.sampleResult.outputData || {
-                  message: labels.noOutputData,
-                }
-              }
-            />
+            <>
+              {task.sampleResult.status === 'success' ? (
+                <Highlight
+                  className="mt-4"
+                  data={task.sampleResult.outputData || {}}
+                />
+              ) : (
+                <Text className="mt-4" color="error">
+                  {String(task.sampleResult.outputData || labels.noOutputData)}
+                </Text>
+              )}
+            </>
           )}
         </>
       )}
