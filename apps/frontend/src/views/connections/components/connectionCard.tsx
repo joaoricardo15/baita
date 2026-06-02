@@ -15,6 +15,7 @@ import {
   IconButton,
 } from '@mui/material'
 import { FC, useContext, useState } from 'react'
+import { getConnectorByAppId } from '@baita/shared'
 
 import { Button, Text } from '../../../components'
 import { IAppConnection } from '../../../models/app'
@@ -29,6 +30,8 @@ const ConnectionCard: FC<{ connection: IAppConnection }> = ({ connection }) => {
   const apiRequest = ApiRequest()
   const { deleteConnection } = useContext(UserContext)
   const { showSnack } = useContext(NotificationContext)
+
+  const connector = getConnectorByAppId(connection.appId)
 
   const [healthStatus, setHealthStatus] = useState<HealthStatus>('idle')
   const [expanded, setExpanded] = useState(false)
@@ -98,11 +101,23 @@ const ConnectionCard: FC<{ connection: IAppConnection }> = ({ connection }) => {
   return (
     <>
       <div className="d-flex align-items-center p-2 mb-2 border rounded">
-        <div className="flex-grow-1" onClick={handleExpand}>
-          <Text className="fw-bold">{connection.name}</Text>
-          <Text type="body2" color="textSecondary">
-            {connection.email}
-          </Text>
+        <div
+          className="flex-grow-1 d-flex align-items-center"
+          onClick={handleExpand}
+        >
+          {connector?.icon && (
+            <img
+              src={connector.icon}
+              alt=""
+              style={{ width: 24, height: 24, marginRight: 10 }}
+            />
+          )}
+          <div>
+            <Text className="fw-bold">{connection.name}</Text>
+            <Text type="body2" color="textSecondary">
+              {connection.email}
+            </Text>
+          </div>
         </div>
 
         <div className="d-flex align-items-center gap-1">

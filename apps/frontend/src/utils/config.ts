@@ -48,6 +48,8 @@ export const configMapping: { [key in Environment]: EnvConfig } = {
   },
 }
 
+export const PRODUCTION_API_URL = ApiUrl.remote
+
 const appConfig: AppConfig = {
   language:
     Language[navigator.language as keyof typeof Language] || defaultLanguage,

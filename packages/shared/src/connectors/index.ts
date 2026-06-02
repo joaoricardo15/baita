@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { VariableSchema } from '../schemas/service'
+import { ServiceSchema, VariableSchema } from '../schemas/service'
 
 export const OAuth2AuthSchema = z.object({
   type: z.literal('oauth2'),
@@ -37,10 +37,12 @@ export const ConnectorOperationSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().optional(),
+  type: z.enum(['trigger', 'invoke']).optional(),
   method: z.enum(['GET', 'POST', 'PUT', 'DELETE']),
   path: z.string(),
   inputFields: z.array(VariableSchema),
   outputPath: z.string().optional(),
+  outputMapping: z.record(z.string()).optional(),
 })
 
 export const ConnectorManifestSchema = z.object({
@@ -61,6 +63,7 @@ export const ConnectorManifestSchema = z.object({
     })
     .optional(),
   operations: z.array(ConnectorOperationSchema),
+  services: z.array(z.lazy(() => ServiceSchema)).optional(),
 })
 
 export type ConnectorManifest = z.infer<typeof ConnectorManifestSchema>

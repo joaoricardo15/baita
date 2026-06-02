@@ -24,6 +24,7 @@ export type IAppConfig = z.infer<typeof AppConfigSchema>
 export const AppSchema = z.object({
   name: z.string(),
   appId: z.string(),
+  icon: z.string().optional(),
   config: AppConfigSchema,
 })
 export type IApp = z.infer<typeof AppSchema>

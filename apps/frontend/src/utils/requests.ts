@@ -1,8 +1,7 @@
 import Axios from 'axios'
 import { useContext } from 'react'
 
-import apps from '../defines/apps'
-import { IAppConnection, IAppService } from '../models/app'
+import { IAppConnection } from '../models/app'
 import {
   IBot,
   IBotLog,
@@ -221,14 +220,9 @@ const ApiRequest = () => {
     )
   }
 
-  const getApps = () => {
-    return new Promise<IAppService[]>((resolve) => resolve(apps))
-  }
-
   return {
     getBot,
     getBots,
-    getApps,
     getLogs,
     testBot,
     getTodo,

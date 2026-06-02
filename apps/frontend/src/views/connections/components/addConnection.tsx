@@ -12,11 +12,9 @@ import { getAllConnectors } from '@baita/shared'
 
 import { AuthContext } from '../../../providers/auth'
 import { NotificationContext } from '../../../providers/notification'
-import { configMapping } from '../../../utils/config'
 import { getLabels, Labels } from '../../../utils/labels'
+import { buildOAuthUrl } from '../../../utils/oauth'
 import { useOauthPopup } from '../../../utils/useOauthPopup'
-
-const OAUTH_CALLBACK_URL = `${configMapping['www.baita.help'].apiUrl}/connectors/oauth`
 
 const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
   open,
@@ -39,21 +37,8 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
     const connector = connectors.find((c) => c.id === connectorId)
     if (!connector || connector.auth.type !== 'oauth2') return
 
-    const { auth, appId } = connector
-    const state = `${appId}:${user?.userId}::0:${connectorId}`
-    const scopes = auth.scopes.join(' ')
-
-    const params = new URLSearchParams({
-      client_id: auth.clientId,
-      redirect_uri: OAUTH_CALLBACK_URL,
-      response_type: 'code',
-      scope: scopes,
-      access_type: 'offline',
-      prompt: 'consent',
-      state,
-    })
-
-    openOauth(`${auth.authorizationUrl}?${params.toString()}`)
+    const state = `${connector.appId}:${user?.userId}::0:${connectorId}`
+    openOauth(buildOAuthUrl(connector, state))
   }
 
   const grouped = connectors.reduce(
@@ -80,6 +65,13 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
                     key={connector.id}
                     onClick={() => handleConnect(connector.id)}
                   >
+                    {connector.icon && (
+                      <img
+                        src={connector.icon}
+                        alt=""
+                        style={{ width: 20, height: 20, marginRight: 10 }}
+                      />
+                    )}
                     <ListItemText primary={connector.name} />
                   </ListItemButton>
                 ))}

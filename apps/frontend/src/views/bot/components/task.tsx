@@ -90,6 +90,13 @@ const Task: FC<{
                     <Text className="text-primary fs-4 fw-bold">
                       {taskIndex}
                     </Text>
+                    {task.app?.icon && (
+                      <img
+                        src={task.app.icon}
+                        alt=""
+                        style={{ width: 16, height: 16, marginLeft: 6 }}
+                      />
+                    )}
                     <Text
                       className=" text-primary fw-bold mx-1"
                       style={{ fontSize: 14 }}
