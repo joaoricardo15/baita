@@ -130,7 +130,7 @@ test.describe('Bot Lifecycle', () => {
   test.afterAll(async ({ request }) => {
     if (botId && apiId) {
       await request
-        .delete(`${API_URL}/user/${userId}/bots/${botId}/api/${apiId}`, {
+        .delete(`${API_URL}/user/${userId}/bot/${botId}/api/${apiId}`, {
           headers: authHeaders(token),
         })
         .catch(() => {})
@@ -138,7 +138,7 @@ test.describe('Bot Lifecycle', () => {
   })
 
   test('create bot', async ({ request }) => {
-    const res = await request.post(`${API_URL}/user/${userId}/bots`, {
+    const res = await request.post(`${API_URL}/user/${userId}/bot`, {
       headers: authHeaders(token),
       data: {},
     })
@@ -152,7 +152,7 @@ test.describe('Bot Lifecycle', () => {
 
   test('get bot logs', async ({ request }) => {
     const res = await request.get(
-      `${API_URL}/user/${userId}/bots/${botId}/logs`,
+      `${API_URL}/user/${userId}/bot/${botId}/logs`,
       { headers: authHeaders(token) }
     )
     expect(res.status()).toBe(200)
@@ -170,7 +170,7 @@ test.describe('Bot Lifecycle', () => {
 
   test('delete bot', async ({ request }) => {
     const res = await request.delete(
-      `${API_URL}/user/${userId}/bots/${botId}/api/${apiId}`,
+      `${API_URL}/user/${userId}/bot/${botId}/api/${apiId}`,
       { headers: authHeaders(token) }
     )
     expect((await res.json()).success).toBe(true)

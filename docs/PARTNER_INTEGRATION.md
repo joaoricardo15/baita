@@ -114,16 +114,33 @@ SLACK_CLIENT_ID: ${ssm:/baita/prod/slack-client-id}
 SLACK_CLIENT_SECRET: ${ssm:/baita/prod/slack-client-secret}
 ```
 
-### 5. Register in Frontend
+### 5. Register in Connector Registry
 
-Add to `apps/frontend/src/defines/apps.ts` (or use the manifest-driven approach once implemented):
+Add to `packages/shared/src/connectors/registry.ts`:
 
 ```typescript
-import { slackConnector } from '@baita/shared'
-// Add to the apps array using the manifest data
+import { slackConnector } from './slack'
+
+// Add to the connectors array
+const connectors: ConnectorManifest[] = [
+  pipedriveConnector,
+  googleConnector,
+  slackConnector,
+]
+
+// Add to APP_ID_MAP (map your frontend appId UUID to connector id)
+const APP_ID_MAP: Record<string, string> = {
+  // ... existing entries
+  'your-new-uuid': 'slack',
+}
 ```
 
-### 6. Configure OAuth Redirect URL
+### 6. Register in Frontend (Optional — for bot builder)
+
+Add to `apps/frontend/src/defines/apps.ts` if the connector should appear in the bot builder.
+The Connections page automatically picks up all connectors from the shared registry.
+
+### 7. Configure OAuth Redirect URL
 
 In the partner's developer dashboard (e.g., api.slack.com), set the OAuth redirect URL to:
 
@@ -131,7 +148,7 @@ In the partner's developer dashboard (e.g., api.slack.com), set the OAuth redire
 https://api.baita.help/connectors/oauth
 ```
 
-### 7. Deploy and Test
+### 8. Deploy and Test
 
 ```bash
 cd apps/backend && npm run deploy
@@ -270,3 +287,61 @@ After integrating a new partner, verify these flows:
 2. **E2E tests** — Connection CRUD with partner-specific credential shape (`tests/e2e/tests/connector-oauth.spec.ts`)
 3. **Manual test** — Open bot builder → add task → click "New Connection" → authorize → verify connection saved
 4. **Bot execution test** — Deploy a bot with the partner task → run it → verify API call succeeds with refreshed token
+
+---
+
+## AI-Assisted Connector Generation
+
+You can use an AI assistant (Claude, Copilot) to generate a new connector manifest from API documentation.
+
+### Template File
+
+A ready-to-copy template exists at `packages/shared/src/connectors/_template.ts` with all fields documented.
+
+### Prompt for AI
+
+Give your AI assistant this prompt along with the partner's API documentation:
+
+```
+I need to create a new connector manifest for Baita (a Zapier-inspired automation platform).
+
+Here's the template structure I need to fill:
+- File: packages/shared/src/connectors/{partner}.ts
+- Must export a ConnectorManifest object
+- Must validate against ConnectorManifestSchema from ./index
+
+Requirements:
+1. id: lowercase kebab-case partner name
+2. auth: OAuth2 config with all URLs, scopes, and env var names
+3. healthCheck: a lightweight GET endpoint that returns 200 if auth is valid
+4. operations: the top 3-5 most useful API operations with typed inputFields
+5. base.url: the API base URL
+
+The partner API docs are: [paste URL or content]
+
+Please generate the TypeScript file following the pattern in _template.ts.
+After generating, I need to:
+1. Export from packages/shared/src/index.ts
+2. Register in packages/shared/src/connectors/registry.ts
+3. Add UUID→connectorId mapping in registry.ts APP_ID_MAP
+4. Store OAuth secrets in AWS SSM
+5. Add env vars to serverless.yml
+6. Deploy
+```
+
+### Validation
+
+After generating, validate the manifest compiles:
+
+```bash
+cd packages/shared && npx tsc --noEmit
+```
+
+And optionally test in a Node REPL:
+
+```typescript
+import { ConnectorManifestSchema } from './src/connectors/index'
+import { newConnector } from './src/connectors/your-connector'
+
+ConnectorManifestSchema.parse(newConnector) // throws if invalid
+```

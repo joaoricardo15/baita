@@ -6,18 +6,21 @@ export const googleConnector: ConnectorManifest = {
   name: 'Google',
   icon: 'google',
   category: 'Productivity',
+  appId: '5c16e311-a65a-449c-ad82-1f23a41cf89c',
   auth: {
     type: 'oauth2',
     authorizationUrl: 'https://accounts.google.com/o/oauth2/auth',
     tokenUrl: 'https://accounts.google.com/o/oauth2/token',
     refreshUrl: 'https://accounts.google.com/o/oauth2/token',
     scopes: [
-      'email',
-      'profile',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/gmail.readonly',
     ],
     userInfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo',
     userIdField: 'sub',
+    clientId:
+      '106617044495-k3n0koedh38faoclgjqdss7vptfoirjr.apps.googleusercontent.com',
     clientIdEnvVar: 'GOOGLE_CLIENT_ID',
     clientSecretEnvVar: 'GOOGLE_CLIENT_SECRET',
   },

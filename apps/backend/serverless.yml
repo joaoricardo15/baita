@@ -192,7 +192,7 @@ functions:
     handler: src/endpoints/bot/create/index.handler
     events:
       - http:
-          path: user/{userId}/bots
+          path: user/{userId}/bot
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -200,7 +200,7 @@ functions:
     handler: src/endpoints/bot/bud/index.handler
     events:
       - http:
-          path: user/{userId}/bots/{botId}/bud
+          path: user/{userId}/bot/{botId}/bud
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -208,7 +208,7 @@ functions:
     handler: src/endpoints/bot/update/index.handler
     events:
       - http:
-          path: user/{userId}/bots/{botId}
+          path: user/{userId}/bot/{botId}
           method: put
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -216,7 +216,7 @@ functions:
     handler: src/endpoints/bot/delete/index.handler
     events:
       - http:
-          path: user/{userId}/bots/{botId}/api/{apiId}
+          path: user/{userId}/bot/{botId}/api/{apiId}
           method: delete
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -224,7 +224,7 @@ functions:
     handler: src/endpoints/bot/deploy/index.handler
     events:
       - http:
-          path: user/{userId}/bots/{botId}/deploy
+          path: user/{userId}/bot/{botId}/deploy
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -232,7 +232,7 @@ functions:
     handler: src/endpoints/bot/test/index.handler
     events:
       - http:
-          path: user/{userId}/bots/{botId}/test/{taskIndex}
+          path: user/{userId}/bot/{botId}/test/{taskIndex}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -240,7 +240,7 @@ functions:
     handler: src/endpoints/bot/logs/index.handler
     events:
       - http:
-          path: user/{userId}/bots/{botId}/logs
+          path: user/{userId}/bot/{botId}/logs
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -252,6 +252,26 @@ functions:
       - http:
           path: connectors/oauth
           method: get
+
+  # Connection health check
+  connection-health:
+    handler: src/endpoints/connection/health/index.handler
+    events:
+      - http:
+          path: user/{userId}/connection/{connectionId}/health
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # Connection details (linked bots)
+  connection-details:
+    handler: src/endpoints/connection/details/index.handler
+    events:
+      - http:
+          path: user/{userId}/connection/{connectionId}/details
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
 
 resources:
   Resources:

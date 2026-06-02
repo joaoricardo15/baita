@@ -105,7 +105,7 @@ describe('ApiRequest', () => {
   })
 
   describe('createBot', () => {
-    it('sends POST request to bots endpoint', async () => {
+    it('sends POST request to bot endpoint', async () => {
       mockRequest.mockResolvedValue({
         data: { success: true, data: { botId: 'new-bot' } },
       })
@@ -114,7 +114,7 @@ describe('ApiRequest', () => {
       const bot = await result.current.createBot()
 
       expect(mockRequest).toHaveBeenCalledWith({
-        url: 'user/user-1/bots',
+        url: 'user/user-1/bot',
         method: 'post',
         data: undefined,
       })
@@ -132,7 +132,7 @@ describe('ApiRequest', () => {
       await result.current.updateBot('bot-1', { name: 'Updated' })
 
       expect(mockRequest).toHaveBeenCalledWith({
-        url: 'user/user-1/bots/bot-1',
+        url: 'user/user-1/bot/bot-1',
         method: 'put',
         data: { name: 'Updated' },
       })
@@ -147,7 +147,7 @@ describe('ApiRequest', () => {
       await result.current.deleteBot('bot-1', 'api-1')
 
       expect(mockRequest).toHaveBeenCalledWith({
-        url: 'user/user-1/bots/bot-1/api/api-1',
+        url: 'user/user-1/bot/bot-1/api/api-1',
         method: 'delete',
         data: undefined,
       })

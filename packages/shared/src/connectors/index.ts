@@ -10,6 +10,7 @@ export const OAuth2AuthSchema = z.object({
   scopes: z.array(z.string()),
   userInfoUrl: z.string(),
   userIdField: z.string(),
+  clientId: z.string(),
   clientIdEnvVar: z.string(),
   clientSecretEnvVar: z.string(),
   tokenAuthMethod: z.enum(['basic', 'body']).default('body').optional(),
@@ -47,6 +48,7 @@ export const ConnectorManifestSchema = z.object({
   name: z.string(),
   icon: z.string().optional(),
   category: z.string(),
+  appId: z.string(),
   auth: ConnectorAuthSchema,
   base: z.object({
     url: z.string(),

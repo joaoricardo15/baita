@@ -60,14 +60,19 @@ exports.handler = async (
       userId,
       appId,
       connectionId,
+      connectorId,
       credentials,
       name,
       email,
+      createdAt: Date.now(),
     }
 
     const resource = new Resource(userId, 'connection')
     await resource.create(connectionId, newConnection)
-    await bot.addConnection(userId, botId, connectionId, taskIndex)
+
+    if (botId) {
+      await bot.addConnection(userId, botId, connectionId, taskIndex)
+    }
 
     api.httpConnectorResponse(callback, ApiRequestStatus.success)
   } catch (err: unknown) {

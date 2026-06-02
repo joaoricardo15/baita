@@ -285,13 +285,13 @@ userId      | #CONNECTION#{connectionId}      | OAuth connection
 
 ### Bots
 
-- `POST /user/{userId}/bots` — Create bot
-- `PUT /user/{userId}/bots/{botId}` — Update bot
-- `DELETE /user/{userId}/bots/{botId}/api/{apiId}` — Delete bot
-- `POST /user/{userId}/bots/{botId}/deploy` — Deploy/publish bot
-- `POST /user/{userId}/bots/{botId}/test/{taskIndex}` — Test individual task
-- `GET /user/{userId}/bots/{botId}/logs` — Get execution logs
-- `POST /user/{userId}/bots/{botId}/bud` — Bot assistant operation
+- `POST /user/{userId}/bot` — Create bot
+- `PUT /user/{userId}/bot/{botId}` — Update bot
+- `DELETE /user/{userId}/bot/{botId}/api/{apiId}` — Delete bot
+- `POST /user/{userId}/bot/{botId}/deploy` — Deploy/publish bot
+- `POST /user/{userId}/bot/{botId}/test/{taskIndex}` — Test individual task
+- `GET /user/{userId}/bot/{botId}/logs` — Get execution logs
+- `POST /user/{userId}/bot/{botId}/bud` — Bot assistant operation
 
 ### Content & Resources
 
@@ -301,8 +301,12 @@ userId      | #CONNECTION#{connectionId}      | OAuth connection
 
 ### OAuth Connectors
 
-- `GET /connectors/pipedrive` — Pipedrive OAuth callback
-- `GET /connectors/google` — Google OAuth callback
+- `GET /connectors/oauth` — Generic OAuth callback (handles all providers)
+
+### Connections
+
+- `POST /user/{userId}/connection/{connectionId}/health` — Test connection health (token validity)
+- `POST /user/{userId}/connection/{connectionId}/details` — Get connection details + linked bots
 
 ## Feature Development Methodology
 
@@ -373,8 +377,8 @@ cd tests/e2e && npm test
 | Auth Rejection      | GET without token              | Yes    | Security — 401 returned                   |
 | CORS on Errors      | GET with Origin header         | Yes    | CORS headers on 4XX                       |
 | Error Handling      | Invalid operations             | Yes    | Structured error response                 |
-| Bot Deploy          | POST /bots/{id}/deploy         | Future | Requires code generation                  |
-| Bot Test            | POST /bots/{id}/test/{idx}     | Future | Requires active deployed bot              |
+| Bot Deploy          | POST /bot/{id}/deploy          | Future | Requires code generation                  |
+| Bot Test            | POST /bot/{id}/test/{idx}      | Future | Requires active deployed bot              |
 | File Upload         | POST /resource/\*/upload       | Future | S3 presigned URL flow                     |
 | OAuth Connectors    | GET /connectors/\*             | Future | Requires interactive OAuth                |
 | Push Notifications  | —                              | N/A    | Frontend-only feature                     |

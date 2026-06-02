@@ -7,6 +7,7 @@ import ApiRequest from '../utils/requests'
 export const UserContext = createContext<{
   connections: IAppConnection[] | undefined
   retrieveConnections: () => Promise<void>
+  deleteConnection: (connectionId: string) => Promise<void>
   contents: IContent[] | undefined
   retrieveContent: () => Promise<void>
   reactToContent: (content: IContent, reaction: string) => Promise<void>
@@ -18,6 +19,7 @@ export const UserContext = createContext<{
 }>({
   connections: undefined,
   retrieveConnections: () => new Promise((resolve) => resolve()),
+  deleteConnection: () => new Promise((resolve) => resolve()),
   contents: undefined,
   retrieveContent: () => new Promise((resolve) => resolve()),
   reactToContent: () => new Promise((resolve) => resolve()),
@@ -76,6 +78,14 @@ const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
       .catch(() => setConnections([]))
   }
 
+  const deleteConnection = (connectionId: string) => {
+    return apiRequest.deleteConnection(connectionId).then(() => {
+      setConnections((prev) =>
+        prev?.filter((c) => String(c.connectionId) !== String(connectionId))
+      )
+    })
+  }
+
   useEffect(() => {
     retrieveContent()
     retrieveTodoTasks()
@@ -87,6 +97,7 @@ const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
       value={{
         connections,
         retrieveConnections,
+        deleteConnection,
         contents,
         retrieveContent,
         reactToContent,

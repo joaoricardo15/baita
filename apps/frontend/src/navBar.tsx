@@ -1,4 +1,5 @@
 import {
+  CableOutlined as CableOutlinedIcon,
   ExitToApp as ExitToAppIcon,
   ExploreOutlined as ExploreOutlinedIcon,
   Face as FaceIcon,
@@ -79,6 +80,11 @@ const NavBar: FC<ComponentProps> = ({ className, style }) => {
                       icon: <SmartToyOutlinedIcon color="secondary" />,
                     },
                     {
+                      label: labels.connections,
+                      onClick: () => navigate(LINKS.connections),
+                      icon: <CableOutlinedIcon color="secondary" />,
+                    },
+                    {
                       label: labels.place,
                       onClick: () => navigate(LINKS.place),
                       icon: <ExploreOutlinedIcon color="secondary" />,
@@ -115,6 +121,7 @@ const LABELS: Labels = {
     toDo: 'To Do',
     place: 'Place',
     notes: 'Notes',
+    connections: 'Connections',
     profile: 'Profile',
     logout: 'Logout',
     login: 'Log in',
@@ -125,6 +132,7 @@ const LABELS: Labels = {
     toDo: 'To Do',
     place: 'Lugar',
     notes: 'Notas',
+    connections: 'Conexões',
     profile: 'Perfil',
     logout: 'Sair',
     login: 'Entrar',

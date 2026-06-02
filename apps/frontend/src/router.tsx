@@ -11,6 +11,7 @@ import UserProvider from './providers/user'
 import { publishEvent } from './utils/firebase'
 import Bot from './views/bot'
 import Bots from './views/bots'
+import Connections from './views/connections'
 import Document from './views/document'
 import Feed from './views/feed'
 import Landing from './views/landing'
@@ -61,6 +62,10 @@ const Router: FC = () => {
                       <Route path={LINKS.todo} element={<ToDo />} />
                       <Route path={LINKS.feed} element={<Feed />} />
                       <Route path={LINKS.bots} element={<Bots />} />
+                      <Route
+                        path={LINKS.connections}
+                        element={<Connections />}
+                      />
                       <Route path={LINKS.notes} element={<Notes />} />
                       <Route path={LINKS.place} element={<Places />} />
                       <Route path={LINKS.profile} element={<Profile />} />
@@ -97,6 +102,7 @@ export const LINKS = {
   profile: '/profile',
   privacy: '/privacy',
   install: '/install',
+  connections: '/connections',
   bot: (botId: string) => `/bots/${botId}`,
   logs: (botId: string) => `/bots/${botId}/logs`,
 }

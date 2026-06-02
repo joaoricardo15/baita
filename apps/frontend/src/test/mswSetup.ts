@@ -28,6 +28,27 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: [] })
   }),
 
+  http.post(
+    `${API_BASE}/user/:userId/resource/connection/delete/:connectionId`,
+    () => {
+      return HttpResponse.json({ success: true, data: null })
+    }
+  ),
+
+  http.post(`${API_BASE}/user/:userId/connection/:connectionId/health`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: { status: 'healthy' },
+    })
+  }),
+
+  http.post(`${API_BASE}/user/:userId/connection/:connectionId/details`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: { connection: {}, linkedBots: [] },
+    })
+  }),
+
   http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
@@ -36,7 +57,7 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.post(`${API_BASE}/user/:userId/bots`, () => {
+  http.post(`${API_BASE}/user/:userId/bot`, () => {
     return HttpResponse.json({
       success: true,
       data: { botId: 'new-bot-id', userId: 'test', tasks: [], active: false },
@@ -56,7 +77,7 @@ export const handlers = [
     })
   }),
 
-  http.get(`${API_BASE}/user/:userId/bots/:botId/logs`, () => {
+  http.get(`${API_BASE}/user/:userId/bot/:botId/logs`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 ]

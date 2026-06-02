@@ -6,6 +6,7 @@ export const pipedriveConnector: ConnectorManifest = {
   name: 'Pipedrive',
   icon: 'pipedrive',
   category: 'CRM',
+  appId: '19c1921c-9a6b-4def-91c8-8bcba8239bf5',
   auth: {
     type: 'oauth2',
     authorizationUrl: 'https://oauth.pipedrive.com/oauth/authorize',
@@ -14,6 +15,7 @@ export const pipedriveConnector: ConnectorManifest = {
     scopes: ['contacts:full', 'deals:full'],
     userInfoUrl: 'https://api.pipedrive.com/v1/users/me',
     userIdField: 'data.id',
+    clientId: '987a469172b3ac62',
     clientIdEnvVar: 'PIPEDRIVE_CLIENT_ID',
     clientSecretEnvVar: 'PIPEDRIVE_CLIENT_SECRET',
     tokenAuthMethod: 'basic',

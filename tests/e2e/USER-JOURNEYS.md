@@ -179,19 +179,29 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 ### Use Cases
 
-| #   | Use Case         | User Action                  | Expected Outcome                                           |
-| --- | ---------------- | ---------------------------- | ---------------------------------------------------------- |
-| 7.1 | Connect app      | Click "Connect" on a service | Redirect to provider OAuth, return with credentials stored |
-| 7.2 | View connections | Open connection list         | See all connected accounts                                 |
-| 7.3 | Token refresh    | Bot uses expired token       | Auto-refresh, new token persisted                          |
-| 7.4 | Disconnect       | Remove a connection          | Credentials deleted from DB                                |
-| 7.5 | OAuth cancel     | User cancels at provider     | Graceful handling (no 500, no crash)                       |
-| 7.6 | Invalid callback | Bad state param in callback  | Graceful handling, no data corruption                      |
+| #    | Use Case              | User Action                     | Expected Outcome                                           |
+| ---- | --------------------- | ------------------------------- | ---------------------------------------------------------- |
+| 7.1  | Connect app           | Click "Connect" on a service    | Redirect to provider OAuth, return with credentials stored |
+| 7.2  | View connections      | Open /connections               | See all connected accounts with status                     |
+| 7.3  | Token refresh         | Bot uses expired token          | Auto-refresh, new token persisted                          |
+| 7.4  | Disconnect            | Click delete on a connection    | Confirmation dialog, credentials deleted from DB           |
+| 7.5  | OAuth cancel          | User cancels at provider        | Graceful handling (no 500, no crash)                       |
+| 7.6  | Invalid callback      | Bad state param in callback     | Graceful handling, no data corruption                      |
+| 7.7  | Health check          | Click "Test" on a connection    | Connection tested, status chip updates                     |
+| 7.8  | View details          | Expand a connection card        | See linked bots, creation date                             |
+| 7.9  | Delete with warning   | Delete connection used by bot   | Warning shown about affected bots before confirming        |
+| 7.10 | Standalone connection | Click "Add" on connections page | Connector picker, OAuth popup, connection saved            |
+| 7.11 | Empty state           | Open /connections with no conns | Friendly empty state with "add" prompt                     |
 
 ### Test Coverage
 
-- **Unit (Backend):** `apps/backend/src/controllers/tests/resource.test.ts` — Connection CRUD
-- **E2E:** `tests/e2e/tests/connector-oauth.spec.ts` — Full lifecycle, token refresh, callback edge cases
+- **Unit (Frontend):** `apps/frontend/src/views/connections/tests/index.test.tsx` — Rendering, loading, health check, delete
+- **Unit (Backend):** `apps/backend/src/endpoints/connection/health/tests/index.test.ts` — Health check with refresh
+- **Unit (Backend):** `apps/backend/src/endpoints/connection/details/tests/index.test.ts` — Details with linked bots
+- **Unit (Backend):** `apps/backend/src/utils/tests/tokenRefresh.test.ts` — Token refresh utility
+- **Unit (Backend):** `apps/backend/src/connectors/oauth/tests/index.test.ts` — OAuth callback handler
+- **E2E:** `tests/e2e/tests/connector-oauth.spec.ts` — Connection CRUD, token refresh, callback edge cases
+- **E2E:** `tests/e2e/tests/connections-page.spec.ts` — Health check, details, delete endpoints
 
 ---
 
@@ -247,7 +257,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 | 4. Bot Automation     | ✅        | ✅        | ✅            | ✅         |
 | 5. Notes              | ✅        | ✅        | —             | ✅         |
 | 6. Places             | —         | ✅        | —             | ✅ (smoke) |
-| 7. OAuth Connections  | —         | ✅        | —             | ✅         |
+| 7. OAuth Connections  | ✅        | ✅        | —             | ✅         |
 | 8. Push Notifications | ✅        | ✅        | —             | —          |
 | 9. Profile & Stats    | —         | —         | —             | ✅ (smoke) |
 

@@ -273,16 +273,17 @@ When the user provides an instruction or rule that is clearly valuable and appli
 
 ### Critical Pages & Data Dependencies
 
-| Route               | Component | Provider          | API Calls on Mount                     | Test File                             |
-| ------------------- | --------- | ----------------- | -------------------------------------- | ------------------------------------- |
-| `/bots`             | Bots      | BotContext        | `getBots()` + `getBotModels()`         | `src/views/bots/tests/index.test.tsx` |
-| `/bots/:botId`      | Bot       | BotContext        | `getBot(botId)`                        | —                                     |
-| `/bots/:botId/logs` | Logs      | BotContext        | `getBot(botId)` + `getLogs(botId)`     | —                                     |
-| `/` / `/todo`       | ToDo      | UserContext       | `retrieveTodoTasks()`                  | `src/views/todo/tests/index.test.tsx` |
-| `/feed`             | Feed      | UserContext       | `retrieveContent()`                    | —                                     |
-| `/notes`            | Notes     | Direct ApiRequest | `getNotes()`                           | —                                     |
-| `/place`            | Places    | Direct ApiRequest | `listPlaces()`                         | —                                     |
-| `/profile`          | Profile   | AuthContext       | None (relies on UserContext pre-fetch) | `src/views/profile/index.test.tsx`    |
+| Route               | Component   | Provider          | API Calls on Mount                     | Test File                                    |
+| ------------------- | ----------- | ----------------- | -------------------------------------- | -------------------------------------------- |
+| `/bots`             | Bots        | BotContext        | `getBots()` + `getBotModels()`         | `src/views/bots/tests/index.test.tsx`        |
+| `/bots/:botId`      | Bot         | BotContext        | `getBot(botId)`                        | —                                            |
+| `/bots/:botId/logs` | Logs        | BotContext        | `getBot(botId)` + `getLogs(botId)`     | —                                            |
+| `/connections`      | Connections | UserContext       | `getAppConnections()` (pre-fetched)    | `src/views/connections/tests/index.test.tsx` |
+| `/` / `/todo`       | ToDo        | UserContext       | `retrieveTodoTasks()`                  | `src/views/todo/tests/index.test.tsx`        |
+| `/feed`             | Feed        | UserContext       | `retrieveContent()`                    | —                                            |
+| `/notes`            | Notes       | Direct ApiRequest | `getNotes()`                           | —                                            |
+| `/place`            | Places      | Direct ApiRequest | `listPlaces()`                         | —                                            |
+| `/profile`          | Profile     | AuthContext       | None (relies on UserContext pre-fetch) | `src/views/profile/index.test.tsx`           |
 
 **Provider-level data fetching (on auth):**
 

@@ -42,5 +42,7 @@ export const AppConnectionSchema = z.object({
   name: z.string(),
   credentials: CredentialSchema,
   connectionId: z.union([z.string(), z.number()]),
+  connectorId: z.string().optional(),
+  createdAt: z.number().optional(),
 })
 export type IAppConnection = z.infer<typeof AppConnectionSchema>

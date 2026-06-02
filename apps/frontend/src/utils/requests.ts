@@ -82,6 +82,27 @@ const ApiRequest = () => {
     return getApiResponse<IAppConnection[]>('post', `resource/connection/list`)
   }
 
+  const deleteConnection = (connectionId: string) => {
+    return getApiResponse<void>(
+      'post',
+      `resource/connection/delete/${connectionId}`
+    )
+  }
+
+  const healthCheckConnection = (connectionId: string) => {
+    return getApiResponse<{ status: string; message?: string }>(
+      'post',
+      `connection/${connectionId}/health`
+    )
+  }
+
+  const getConnectionDetails = (connectionId: string) => {
+    return getApiResponse<{
+      connection: Record<string, unknown>
+      linkedBots: { botId: string; name: string }[]
+    }>('post', `connection/${connectionId}/details`)
+  }
+
   const getBots = () => {
     return getApiResponse<IBot[]>('post', 'resource/bot/list')
   }
@@ -142,33 +163,33 @@ const ApiRequest = () => {
   }
 
   const createBot = () => {
-    return getApiResponse<IBot>('post', 'bots')
+    return getApiResponse<IBot>('post', 'bot')
   }
 
   const updateBot = (botId: string, bot: Partial<IBot>) => {
-    return getApiResponse<IBot>('put', `bots/${botId}`, bot)
+    return getApiResponse<IBot>('put', `bot/${botId}`, bot)
   }
 
   const deleteBot = (botId: string, apiId: string) => {
-    return getApiResponse<void>('delete', `bots/${botId}/api/${apiId}`)
+    return getApiResponse<void>('delete', `bot/${botId}/api/${apiId}`)
   }
 
   const deployBot = (botId: string, bot: Partial<IBot>) => {
-    return getApiResponse<IBot>('post', `bots/${botId}/deploy`, bot)
+    return getApiResponse<IBot>('post', `bot/${botId}/deploy`, bot)
   }
 
   const deployBotModel = (modelId: string, model: IBotModel) => {
-    return getApiResponse<IBot>('post', `bots/${modelId}/bud`, model)
+    return getApiResponse<IBot>('post', `bot/${modelId}/bud`, model)
   }
 
   const getLogs = (botId: string) => {
-    return getApiResponse<IBotLog[]>('get', `bots/${botId}/logs`)
+    return getApiResponse<IBotLog[]>('get', `bot/${botId}/logs`)
   }
 
   const testBot = (botId: string, task: ITask, taskIndex: number) => {
     return getApiResponse<ITaskExecutionResult>(
       'post',
-      `bots/${botId}/test/${taskIndex}`,
+      `bot/${botId}/test/${taskIndex}`,
       task
     )
   }
@@ -232,6 +253,9 @@ const ApiRequest = () => {
     deleteBotModel,
     publishBotModel,
     getAppConnections,
+    deleteConnection,
+    healthCheckConnection,
+    getConnectionDetails,
     getImageUploadUrl,
   }
 }
