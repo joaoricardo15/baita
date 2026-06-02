@@ -1,6 +1,6 @@
+import { ConnectorManifest } from '@baita/shared'
 import axios from 'axios'
 import qs from 'qs'
-import { ConnectorManifest } from '@baita/shared'
 
 export interface ITokenCredentials {
   access_token: string

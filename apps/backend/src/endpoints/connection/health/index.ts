@@ -1,6 +1,6 @@
+import { getConnectorByAppId, getConnectorById } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 import axios from 'axios'
-import { getConnectorByAppId, getConnectorById } from '@baita/shared'
 import Resource from 'src/controllers/resource'
 import Api, { ApiRequestStatus } from 'src/utils/api'
 import { ITokenCredentials, refreshOAuth2Token } from 'src/utils/tokenRefresh'
@@ -96,7 +96,7 @@ exports.handler = async (
           api.httpResponse(callback, ApiRequestStatus.success, undefined, {
             status: 'healthy',
           })
-        } catch (_refreshErr: unknown) {
+        } catch (_err: unknown) {
           api.httpResponse(callback, ApiRequestStatus.success, undefined, {
             status: 'expired',
             message: 'Token refresh failed — reconnection required',

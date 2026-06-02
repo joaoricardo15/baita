@@ -22,7 +22,6 @@ const LandingPage: FC = () => {
         <div className="d-flex justify-content-center mt-4">
           <Logo size={150} />
         </div>
-        <p className="text-center text-secondary mt-3 mx-3">{labels.purpose}</p>
         {!isLoading && (
           <div className="text-center m-4">
             <TypeAnimation
@@ -66,6 +65,7 @@ const LandingPage: FC = () => {
           </div>
         )}
         <div className="text-center mt-5">
+          <p className="text-secondary mx-3 mb-2">{labels.purpose}</p>
           <Link to={LINKS.privacy} className="text-secondary mx-2">
             {labels.privacy}
           </Link>
