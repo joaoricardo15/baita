@@ -2,6 +2,7 @@ import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import { SQS } from '@aws-sdk/client-sqs'
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 import { IContent, IUser } from '@baita/shared'
+
 import { CONTENT_BATCH_LIMIT, SQS_RETENTION_SECONDS } from '@/utils/constants'
 
 const CORE_TABLE = process.env.CORE_TABLE || ''

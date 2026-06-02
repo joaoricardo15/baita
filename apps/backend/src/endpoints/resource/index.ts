@@ -1,4 +1,5 @@
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
+
 import Resource, {
   resourceOperations,
   resourceValidationProneOperations,

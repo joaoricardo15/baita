@@ -11,6 +11,7 @@ import {
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { mockClient } from 'aws-sdk-client-mock'
+
 import { invokeHandler } from '@/utils/tests/helpers/event'
 
 const ddbMock = mockClient(DynamoDBDocument)

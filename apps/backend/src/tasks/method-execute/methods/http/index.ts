@@ -1,6 +1,7 @@
 import { ITaskExecutionInput } from '@baita/shared'
 import { DataType } from '@baita/shared'
 import Axios from 'axios'
+
 import Resource from '@/controllers/resource'
 import { getDataFromPath, getMappedData } from '@/utils/bot'
 

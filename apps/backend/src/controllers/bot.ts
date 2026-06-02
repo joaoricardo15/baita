@@ -14,6 +14,8 @@ import {
 } from '@baita/shared'
 import { validateTaskExecutionResult } from '@baita/shared'
 import { ServiceName } from '@baita/shared'
+import { v4 as uuidv4 } from 'uuid'
+
 import { getDataFromService } from '@/utils/bot'
 import { getBotSampleCode, getCodeFile, getCompleteBotCode } from '@/utils/code'
 import {
@@ -21,7 +23,6 @@ import {
   LOG_LOOKBACK_DAYS,
   LOG_QUERY_LIMIT,
 } from '@/utils/constants'
-import { v4 as uuidv4 } from 'uuid'
 
 import Resource from './resource'
 

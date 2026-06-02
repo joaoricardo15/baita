@@ -2,9 +2,10 @@ import { ITaskExecutionInput, TaskExecutionStatus } from '@baita/shared'
 import { validateTaskExecutionInput } from '@baita/shared'
 import { DataType } from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
+import vm from 'vm'
+
 import Api from '@/utils/api'
 import { CODE_EXECUTION_TIMEOUT_MS } from '@/utils/constants'
-import vm from 'vm'
 
 interface ICodeExecute {
   code: string

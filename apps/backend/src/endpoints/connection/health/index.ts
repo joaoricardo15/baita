@@ -1,6 +1,7 @@
 import { getConnectorByAppId, getConnectorById } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 import axios from 'axios'
+
 import Resource from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
 import { ITokenCredentials, refreshOAuth2Token } from '@/utils/tokenRefresh'
