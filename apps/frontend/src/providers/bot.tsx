@@ -1,7 +1,7 @@
-import { createContext, FC, ReactNode, useState } from 'react'
-
 import { IBot, IBotModel, ITask } from '@baita/shared'
 import { IVariable, ServiceType, VariableType } from '@baita/shared'
+import { createContext, FC, ReactNode, useState } from 'react'
+
 import { getExistingSubscription } from '@/utils/push'
 import ApiRequest from '@/utils/requests'
 
@@ -139,8 +139,15 @@ const BotProvider: FC<{ children: ReactNode }> = ({ children }) => {
     for (let i = 0; i < tasks.length; i++) {
       if (tasks[i].sampleResult && tasks[i].sampleResult?.outputData) {
         const taskIndex = i
+        const serviceLabel = tasks[i].service?.label
         const groupName =
-          taskIndex === 0 ? ServiceType.trigger : `task ${taskIndex}`
+          taskIndex === 0
+            ? serviceLabel
+              ? `Trigger: ${serviceLabel}`
+              : ServiceType.trigger
+            : serviceLabel
+              ? `${taskIndex}. ${serviceLabel}`
+              : `task ${taskIndex}`
         const outputData = tasks[taskIndex].sampleResult?.outputData
 
         const getFromVariable = (name: string, value: any) => {

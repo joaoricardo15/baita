@@ -134,8 +134,11 @@ export const getValueFromInputVariable = (
   }
 
   if (type === VariableType.output) {
+    if (outputIndex === undefined && outputPath === undefined) {
+      return value
+    }
     if (outputIndex === undefined || outputPath === undefined) {
-      throw Error(`Variable '${label}' has no outputIndex or outputPath`)
+      throw Error(`Variable '${label}' has incomplete output reference`)
     }
 
     return (

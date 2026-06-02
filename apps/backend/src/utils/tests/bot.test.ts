@@ -217,7 +217,7 @@ describe('getValueFromInputVariable', () => {
     expect(getValueFromInputVariable(variable, true)).toBe('sampleValue')
   })
 
-  test('should throw error when it is an output variable and there is no outputIndex or outputPath', () => {
+  test('should throw error when output variable has incomplete reference (one of outputIndex/outputPath missing)', () => {
     const variable1 = {
       name: 'property',
       label: 'Property',
@@ -235,6 +235,17 @@ describe('getValueFromInputVariable', () => {
     }
 
     expect(() => getValueFromInputVariable(variable2, false)).toThrow()
+  })
+
+  test('should return literal value when output variable has neither outputIndex nor outputPath', () => {
+    const variable = {
+      name: 'property',
+      label: 'Property',
+      type: VariableType.output,
+      value: 'custom text value',
+    }
+
+    expect(getValueFromInputVariable(variable, false)).toBe('custom text value')
   })
 
   test('should return output variable string when it is a output variable', () => {

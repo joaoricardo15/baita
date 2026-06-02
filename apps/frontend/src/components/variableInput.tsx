@@ -3,7 +3,7 @@ import {
   AccountTree as AccountTreeIcon,
   Edit as EditIcon,
 } from '@mui/icons-material'
-import { IconButton, Tooltip } from '@mui/material'
+import { Box, IconButton, Tooltip, Typography } from '@mui/material'
 import { FC, useState } from 'react'
 
 import { getLabels, Labels } from '@/utils/labels'
@@ -32,7 +32,10 @@ const VariableInput: FC<
 }) => {
   const hasOutputOptions = !!outputFields?.length
   const [isManualMode, setIsManualMode] = useState(
-    hasOutputOptions && variable.type !== VariableType.output
+    hasOutputOptions &&
+      variable.type === VariableType.output &&
+      variable.outputIndex === undefined &&
+      !!variable.value
   )
 
   const onOutputChange = (field: IVariable, result?: IVariable) => {
@@ -90,10 +93,10 @@ const VariableInput: FC<
     setIsManualMode(true)
     onChange({
       ...variable,
-      type: VariableType.text,
       outputIndex: undefined,
       outputPath: undefined,
       value: '',
+      label: '',
       sampleValue: '',
     })
   }
@@ -102,7 +105,8 @@ const VariableInput: FC<
     setIsManualMode(false)
     onChange({
       ...variable,
-      type: VariableType.output,
+      outputIndex: undefined,
+      outputPath: undefined,
       value: '',
       label: '',
       sampleValue: '',
@@ -129,6 +133,31 @@ const VariableInput: FC<
     </Tooltip>
   )
 
+  const renderOutputOption = (
+    props: React.HTMLAttributes<HTMLLIElement>,
+    option: IVariable
+  ) => {
+    const sampleText =
+      typeof option.value === 'string' || typeof option.value === 'number'
+        ? String(option.value).slice(0, 50)
+        : ''
+
+    return (
+      <li {...props}>
+        <Box sx={{ overflow: 'hidden' }}>
+          <Typography variant="body2" noWrap>
+            {option.name || option.outputPath}
+          </Typography>
+          {sampleText && (
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {sampleText}
+            </Typography>
+          )}
+        </Box>
+      </li>
+    )
+  }
+
   return (
     <div className={className} style={style}>
       {variable.description && (
@@ -153,11 +182,12 @@ const VariableInput: FC<
               onChange={(result) => onOutputChange(variable, result)}
               onBlur={onBlur}
               options={outputFields}
+              renderOption={renderOutputOption}
             />
           </div>
           {hasOutputOptions && renderToggleButton()}
         </div>
-      ) : isManualMode && hasOutputOptions ? (
+      ) : variable.type === VariableType.output && isManualMode ? (
         <div className="d-flex align-items-center">
           <div className="flex-grow-1">
             <TextInput
@@ -170,6 +200,14 @@ const VariableInput: FC<
           </div>
           {renderToggleButton()}
         </div>
+      ) : variable.type === VariableType.output ? (
+        <TextInput
+          value={value}
+          variant="outlined"
+          onBlur={onBlur}
+          label={getLabel(variable.label)}
+          onChange={(result) => onTextChange(variable, result)}
+        />
       ) : variable.type === VariableType.options ? (
         <OptionsInput
           label={getLabel(variable.label)}

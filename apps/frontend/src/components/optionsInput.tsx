@@ -1,5 +1,5 @@
 import { Autocomplete, Chip, TextField } from '@mui/material'
-import { FC, useEffect, useState } from 'react'
+import { FC, ReactNode, useEffect, useState } from 'react'
 
 import { getLabels, Labels } from '@/utils/labels'
 
@@ -17,6 +17,10 @@ export const OptionsInput: FC<
     chip?: boolean
     optionLabelPath?: string | string[]
     groupLabelPath?: string | string[]
+    renderOption?: (
+      props: React.HTMLAttributes<HTMLLIElement>,
+      option: any
+    ) => ReactNode
   } & ComponentProps
 > = ({
   value,
@@ -29,6 +33,7 @@ export const OptionsInput: FC<
   chip = false,
   optionLabelPath,
   groupLabelPath,
+  renderOption: customRenderOption,
   className,
   style,
 }) => {
@@ -41,6 +46,21 @@ export const OptionsInput: FC<
   const getPropertyByPath = (path: string | string[], obj: any): string => {
     const properties = Array.isArray(path) ? path : path.split('.')
     return properties.reduce((prev, curr) => prev[curr], obj)
+  }
+
+  const getDefaultRenderOption = () => {
+    if (customRenderOption) return customRenderOption
+    if (chip) {
+      return (props: React.HTMLAttributes<HTMLLIElement>, option: any) => (
+        <li {...props}>
+          <Chip
+            variant="outlined"
+            label={getPropertyByPath(`${optionLabelPath}`, option)}
+          />
+        </li>
+      )
+    }
+    return undefined
   }
 
   return (
@@ -56,6 +76,7 @@ export const OptionsInput: FC<
           onBlur={onBlur}
           onChange={(_, value) => onChange(value)}
           onInputChange={(_, newValue) => setLocalInputValue(newValue)}
+          onClose={() => setLocalInputValue(value)}
           groupBy={
             groupLabelPath
               ? (option) => getPropertyByPath(groupLabelPath, option)
@@ -65,18 +86,7 @@ export const OptionsInput: FC<
             getPropertyByPath(`${optionLabelPath}`, option)
           }
           isOptionEqualToValue={() => true}
-          renderOption={
-            chip
-              ? (props, option) => (
-                  <li {...props}>
-                    <Chip
-                      variant="outlined"
-                      label={getPropertyByPath(`${optionLabelPath}`, option)}
-                    />
-                  </li>
-                )
-              : undefined
-          }
+          renderOption={getDefaultRenderOption()}
           renderInput={(params) => (
             <TextField
               {...params}
