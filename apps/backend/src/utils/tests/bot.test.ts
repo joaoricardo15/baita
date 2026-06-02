@@ -558,7 +558,7 @@ describe('getDataFromService', () => {
   })
 
   test('should return correct input object regarding a complex real use case', () => {
-    process.env.OPENAI_API_AUTHORIZATION = 'Bearer xxx'
+    process.env.NEWS_API_KEY = 'test-api-key'
     const serviceVariables = [
       {
         name: 'method',
@@ -578,7 +578,7 @@ describe('getDataFromService', () => {
         name: 'headers.Authorization',
         label: 'Authorization',
         type: VariableType.environment,
-        value: 'OPENAI_API_AUTHORIZATION',
+        value: 'NEWS_API_KEY',
         required: true,
       },
       {
@@ -641,7 +641,7 @@ describe('getDataFromService', () => {
         temperature: 0.9,
       },
       headers: {
-        Authorization: 'Bearer xxx',
+        Authorization: 'test-api-key',
       },
       method: 'post',
       path: 'chat/completions',

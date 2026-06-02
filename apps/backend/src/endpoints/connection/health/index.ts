@@ -55,12 +55,16 @@ exports.handler = async (
       : `${connector.base.url}${connector.healthCheck.url}`
 
     const credentials = connection.credentials as ITokenCredentials
+    const authHeader =
+      connector.auth.type === 'userApiKey'
+        ? `${connector.auth.prefix || ''}${credentials.apiKey || ''}`
+        : `Bearer ${credentials.access_token}`
 
     try {
       await axios.request({
         url: healthUrl,
         method: connector.healthCheck.method || 'GET',
-        headers: { Authorization: `Bearer ${credentials.access_token}` },
+        headers: { Authorization: authHeader },
       })
 
       api.httpResponse(callback, ApiRequestStatus.success, undefined, {

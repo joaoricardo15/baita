@@ -1,6 +1,13 @@
-import { FC } from 'react'
-
 import { IVariable, VariableType } from '@baita/shared'
+import {
+  AccountTree as AccountTreeIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material'
+import { IconButton, Tooltip } from '@mui/material'
+import { FC, useState } from 'react'
+
+import { getLabels, Labels } from '@/utils/labels'
+
 import { CheckBox, CodeInput, OptionsInput, Text, TextInput } from '.'
 import { ComponentProps } from '.'
 
@@ -23,6 +30,11 @@ const VariableInput: FC<
   className,
   style,
 }) => {
+  const hasOutputOptions = !!outputFields?.length
+  const [isManualMode, setIsManualMode] = useState(
+    hasOutputOptions && variable.type !== VariableType.output
+  )
+
   const onOutputChange = (field: IVariable, result?: IVariable) => {
     onChange({
       ...field,
@@ -74,7 +86,48 @@ const VariableInput: FC<
     })
   }
 
+  const switchToManualMode = () => {
+    setIsManualMode(true)
+    onChange({
+      ...variable,
+      type: VariableType.text,
+      outputIndex: undefined,
+      outputPath: undefined,
+      value: '',
+      sampleValue: '',
+    })
+  }
+
+  const switchToReferenceMode = () => {
+    setIsManualMode(false)
+    onChange({
+      ...variable,
+      type: VariableType.output,
+      value: '',
+      label: '',
+      sampleValue: '',
+    })
+  }
+
   const getLabel = (label: string) => (variable.required ? `${label} *` : label)
+
+  const renderToggleButton = () => (
+    <Tooltip
+      title={isManualMode ? labels.useTaskOutput : labels.useCustomValue}
+    >
+      <IconButton
+        size="small"
+        onClick={isManualMode ? switchToReferenceMode : switchToManualMode}
+        sx={{ ml: 0.5 }}
+      >
+        {isManualMode ? (
+          <AccountTreeIcon fontSize="small" />
+        ) : (
+          <EditIcon fontSize="small" />
+        )}
+      </IconButton>
+    </Tooltip>
+  )
 
   return (
     <div className={className} style={style}>
@@ -87,16 +140,36 @@ const VariableInput: FC<
           {variable.description}
         </Text>
       )}
-      {variable.type === VariableType.output && outputFields ? (
-        <OptionsInput
-          value={value}
-          label={getLabel(variable.label)}
-          optionLabelPath="label"
-          groupLabelPath="groupName"
-          onChange={(result) => onOutputChange(variable, result)}
-          onBlur={onBlur}
-          options={outputFields}
-        />
+      {variable.type === VariableType.output &&
+      outputFields &&
+      !isManualMode ? (
+        <div className="d-flex align-items-center">
+          <div className="flex-grow-1">
+            <OptionsInput
+              value={value}
+              label={getLabel(variable.label)}
+              optionLabelPath="label"
+              groupLabelPath="groupName"
+              onChange={(result) => onOutputChange(variable, result)}
+              onBlur={onBlur}
+              options={outputFields}
+            />
+          </div>
+          {hasOutputOptions && renderToggleButton()}
+        </div>
+      ) : isManualMode && hasOutputOptions ? (
+        <div className="d-flex align-items-center">
+          <div className="flex-grow-1">
+            <TextInput
+              value={value}
+              variant="outlined"
+              onBlur={onBlur}
+              label={getLabel(variable.label)}
+              onChange={(result) => onTextChange(variable, result)}
+            />
+          </div>
+          {renderToggleButton()}
+        </div>
       ) : variable.type === VariableType.options ? (
         <OptionsInput
           label={getLabel(variable.label)}
@@ -136,3 +209,16 @@ const VariableInput: FC<
 }
 
 export default VariableInput
+
+const LABELS: Labels = {
+  en: {
+    useCustomValue: 'Type a custom value',
+    useTaskOutput: 'Select from task outputs',
+  },
+  pt: {
+    useCustomValue: 'Digitar um valor',
+    useTaskOutput: 'Selecionar saída de tarefa',
+  },
+}
+
+const labels = getLabels(LABELS)

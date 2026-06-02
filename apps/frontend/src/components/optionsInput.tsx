@@ -1,7 +1,8 @@
 import { Autocomplete, Chip, TextField } from '@mui/material'
-import { FC } from 'react'
+import { FC, useEffect, useState } from 'react'
 
 import { getLabels, Labels } from '@/utils/labels'
+
 import { ComponentProps } from '.'
 
 export const OptionsInput: FC<
@@ -31,6 +32,12 @@ export const OptionsInput: FC<
   className,
   style,
 }) => {
+  const [localInputValue, setLocalInputValue] = useState(value)
+
+  useEffect(() => {
+    setLocalInputValue(value)
+  }, [value])
+
   const getPropertyByPath = (path: string | string[], obj: any): string => {
     const properties = Array.isArray(path) ? path : path.split('.')
     return properties.reduce((prev, curr) => prev[curr], obj)
@@ -44,11 +51,11 @@ export const OptionsInput: FC<
           autoHighlight
           blurOnSelect
           options={options}
-          inputValue={value}
+          inputValue={localInputValue}
           noOptionsText={labels.noOptions}
-          filterOptions={(options) => options}
           onBlur={onBlur}
           onChange={(_, value) => onChange(value)}
+          onInputChange={(_, newValue) => setLocalInputValue(newValue)}
           groupBy={
             groupLabelPath
               ? (option) => getPropertyByPath(groupLabelPath, option)
@@ -70,7 +77,6 @@ export const OptionsInput: FC<
                 )
               : undefined
           }
-          onKeyDown={(event) => event.preventDefault()}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -78,7 +84,6 @@ export const OptionsInput: FC<
               label={label}
               variant="outlined"
               placeholder={placeholder}
-              onKeyDown={(event) => event.preventDefault()}
             />
           )}
         />

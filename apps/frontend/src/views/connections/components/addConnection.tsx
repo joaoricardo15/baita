@@ -1,19 +1,24 @@
 import {
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   List,
   ListItemButton,
   ListItemText,
   ListSubheader,
+  TextField,
 } from '@mui/material'
-import { FC, useContext } from 'react'
-import { getAllConnectors } from '@baita/shared'
+import { FC, useContext, useState } from 'react'
+import { ConnectorManifest, getAllConnectors } from '@baita/shared'
 
+import { Button } from '@/components'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
+import { UserContext } from '@/providers/user'
 import { getLabels, Labels } from '@/utils/labels'
 import { buildOAuthUrl } from '@/utils/oauth'
+import ApiRequest from '@/utils/requests'
 import { useOauthPopup } from '@/utils/useOauthPopup'
 
 const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
@@ -22,8 +27,15 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
 }) => {
   const { user } = useContext(AuthContext)
   const { showSnack } = useContext(NotificationContext)
+  const { retrieveConnections } = useContext(UserContext)
+  const apiRequest = ApiRequest()
 
   const connectors = getAllConnectors()
+
+  const [apiKeyDialog, setApiKeyDialog] = useState<ConnectorManifest | null>(
+    null
+  )
+  const [apiKeyValue, setApiKeyValue] = useState('')
 
   const openOauth = useOauthPopup((created) => {
     showSnack(
@@ -35,10 +47,29 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
 
   const handleConnect = (connectorId: string) => {
     const connector = connectors.find((c) => c.id === connectorId)
-    if (!connector || connector.auth.type !== 'oauth2') return
+    if (!connector) return
 
-    const state = `${connector.appId}:${user?.userId}::0:${connectorId}`
-    openOauth(buildOAuthUrl(connector, state))
+    if (connector.auth.type === 'oauth2') {
+      const state = `${connector.appId}:${user?.userId}::0:${connectorId}`
+      openOauth(buildOAuthUrl(connector, state))
+    } else if (connector.auth.type === 'userApiKey') {
+      setApiKeyDialog(connector)
+      setApiKeyValue('')
+    }
+  }
+
+  const handleApiKeySubmit = () => {
+    if (!apiKeyDialog || !apiKeyValue.trim()) return
+
+    apiRequest
+      .createApiKeyConnection(apiKeyDialog.id, apiKeyValue.trim())
+      .then(() => {
+        showSnack(labels.success, 'success')
+        retrieveConnections()
+        setApiKeyDialog(null)
+        onClose()
+      })
+      .catch(() => showSnack(labels.error, 'error'))
   }
 
   const grouped = connectors.reduce(
@@ -51,35 +82,73 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
   )
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{labels.title}</DialogTitle>
-      <DialogContent>
-        <List>
-          {Object.entries(grouped).map(([category, items]) => (
-            <div key={category}>
-              <ListSubheader>{category}</ListSubheader>
-              {items
-                .filter((c) => c.auth.type === 'oauth2')
-                .map((connector) => (
-                  <ListItemButton
-                    key={connector.id}
-                    onClick={() => handleConnect(connector.id)}
-                  >
-                    {connector.icon && (
-                      <img
-                        src={connector.icon}
-                        alt=""
-                        style={{ width: 20, height: 20, marginRight: 10 }}
-                      />
-                    )}
-                    <ListItemText primary={connector.name} />
-                  </ListItemButton>
-                ))}
-            </div>
-          ))}
-        </List>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog
+        open={open && !apiKeyDialog}
+        onClose={onClose}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>{labels.title}</DialogTitle>
+        <DialogContent>
+          <List>
+            {Object.entries(grouped).map(([category, items]) => (
+              <div key={category}>
+                <ListSubheader>{category}</ListSubheader>
+                {items
+                  .filter(
+                    (c) =>
+                      c.auth.type === 'oauth2' || c.auth.type === 'userApiKey'
+                  )
+                  .map((connector) => (
+                    <ListItemButton
+                      key={connector.id}
+                      onClick={() => handleConnect(connector.id)}
+                    >
+                      {connector.icon && (
+                        <img
+                          src={connector.icon}
+                          alt=""
+                          style={{ width: 20, height: 20, marginRight: 10 }}
+                        />
+                      )}
+                      <ListItemText primary={connector.name} />
+                    </ListItemButton>
+                  ))}
+              </div>
+            ))}
+          </List>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!apiKeyDialog}
+        onClose={() => setApiKeyDialog(null)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>
+          {labels.apiKeyTitle} {apiKeyDialog?.name}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            type="password"
+            label={labels.apiKeyLabel}
+            value={apiKeyValue}
+            onChange={(e) => setApiKeyValue(e.target.value)}
+            margin="dense"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setApiKeyDialog(null)}>{labels.cancel}</Button>
+          <Button color="primary" onClick={handleApiKeySubmit}>
+            {labels.connect}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   )
 }
 
@@ -90,11 +159,21 @@ const LABELS: Labels = {
     title: 'Add Connection',
     success: 'Connection created successfully',
     cancelled: 'Connection was not completed',
+    error: 'Could not create connection',
+    apiKeyTitle: 'Connect',
+    apiKeyLabel: 'API Key',
+    cancel: 'Cancel',
+    connect: 'Connect',
   },
   pt: {
     title: 'Adicionar Conexão',
     success: 'Conexão criada com sucesso',
     cancelled: 'Conexão não foi concluída',
+    error: 'Não foi possível criar a conexão',
+    apiKeyTitle: 'Conectar',
+    apiKeyLabel: 'Chave de API',
+    cancel: 'Cancelar',
+    connect: 'Conectar',
   },
 }
 

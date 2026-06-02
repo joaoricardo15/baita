@@ -23,6 +23,12 @@ export const ApiKeyAuthSchema = z.object({
   envVar: z.string(),
 })
 
+export const UserApiKeyAuthSchema = z.object({
+  type: z.literal('userApiKey'),
+  headerName: z.string(),
+  prefix: z.string().optional(),
+})
+
 export const NoAuthSchema = z.object({
   type: z.literal('none'),
 })
@@ -30,6 +36,7 @@ export const NoAuthSchema = z.object({
 export const ConnectorAuthSchema = z.discriminatedUnion('type', [
   OAuth2AuthSchema,
   ApiKeyAuthSchema,
+  UserApiKeyAuthSchema,
   NoAuthSchema,
 ])
 

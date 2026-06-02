@@ -88,6 +88,13 @@ const ApiRequest = () => {
     )
   }
 
+  const createApiKeyConnection = (connectorId: string, apiKey: string) => {
+    return getApiResponse<void>('post', 'connection/create', {
+      connectorId,
+      apiKey,
+    })
+  }
+
   const healthCheckConnection = (connectionId: string) => {
     return getApiResponse<{ status: string; message?: string }>(
       'post',
@@ -248,6 +255,7 @@ const ApiRequest = () => {
     publishBotModel,
     getAppConnections,
     deleteConnection,
+    createApiKeyConnection,
     healthCheckConnection,
     getConnectionDetails,
     getImageUploadUrl,

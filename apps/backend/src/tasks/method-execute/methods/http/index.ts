@@ -1,4 +1,4 @@
-import { ITaskExecutionInput } from '@baita/shared'
+import { getConnectorById, ITaskExecutionInput } from '@baita/shared'
 import { DataType } from '@baita/shared'
 import Axios from 'axios'
 
@@ -16,12 +16,28 @@ interface IHttpRequest {
 export const httpRequest = async (
   taskInput: ITaskExecutionInput<IHttpRequest>
 ) => {
-  const { appConfig, serviceConfig, inputData } = taskInput
+  const { appConfig, serviceConfig, inputData, connectionId, userId } =
+    taskInput
+
+  const headers = { ...inputData.headers }
+
+  if (connectionId && userId) {
+    const resource = new Resource(userId, 'connection')
+    const connection = await resource.read(connectionId as string)
+    if (connection?.credentials?.apiKey && connection.connectorId) {
+      const connector = getConnectorById(connection.connectorId as string)
+      if (connector?.auth.type === 'userApiKey') {
+        const prefix = connector.auth.prefix || ''
+        headers[connector.auth.headerName] =
+          `${prefix}${connection.credentials.apiKey}`
+      }
+    }
+  }
 
   const axiosInput = {
     url: appConfig.apiUrl + (inputData.path ? `/${inputData.path}` : ''),
     method: inputData.method,
-    headers: inputData.headers,
+    headers,
     data: inputData.bodyParams,
     params: inputData.queryParams,
   }

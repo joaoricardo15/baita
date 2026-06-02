@@ -1,3 +1,5 @@
+import { ITask, removeStepReferences } from '@baita/shared'
+import { ServiceName, ServiceType } from '@baita/shared'
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
@@ -7,10 +9,9 @@ import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 
 import { Button, Text } from '@/components'
-import { ITask, removeStepReferences } from '@baita/shared'
-import { ServiceName, ServiceType } from '@baita/shared'
 import { BotContext } from '@/providers/bot'
 import { getLabels, Labels } from '@/utils/labels'
+
 import TaskInput from './input'
 import TaskOptions from './options'
 import TaskService from './service'
@@ -58,6 +59,7 @@ const Task: FC<{
   return (
     <div
       className="mt-4"
+      data-task
       onClick={onSelect}
       style={{
         borderLeft: isSelected ? '2px solid #90caf9' : '2px solid transparent',

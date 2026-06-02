@@ -8,11 +8,12 @@ export const openaiConnector: ConnectorManifest = {
   category: 'AI',
   appId: 'f9686ea8-ac80-4f70-b35b-hggfhjhk',
   auth: {
-    type: 'apiKey',
+    type: 'userApiKey',
     headerName: 'Authorization',
-    envVar: 'OPENAI_API_AUTHORIZATION',
+    prefix: 'Bearer ',
   },
   base: { url: 'https://api.openai.com/v1' },
+  healthCheck: { url: '/models', method: 'GET' },
   operations: [
     {
       id: 'text-completion',

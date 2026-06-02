@@ -141,7 +141,6 @@ provider:
     GOOGLE_CLIENT_ID: ${ssm:/baita/prod/google-client-id}
     GOOGLE_CLIENT_SECRET: ${ssm:/baita/prod/google-client-secret}
     NEWS_API_KEY: ${ssm:/baita/prod/news-api-key}
-    OPENAI_API_AUTHORIZATION: ${ssm:/baita/prod/openai-authorization}
     VAPID_PUBLIC_KEY: ${ssm:/baita/prod/vapid-public-key}
     VAPID_PRIVATE_KEY: ${ssm:/baita/prod/vapid-private-key}
 
@@ -259,6 +258,16 @@ functions:
     events:
       - http:
           path: user/{userId}/connection/{connectionId}/health
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # Connection create (API key)
+  connection-create:
+    handler: src/endpoints/connection/create/index.handler
+    events:
+      - http:
+          path: user/{userId}/connection/create
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}

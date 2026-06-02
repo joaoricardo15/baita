@@ -68,7 +68,9 @@ export function connectorToAppService(
                 password: connector.auth.clientSecretEnvVar,
               },
             }
-          : undefined,
+          : connector.auth.type === 'userApiKey'
+            ? { type: 'userApiKey', method: 'none', url: 'userApiKey' }
+            : undefined,
     },
     services,
   }
@@ -79,7 +81,7 @@ function operationToService(
   op: ConnectorOperation
 ): IService {
   const methodName =
-    connector.auth.type === 'apiKey'
+    connector.auth.type === 'apiKey' || connector.auth.type === 'userApiKey'
       ? MethodName.httpRequest
       : MethodName.oauth2Request
 
