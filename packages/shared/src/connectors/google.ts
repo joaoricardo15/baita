@@ -15,7 +15,6 @@ export const googleConnector: ConnectorManifest = {
     scopes: [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/gmail.readonly',
     ],
     userInfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo',
     userIdField: 'sub',

@@ -594,7 +594,7 @@ const apps: IAppService[] = [
     config: {
       apiUrl: 'https://gmail.googleapis.com',
       authorizeUrl:
-        'https://accounts.google.com/o/oauth2/auth?client_id=106617044495-k3n0koedh38faoclgjqdss7vptfoirjr.apps.googleusercontent.com&redirect_uri=https://api.baita.help/connectors/oauth&response_type=code&scope=https://www.googleapis.com/auth/userinfo.email+https://www.googleapis.com/auth/gmail.readonly&access_type=offline&prompt=consent&state=',
+        'https://accounts.google.com/o/oauth2/auth?client_id=106617044495-k3n0koedh38faoclgjqdss7vptfoirjr.apps.googleusercontent.com&redirect_uri=https://api.baita.help/connectors/oauth&response_type=code&scope=https://www.googleapis.com/auth/userinfo.email+https://www.googleapis.com/auth/userinfo.profile&access_type=offline&prompt=consent&state=',
       auth: {
         type: 'body',
         method: 'post',
