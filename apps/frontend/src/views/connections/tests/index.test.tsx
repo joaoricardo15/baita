@@ -105,12 +105,12 @@ describe('Connections page', () => {
     expect(screen.getByText('user@gmail.com')).toBeInTheDocument()
   })
 
-  it('shows page title', () => {
+  it('renders add connection button', () => {
     renderConnections({ connections: [] })
-    expect(screen.getByText('Connections')).toBeInTheDocument()
+    expect(screen.getByText('Add connection')).toBeInTheDocument()
   })
 
-  it('renders test button for each connection', () => {
+  it('renders menu for each connection', () => {
     renderConnections({
       connections: [
         {
@@ -124,10 +124,12 @@ describe('Connections page', () => {
       ],
     })
 
-    expect(screen.getByText('Test')).toBeInTheDocument()
+    expect(
+      document.querySelector('[data-testid="MoreVertIcon"]')
+    ).toBeInTheDocument()
   })
 
-  it('health check updates status on click', async () => {
+  it('health check updates status via menu', async () => {
     server.use(
       http.post(
         'http://localhost:5000/prod/user/:userId/connection/:id/health',
@@ -152,7 +154,8 @@ describe('Connections page', () => {
       ],
     })
 
-    screen.getByText('Test').click()
+    fireEvent.click(document.querySelector('[data-testid="MoreVertIcon"]')!)
+    fireEvent.click(screen.getByText('Test'))
 
     await waitFor(() => {
       expect(screen.getByText('Connected')).toBeInTheDocument()

@@ -1,11 +1,11 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
 import { Add as AddIcon } from '@mui/icons-material'
-import { Fab } from '@mui/material'
 import { FC, useContext, useState } from 'react'
 
-import { Loading, Skeleton, Text } from '@/components'
+import { Button, Loading, Skeleton, Text } from '@/components'
 import { UserContext } from '@/providers/user'
 import { getLabels, Labels } from '@/utils/labels'
+
 import AddConnection from './components/addConnection'
 import ConnectionCard from './components/connectionCard'
 
@@ -14,27 +14,11 @@ export const Connections: FC = () => {
   const [showAdd, setShowAdd] = useState(false)
 
   if (connections === undefined) {
-    return (
-      <div className="d-flex flex-column m-2">
-        <Skeleton elements={3} height={72} className="w-100 mb-2" />
-      </div>
-    )
+    return <Skeleton elements={3} height={100} />
   }
 
   return (
     <>
-      <Fab
-        color="primary"
-        style={{ position: 'absolute', right: 10 }}
-        onClick={() => setShowAdd(true)}
-      >
-        <AddIcon />
-      </Fab>
-
-      <Text className="fw-bold mb-3" type="h6">
-        {labels.title}
-      </Text>
-
       {connections.length === 0 ? (
         <div className="text-center mt-5">
           <Text color="textSecondary">{labels.empty}</Text>
@@ -43,15 +27,23 @@ export const Connections: FC = () => {
           </Text>
         </div>
       ) : (
-        <div className="d-flex flex-column">
-          {connections.map((connection) => (
-            <ConnectionCard
-              key={String(connection.connectionId)}
-              connection={connection}
-            />
-          ))}
-        </div>
+        connections.map((connection) => (
+          <div className="mb-2" key={String(connection.connectionId)}>
+            <ConnectionCard connection={connection} />
+          </div>
+        ))
       )}
+
+      <div className="d-flex align-items-center justify-content-center mt-5">
+        <Button
+          type="text"
+          color="primary"
+          icon={<AddIcon />}
+          onClick={() => setShowAdd(true)}
+        >
+          {labels.addConnection}
+        </Button>
+      </div>
 
       <AddConnection open={showAdd} onClose={() => setShowAdd(false)} />
     </>
@@ -64,14 +56,14 @@ export default withAuthenticationRequired(Connections, {
 
 const LABELS: Labels = {
   en: {
-    title: 'Connections',
     empty: 'No connections yet',
     emptyHint: 'Connect your first app to get started',
+    addConnection: 'Add connection',
   },
   pt: {
-    title: 'Conexões',
-    empty: 'Nenhuma conexão ainda',
-    emptyHint: 'Conecte seu primeiro app para começar',
+    empty: 'Nenhuma conexao ainda',
+    emptyHint: 'Conecte seu primeiro app para comecar',
+    addConnection: 'Adicionar conexao',
   },
 }
 
