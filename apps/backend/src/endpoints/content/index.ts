@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
-import User from 'src/controllers/user'
-import Api, { ApiRequestStatus } from 'src/utils/api'
+import User from '@/controllers/user'
+import Api, { ApiRequestStatus } from '@/utils/api'
 
 exports.handler = async (
   event: APIGatewayProxyEvent,

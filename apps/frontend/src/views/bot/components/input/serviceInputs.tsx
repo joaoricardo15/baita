@@ -1,6 +1,6 @@
 import { FC } from 'react'
 
-import { VariableInput } from '../../../../components'
+import { VariableInput } from '@/components'
 import { IVariable } from '@baita/shared'
 
 const ServiceInputs: FC<{

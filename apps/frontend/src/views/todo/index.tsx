@@ -2,9 +2,9 @@ import { withAuthenticationRequired } from '@auth0/auth0-react'
 import { Add as AddIcon } from '@mui/icons-material'
 import { FC, useContext, useEffect, useState } from 'react'
 
-import { Button, Loading, Skeleton, TextInput } from '../../components'
-import { UserContext } from '../../providers/user'
-import { getLabels, Labels } from '../../utils/labels'
+import { Button, Loading, Skeleton, TextInput } from '@/components'
+import { UserContext } from '@/providers/user'
+import { getLabels, Labels } from '@/utils/labels'
 import ToDoList from './components/todoList'
 
 export const ToDo: FC = () => {

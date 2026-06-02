@@ -7,11 +7,11 @@ import { FC, useContext, useState } from 'react'
 import ReactConfetti from 'react-confetti'
 import { useNavigate } from 'react-router-dom'
 
-import { Button, TextInput } from '../../../components'
-import { BotContext } from '../../../providers/bot'
-import { NotificationContext } from '../../../providers/notification'
-import { LINKS } from '../../../router'
-import { getLabels, Labels } from '../../../utils/labels'
+import { Button, TextInput } from '@/components'
+import { BotContext } from '@/providers/bot'
+import { NotificationContext } from '@/providers/notification'
+import { LINKS } from '@/router'
+import { getLabels, Labels } from '@/utils/labels'
 
 const TopBar: FC<{
   name: string

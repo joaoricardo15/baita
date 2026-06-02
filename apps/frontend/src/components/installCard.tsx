@@ -2,7 +2,7 @@ import { Close as CloseIcon, GetApp as GetAppIcon } from '@mui/icons-material'
 import { Card } from '@mui/material'
 import { FC, useEffect, useState } from 'react'
 
-import { getLabels, Labels } from '../utils/labels'
+import { getLabels, Labels } from '@/utils/labels'
 import { Button, Text } from '.'
 
 const InstallCard: FC = () => {

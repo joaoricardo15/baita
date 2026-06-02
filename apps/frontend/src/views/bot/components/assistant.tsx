@@ -15,15 +15,15 @@ import {
 import { FC, useContext, useState } from 'react'
 
 import { IBot, ITask } from '@baita/shared'
-import { BotContext } from '../../../providers/bot'
+import { BotContext } from '@/providers/bot'
 import {
   AiMessage,
   buildMessagesWithContext,
   buildRetryMessage,
   getAiService,
   parseTaskFromResponse,
-} from '../../../utils/ai'
-import { getLabels, Labels } from '../../../utils/labels'
+} from '@/utils/ai'
+import { getLabels, Labels } from '@/utils/labels'
 
 const MAX_ATTEMPTS = 3
 

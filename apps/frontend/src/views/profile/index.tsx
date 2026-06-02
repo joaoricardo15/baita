@@ -12,13 +12,13 @@ import {
 import { FC, useContext, useEffect, useState } from 'react'
 import { TypeAnimation } from 'react-type-animation'
 
-import trophySrc from '../../assets/trophy.gif'
-import { Loading, Skeleton, Text } from '../../components'
+import trophySrc from '@/assets/trophy.gif'
+import { Loading, Skeleton, Text } from '@/components'
 import { ITodoTask } from '@baita/shared'
-import { AuthContext } from '../../providers/auth'
-import { UserContext } from '../../providers/user'
-import { getTimeDiffLabel, isToday } from '../../utils/date'
-import { getLabels, Labels } from '../../utils/labels'
+import { AuthContext } from '@/providers/auth'
+import { UserContext } from '@/providers/user'
+import { getTimeDiffLabel, isToday } from '@/utils/date'
+import { getLabels, Labels } from '@/utils/labels'
 import Avatar from './components/avatar'
 
 export const ProfileComponent: FC = () => {

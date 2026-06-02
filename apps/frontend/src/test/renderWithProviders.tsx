@@ -3,7 +3,7 @@ import { FC, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import { AuthContext } from '../providers/auth'
+import { AuthContext } from '@/providers/auth'
 
 const mockUser = {
   userId: 'test-user',

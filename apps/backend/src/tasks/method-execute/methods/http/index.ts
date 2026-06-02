@@ -1,8 +1,8 @@
 import { ITaskExecutionInput } from '@baita/shared'
 import { DataType } from '@baita/shared'
 import Axios from 'axios'
-import Resource from 'src/controllers/resource'
-import { getDataFromPath, getMappedData } from 'src/utils/bot'
+import Resource from '@/controllers/resource'
+import { getDataFromPath, getMappedData } from '@/utils/bot'
 
 interface IHttpRequest {
   path: string

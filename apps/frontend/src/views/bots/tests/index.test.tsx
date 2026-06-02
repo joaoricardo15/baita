@@ -2,9 +2,9 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import { AuthContext } from '../../../providers/auth'
-import { BotContext } from '../../../providers/bot'
-import { Bots } from '../index'
+import { AuthContext } from '@/providers/auth'
+import { BotContext } from '@/providers/bot'
+import { Bots } from '@/views/bots/index'
 
 vi.mock('@auth0/auth0-react', () => ({
   withAuthenticationRequired: (component: any) => component,

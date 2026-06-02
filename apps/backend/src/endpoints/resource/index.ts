@@ -3,8 +3,8 @@ import Resource, {
   resourceOperations,
   resourceValidationProneOperations,
   resourceValidations,
-} from 'src/controllers/resource'
-import Api, { ApiRequestStatus } from 'src/utils/api'
+} from '@/controllers/resource'
+import Api, { ApiRequestStatus } from '@/utils/api'
 
 exports.handler = async (
   event: APIGatewayProxyEvent,

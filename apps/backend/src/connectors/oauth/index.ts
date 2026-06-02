@@ -1,9 +1,9 @@
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 import axios from 'axios'
 import qs from 'qs'
-import Bot from 'src/controllers/bot'
-import Resource from 'src/controllers/resource'
-import Api, { ApiRequestStatus } from 'src/utils/api'
+import Bot from '@/controllers/bot'
+import Resource from '@/controllers/resource'
+import Api, { ApiRequestStatus } from '@/utils/api'
 
 import { getConnectorById } from './registry'
 

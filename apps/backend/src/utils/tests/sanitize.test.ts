@@ -1,4 +1,4 @@
-import { sanitizeForCodeString } from 'src/utils/code'
+import { sanitizeForCodeString } from '@/utils/code'
 
 describe('sanitizeForCodeString', () => {
   test('should escape single quotes', () => {
@@ -10,9 +10,7 @@ describe('sanitizeForCodeString', () => {
   })
 
   test('should escape backslashes', () => {
-    expect(sanitizeForCodeString('path\\to\\file')).toBe(
-      'path\\\\to\\\\file'
-    )
+    expect(sanitizeForCodeString('path\\to\\file')).toBe('path\\\\to\\\\file')
   })
 
   test('should escape dollar signs', () => {
@@ -20,9 +18,7 @@ describe('sanitizeForCodeString', () => {
   })
 
   test('should handle multiple escape characters together', () => {
-    expect(sanitizeForCodeString("it's `$cool`")).toBe(
-      "it\\'s \\`\\$cool\\`"
-    )
+    expect(sanitizeForCodeString("it's `$cool`")).toBe("it\\'s \\`\\$cool\\`")
   })
 
   test('should return unchanged string when no special chars', () => {

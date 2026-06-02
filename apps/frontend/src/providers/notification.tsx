@@ -1,7 +1,7 @@
 import { Alert, Modal, Snackbar } from '@mui/material'
 import { createContext, FC, ReactNode, useState } from 'react'
 
-import { Loading, Logo, Text } from '../components'
+import { Loading, Logo, Text } from '@/components'
 
 type MessageType = 'success' | 'info' | 'warning' | 'error'
 

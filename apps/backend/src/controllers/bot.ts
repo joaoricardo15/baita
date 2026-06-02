@@ -14,17 +14,13 @@ import {
 } from '@baita/shared'
 import { validateTaskExecutionResult } from '@baita/shared'
 import { ServiceName } from '@baita/shared'
-import { getDataFromService } from 'src/utils/bot'
-import {
-  getBotSampleCode,
-  getCodeFile,
-  getCompleteBotCode,
-} from 'src/utils/code'
+import { getDataFromService } from '@/utils/bot'
+import { getBotSampleCode, getCodeFile, getCompleteBotCode } from '@/utils/code'
 import {
   DISABLED_SCHEDULE_EXPRESSION,
   LOG_LOOKBACK_DAYS,
   LOG_QUERY_LIMIT,
-} from 'src/utils/constants'
+} from '@/utils/constants'
 import { v4 as uuidv4 } from 'uuid'
 
 import Resource from './resource'

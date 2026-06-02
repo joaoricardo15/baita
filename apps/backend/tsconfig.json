@@ -9,6 +9,9 @@
     "outDir": ".build",
     "rootDir": "./",
     "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true
   },

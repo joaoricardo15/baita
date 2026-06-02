@@ -1,5 +1,5 @@
 import { TaskExecutionStatus } from '@baita/shared'
-import Api, { ApiRequestStatus } from 'src/utils/api'
+import Api, { ApiRequestStatus } from '@/utils/api'
 
 const mockContext = {
   getRemainingTimeInMillis: () => 30000,

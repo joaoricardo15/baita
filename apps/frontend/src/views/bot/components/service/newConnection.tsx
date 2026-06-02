@@ -2,14 +2,14 @@ import { Add as AddIcon } from '@mui/icons-material'
 import { FC, useContext } from 'react'
 import { getConnectorByAppId } from '@baita/shared'
 
-import { Button, OptionsInput } from '../../../../components'
+import { Button, OptionsInput } from '@/components'
 import { IAppConnection } from '@baita/shared'
-import { AuthContext } from '../../../../providers/auth'
-import { NotificationContext } from '../../../../providers/notification'
-import { UserContext } from '../../../../providers/user'
-import { getLabels, Labels } from '../../../../utils/labels'
-import { buildOAuthUrl } from '../../../../utils/oauth'
-import { useOauthPopup } from '../../../../utils/useOauthPopup'
+import { AuthContext } from '@/providers/auth'
+import { NotificationContext } from '@/providers/notification'
+import { UserContext } from '@/providers/user'
+import { getLabels, Labels } from '@/utils/labels'
+import { buildOAuthUrl } from '@/utils/oauth'
+import { useOauthPopup } from '@/utils/useOauthPopup'
 
 const NewConnection: FC<{
   botId: string

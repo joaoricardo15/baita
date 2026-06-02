@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef } from 'react'
 
-import { UserContext } from '../providers/user'
+import { UserContext } from '@/providers/user'
 import ApiRequest from './requests'
 
 export function useOauthPopup(onComplete?: (created: boolean) => void) {

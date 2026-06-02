@@ -5,7 +5,7 @@ import {
   buildRetryMessage,
   getAiService,
   parseTaskFromResponse,
-} from '../ai'
+} from '@/utils/ai'
 
 afterEach(() => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

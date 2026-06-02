@@ -1,7 +1,7 @@
 import { FC } from 'react'
 
-import { Text } from '../components'
-import { getLabels, Labels } from '../utils/labels'
+import { Text } from '@/components'
+import { getLabels, Labels } from '@/utils/labels'
 
 const NotFound: FC = () => {
   return (

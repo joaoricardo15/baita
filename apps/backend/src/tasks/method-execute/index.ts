@@ -2,7 +2,7 @@ import { ITaskExecutionInput, TaskExecutionStatus } from '@baita/shared'
 import { validateTaskExecutionInput } from '@baita/shared'
 import { DataType, MethodName } from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
-import Api from 'src/utils/api'
+import Api from '@/utils/api'
 
 import { httpRequest, oauth2Request } from './methods/http'
 import { sendNotification } from './methods/push'

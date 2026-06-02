@@ -63,6 +63,11 @@ function mockApiPlugin(): Plugin {
 }
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
+  },
   plugins: [
     react(),
     mockApiPlugin(),

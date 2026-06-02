@@ -1,6 +1,6 @@
-import { invokeHandler } from 'src/utils/tests/helpers/event'
+import { invokeHandler } from '@/utils/tests/helpers/event'
 
-jest.mock('src/controllers/resource')
+jest.mock('@/controllers/resource')
 
 const Resource = require('src/controllers/resource').default
 const { handler } = require('../index')

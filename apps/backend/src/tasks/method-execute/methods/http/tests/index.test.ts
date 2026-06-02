@@ -27,14 +27,14 @@ jest.mock('axios', () => ({
 
 const mockResourceRead = jest.fn()
 const mockResourceUpdate = jest.fn()
-jest.mock('src/controllers/resource', () => {
+jest.mock('@/controllers/resource', () => {
   return jest.fn().mockImplementation(() => ({
     read: mockResourceRead,
     update: mockResourceUpdate,
   }))
 })
 
-jest.mock('src/utils/bot', () => ({
+jest.mock('@/utils/bot', () => ({
   getDataFromPath: jest.fn((data, path) => {
     if (!path) return undefined
     return path.split('.').reduce((obj: any, key: string) => obj?.[key], data)

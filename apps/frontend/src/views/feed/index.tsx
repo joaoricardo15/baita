@@ -3,11 +3,11 @@ import { FC, useContext, useEffect, useState } from 'react'
 import { CardSwiper } from 'react-card-rotate-swiper'
 import { TwitterTweetEmbed } from 'react-twitter-embed'
 
-import { Button, Loading, Logo, Skeleton, Text } from '../../components'
+import { Button, Loading, Logo, Skeleton, Text } from '@/components'
 import { IContent } from '@baita/shared'
-import { NotificationContext } from '../../providers/notification'
-import { UserContext } from '../../providers/user'
-import { getLabels, Labels } from '../../utils/labels'
+import { NotificationContext } from '@/providers/notification'
+import { UserContext } from '@/providers/user'
+import { getLabels, Labels } from '@/utils/labels'
 import ContentCard from './components/contentCard'
 
 export const Feed: FC = () => {

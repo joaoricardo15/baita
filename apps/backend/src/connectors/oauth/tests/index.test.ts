@@ -31,14 +31,14 @@ jest.mock('axios', () => ({
 }))
 
 const mockResourceCreate = jest.fn()
-jest.mock('src/controllers/resource', () => {
+jest.mock('@/controllers/resource', () => {
   return jest.fn().mockImplementation(() => ({
     create: mockResourceCreate,
   }))
 })
 
 const mockAddConnection = jest.fn()
-jest.mock('src/controllers/bot', () => {
+jest.mock('@/controllers/bot', () => {
   return jest.fn().mockImplementation(() => ({
     addConnection: mockAddConnection,
   }))

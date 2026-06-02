@@ -42,7 +42,7 @@ const schedulerMock = mockClient(Scheduler)
 const apiGwMock = mockClient(ApiGatewayV2)
 const cwlMock = mockClient(CloudWatchLogs)
 
-jest.mock('src/utils/code', () => ({
+jest.mock('@/utils/code', () => ({
   getCodeFile: jest.fn().mockResolvedValue(Buffer.from('zip-content')),
   getBotSampleCode: jest.fn().mockReturnValue('sample-code'),
   getCompleteBotCode: jest.fn().mockReturnValue('complete-code'),

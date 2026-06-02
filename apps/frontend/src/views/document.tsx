@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown'
 
-import { Logo } from '../components'
+import { Logo } from '@/components'
 
 const Document: FC<{ name: keyof typeof DOCUMENTS }> = ({ name }) => {
   return (

@@ -4,8 +4,8 @@ import {
 } from '@mui/icons-material'
 import { FC } from 'react'
 
-import { Button, Text } from '../../../components'
-import { getLabels, Labels } from '../../../utils/labels'
+import { Button, Text } from '@/components'
+import { getLabels, Labels } from '@/utils/labels'
 
 const TopBar: FC<{
   botName?: string

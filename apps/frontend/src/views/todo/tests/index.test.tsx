@@ -15,8 +15,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import { UserContext } from '../../../providers/user'
-import { ToDo } from '../index'
+import { UserContext } from '@/providers/user'
+import { ToDo } from '@/views/todo/index'
 
 vi.mock('@auth0/auth0-react', () => ({
   withAuthenticationRequired: (component: any) => component,

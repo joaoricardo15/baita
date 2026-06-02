@@ -9,7 +9,7 @@ import { PutObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { CreateScheduleCommand, Scheduler } from '@aws-sdk/client-scheduler'
 import { DynamoDBDocument, PutCommand } from '@aws-sdk/lib-dynamodb'
 import { mockClient } from 'aws-sdk-client-mock'
-import { invokeHandler } from 'src/utils/tests/helpers/event'
+import { invokeHandler } from '@/utils/tests/helpers/event'
 
 const ddbMock = mockClient(DynamoDBDocument)
 const s3Mock = mockClient(S3)
@@ -18,7 +18,7 @@ const schedulerMock = mockClient(Scheduler)
 const apiGwMock = mockClient(ApiGatewayV2)
 
 jest.mock('uuid', () => ({ v4: () => 'mock-bot-id' }))
-jest.mock('src/utils/code', () => ({
+jest.mock('@/utils/code', () => ({
   getCodeFile: jest.fn().mockResolvedValue(Buffer.from('zip')),
   getBotSampleCode: jest.fn().mockReturnValue('code'),
   getCompleteBotCode: jest.fn().mockReturnValue('code'),

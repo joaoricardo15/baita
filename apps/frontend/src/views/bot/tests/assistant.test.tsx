@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeAll, vi } from 'vitest'
 
 import { IBot, ITask } from '@baita/shared'
-import { BotContext } from '../../../providers/bot'
-import BotAssistant from '../components/assistant'
+import { BotContext } from '@/providers/bot'
+import BotAssistant from '@/views/bot/components/assistant'
 
 vi.mock('@auth0/auth0-react', () => ({
   withAuthenticationRequired: (component: any) => component,

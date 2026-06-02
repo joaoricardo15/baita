@@ -2,15 +2,10 @@ import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material'
 import { Divider } from '@mui/material'
 import { FC } from 'react'
 
-import {
-  Button,
-  OptionsInput,
-  TextInput,
-  VariableInput,
-} from '../../../../components'
+import { Button, OptionsInput, TextInput, VariableInput } from '@/components'
 import { ConditionOperator, ITask, ITaskCondition } from '@baita/shared'
 import { IVariable, VariableType } from '@baita/shared'
-import { getLabels, Labels } from '../../../../utils/labels'
+import { getLabels, Labels } from '@/utils/labels'
 
 export const newEmptyCondition: ITaskCondition = {
   operator: ConditionOperator.exists,

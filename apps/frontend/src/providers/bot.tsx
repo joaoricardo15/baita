@@ -2,8 +2,8 @@ import { createContext, FC, ReactNode, useState } from 'react'
 
 import { IBot, IBotModel, ITask } from '@baita/shared'
 import { IVariable, ServiceType, VariableType } from '@baita/shared'
-import { getExistingSubscription } from '../utils/push'
-import ApiRequest from '../utils/requests'
+import { getExistingSubscription } from '@/utils/push'
+import ApiRequest from '@/utils/requests'
 
 export const BotContext = createContext<{
   bots: IBot[] | undefined

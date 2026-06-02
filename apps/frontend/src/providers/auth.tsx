@@ -2,7 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react'
 import { createContext, FC, ReactNode } from 'react'
 
 import { IUser } from '@baita/shared'
-import { unsubscribeFromPush } from '../utils/push'
+import { unsubscribeFromPush } from '@/utils/push'
 
 export const AuthContext = createContext<{
   isLoading: boolean

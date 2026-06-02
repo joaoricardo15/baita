@@ -2,7 +2,7 @@ import { FC, useContext, useEffect, useState } from 'react'
 
 import { ITask } from '@baita/shared'
 import { ServiceName, ServiceType } from '@baita/shared'
-import { BotContext } from '../../../../providers/bot'
+import { BotContext } from '@/providers/bot'
 import ExtraOptions from './extraOptions'
 import FilterConditions from './filterConditions'
 

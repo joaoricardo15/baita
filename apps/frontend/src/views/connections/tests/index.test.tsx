@@ -3,12 +3,12 @@ import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import { server } from '../../../test/mswSetup'
-import { AuthContext } from '../../../providers/auth'
-import { UserContext } from '../../../providers/user'
-import { NotificationContext } from '../../../providers/notification'
-import { Connections } from '../index'
-import AddConnection from '../components/addConnection'
+import { server } from '@/test/mswSetup'
+import { AuthContext } from '@/providers/auth'
+import { UserContext } from '@/providers/user'
+import { NotificationContext } from '@/providers/notification'
+import { Connections } from '@/views/connections/index'
+import AddConnection from '@/views/connections/components/addConnection'
 
 vi.mock('@auth0/auth0-react', () => ({
   withAuthenticationRequired: (component: any) => component,

@@ -2,10 +2,10 @@ import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material'
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material'
 import { FC, useContext } from 'react'
 
-import { Highlight, StatusChip, Text } from '../../../components'
+import { Highlight, StatusChip, Text } from '@/components'
 import { IBotLog } from '@baita/shared'
-import { AuthContext } from '../../../providers/auth'
-import { getLabels, Labels } from '../../../utils/labels'
+import { AuthContext } from '@/providers/auth'
+import { getLabels, Labels } from '@/utils/labels'
 
 const Log: FC<{ botLog: IBotLog }> = ({ botLog }) => {
   const { isAdmin } = useContext(AuthContext)

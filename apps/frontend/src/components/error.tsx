@@ -1,7 +1,7 @@
 import { Modal } from '@mui/material'
 import { FC, useState } from 'react'
 
-import { getLabels, Labels } from '../utils/labels'
+import { getLabels, Labels } from '@/utils/labels'
 import { ComponentProps, Text } from '.'
 import Button from './button'
 

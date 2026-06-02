@@ -17,12 +17,12 @@ import {
 import { FC, useContext, useState } from 'react'
 import { getConnectorByAppId } from '@baita/shared'
 
-import { Button, Text } from '../../../components'
+import { Button, Text } from '@/components'
 import { IAppConnection } from '@baita/shared'
-import { NotificationContext } from '../../../providers/notification'
-import { UserContext } from '../../../providers/user'
-import { getLabels, Labels } from '../../../utils/labels'
-import ApiRequest from '../../../utils/requests'
+import { NotificationContext } from '@/providers/notification'
+import { UserContext } from '@/providers/user'
+import { getLabels, Labels } from '@/utils/labels'
+import ApiRequest from '@/utils/requests'
 
 type HealthStatus = 'idle' | 'checking' | 'healthy' | 'expired' | 'error'
 

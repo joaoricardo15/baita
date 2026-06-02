@@ -3,8 +3,8 @@ import Axios from 'axios'
 import { ReactNode } from 'react'
 import { vi } from 'vitest'
 
-import { AuthContext } from '../../providers/auth'
-import ApiRequest from '../requests'
+import { AuthContext } from '@/providers/auth'
+import ApiRequest from '@/utils/requests'
 
 vi.mock('axios')
 

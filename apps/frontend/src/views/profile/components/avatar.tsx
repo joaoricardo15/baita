@@ -1,6 +1,6 @@
 import { FC } from 'react'
 
-import { ComponentProps, Text } from '../../../components'
+import { ComponentProps, Text } from '@/components'
 
 const Avatar: FC<
   { name: string; email: string; picture: string } & ComponentProps

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { FC, useContext } from 'react'
 import { vi } from 'vitest'
 
-import AuthProvider, { AuthContext } from '../providers/auth'
+import AuthProvider, { AuthContext } from '@/providers/auth'
 
 const mockUseAuth0 = vi.fn()
 

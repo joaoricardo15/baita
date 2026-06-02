@@ -1,6 +1,6 @@
 import { FC, useContext, useEffect, useState } from 'react'
 
-import { OptionsInput } from '../../../../components'
+import { OptionsInput } from '@/components'
 import { IAppConnection } from '@baita/shared'
 import { ITask } from '@baita/shared'
 import {
@@ -10,9 +10,9 @@ import {
   ServiceName,
   ServiceType,
 } from '@baita/shared'
-import { AppsContext } from '../../../../providers/apps'
-import { BotContext } from '../../../../providers/bot'
-import { getLabels, Labels } from '../../../../utils/labels'
+import { AppsContext } from '@/providers/apps'
+import { BotContext } from '@/providers/bot'
+import { getLabels, Labels } from '@/utils/labels'
 import NewConnection from './newConnection'
 import PushNotificationService from './pushNotification'
 import WebhookService from './webhook'

@@ -15,10 +15,10 @@ import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import { AuthContext } from '../../../providers/auth'
-import { NotificationContext } from '../../../providers/notification'
-import { server } from '../../../test/mswSetup'
-import { Notes } from '../index'
+import { AuthContext } from '@/providers/auth'
+import { NotificationContext } from '@/providers/notification'
+import { server } from '@/test/mswSetup'
+import { Notes } from '@/views/notes/index'
 
 vi.mock('@auth0/auth0-react', () => ({
   withAuthenticationRequired: (component: any) => component,

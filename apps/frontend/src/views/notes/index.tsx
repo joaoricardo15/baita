@@ -7,10 +7,10 @@ import {
 import { Fab, TextareaAutosize } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 
-import { Button, Loading, Skeleton, Text } from '../../components'
-import { NotificationContext } from '../../providers/notification'
-import { getLabels, Labels } from '../../utils/labels'
-import ApiRequest from '../../utils/requests'
+import { Button, Loading, Skeleton, Text } from '@/components'
+import { NotificationContext } from '@/providers/notification'
+import { getLabels, Labels } from '@/utils/labels'
+import ApiRequest from '@/utils/requests'
 
 export interface INote {
   noteId: string

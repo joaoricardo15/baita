@@ -10,9 +10,9 @@ import {
   ITaskExecutionResult,
 } from '@baita/shared'
 import { IContent, ITodo, ITodoTask } from '@baita/shared'
-import { AuthContext } from '../providers/auth'
-import { INote } from '../views/notes'
-import { IPlace } from '../views/places'
+import { AuthContext } from '@/providers/auth'
+import { INote } from '@/views/notes'
+import { IPlace } from '@/views/places'
 import appConfig from './config'
 
 const ApiRequest = () => {

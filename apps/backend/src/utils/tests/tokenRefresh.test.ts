@@ -1,6 +1,6 @@
 import { ConnectorManifest } from '@baita/shared'
 import axios from 'axios'
-import { refreshOAuth2Token } from 'src/utils/tokenRefresh'
+import { refreshOAuth2Token } from '@/utils/tokenRefresh'
 
 jest.mock('axios')
 const mockAxios = axios as jest.Mocked<typeof axios>

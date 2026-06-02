@@ -1,7 +1,7 @@
 import { Autocomplete, Chip, TextField } from '@mui/material'
 import { FC } from 'react'
 
-import { getLabels, Labels } from '../utils/labels'
+import { getLabels, Labels } from '@/utils/labels'
 import { ComponentProps } from '.'
 
 export const OptionsInput: FC<

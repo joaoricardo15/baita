@@ -6,10 +6,10 @@ import { FC, useContext, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { TypeAnimation } from 'react-type-animation'
 
-import { Logo, Text } from '../components'
-import { AuthContext } from '../providers/auth'
-import { LINKS } from '../router'
-import { getLabels, Labels } from '../utils/labels'
+import { Logo, Text } from '@/components'
+import { AuthContext } from '@/providers/auth'
+import { LINKS } from '@/router'
+import { getLabels, Labels } from '@/utils/labels'
 
 const LandingPage: FC = () => {
   const { isLoading } = useContext(AuthContext)

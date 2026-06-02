@@ -1,8 +1,8 @@
 import { Card, Switch } from '@mui/material'
 import { FC, ReactNode } from 'react'
 
-import { Text } from '../../../components'
-import { getLabels, Labels } from '../../../utils/labels'
+import { Text } from '@/components'
+import { getLabels, Labels } from '@/utils/labels'
 
 const BotCard: FC<{
   name: string

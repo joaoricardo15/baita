@@ -3,9 +3,9 @@ import { Add as AddIcon } from '@mui/icons-material'
 import { Fab } from '@mui/material'
 import { FC, useContext, useState } from 'react'
 
-import { Loading, Skeleton, Text } from '../../components'
-import { UserContext } from '../../providers/user'
-import { getLabels, Labels } from '../../utils/labels'
+import { Loading, Skeleton, Text } from '@/components'
+import { UserContext } from '@/providers/user'
+import { getLabels, Labels } from '@/utils/labels'
 import AddConnection from './components/addConnection'
 import ConnectionCard from './components/connectionCard'
 

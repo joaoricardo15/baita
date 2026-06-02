@@ -8,8 +8,8 @@ import {
 } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 
-import { Error as ErrorComponent } from '../components'
-import { publishEvent } from '../utils/firebase'
+import { Error as ErrorComponent } from '@/components'
+import { publishEvent } from '@/utils/firebase'
 import { AuthContext } from './auth'
 
 export const ErrorContext = createContext<{

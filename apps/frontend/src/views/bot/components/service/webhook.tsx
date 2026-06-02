@@ -2,9 +2,9 @@ import { FileCopy as FileCopyIcon } from '@mui/icons-material'
 import { FC, useContext } from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 
-import { Button } from '../../../../components'
-import { NotificationContext } from '../../../../providers/notification'
-import { getLabels, Labels } from '../../../../utils/labels'
+import { Button } from '@/components'
+import { NotificationContext } from '@/providers/notification'
+import { getLabels, Labels } from '@/utils/labels'
 
 const WebhookService: FC<{ triggerUrl: string }> = ({ triggerUrl }) => {
   const { showSnack } = useContext(NotificationContext)

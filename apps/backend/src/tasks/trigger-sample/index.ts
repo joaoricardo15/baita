@@ -5,8 +5,8 @@ import {
 } from '@baita/shared'
 import { DataType } from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
-import Bot from 'src/controllers/bot'
-import Api from 'src/utils/api'
+import Bot from '@/controllers/bot'
+import Api from '@/utils/api'
 
 interface ITriggerSample {
   status: TaskExecutionStatus

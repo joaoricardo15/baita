@@ -22,7 +22,7 @@ process.env.DISABLED_SCHEDULE_EXPRESSION = 'rate(99 years)'
 
 const mockDeployBot = jest.fn()
 
-jest.mock('src/controllers/bot', () => {
+jest.mock('@/controllers/bot', () => {
   return jest.fn().mockImplementation(() => ({
     deployBot: mockDeployBot,
   }))
@@ -36,7 +36,7 @@ jest.mock('@baita/shared', () => ({
     .mockReturnValue({ valid: true, errors: [], warnings: [] }),
 }))
 
-import { invokeHandler } from 'src/utils/tests/helpers/event'
+import { invokeHandler } from '@/utils/tests/helpers/event'
 
 const { handler } = require('../index')
 

@@ -21,9 +21,9 @@ import {
   Skeleton,
   Text,
   TextInput,
-} from '../../components'
-import { getLabels, Labels } from '../../utils/labels'
-import ApiRequest from '../../utils/requests'
+} from '@/components'
+import { getLabels, Labels } from '@/utils/labels'
+import ApiRequest from '@/utils/requests'
 
 const googleMapsApiKey = 'AIzaSyDtemIhgSV-6K1y4jGStXVSKTKeEUY2Vh8'
 const googleMapsMapId = '9bc619eba69cb21f'

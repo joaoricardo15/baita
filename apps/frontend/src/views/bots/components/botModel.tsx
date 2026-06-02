@@ -1,12 +1,12 @@
 import { Delete as DeleteIcon } from '@mui/icons-material'
 import { FC, useContext } from 'react'
 
-import { Button } from '../../../components'
+import { Button } from '@/components'
 import { IBotModel } from '@baita/shared'
-import { AuthContext } from '../../../providers/auth'
-import { BotContext } from '../../../providers/bot'
-import { NotificationContext } from '../../../providers/notification'
-import { getLabels, Labels } from '../../../utils/labels'
+import { AuthContext } from '@/providers/auth'
+import { BotContext } from '@/providers/bot'
+import { NotificationContext } from '@/providers/notification'
+import { getLabels, Labels } from '@/utils/labels'
 import BotCard from './botCard'
 
 const BotModel: FC<{

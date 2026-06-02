@@ -13,9 +13,9 @@ import {
 } from '@mui/material'
 import { FC } from 'react'
 
-import { ComponentProps, Text } from '../../../components'
+import { ComponentProps, Text } from '@/components'
 import { IContent } from '@baita/shared'
-import { getTimeDiffLabel } from '../../../utils/date'
+import { getTimeDiffLabel } from '@/utils/date'
 
 const ContentCard: FC<{ content: IContent } & ComponentProps> = ({
   content,

@@ -3,7 +3,7 @@ process.env.SERVICE_API_URL = 'https://api.baita.help'
 process.env.PIPEDRIVE_CLIENT_ID = 'test-pipedrive-client-id'
 process.env.PIPEDRIVE_CLIENT_SECRET = 'test-pipedrive-client-secret'
 
-import { invokeHandler } from 'src/utils/tests/helpers/event'
+import { invokeHandler } from '@/utils/tests/helpers/event'
 
 const mockAxiosRequest = jest.fn()
 
@@ -13,8 +13,8 @@ jest.mock('axios', () => ({
   get: jest.fn(),
 }))
 
-jest.mock('src/controllers/resource')
-jest.mock('src/utils/tokenRefresh')
+jest.mock('@/controllers/resource')
+jest.mock('@/utils/tokenRefresh')
 
 const Resource = require('src/controllers/resource').default
 const { refreshOAuth2Token } = require('src/utils/tokenRefresh')

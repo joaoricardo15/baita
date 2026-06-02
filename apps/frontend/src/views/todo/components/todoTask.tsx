@@ -7,10 +7,10 @@ import {
 } from '@mui/icons-material'
 import { createContext, FC, useContext, useMemo, useState } from 'react'
 
-import { CheckBox, TextInput } from '../../../components'
+import { CheckBox, TextInput } from '@/components'
 import { ITodoTask } from '@baita/shared'
-import { NotificationContext } from '../../../providers/notification'
-import { UserContext } from '../../../providers/user'
+import { NotificationContext } from '@/providers/notification'
+import { UserContext } from '@/providers/user'
 
 interface Context {
   attributes: Record<string, any>
