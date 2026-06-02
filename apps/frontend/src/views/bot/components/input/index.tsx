@@ -1,8 +1,8 @@
 import { Divider } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 
-import { ITask } from '../../../../models/bot'
-import { IVariable } from '../../../../models/service'
+import { ITask } from '@baita/shared'
+import { IVariable } from '@baita/shared'
 import { BotContext } from '../../../../providers/bot'
 import CustomInputs from './customInputs'
 import ServiceInputs from './serviceInputs'

@@ -1,4 +1,4 @@
-import { DataType, IVariable, VariableType } from 'src/models/service/interface'
+import { DataType, IVariable, VariableType } from '@baita/shared'
 
 import {
   getDataFromMapping,

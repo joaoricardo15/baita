@@ -1,6 +1,6 @@
+import { TaskExecutionStatus } from '@baita/shared'
+import { DataType } from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
-import { TaskExecutionStatus } from 'src/models/bot/interface'
-import { DataType } from 'src/models/service/interface'
 
 import { LAMBDA_TIMEOUT_BUFFER_MS } from './constants'
 

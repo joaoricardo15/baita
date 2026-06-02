@@ -14,7 +14,7 @@ import { TypeAnimation } from 'react-type-animation'
 
 import trophySrc from '../../assets/trophy.gif'
 import { Loading, Skeleton, Text } from '../../components'
-import { ITodoTask } from '../../models/user'
+import { ITodoTask } from '@baita/shared'
 import { AuthContext } from '../../providers/auth'
 import { UserContext } from '../../providers/user'
 import { getTimeDiffLabel, isToday } from '../../utils/date'

@@ -3,7 +3,7 @@ import { arrayMove, SortableContext } from '@dnd-kit/sortable'
 import { FC } from 'react'
 
 import { Text } from '../../../components'
-import { ITodoTask, ITodoTaskGroup } from '../../../models/user'
+import { ITodoTask, ITodoTaskGroup } from '@baita/shared'
 import ToDoTask from './todoTask'
 
 export const ToDoList: FC<{

@@ -1,4 +1,4 @@
-import { ITaskExecutionInput } from 'src/models/bot/interface'
+import { ITaskExecutionInput } from '@baita/shared'
 import webpush from 'web-push'
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''

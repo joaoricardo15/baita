@@ -1,6 +1,6 @@
+import { validateUser } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 import User from 'src/controllers/user'
-import { validateUser } from 'src/models/user/validation'
 import Api, { ApiRequestStatus } from 'src/utils/api'
 
 exports.handler = async (

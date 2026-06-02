@@ -3,7 +3,7 @@ import { FC, useContext, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { Loading, Skeleton, Text } from '../../components'
-import { IBotLog } from '../../models/bot'
+import { IBotLog } from '@baita/shared'
 import { BotContext } from '../../providers/bot'
 import { getLabels, Labels } from '../../utils/labels'
 import ApiRequest from '../../utils/requests'

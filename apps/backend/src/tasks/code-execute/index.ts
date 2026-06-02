@@ -1,10 +1,7 @@
+import { ITaskExecutionInput, TaskExecutionStatus } from '@baita/shared'
+import { validateTaskExecutionInput } from '@baita/shared'
+import { DataType } from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
-import {
-  ITaskExecutionInput,
-  TaskExecutionStatus,
-} from 'src/models/bot/interface'
-import { validateTaskExecutionInput } from 'src/models/bot/schema'
-import { DataType } from 'src/models/service/interface'
 import Api from 'src/utils/api'
 import { CODE_EXECUTION_TIMEOUT_MS } from 'src/utils/constants'
 import vm from 'vm'

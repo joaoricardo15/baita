@@ -3,7 +3,7 @@ import 'highlight.js/styles/monokai-sublime.css'
 import hljs from 'highlight.js'
 import { FC, useEffect, useRef } from 'react'
 
-import { DataType } from '../models/service'
+import { DataType } from '@baita/shared'
 import { ComponentProps } from '.'
 
 const Highlight: FC<{ data: DataType; language?: string } & ComponentProps> = ({

@@ -1,7 +1,7 @@
 import { createContext, FC, ReactNode, useState } from 'react'
 
-import { IBot, IBotModel, ITask } from '../models/bot'
-import { IVariable, ServiceType, VariableType } from '../models/service'
+import { IBot, IBotModel, ITask } from '@baita/shared'
+import { IVariable, ServiceType, VariableType } from '@baita/shared'
 import { getExistingSubscription } from '../utils/push'
 import ApiRequest from '../utils/requests'
 

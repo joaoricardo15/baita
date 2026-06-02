@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeAll, vi } from 'vitest'
 
-import { IBot, ITask } from '../../../models/bot'
+import { IBot, ITask } from '@baita/shared'
 import { BotContext } from '../../../providers/bot'
 import BotAssistant from '../components/assistant'
 

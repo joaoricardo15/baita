@@ -1,10 +1,6 @@
+import { ConditionOperator, ITask, ITaskCondition } from '@baita/shared'
+import { DataType, VariableType } from '@baita/shared'
 import JSZip from 'jszip'
-import {
-  ConditionOperator,
-  ITask,
-  ITaskCondition,
-} from 'src/models/bot/interface'
-import { DataType, VariableType } from 'src/models/service/interface'
 
 import {
   getDataFromService,

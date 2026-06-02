@@ -1,7 +1,7 @@
 import { createContext, FC, ReactNode, useEffect, useState } from 'react'
 
-import { IAppConnection } from '../models/app'
-import { IContent, ITodoTask } from '../models/user'
+import { IAppConnection } from '@baita/shared'
+import { IContent, ITodoTask } from '@baita/shared'
 import ApiRequest from '../utils/requests'
 
 export const UserContext = createContext<{

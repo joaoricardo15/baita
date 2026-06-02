@@ -1,10 +1,7 @@
+import { ITaskExecutionInput, TaskExecutionStatus } from '@baita/shared'
+import { validateTaskExecutionInput } from '@baita/shared'
+import { DataType, MethodName } from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
-import {
-  ITaskExecutionInput,
-  TaskExecutionStatus,
-} from 'src/models/bot/interface'
-import { validateTaskExecutionInput } from 'src/models/bot/schema'
-import { DataType, MethodName } from 'src/models/service/interface'
 import Api from 'src/utils/api'
 
 import { httpRequest, oauth2Request } from './methods/http'

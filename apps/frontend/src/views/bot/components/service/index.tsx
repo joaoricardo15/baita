@@ -1,15 +1,15 @@
 import { FC, useContext, useEffect, useState } from 'react'
 
 import { OptionsInput } from '../../../../components'
-import { IAppConnection } from '../../../../models/app'
-import { ITask } from '../../../../models/bot'
+import { IAppConnection } from '@baita/shared'
+import { ITask } from '@baita/shared'
 import {
   IServiceApp,
   IVariable,
   MethodName,
   ServiceName,
   ServiceType,
-} from '../../../../models/service'
+} from '@baita/shared'
 import { AppsContext } from '../../../../providers/apps'
 import { BotContext } from '../../../../providers/bot'
 import { getLabels, Labels } from '../../../../utils/labels'

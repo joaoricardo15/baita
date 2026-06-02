@@ -8,12 +8,8 @@ import {
   TextInput,
   VariableInput,
 } from '../../../../components'
-import {
-  ConditionOperator,
-  ITask,
-  ITaskCondition,
-} from '../../../../models/bot'
-import { IVariable, VariableType } from '../../../../models/service'
+import { ConditionOperator, ITask, ITaskCondition } from '@baita/shared'
+import { IVariable, VariableType } from '@baita/shared'
 import { getLabels, Labels } from '../../../../utils/labels'
 
 export const newEmptyCondition: ITaskCondition = {

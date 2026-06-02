@@ -1,8 +1,8 @@
+import { ITaskExecutionInput } from '@baita/shared'
+import { IContent } from '@baita/shared'
+import { validateContent } from '@baita/shared'
 import Resource from 'src/controllers/resource'
 import User from 'src/controllers/user'
-import { ITaskExecutionInput } from 'src/models/bot/interface'
-import { IContent } from 'src/models/user/interface'
-import { validateContent } from 'src/models/user/validation'
 
 export const getTodo = async (taskInput: ITaskExecutionInput<undefined>) => {
   try {

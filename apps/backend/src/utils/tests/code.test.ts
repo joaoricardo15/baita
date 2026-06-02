@@ -1,9 +1,5 @@
-import { ConditionOperator, ITask } from 'src/models/bot/interface'
-import {
-  ServiceName,
-  ServiceType,
-  VariableType,
-} from 'src/models/service/interface'
+import { ConditionOperator, ITask } from '@baita/shared'
+import { ServiceName, ServiceType, VariableType } from '@baita/shared'
 
 import {
   getBotInnerCode,

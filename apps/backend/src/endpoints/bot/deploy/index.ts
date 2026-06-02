@@ -1,7 +1,7 @@
+import { validateBot } from '@baita/shared'
+import { validateTasks } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 import Bot from 'src/controllers/bot'
-import { validateBot } from 'src/models/bot/interface'
-import { validateTasks } from 'src/models/bot/schema'
 import Api, { ApiRequestStatus } from 'src/utils/api'
 
 exports.handler = async (

@@ -1,7 +1,7 @@
+import { ITaskExecutionInput } from '@baita/shared'
+import { DataType } from '@baita/shared'
 import Axios from 'axios'
 import Resource from 'src/controllers/resource'
-import { ITaskExecutionInput } from 'src/models/bot/interface'
-import { DataType } from 'src/models/service/interface'
 import { getDataFromPath, getMappedData } from 'src/utils/bot'
 
 interface IHttpRequest {

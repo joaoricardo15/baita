@@ -20,7 +20,8 @@ process.env.REGION = 'us-east-1'
 
 import { Callback, Context } from 'aws-lambda'
 
-jest.mock('src/models/bot/schema', () => ({
+jest.mock('@baita/shared', () => ({
+  ...jest.requireActual('@baita/shared'),
   validateTaskExecutionInput: jest.fn(),
 }))
 

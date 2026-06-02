@@ -1,14 +1,11 @@
-import { Callback, Context } from 'aws-lambda'
-import Bot from 'src/controllers/bot'
-import {
-  ITaskExecutionInput,
-  TaskExecutionStatus,
-} from 'src/models/bot/interface'
+import { ITaskExecutionInput, TaskExecutionStatus } from '@baita/shared'
 import {
   validateTaskExecutionInput,
   validateTaskExecutionResult,
-} from 'src/models/bot/schema'
-import { DataType } from 'src/models/service/interface'
+} from '@baita/shared'
+import { DataType } from '@baita/shared'
+import { Callback, Context } from 'aws-lambda'
+import Bot from 'src/controllers/bot'
 import Api from 'src/utils/api'
 
 interface ITriggerSample {

@@ -2,7 +2,7 @@ import { Delete as DeleteIcon } from '@mui/icons-material'
 import { FC, useContext } from 'react'
 
 import { Button } from '../../../components'
-import { IBotModel } from '../../../models/bot'
+import { IBotModel } from '@baita/shared'
 import { AuthContext } from '../../../providers/auth'
 import { BotContext } from '../../../providers/bot'
 import { NotificationContext } from '../../../providers/notification'

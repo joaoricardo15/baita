@@ -7,7 +7,7 @@ import {
 import { FC, useContext, useEffect, useState } from 'react'
 
 import { Button, Text } from '../../../../components'
-import { IVariable, VariableType } from '../../../../models/service'
+import { IVariable, VariableType } from '@baita/shared'
 import { NotificationContext } from '../../../../providers/notification'
 import { getLabels, Labels } from '../../../../utils/labels'
 import {

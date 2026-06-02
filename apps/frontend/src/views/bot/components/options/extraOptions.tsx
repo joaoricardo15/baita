@@ -1,7 +1,7 @@
 import { FC } from 'react'
 
 import { CheckBox } from '../../../../components'
-import { ITask, ITaskCondition } from '../../../../models/bot'
+import { ITask, ITaskCondition } from '@baita/shared'
 import { getLabels, Labels } from '../../../../utils/labels'
 import { newEmptyCondition } from './filterConditions'
 

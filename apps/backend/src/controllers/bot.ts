@@ -11,9 +11,9 @@ import {
   ITask,
   ITaskExecutionResult,
   TaskExecutionStatus,
-} from 'src/models/bot/interface'
-import { validateTaskExecutionResult } from 'src/models/bot/schema'
-import { ServiceName } from 'src/models/service/interface'
+} from '@baita/shared'
+import { validateTaskExecutionResult } from '@baita/shared'
+import { ServiceName } from '@baita/shared'
 import { getDataFromService } from 'src/utils/bot'
 import {
   getBotSampleCode,

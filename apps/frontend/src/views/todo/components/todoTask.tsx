@@ -8,7 +8,7 @@ import {
 import { createContext, FC, useContext, useMemo, useState } from 'react'
 
 import { CheckBox, TextInput } from '../../../components'
-import { ITodoTask } from '../../../models/user'
+import { ITodoTask } from '@baita/shared'
 import { NotificationContext } from '../../../providers/notification'
 import { UserContext } from '../../../providers/user'
 

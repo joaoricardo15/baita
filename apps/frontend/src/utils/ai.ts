@@ -1,4 +1,4 @@
-import { ITask } from '../models/bot'
+import { ITask } from '@baita/shared'
 
 export interface AiMessage {
   role: 'user' | 'assistant' | 'system'

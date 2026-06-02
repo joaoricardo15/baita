@@ -2,7 +2,7 @@ import { FlashOnSharp as FlashOnSharpIcon } from '@mui/icons-material'
 import { FC, useContext, useEffect, useState } from 'react'
 
 import { Button, Highlight, StatusChip, Text } from '../../../../components'
-import { ITask } from '../../../../models/bot'
+import { ITask } from '@baita/shared'
 import { BotContext } from '../../../../providers/bot'
 import { NotificationContext } from '../../../../providers/notification'
 import { getTimeDiffLabel } from '../../../../utils/date'

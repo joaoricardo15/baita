@@ -28,11 +28,9 @@ jest.mock('src/controllers/bot', () => {
   }))
 })
 
-jest.mock('src/models/bot/schema', () => ({
+jest.mock('@baita/shared', () => ({
+  ...jest.requireActual('@baita/shared'),
   validateTasks: jest.fn(),
-}))
-
-jest.mock('src/models/bot/interface', () => ({
   validateBot: jest
     .fn()
     .mockReturnValue({ valid: true, errors: [], warnings: [] }),
@@ -94,7 +92,7 @@ describe('Bot Deploy Endpoint', () => {
   })
 
   test('task validation failure returns error', async () => {
-    const { validateTasks } = require('src/models/bot/schema')
+    const { validateTasks } = require('@baita/shared')
     validateTasks.mockImplementation(() => {
       throw new Error('tasks must have at least one element')
     })
@@ -111,10 +109,10 @@ describe('Bot Deploy Endpoint', () => {
   })
 
   test('bot validation failure returns error with details', async () => {
-    const { validateTasks } = require('src/models/bot/schema')
+    const { validateTasks } = require('@baita/shared')
     validateTasks.mockImplementation(() => {})
 
-    const { validateBot } = require('src/models/bot/interface')
+    const { validateBot } = require('@baita/shared')
     validateBot.mockReturnValue({
       valid: false,
       errors: [
@@ -143,10 +141,10 @@ describe('Bot Deploy Endpoint', () => {
   })
 
   test('controller error returns failure', async () => {
-    const { validateTasks } = require('src/models/bot/schema')
+    const { validateTasks } = require('@baita/shared')
     validateTasks.mockImplementation(() => {})
 
-    const { validateBot } = require('src/models/bot/interface')
+    const { validateBot } = require('@baita/shared')
     validateBot.mockReturnValue({ valid: true, errors: [], warnings: [] })
 
     mockDeployBot.mockRejectedValue(new Error('Lambda creation failed'))

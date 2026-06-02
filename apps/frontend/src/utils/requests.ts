@@ -1,15 +1,15 @@
 import Axios from 'axios'
 import { useContext } from 'react'
 
-import { IAppConnection } from '../models/app'
+import { IAppConnection } from '@baita/shared'
 import {
   IBot,
   IBotLog,
   IBotModel,
   ITask,
   ITaskExecutionResult,
-} from '../models/bot'
-import { IContent, ITodo, ITodoTask } from '../models/user'
+} from '@baita/shared'
+import { IContent, ITodo, ITodoTask } from '@baita/shared'
 import { AuthContext } from '../providers/auth'
 import { INote } from '../views/notes'
 import { IPlace } from '../views/places'

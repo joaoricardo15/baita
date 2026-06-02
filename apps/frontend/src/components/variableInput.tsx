@@ -1,6 +1,6 @@
 import { FC } from 'react'
 
-import { IVariable, VariableType } from '../models/service'
+import { IVariable, VariableType } from '@baita/shared'
 import { CheckBox, CodeInput, OptionsInput, Text, TextInput } from '.'
 import { ComponentProps } from '.'
 

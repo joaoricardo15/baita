@@ -11,7 +11,7 @@ import { FC, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Menu from '../../../components/menu'
-import { IBot, IBotModel } from '../../../models/bot'
+import { IBot, IBotModel } from '@baita/shared'
 import { AuthContext } from '../../../providers/auth'
 import { BotContext } from '../../../providers/bot'
 import { NotificationContext } from '../../../providers/notification'

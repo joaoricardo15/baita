@@ -1,8 +1,9 @@
 import { z } from 'zod'
 
-import { AppSchema } from './app'
+import { AppConfigSchema, AppSchema } from './app'
 import {
   DataTypeSchema,
+  ServiceConfigSchema,
   ServiceSchema,
   VariableSchema,
   VariableType,
@@ -94,6 +95,15 @@ export const BotLogSchema = z.object({
   timestamp: z.number(),
 })
 export type IBotLog = z.infer<typeof BotLogSchema>
+
+export const TaskExecutionInputSchema = z.object({
+  userId: z.string(),
+  botId: z.string(),
+  connectionId: z.union([z.string(), z.number()]).nullable().optional(),
+  appConfig: AppConfigSchema,
+  serviceConfig: ServiceConfigSchema,
+  inputData: DataTypeSchema.optional(),
+})
 
 export const BotUsageSchema = z.object({
   total: z.number(),

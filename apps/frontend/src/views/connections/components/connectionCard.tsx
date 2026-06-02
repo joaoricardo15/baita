@@ -18,7 +18,7 @@ import { FC, useContext, useState } from 'react'
 import { getConnectorByAppId } from '@baita/shared'
 
 import { Button, Text } from '../../../components'
-import { IAppConnection } from '../../../models/app'
+import { IAppConnection } from '@baita/shared'
 import { NotificationContext } from '../../../providers/notification'
 import { UserContext } from '../../../providers/user'
 import { getLabels, Labels } from '../../../utils/labels'

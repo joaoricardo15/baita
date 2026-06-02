@@ -3,7 +3,7 @@ import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material'
 import { FC, useContext } from 'react'
 
 import { Highlight, StatusChip, Text } from '../../../components'
-import { IBotLog } from '../../../models/bot'
+import { IBotLog } from '@baita/shared'
 import { AuthContext } from '../../../providers/auth'
 import { getLabels, Labels } from '../../../utils/labels'
 

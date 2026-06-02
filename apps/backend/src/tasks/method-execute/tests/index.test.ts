@@ -38,7 +38,8 @@ jest.mock('../methods/http', () => ({
   oauth2Request: (...args: any[]) => mockOauth2Request(...args),
 }))
 
-jest.mock('src/models/bot/schema', () => ({
+jest.mock('@baita/shared', () => ({
+  ...jest.requireActual('@baita/shared'),
   validateTaskExecutionInput: jest.fn(),
 }))
 

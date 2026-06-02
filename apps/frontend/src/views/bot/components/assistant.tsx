@@ -14,7 +14,7 @@ import {
 } from '@mui/material'
 import { FC, useContext, useState } from 'react'
 
-import { IBot, ITask } from '../../../models/bot'
+import { IBot, ITask } from '@baita/shared'
 import { BotContext } from '../../../providers/bot'
 import {
   AiMessage,

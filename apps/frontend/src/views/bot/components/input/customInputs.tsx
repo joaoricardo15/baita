@@ -2,7 +2,7 @@ import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material'
 import { FC } from 'react'
 
 import { Button, TextInput, VariableInput } from '../../../../components'
-import { IVariable, VariableType } from '../../../../models/service'
+import { IVariable, VariableType } from '@baita/shared'
 import { getLabels, Labels } from '../../../../utils/labels'
 
 const CustomInputs: FC<{

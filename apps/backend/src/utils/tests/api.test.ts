@@ -1,4 +1,4 @@
-import { TaskExecutionStatus } from 'src/models/bot/interface'
+import { TaskExecutionStatus } from '@baita/shared'
 import Api, { ApiRequestStatus } from 'src/utils/api'
 
 const mockContext = {
