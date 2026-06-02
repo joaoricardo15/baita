@@ -24,7 +24,13 @@ test('authenticate', async ({ page }) => {
     'button[type="submit"], button:has-text("Continue"), button:has-text("Log In")'
   )
   await page.waitForURL(/localhost|baita\.help/, { timeout: 15000 })
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('domcontentloaded')
+
+  // Wait for Auth0 SDK to store token in localStorage
+  await page.waitForFunction(
+    () => Object.keys(localStorage).some((k) => k.startsWith('@@auth0spajs@@')),
+    { timeout: 15000 }
+  )
 
   // Save browser state (cookies + localStorage) for page tests
   await page.context().storageState({ path: authFile })
