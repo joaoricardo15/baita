@@ -17,7 +17,10 @@ const LandingPage: FC = () => {
   const [animationDone, setAnimationDone] = useState(false)
 
   return (
-    <div className="d-flex justify-content-center">
+    <div
+      className="d-flex flex-column justify-content-between"
+      style={{ minHeight: '80vh' }}
+    >
       <div>
         <div className="d-flex justify-content-center mt-4">
           <Logo size={150} />
@@ -64,15 +67,15 @@ const LandingPage: FC = () => {
             )}
           </div>
         )}
-        <div className="text-center mt-5">
-          <p className="text-secondary mx-3 mb-2">{labels.purpose}</p>
-          <Link to={LINKS.privacy} className="text-secondary mx-2">
-            {labels.privacy}
-          </Link>
-          <Link to={LINKS.terms} className="text-secondary mx-2">
-            {labels.terms}
-          </Link>
-        </div>
+      </div>
+      <div className="text-center pb-3">
+        <p className="text-secondary mx-3 mb-2">{labels.purpose}</p>
+        <Link to={LINKS.privacy} className="text-secondary mx-2">
+          {labels.privacy}
+        </Link>
+        <Link to={LINKS.terms} className="text-secondary mx-2">
+          {labels.terms}
+        </Link>
       </div>
     </div>
   )
