@@ -196,19 +196,20 @@ describe('UserProvider', () => {
         { contentId: 'c2', header: 'Second', body: '2' },
         { contentId: 'c3', header: 'Third', body: '3' },
         { contentId: 'c4', header: 'Fourth', body: '4' },
+        { contentId: 'c5', header: 'Fifth', body: '5' },
       ]
       mockGetContent.mockResolvedValue(content)
 
       const { result } = renderHook(() => useContext(UserContext), { wrapper })
 
       await waitFor(() => {
-        expect(result.current.contents).toHaveLength(4)
+        expect(result.current.contents).toHaveLength(5)
       })
 
       result.current.popContent()
 
       await waitFor(() => {
-        expect(result.current.contents).toHaveLength(3)
+        expect(result.current.contents).toHaveLength(4)
       })
     })
 

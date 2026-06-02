@@ -50,12 +50,12 @@ const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }
 
   const popContent = () => {
-    contents?.pop()
-    setContents(contents)
-
-    if (contents && contents.length <= 3) {
-      retrieveContent()
-    }
+    setContents((prev) => {
+      if (!prev || prev.length === 0) return prev
+      const updated = prev.slice(0, -1)
+      if (updated.length <= 3) retrieveContent()
+      return updated
+    })
   }
 
   const retrieveTodoTasks = () => {

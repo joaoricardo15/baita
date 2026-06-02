@@ -95,7 +95,7 @@ export const Feed: FC = () => {
           className="position-relative"
           style={{ height: 'calc(100vh - 80px)' }}
         >
-          {contents.map((content, index) => (
+          {contents.slice(-2).map((content, index) => (
             <div
               key={content.contentId}
               className="w-100 position-absolute top-0"
