@@ -32,6 +32,16 @@ Before reporting a task as done, self-check:
 - For layout changes: visually verify before/after.
 - When writing tests: every bug fix or new feature must include a unit/integration test that would catch the issue if it regressed.
 
+### Mobile-First Design
+
+All layout and UI changes MUST be designed mobile-first:
+
+- **No hover-only interactions** — every action must be accessible via tap (no tooltips as sole affordance, no hover-revealed buttons)
+- **Touch targets** — minimum 44x44px for interactive elements
+- **Clear buttons** — always visible (not hover-dependent) when a value is selected
+- **Responsive layout** — components must work on 375px viewport width minimum
+- **Test on mobile** — use Chrome DevTools responsive mode or a real device before pushing
+
 ### Visual Verification with Playwright (Layout Changes)
 
 For ANY change involving UI layout, component rendering, or visual presentation:

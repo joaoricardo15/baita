@@ -85,12 +85,18 @@ export const OptionsInput: FC<
           openOnFocus
           autoHighlight
           blurOnSelect
+          freeSolo
           options={options}
           inputValue={inputValue}
           noOptionsText={labels.noOptions}
           onBlur={onBlur}
           onOpen={() => setInputValue('')}
           onChange={(_, selected) => onChange(selected)}
+          sx={{
+            '& .MuiAutocomplete-clearIndicator': {
+              visibility: value ? 'visible' : 'hidden',
+            },
+          }}
           onInputChange={(_, newValue, reason) => {
             if (reason === 'input') {
               setInputValue(newValue)
@@ -112,7 +118,6 @@ export const OptionsInput: FC<
           renderOption={getDefaultRenderOption()}
           renderGroup={customRenderGroup}
           getOptionDisabled={getOptionDisabled}
-          freeSolo
           renderInput={(params) => (
             <TextField
               {...params}
