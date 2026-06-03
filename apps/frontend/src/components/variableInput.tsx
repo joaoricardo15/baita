@@ -170,7 +170,7 @@ const VariableInput: FC<
         </Text>
       )}
       {variable.type === VariableType.output &&
-      outputFields &&
+      hasOutputOptions &&
       !isManualMode ? (
         <div className="d-flex align-items-center">
           <div className="flex-grow-1">
