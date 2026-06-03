@@ -2,7 +2,6 @@ import {
   AutoFixHigh as AutoFixHighIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-  FlashOnSharp as FlashOnSharpIcon,
   History as HistoryIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material'
@@ -11,7 +10,7 @@ import { FC, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Menu from '@/components/menu'
-import { IBot, IBotModel } from '@baita/shared'
+import { IBot, IBotModel, validateBot } from '@baita/shared'
 import { AuthContext } from '@/providers/auth'
 import { BotContext } from '@/providers/bot'
 import { NotificationContext } from '@/providers/notification'
@@ -44,6 +43,13 @@ const Bot: FC<{
   }
 
   const onDeployBot = () => {
+    if (!bot.active) {
+      const { errors } = validateBot(bot)
+      if (errors.length) {
+        showSnack(errors[0], 'warning')
+        return
+      }
+    }
     showLoading(true)
     deployBot({ ...bot, active: !bot.active })
       .catch((err: { message?: string }) => {
@@ -54,26 +60,19 @@ const Bot: FC<{
   }
 
   const onTestBot = (bot: IBot) => {
-    if (!bot.active) {
-      showSnack(labels.testInactiveMessage)
-    } else {
-      showLoading(true)
-      Axios.post(bot.triggerUrl)
-        .then((result) => {
-          if (result.data.success) {
-            showSnack(labels.testSuccess, 'success')
-          } else {
-            showSnack(labels.testFail, 'error')
-          }
-        })
-        .catch((error) =>
-          showSnack(
-            typeof error === 'string' ? error : labels.testFail,
-            'error'
-          )
-        )
-        .finally(() => showLoading(false))
-    }
+    showLoading(true)
+    Axios.post(bot.triggerUrl)
+      .then((result) => {
+        if (result.data.success) {
+          showSnack(labels.testSuccess, 'success')
+        } else {
+          showSnack(labels.testFail, 'error')
+        }
+      })
+      .catch((error) =>
+        showSnack(typeof error === 'string' ? error : labels.testFail, 'error')
+      )
+      .finally(() => showLoading(false))
   }
 
   const parseModelBot = (bot: IBot): IBotModel => ({
@@ -113,14 +112,10 @@ const Bot: FC<{
       active={bot.active}
       description={bot.description}
       onToggleBot={onDeployBot}
+      onTestBot={() => onTestBot(bot)}
       actionComponent={
         <Menu
           links={[
-            {
-              label: labels.testButton,
-              icon: <FlashOnSharpIcon color="secondary" />,
-              onClick: () => onTestBot(bot),
-            },
             {
               label: labels.editButton,
               icon: <EditIcon color="secondary" />,

@@ -13,10 +13,10 @@ import {
   IconButton,
   ListSubheader,
   Tooltip,
-  Typography,
 } from '@mui/material'
-import { FC, useRef, useState } from 'react'
+import { FC, useContext, useRef, useState } from 'react'
 
+import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
 
 import { CheckBox, CodeInput, OptionsInput, Text, TextInput } from '.'
@@ -42,6 +42,7 @@ const VariableInput: FC<
   className,
   style,
 }) => {
+  const { showSnack } = useContext(NotificationContext)
   const hasOutputOptions = !!outputFields?.length
   const [isManualMode, setIsManualMode] = useState(
     hasOutputOptions &&
@@ -371,21 +372,23 @@ const VariableInput: FC<
           {renderToggleButton()}
         </div>
       ) : variable.type === VariableType.output ? (
-        <div>
-          <TextInput
-            value={value}
-            variant="outlined"
-            onBlur={onBlur}
-            label={getLabel(variable.label)}
-            onChange={(result) => onTextChange(variable, result)}
-          />
-          <Typography
-            variant="caption"
-            color="text.disabled"
-            sx={{ mt: 0.5, display: 'block' }}
+        <div className="d-flex align-items-center">
+          <div className="flex-grow-1">
+            <TextInput
+              value={value}
+              variant="outlined"
+              onBlur={onBlur}
+              label={getLabel(variable.label)}
+              onChange={(result) => onTextChange(variable, result)}
+            />
+          </div>
+          <IconButton
+            size="small"
+            sx={{ ml: 0.5, opacity: 0.4 }}
+            onClick={() => showSnack(labels.noOutputsAvailable, 'warning')}
           >
-            {labels.noOutputsAvailable}
-          </Typography>
+            <AccountTreeIcon fontSize="small" />
+          </IconButton>
         </div>
       ) : variable.type === VariableType.options ? (
         <OptionsInput

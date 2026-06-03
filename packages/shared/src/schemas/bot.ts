@@ -152,6 +152,10 @@ export interface IValidationResult {
   warnings: string[]
 }
 
+export function getTaskLabel(index: number): string {
+  return index === 0 ? 'Trigger' : `Task ${index}`
+}
+
 export function validateBot(bot: IBot): IValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
@@ -160,7 +164,7 @@ export function validateBot(bot: IBot): IValidationResult {
     const task = bot.tasks[i]
 
     if (i > 0 && !task.service) {
-      errors.push(`Step ${i + 1}: missing service configuration`)
+      errors.push(`${getTaskLabel(i)}: missing service configuration`)
     }
 
     for (const input of task.inputData) {
@@ -168,7 +172,7 @@ export function validateBot(bot: IBot): IValidationResult {
         // Validate outputIndex references an earlier step
         if (input.outputIndex !== undefined && input.outputIndex >= i) {
           errors.push(
-            `Step ${i + 1}: input "${input.name}" references step ${input.outputIndex + 1} which hasn't executed yet`
+            `${getTaskLabel(i)}: input "${input.name}" references ${getTaskLabel(input.outputIndex)} which hasn't executed yet`
           )
         }
         // Validate referenced step exists
@@ -177,7 +181,7 @@ export function validateBot(bot: IBot): IValidationResult {
           input.outputIndex >= bot.tasks.length
         ) {
           errors.push(
-            `Step ${i + 1}: input "${input.name}" references non-existent step ${input.outputIndex + 1}`
+            `${getTaskLabel(i)}: input "${input.name}" references non-existent step ${input.outputIndex + 1}`
           )
         }
         // Validate path against sample data (warning, not error)
@@ -190,7 +194,7 @@ export function validateBot(bot: IBot): IValidationResult {
             )
             if (pathExists === undefined) {
               warnings.push(
-                `Step ${i + 1}: input "${input.name}" references path "${input.outputPath}" not found in test data (may be stale)`
+                `${getTaskLabel(i)}: input "${input.name}" references path "${input.outputPath}" not found in test data (may be stale)`
               )
             }
           }
@@ -203,8 +207,30 @@ export function validateBot(bot: IBot): IValidationResult {
       const currentHash = computeStepConfigHash(task)
       if (currentHash !== task.sampleConfigHash) {
         warnings.push(
-          `Step ${i + 1}: test data is stale (step configuration changed since last test)`
+          `${getTaskLabel(i)}: test data is stale (step configuration changed since last test)`
         )
+      }
+    }
+
+    // Validate required input fields have values
+    if (task.service?.config?.inputFields) {
+      for (const field of task.service.config.inputFields) {
+        if (
+          field.required &&
+          field.type !== VariableType.constant &&
+          field.type !== VariableType.environment
+        ) {
+          const stored = task.inputData.find((d) => d.name === field.name)
+          const hasValue =
+            stored?.value ||
+            stored?.outputIndex !== undefined ||
+            stored?.outputPath !== undefined
+          if (!hasValue) {
+            errors.push(
+              `${getTaskLabel(i)}: required field "${field.label}" is missing`
+            )
+          }
+        }
       }
     }
   }

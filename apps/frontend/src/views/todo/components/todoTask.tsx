@@ -124,9 +124,6 @@ export const ToDoTask: FC<{
           transform: CSS.Translate.toString(transform),
           transition,
         }}
-
-        // TODO : First line could have a board
-        // ${index === 0 && 'shadow-sm my-2 border rounded rounded-3 '}`}
       >
         <DragHandle />
         <div className="d-flex w-100 align-items-center">
@@ -138,8 +135,6 @@ export const ToDoTask: FC<{
           <TextInput
             value={taskTitle}
             className="w-100"
-            // TODO: First line could be bold???
-            // variant={`${index === 0 && 'fw-bolder'}`}
             onBlur={() => onTaskTitleBlur()}
             onFocus={() => onTaskTitleFocus()}
             onChange={(result) => onTaskTitleChange(result)}

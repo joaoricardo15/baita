@@ -1,5 +1,6 @@
-import { Card, Switch } from '@mui/material'
-import { FC, ReactNode } from 'react'
+import { FlashOnSharp as FlashOnSharpIcon } from '@mui/icons-material'
+import { Card, IconButton, Switch } from '@mui/material'
+import { FC, ReactNode, useState } from 'react'
 
 import { Text } from '@/components'
 import { getLabels, Labels } from '@/utils/labels'
@@ -10,6 +11,7 @@ const BotCard: FC<{
   active?: boolean
   description?: string
   onToggleBot: () => void
+  onTestBot?: () => void
   actionComponent?: ReactNode
 }> = ({
   name,
@@ -17,53 +19,58 @@ const BotCard: FC<{
   active = false,
   description,
   onToggleBot,
+  onTestBot,
   actionComponent,
 }) => {
+  const [highlight, setHighlight] = useState(false)
+
+  const handleToggle = () => {
+    if (!active) {
+      setTimeout(() => {
+        setHighlight(true)
+        setTimeout(() => setHighlight(false), 1500)
+      }, 500)
+    }
+    onToggleBot()
+  }
+
   return (
     <Card className="p-2">
-      <div className="d-flex justify-content-between">
-        <div className="d-flex">
+      <div className="d-flex justify-content-between align-items-center">
+        <div className="d-flex align-items-center">
           {image && (
             <div style={{ width: 60 }} className="m-3">
               <img width={60} src={image} alt="Bot front image" />
             </div>
           )}
-          <div className="mx-2" style={{ margin: 'auto' }}>
+          <div className="mx-2">
             <div className="d-flex align-items-center">
               {name ? (
                 <Text className="fw-bold align-self-center">{name}</Text>
               ) : (
                 <Text>{labels.noName}</Text>
               )}
-              <Switch checked={active} onChange={onToggleBot} />
+              <Switch checked={active} onChange={handleToggle} />
             </div>
             {description && (
               <Text className="fw-light fs-6">{description}</Text>
             )}
           </div>
         </div>
-        {actionComponent}
-      </div>
-
-      {/* TODO: Implement input fields logic */}
-      {/* <Divider />
-      {tasks.map((task) => (
-        <div key={task.taskId}>
-          {task.inputData
-            .filter((input) => input.type === 'text')
-            .map((input, inputIndex) => (
-              <TextInput
-                key={inputIndex}
-                label={input.name}
-                variant={'standard'}
-                value={input.value as string}
-                onChange={(value) => {
-                  updateBotInputField(task, inputIndex, { ...input, value })
-                }}
-              />
-            ))}
+        <div className="d-flex align-items-center">
+          {active && onTestBot && (
+            <IconButton
+              size="small"
+              onClick={onTestBot}
+              color="secondary"
+              className={highlight ? 'animate-pulse-once' : undefined}
+            >
+              <FlashOnSharpIcon />
+            </IconButton>
+          )}
+          {actionComponent}
         </div>
-      ))} */}
+      </div>
     </Card>
   )
 }

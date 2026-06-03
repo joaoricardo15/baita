@@ -2,7 +2,7 @@ import { FlashOnSharp as FlashOnSharpIcon } from '@mui/icons-material'
 import { FC, useContext, useEffect, useState } from 'react'
 
 import { Button, Highlight, StatusChip, Text } from '@/components'
-import { ITask } from '@baita/shared'
+import { getTaskLabel, ITask, validateBot } from '@baita/shared'
 import { BotContext } from '@/providers/bot'
 import { NotificationContext } from '@/providers/notification'
 import { getTimeDiffLabel } from '@/utils/date'
@@ -16,14 +16,21 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
 
   const testTask = (taskIndex: number) => {
     if (bot) {
-      showLoading(true)
+      const { errors } = validateBot(bot)
+      const stepLabel = getTaskLabel(taskIndex)
+      const taskErrors = errors.filter((e) => e.startsWith(`${stepLabel}:`))
+      if (taskErrors.length) {
+        showSnack(taskErrors[0], 'warning')
+        return
+      }
 
+      showLoading(true)
       testBotTask(bot, taskIndex)
         .then(() => {
-          showSnack('Task executed successfully!', 'success')
+          showSnack(labels.testSuccess, 'success')
         })
-        .catch((err) => {
-          showSnack(`Task failed: ${err.message}`, 'error')
+        .catch((err: { message?: string }) => {
+          showSnack(err?.message || labels.testFail, 'error')
         })
         .finally(() => {
           showLoading(false)
@@ -84,9 +91,13 @@ export default TaskTest
 const LABELS: Labels = {
   en: {
     noOutputData: 'No output data...',
+    testSuccess: 'Task executed successfully!',
+    testFail: 'Task execution failed',
   },
   pt: {
     noOutputData: 'Nenhum dado de saída...',
+    testSuccess: 'Tarefa executada com sucesso!',
+    testFail: 'Falha na execução da tarefa',
   },
 }
 

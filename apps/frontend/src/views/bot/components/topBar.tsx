@@ -8,6 +8,7 @@ import ReactConfetti from 'react-confetti'
 import { useNavigate } from 'react-router-dom'
 
 import { Button, TextInput } from '@/components'
+import { validateBot } from '@baita/shared'
 import { BotContext } from '@/providers/bot'
 import { NotificationContext } from '@/providers/notification'
 import { LINKS } from '@/router'
@@ -54,6 +55,13 @@ const TopBar: FC<{
 
   const onToggleBot = () => {
     if (bot) {
+      if (!bot.active) {
+        const { errors } = validateBot(bot)
+        if (errors.length) {
+          showSnack(errors[0], 'warning')
+          return
+        }
+      }
       showLoading(true)
       deployBot({ ...bot, active: !bot.active })
         .catch((err: { message?: string }) => {
