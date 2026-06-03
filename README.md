@@ -1,6 +1,6 @@
 # Baita
 
-Personal automation platform — a Zapier-inspired tool aimed at normal people. Create automated workflows (bots) that connect services, run on schedules, and publish results to your feed.
+Personal automation platform aimed at normal people. Create automated workflows (bots) that connect services, run on schedules, and publish results to your feed.
 
 **Live at**: https://baita.help | **API**: https://api.baita.help
 

@@ -1,6 +1,6 @@
 # Baita Serverless
 
-Backend application for BaitaHelp: the personal automation platform (Zapier-inspired, aimed at normal people). API available at https://api.baita.help.
+Backend application for BaitaHelp: the personal automation platform aimed at normal people. API available at https://api.baita.help.
 
 ## Core Philosophies
 

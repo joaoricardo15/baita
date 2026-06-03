@@ -303,7 +303,7 @@ A ready-to-copy template exists at `packages/shared/src/connectors/_template.ts`
 Give your AI assistant this prompt along with the partner's API documentation:
 
 ```
-I need to create a new connector manifest for Baita (a Zapier-inspired automation platform).
+I need to create a new connector manifest for Baita.
 
 Here's the template structure I need to fill:
 - File: packages/shared/src/connectors/{partner}.ts

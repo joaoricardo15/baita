@@ -4,7 +4,7 @@ This document provides complete instructions for programmatically creating bots 
 
 ## Overview
 
-A Baita bot is a serverless automation workflow (similar to Zapier zaps). Each bot:
+A Baita bot is a serverless automation workflow. Each bot:
 
 - Has a **trigger** (how it starts: webhook HTTP call or schedule)
 - Has one or more **tasks** (sequential steps that execute logic)

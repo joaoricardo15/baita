@@ -1,6 +1,6 @@
 # Baita Frontend
 
-Personal automation app (Zapier-inspired, aimed at normal people) available at https://baita.help.
+Personal automation app aimed at normal people available at https://baita.help.
 
 Part of the Baita monorepo. Backend lives at `apps/backend/`, shared schemas at `packages/shared/`. See root `CLAUDE.md` for cross-workspace conventions.
 

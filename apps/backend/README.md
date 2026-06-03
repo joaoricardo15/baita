@@ -1,6 +1,6 @@
 # Baita Backend
 
-Backend API for Baita: a personal automation platform (Zapier-inspired, aimed at normal people).
+Backend API for Baita: a personal automation platform aimed at normal people.
 
 **API**: https://api.baita.help | **Docs**: Available via OpenAPI spec at deployment
 

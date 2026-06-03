@@ -1,6 +1,6 @@
 # Baita — Monorepo
 
-Personal automation platform (Zapier-inspired, aimed at normal people). Turborepo + pnpm workspaces monorepo.
+Personal automation platform aimed at normal people. Turborepo + pnpm workspaces monorepo.
 
 - **`apps/frontend/`** — React 18 + Vite app at https://baita.help
 - **`apps/backend/`** — Serverless Framework API at https://api.baita.help

@@ -1,6 +1,6 @@
 # Baita Frontend
 
-Frontend application for Baita: a personal automation platform (Zapier-inspired, aimed at normal people).
+Frontend application for Baita: a personal automation platform aimed at normal people.
 
 **Live at**: https://baita.help
 
