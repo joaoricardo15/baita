@@ -121,6 +121,7 @@ function operationToService(
     type: op.type === 'trigger' ? ServiceType.trigger : ServiceType.invoke,
     name: ServiceName.method,
     label: op.name,
+    description: op.description,
     config: {
       methodName,
       inputFields,

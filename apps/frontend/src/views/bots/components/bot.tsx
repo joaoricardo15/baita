@@ -45,7 +45,12 @@ const Bot: FC<{
 
   const onDeployBot = () => {
     showLoading(true)
-    deployBot({ ...bot, active: !bot.active }).then(() => showLoading(false))
+    deployBot({ ...bot, active: !bot.active })
+      .catch((err: { message?: string }) => {
+        const message = err?.message || labels.toggleError
+        showSnack(message, 'error')
+      })
+      .finally(() => showLoading(false))
   }
 
   const onTestBot = (bot: IBot) => {
@@ -155,6 +160,7 @@ const LABELS: Labels = {
     testInactiveMessage: 'Bot is inactive',
     testSuccess: 'Test run successfully',
     testFail: 'Test failed',
+    toggleError: 'Failed to toggle bot',
     editButton: 'Edit',
     logsButton: 'Logs',
     deleteButton: 'Delete',
@@ -167,6 +173,7 @@ const LABELS: Labels = {
     testInactiveMessage: 'Bot está inativado',
     testSuccess: 'Testado com sucesso',
     testFail: 'Testado com falha',
+    toggleError: 'Falha ao alternar bot',
     editButton: 'Editar',
     logsButton: 'Logs',
     deleteButton: 'Deletar',

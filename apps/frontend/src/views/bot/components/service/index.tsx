@@ -118,14 +118,14 @@ const TaskService: FC<{
                         alt=""
                         className="me-2"
                         style={{
-                          width: 18,
-                          height: 18,
-                          borderRadius: 3,
+                          width: 20,
+                          height: 20,
+                          borderRadius: 4,
                           objectFit: 'contain',
                         }}
                       />
                     )}
-                    <span className="fw-bold" style={{ fontSize: '0.8rem' }}>
+                    <span className="fw-bold" style={{ fontSize: '0.85rem' }}>
                       {params.group}
                     </span>
                   </div>
@@ -133,6 +133,32 @@ const TaskService: FC<{
                 </li>
               )
             }}
+            renderOption={(props, option: IServiceApp) => (
+              <li
+                {...props}
+                style={{
+                  ...props.style,
+                  padding: '10px 16px 10px 32px',
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: '0.9rem' }}>
+                    {option.service.label}
+                  </div>
+                  {option.service.description && (
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: '#888',
+                        marginTop: 2,
+                      }}
+                    >
+                      {option.service.description}
+                    </div>
+                  )}
+                </div>
+              </li>
+            )}
             options={
               taskIndex === 0
                 ? services.filter((x) => x.service.type === ServiceType.trigger)

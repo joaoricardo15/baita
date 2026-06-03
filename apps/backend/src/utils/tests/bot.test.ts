@@ -1,6 +1,8 @@
 import { DataType, IVariable, VariableType } from '@baita/shared'
 
 import {
+  applyTransformToValue,
+  buildTransformExpression,
   getDataFromMapping,
   getDataFromPath,
   getDataFromService,
@@ -657,5 +659,161 @@ describe('getDataFromService', () => {
       method: 'post',
       path: 'chat/completions',
     })
+  })
+})
+
+describe('buildTransformExpression', () => {
+  test('first returns [0]', () => {
+    expect(buildTransformExpression({ operation: 'first' })).toBe('[0]')
+  })
+
+  test('last returns .slice(-1)[0]', () => {
+    expect(buildTransformExpression({ operation: 'last' })).toBe(
+      '.slice(-1)[0]'
+    )
+  })
+
+  test('at returns [index]', () => {
+    expect(buildTransformExpression({ operation: 'at', index: 3 })).toBe('[3]')
+  })
+
+  test('count returns .length', () => {
+    expect(buildTransformExpression({ operation: 'count' })).toBe('.length')
+  })
+
+  test('pluck returns .map expression', () => {
+    expect(
+      buildTransformExpression({ operation: 'pluck', property: 'title' })
+    ).toBe(".map(item => item['title'])")
+  })
+
+  test('filter with equals', () => {
+    expect(
+      buildTransformExpression({
+        operation: 'filter',
+        property: 'status',
+        operator: 'equals',
+        value: 'active',
+      })
+    ).toBe(".filter(item => item['status'] === 'active')")
+  })
+
+  test('filter with contains', () => {
+    expect(
+      buildTransformExpression({
+        operation: 'filter',
+        property: 'name',
+        operator: 'contains',
+        value: 'John',
+      })
+    ).toBe(".filter(item => String(item['name']).includes('John'))")
+  })
+
+  test('join returns .join expression', () => {
+    expect(buildTransformExpression({ operation: 'join', value: ' | ' })).toBe(
+      ".join(' | ')"
+    )
+  })
+
+  test('sort ascending', () => {
+    expect(
+      buildTransformExpression({
+        operation: 'sort',
+        property: 'date',
+        direction: 'asc',
+      })
+    ).toBe(".sort((a, b) => a['date'] > b['date'] ? 1 : -1)")
+  })
+
+  test('escapes single quotes in values', () => {
+    expect(
+      buildTransformExpression({
+        operation: 'filter',
+        property: 'name',
+        operator: 'equals',
+        value: "O'Brien",
+      })
+    ).toBe(".filter(item => item['name'] === 'O\\'Brien')")
+  })
+})
+
+describe('applyTransformToValue', () => {
+  const items = [
+    { name: 'Alice', age: 30, active: true },
+    { name: 'Bob', age: 25, active: false },
+    { name: 'Charlie', age: 35, active: true },
+  ]
+
+  test('first returns first item', () => {
+    expect(applyTransformToValue(items, { operation: 'first' })).toEqual(
+      items[0]
+    )
+  })
+
+  test('last returns last item', () => {
+    expect(applyTransformToValue(items, { operation: 'last' })).toEqual(
+      items[2]
+    )
+  })
+
+  test('count returns array length', () => {
+    expect(applyTransformToValue(items, { operation: 'count' })).toBe(3)
+  })
+
+  test('pluck extracts property', () => {
+    expect(
+      applyTransformToValue(items, { operation: 'pluck', property: 'name' })
+    ).toEqual(['Alice', 'Bob', 'Charlie'])
+  })
+
+  test('filter equals', () => {
+    expect(
+      applyTransformToValue(items, {
+        operation: 'filter',
+        property: 'active',
+        operator: 'equals',
+        value: 'true',
+      })
+    ).toEqual([items[0], items[2]])
+  })
+
+  test('join concatenates array', () => {
+    expect(
+      applyTransformToValue(['a', 'b', 'c'], {
+        operation: 'join',
+        value: '-',
+      })
+    ).toBe('a-b-c')
+  })
+})
+
+describe('getValueFromInputVariable with transform', () => {
+  test('appends transform to output reference in code gen', () => {
+    const variable: IVariable = {
+      name: 'articles',
+      label: 'Articles',
+      type: VariableType.output,
+      outputIndex: 0,
+      outputPath: 'articles',
+      transform: { operation: 'first' },
+    }
+
+    expect(getValueFromInputVariable(variable, false)).toBe(
+      `${OUTPUT_CODE}task0_outputData['articles'][0]${OUTPUT_CODE}`
+    )
+  })
+
+  test('applies transform to sampleValue in test mode', () => {
+    const variable: IVariable = {
+      name: 'articles',
+      label: 'Articles',
+      type: VariableType.output,
+      outputIndex: 0,
+      outputPath: 'articles',
+      sampleValue: [{ title: 'A' }, { title: 'B' }],
+      transform: { operation: 'pluck', property: 'title' },
+    }
+
+    expect(getValueFromInputVariable(variable, true)).toEqual(['A', 'B'])
   })
 })

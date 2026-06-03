@@ -20,13 +20,29 @@ const ServiceInputs: FC<{
     return field.value.toString()
   }
 
+  const getVariable = (serviceField: IVariable): IVariable => {
+    const stored = inputData?.find(
+      (x: IVariable) => x.name === serviceField.name
+    )
+    if (!stored) return serviceField
+    return {
+      ...serviceField,
+      value: stored.value,
+      sampleValue: stored.sampleValue,
+      label: stored.label || serviceField.label,
+      outputIndex: stored.outputIndex,
+      outputPath: stored.outputPath,
+      transform: stored.transform,
+    }
+  }
+
   return (
     <>
       {serviceInputFields.map((variable: IVariable) => (
         <VariableInput
           className="mb-3"
           key={variable.name}
-          variable={variable}
+          variable={getVariable(variable)}
           label={getInputDataLabel(variable.name)}
           value={getInputDataValue(variable.name)}
           onChange={onInputFieldChange}

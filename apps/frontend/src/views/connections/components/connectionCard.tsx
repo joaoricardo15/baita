@@ -1,9 +1,7 @@
 import { getConnectorByAppId } from '@baita/shared'
 import { IAppConnection } from '@baita/shared'
 import {
-  CheckCircle as CheckCircleIcon,
   Delete as DeleteIcon,
-  Error as ErrorIcon,
   MoreVert as MoreVertIcon,
   Sync as SyncIcon,
 } from '@mui/icons-material'
@@ -48,17 +46,16 @@ const ConnectionCard: FC<{ connection: IAppConnection }> = ({ connection }) => {
         return (
           <Chip
             size="small"
-            icon={<SyncIcon className="animate-spin" />}
             label={labels.checking}
+            className="bg-white border border-secondary ms-2"
           />
         )
       case 'healthy':
         return (
           <Chip
             size="small"
-            color="success"
-            icon={<CheckCircleIcon />}
             label={labels.healthy}
+            className="bg-white border border-success ms-2"
           />
         )
       case 'expired':
@@ -66,9 +63,8 @@ const ConnectionCard: FC<{ connection: IAppConnection }> = ({ connection }) => {
         return (
           <Chip
             size="small"
-            color="error"
-            icon={<ErrorIcon />}
             label={healthStatus === 'expired' ? labels.expired : labels.error}
+            className="text-white bg-danger ms-2"
           />
         )
       default:
@@ -79,8 +75,8 @@ const ConnectionCard: FC<{ connection: IAppConnection }> = ({ connection }) => {
   return (
     <>
       <Card className="p-2">
-        <div className="d-flex justify-content-between">
-          <div className="d-flex">
+        <div className="d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center">
             {connector?.icon && (
               <div
                 style={{ width: 30 }}
@@ -89,34 +85,32 @@ const ConnectionCard: FC<{ connection: IAppConnection }> = ({ connection }) => {
                 <img width={30} height={30} src={connector.icon} alt="" />
               </div>
             )}
-            <div className="mx-2" style={{ margin: 'auto' }}>
-              <div className="d-flex align-items-center">
-                <Text className="fw-bold align-self-center">
-                  {connection.name}
-                </Text>
-                {getStatusChip()}
-              </div>
+            <div className="mx-2">
+              <Text className="fw-bold">{connection.name}</Text>
               {connection.email && (
                 <Text className="fw-light fs-6">{connection.email}</Text>
               )}
             </div>
           </div>
-          <Menu
-            links={[
-              {
-                label: labels.test,
-                icon: <SyncIcon color="secondary" />,
-                onClick: handleTest,
-              },
-              {
-                label: labels.delete,
-                icon: <DeleteIcon color="secondary" />,
-                onClick: handleDelete,
-              },
-            ]}
-          >
-            <MoreVertIcon />
-          </Menu>
+          <div className="d-flex align-items-center">
+            {getStatusChip()}
+            <Menu
+              links={[
+                {
+                  label: labels.test,
+                  icon: <SyncIcon color="secondary" />,
+                  onClick: handleTest,
+                },
+                {
+                  label: labels.delete,
+                  icon: <DeleteIcon color="secondary" />,
+                  onClick: handleDelete,
+                },
+              ]}
+            >
+              <MoreVertIcon />
+            </Menu>
+          </div>
         </div>
       </Card>
     </>

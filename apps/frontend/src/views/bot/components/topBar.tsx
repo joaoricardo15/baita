@@ -56,9 +56,8 @@ const TopBar: FC<{
     if (bot) {
       showLoading(true)
       deployBot({ ...bot, active: !bot.active })
-        .catch((err) => {
-          const message =
-            typeof err === 'string' ? err : err?.message || labels.toggleError
+        .catch((err: { message?: string }) => {
+          const message = err?.message || labels.toggleError
           showSnack(message, 'error')
         })
         .finally(() => showLoading(false))

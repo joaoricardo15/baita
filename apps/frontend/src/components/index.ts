@@ -13,6 +13,7 @@ import Skeleton from './skeleton'
 import StatusChip from './statusChip'
 import Text from './text'
 import TextInput from './textInput'
+import TransformPanel from './transformPanel'
 import VariableInput from './variableInput'
 
 export interface ComponentProps {
@@ -34,5 +35,6 @@ export {
   StatusChip,
   Text,
   TextInput,
+  TransformPanel,
   VariableInput,
 }

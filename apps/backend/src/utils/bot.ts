@@ -1,4 +1,4 @@
-import { DataType, IVariable, VariableType } from '@baita/shared'
+import { DataType, ITransform, IVariable, VariableType } from '@baita/shared'
 
 export const OUTPUT_CODE = '###baita.help###'
 
@@ -119,6 +119,116 @@ export const getOutputVariableStringById = (
   return getOutputVariableString(index, path)
 }
 
+const escapeString = (s: string): string =>
+  s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+
+const operatorToJs = (op?: string): string => {
+  switch (op) {
+    case 'equals':
+      return '==='
+    case 'notEquals':
+      return '!=='
+    case 'greaterThan':
+      return '>'
+    case 'lessThan':
+      return '<'
+    default:
+      return '==='
+  }
+}
+
+export const buildTransformExpression = (transform: ITransform): string => {
+  const { operation, index, property, operator, value, direction } = transform
+  const prop = property ? escapeString(property) : ''
+  const val = value ? escapeString(value) : ''
+
+  switch (operation) {
+    case 'first':
+      return '[0]'
+    case 'last':
+      return '.slice(-1)[0]'
+    case 'at':
+      return `[${index ?? 0}]`
+    case 'count':
+      return '.length'
+    case 'pluck':
+      return `.map(item => item['${prop}'])`
+    case 'filter':
+      if (operator === 'contains')
+        return `.filter(item => String(item['${prop}']).includes('${val}'))`
+      if (operator === 'exists')
+        return `.filter(item => item['${prop}'] !== undefined && item['${prop}'] !== null)`
+      if (operator === 'notExists')
+        return `.filter(item => item['${prop}'] === undefined || item['${prop}'] === null)`
+      return `.filter(item => item['${prop}'] ${operatorToJs(operator)} '${val}')`
+    case 'join':
+      return `.join('${val || ', '}')`
+    case 'sort': {
+      const dir = direction === 'desc' ? -1 : 1
+      return `.sort((a, b) => a['${prop}'] > b['${prop}'] ? ${dir} : ${-dir})`
+    }
+    default:
+      return ''
+  }
+}
+
+export const applyTransformToValue = (
+  data: DataType,
+  transform: ITransform
+): DataType => {
+  if (!data || !transform) return data
+  const { operation, index, property, operator, value, direction } = transform
+
+  switch (operation) {
+    case 'first':
+      return Array.isArray(data) ? data[0] : data
+    case 'last':
+      return Array.isArray(data) ? data[data.length - 1] : data
+    case 'at':
+      return Array.isArray(data) ? data[index ?? 0] : data
+    case 'count':
+      return Array.isArray(data) ? data.length : 0
+    case 'pluck':
+      return Array.isArray(data)
+        ? data.map((item: any) => item?.[property!])
+        : data
+    case 'filter':
+      if (!Array.isArray(data)) return data
+      return data.filter((item: any) => {
+        const itemVal = item?.[property!]
+        switch (operator) {
+          case 'equals':
+            return String(itemVal ?? '') === value
+          case 'notEquals':
+            return String(itemVal ?? '') !== value
+          case 'contains':
+            return String(itemVal ?? '').includes(value || '')
+          case 'greaterThan':
+            return String(itemVal ?? '') > (value || '')
+          case 'lessThan':
+            return String(itemVal ?? '') < (value || '')
+          case 'exists':
+            return itemVal !== undefined && itemVal !== null
+          case 'notExists':
+            return itemVal === undefined || itemVal === null
+          default:
+            return true
+        }
+      })
+    case 'join':
+      return Array.isArray(data) ? data.join(value || ', ') : data
+    case 'sort': {
+      if (!Array.isArray(data)) return data
+      const dir = direction === 'desc' ? -1 : 1
+      return [...data].sort((a: any, b: any) =>
+        a?.[property!] > b?.[property!] ? dir : -dir
+      )
+    }
+    default:
+      return data
+  }
+}
+
 export const getValueFromInputVariable = (
   variable: IVariable,
   testData?: boolean
@@ -130,6 +240,8 @@ export const getValueFromInputVariable = (
       throw Error(`Variable '${label}' has no sample value`)
     }
 
+    if (variable.transform)
+      return applyTransformToValue(sampleValue, variable.transform)
     return sampleValue
   }
 
@@ -141,11 +253,11 @@ export const getValueFromInputVariable = (
       throw Error(`Variable '${label}' has incomplete output reference`)
     }
 
-    return (
-      OUTPUT_CODE +
-      getOutputVariableString(outputIndex, outputPath) +
-      OUTPUT_CODE
-    )
+    let ref = getOutputVariableString(outputIndex, outputPath)
+    if (variable.transform) {
+      ref += buildTransformExpression(variable.transform)
+    }
+    return OUTPUT_CODE + ref + OUTPUT_CODE
   }
 
   return value

@@ -50,8 +50,42 @@ export const DataTypeSchema: z.ZodType<DataType> = z.union([
   z.number(),
   z.boolean(),
   z.record(z.unknown()),
-  z.array(z.union([z.string(), z.number(), z.boolean(), z.record(z.unknown())])),
+  z.array(
+    z.union([z.string(), z.number(), z.boolean(), z.record(z.unknown())])
+  ),
 ])
+
+export const TransformOperationSchema = z.enum([
+  'first',
+  'last',
+  'at',
+  'count',
+  'pluck',
+  'filter',
+  'join',
+  'sort',
+])
+export type ITransformOperation = z.infer<typeof TransformOperationSchema>
+
+export const TransformSchema = z.object({
+  operation: TransformOperationSchema,
+  index: z.number().optional(),
+  property: z.string().optional(),
+  operator: z
+    .enum([
+      'equals',
+      'notEquals',
+      'contains',
+      'greaterThan',
+      'lessThan',
+      'exists',
+      'notExists',
+    ])
+    .optional(),
+  value: z.string().optional(),
+  direction: z.enum(['asc', 'desc']).optional(),
+})
+export type ITransform = z.infer<typeof TransformSchema>
 
 export const VariableSchema = z.object({
   type: VariableTypeSchema,
@@ -68,6 +102,7 @@ export const VariableSchema = z.object({
   options: z
     .array(z.object({ label: z.string(), value: z.string() }))
     .optional(),
+  transform: TransformSchema.optional(),
 })
 export type IVariable = z.infer<typeof VariableSchema>
 
@@ -84,6 +119,7 @@ export const ServiceSchema = z.object({
   type: ServiceTypeSchema,
   name: ServiceNameSchema,
   label: z.string(),
+  description: z.string().optional(),
   config: ServiceConfigSchema,
 })
 export type IService = z.infer<typeof ServiceSchema>
