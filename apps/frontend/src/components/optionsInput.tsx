@@ -28,6 +28,7 @@ export const OptionsInput: FC<
     ) => ReactNode
     renderGroup?: (params: AutocompleteRenderGroupParams) => ReactNode
     getOptionDisabled?: (option: any) => boolean
+    onSearchChange?: (value: string) => void
   } & ComponentProps
 > = ({
   value,
@@ -43,6 +44,7 @@ export const OptionsInput: FC<
   renderOption: customRenderOption,
   renderGroup: customRenderGroup,
   getOptionDisabled,
+  onSearchChange,
   className,
   style,
 }) => {
@@ -84,7 +86,12 @@ export const OptionsInput: FC<
           noOptionsText={labels.noOptions}
           onBlur={onBlur}
           onChange={(_, value) => onChange(value)}
-          onInputChange={(_, newValue) => setLocalInputValue(newValue)}
+          onInputChange={(_, newValue, reason) => {
+            if (reason !== 'reset') {
+              setLocalInputValue(newValue)
+              onSearchChange?.(newValue)
+            }
+          }}
           onClose={() => setLocalInputValue(value)}
           groupBy={
             groupLabelPath

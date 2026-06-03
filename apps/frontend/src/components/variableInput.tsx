@@ -1,9 +1,19 @@
 import { IVariable, VariableType } from '@baita/shared'
 import {
   AccountTree as AccountTreeIcon,
+  ChevronRight as ChevronRightIcon,
   Edit as EditIcon,
+  ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material'
-import { Box, IconButton, Tooltip, Typography } from '@mui/material'
+import {
+  AutocompleteRenderGroupParams,
+  Box,
+  Collapse,
+  IconButton,
+  ListSubheader,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { FC, useState } from 'react'
 
 import { getLabels, Labels } from '@/utils/labels'
@@ -37,6 +47,10 @@ const VariableInput: FC<
       variable.outputIndex === undefined &&
       !!variable.value
   )
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    {}
+  )
+  const [searchInput, setSearchInput] = useState('')
 
   const onOutputChange = (field: IVariable, result?: IVariable) => {
     onChange({
@@ -266,6 +280,47 @@ const VariableInput: FC<
   const isOutputOptionDisabled = (option: IVariable): boolean =>
     isContainerValue(option.value)
 
+  const toggleGroup = (group: string) => {
+    setExpandedGroups((prev) => ({ ...prev, [group]: !prev[group] }))
+  }
+
+  const renderCollapsibleGroup = (params: AutocompleteRenderGroupParams) => {
+    const isSearching = searchInput.length > 0
+    const isExpanded = isSearching || !!expandedGroups[params.group]
+
+    return (
+      <li key={params.key}>
+        <ListSubheader
+          component="div"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (!isSearching) toggleGroup(params.group)
+          }}
+          sx={{
+            cursor: isSearching ? 'default' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            fontWeight: 700,
+            bgcolor: 'background.paper',
+            '&:hover': { bgcolor: isSearching ? undefined : 'action.hover' },
+          }}
+        >
+          {isExpanded ? (
+            <ExpandMoreIcon fontSize="small" />
+          ) : (
+            <ChevronRightIcon fontSize="small" />
+          )}
+          {params.group}
+        </ListSubheader>
+        <Collapse in={isExpanded} timeout="auto">
+          <ul style={{ padding: 0, margin: 0 }}>{params.children}</ul>
+        </Collapse>
+      </li>
+    )
+  }
+
   return (
     <div className={className} style={style}>
       {variable.description && (
@@ -291,7 +346,9 @@ const VariableInput: FC<
               onBlur={onBlur}
               options={outputFields}
               renderOption={renderOutputOption}
+              renderGroup={renderCollapsibleGroup}
               getOptionDisabled={isOutputOptionDisabled}
+              onSearchChange={setSearchInput}
             />
           </div>
           {hasOutputOptions && renderToggleButton()}
@@ -321,7 +378,11 @@ const VariableInput: FC<
         <OptionsInput
           label={getLabel(variable.label)}
           optionLabelPath="label"
-          value={label}
+          value={
+            label ||
+            variable.options?.find((o) => o.value === value)?.label ||
+            ''
+          }
           onChange={(result) => onOptionChange(variable, result)}
           onBlur={onBlur}
           options={variable.options}
