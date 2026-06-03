@@ -61,15 +61,13 @@ const Task: FC<{
       className="mt-4"
       data-task
       onClick={onSelect}
-      style={{
-        borderLeft: isSelected ? '2px solid #90caf9' : '2px solid transparent',
-        paddingLeft: 8,
-        cursor: 'pointer',
-      }}
+      style={{ cursor: 'pointer' }}
     >
       {bot && task && (
         <>
-          <div className="d-flex justify-content-between">
+          <div
+            className={`d-flex justify-content-between p-1${isSelected ? ' bg-light rounded' : ''}`}
+          >
             {/***** Task Title *****/}
             {taskIndex === 0 ? (
               <Text className="mx-2 text-primary fw-bold">
@@ -96,7 +94,13 @@ const Task: FC<{
                       <img
                         src={task.app.icon}
                         alt=""
-                        style={{ width: 16, height: 16, marginLeft: 6 }}
+                        style={{
+                          width: 20,
+                          height: 20,
+                          marginLeft: 6,
+                          borderRadius: 4,
+                          objectFit: 'contain',
+                        }}
                       />
                     )}
                     <Text

@@ -48,15 +48,22 @@ export const OptionsInput: FC<
   className,
   style,
 }) => {
-  const [localInputValue, setLocalInputValue] = useState(value)
+  const [inputValue, setInputValue] = useState(value)
 
   useEffect(() => {
-    setLocalInputValue(value)
+    setInputValue(value)
   }, [value])
 
   const getPropertyByPath = (path: string | string[], obj: any): string => {
     const properties = Array.isArray(path) ? path : path.split('.')
-    return properties.reduce((prev, curr) => prev[curr], obj)
+    return properties.reduce((prev, curr) => prev?.[curr], obj) || ''
+  }
+
+  const getOptionLabel = (option: any): string => {
+    if (typeof option === 'string') return option
+    return optionLabelPath
+      ? getPropertyByPath(optionLabelPath, option)
+      : String(option)
   }
 
   const getDefaultRenderOption = () => {
@@ -64,10 +71,7 @@ export const OptionsInput: FC<
     if (chip) {
       return (props: React.HTMLAttributes<HTMLLIElement>, option: any) => (
         <li {...props}>
-          <Chip
-            variant="outlined"
-            label={getPropertyByPath(`${optionLabelPath}`, option)}
-          />
+          <Chip variant="outlined" label={getOptionLabel(option)} />
         </li>
       )
     }
@@ -82,29 +86,33 @@ export const OptionsInput: FC<
           autoHighlight
           blurOnSelect
           options={options}
-          inputValue={localInputValue}
+          inputValue={inputValue}
           noOptionsText={labels.noOptions}
           onBlur={onBlur}
-          onChange={(_, value) => onChange(value)}
+          onOpen={() => setInputValue('')}
+          onChange={(_, selected) => onChange(selected)}
           onInputChange={(_, newValue, reason) => {
-            if (reason !== 'reset') {
-              setLocalInputValue(newValue)
+            if (reason === 'input') {
+              setInputValue(newValue)
               onSearchChange?.(newValue)
+            } else if (reason === 'clear') {
+              setInputValue('')
+              onChange(null)
+              onSearchChange?.('')
             }
           }}
-          onClose={() => setLocalInputValue(value)}
+          onClose={() => setInputValue(value)}
           groupBy={
             groupLabelPath
               ? (option) => getPropertyByPath(groupLabelPath, option)
               : undefined
           }
-          getOptionLabel={(option) =>
-            getPropertyByPath(`${optionLabelPath}`, option)
-          }
+          getOptionLabel={getOptionLabel}
           isOptionEqualToValue={() => true}
           renderOption={getDefaultRenderOption()}
           renderGroup={customRenderGroup}
           getOptionDisabled={getOptionDisabled}
+          freeSolo
           renderInput={(params) => (
             <TextField
               {...params}

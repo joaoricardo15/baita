@@ -4,7 +4,7 @@ import { ConnectorManifest } from './index'
 export const openaiConnector: ConnectorManifest = {
   id: 'openai',
   name: 'ChatGPT',
-  icon: 'https://chat.openai.com/favicon.ico',
+  icon: '/icons/openai.png',
   category: 'AI',
   appId: 'f9686ea8-ac80-4f70-b35b-hggfhjhk',
   auth: {

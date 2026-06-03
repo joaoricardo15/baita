@@ -4,7 +4,7 @@ import { ConnectorManifest } from './index'
 export const pipedriveConnector: ConnectorManifest = {
   id: 'pipedrive',
   name: 'Pipedrive',
-  icon: 'https://www.pipedrive.com/favicon.ico',
+  icon: '/icons/pipedrive.png',
   category: 'CRM',
   appId: '19c1921c-9a6b-4def-91c8-8bcba8239bf5',
   auth: {

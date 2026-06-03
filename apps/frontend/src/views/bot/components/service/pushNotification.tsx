@@ -45,6 +45,12 @@ const PushNotificationService: FC<{
   }
 
   const requestPermission = async () => {
+    const regs = await navigator.serviceWorker.getRegistrations()
+    if (regs.length === 0) {
+      showSnack(labels.noServiceWorker, 'warning')
+      setState('not-supported')
+      return
+    }
     const subscription = await subscribeToPush()
     if (subscription) {
       setState('subscribed')
@@ -71,14 +77,30 @@ const PushNotificationService: FC<{
       return
     }
 
-    checkSubscriptionHealth().then((subscription) => {
-      if (subscription) {
-        setState('subscribed')
-        storeSubscription(subscription)
-      } else {
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((regs) => {
+        if (regs.length === 0) {
+          setState('ready-to-ask')
+          return
+        }
+
+        checkSubscriptionHealth()
+          .then((subscription) => {
+            if (subscription) {
+              setState('subscribed')
+              storeSubscription(subscription)
+            } else {
+              setState('ready-to-ask')
+            }
+          })
+          .catch(() => {
+            setState('ready-to-ask')
+          })
+      })
+      .catch(() => {
         setState('ready-to-ask')
-      }
-    })
+      })
   }, [])
 
   if (state === 'loading') return null
@@ -181,6 +203,8 @@ const LABELS: Labels = {
       'Get notified on this device when your bot runs, completes a task, or needs attention.',
     enableButton: 'Enable notifications',
     successSnack: 'Notifications enabled for this device',
+    noServiceWorker:
+      'Service worker not available. Try the production app or build locally.',
     subscribed: 'Notifications active',
     deviceNote:
       'Notifications are sent to this device only. Enable on other devices separately.',
@@ -203,6 +227,8 @@ const LABELS: Labels = {
       'Receba notificações neste dispositivo quando seu bot executar, completar uma tarefa, ou precisar de atenção.',
     enableButton: 'Ativar notificações',
     successSnack: 'Notificações ativadas para este dispositivo',
+    noServiceWorker:
+      'Service worker não disponível. Use o app em produção ou faça build local.',
     subscribed: 'Notificações ativas',
     deviceNote:
       'Notificações são enviadas apenas para este dispositivo. Ative em outros dispositivos separadamente.',

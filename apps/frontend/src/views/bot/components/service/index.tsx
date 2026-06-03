@@ -96,6 +96,43 @@ const TaskService: FC<{
             onChange={onSelectService}
             groupLabelPath={'app.name'}
             optionLabelPath={'service.label'}
+            renderGroup={(params) => {
+              const filteredServices =
+                taskIndex === 0
+                  ? services.filter(
+                      (x) => x.service.type === ServiceType.trigger
+                    )
+                  : services.filter(
+                      (x) => x.service.type !== ServiceType.trigger
+                    )
+              const appIcon = filteredServices.find(
+                (s) => s.app.name === params.group
+              )?.app.icon
+
+              return (
+                <li key={params.key}>
+                  <div className="d-flex align-items-center px-3 py-2 bg-light">
+                    {appIcon && (
+                      <img
+                        src={appIcon}
+                        alt=""
+                        className="me-2"
+                        style={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: 3,
+                          objectFit: 'contain',
+                        }}
+                      />
+                    )}
+                    <span className="fw-bold" style={{ fontSize: '0.8rem' }}>
+                      {params.group}
+                    </span>
+                  </div>
+                  <ul className="p-0 m-0">{params.children}</ul>
+                </li>
+              )
+            }}
             options={
               taskIndex === 0
                 ? services.filter((x) => x.service.type === ServiceType.trigger)

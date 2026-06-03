@@ -20,7 +20,7 @@ const TopBar: FC<{
   isActive: boolean
 }> = ({ name, description, image, isActive }) => {
   const navigate = useNavigate()
-  const { showLoading } = useContext(NotificationContext)
+  const { showLoading, showSnack } = useContext(NotificationContext)
   const { bot, updateBot, deployBot } = useContext(BotContext)
 
   const [botName, setBotName] = useState(name)
@@ -55,7 +55,13 @@ const TopBar: FC<{
   const onToggleBot = () => {
     if (bot) {
       showLoading(true)
-      deployBot({ ...bot, active: !bot.active }).then(() => showLoading(false))
+      deployBot({ ...bot, active: !bot.active })
+        .catch((err) => {
+          const message =
+            typeof err === 'string' ? err : err?.message || labels.toggleError
+          showSnack(message, 'error')
+        })
+        .finally(() => showLoading(false))
     }
   }
 
@@ -135,6 +141,7 @@ const LABELS: Labels = {
     historyTooltip: 'History',
     turnOnTooltip: 'Turn on',
     turnOffTooltip: 'Turn off',
+    toggleError: 'Failed to deploy bot',
     description: 'Description',
     icon: 'Icon url',
   },
@@ -143,6 +150,7 @@ const LABELS: Labels = {
     historyTooltip: 'Histórico',
     turnOnTooltip: 'Ativar',
     turnOffTooltip: 'Desativar',
+    toggleError: 'Falha ao alternar bot',
     description: 'Descrição',
     icon: 'Url do ícone',
   },

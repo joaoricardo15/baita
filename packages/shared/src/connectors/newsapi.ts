@@ -4,7 +4,7 @@ import { ConnectorManifest } from './index'
 export const newsapiConnector: ConnectorManifest = {
   id: 'newsapi',
   name: 'NewsAPI',
-  icon: 'https://newsapi.org/favicon-32x32.png',
+  icon: '/icons/newsapi.png',
   category: 'News',
   appId: 'f9686ea8-ac80-4f70-b35b-asd',
   auth: {

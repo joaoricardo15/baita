@@ -73,6 +73,20 @@ The bot schema includes validation and integrity helpers that protect against co
 - Backend endpoints define the contract
 - Frontend Axios calls must match the backend contract exactly
 
+### Connector Icons
+
+All connector/service icons live in `apps/frontend/public/icons/` and are referenced as `/icons/{name}.{ext}` in connector manifests (`packages/shared/src/connectors/*.ts`).
+
+**Rules for adding new connector icons:**
+
+1. **Format**: SVG preferred (scales perfectly), PNG at minimum 128x128px as fallback
+2. **Location**: `apps/frontend/public/icons/{connector-id}.{svg|png}`
+3. **Reference**: Set `icon: '/icons/{connector-id}.{svg|png}'` in the connector manifest
+4. **Never use external favicon.ico** — they are 16-32px and look blurry at display size
+5. **Never hotlink external CDNs** — they can 404, require auth, or change without notice
+6. **Style consistency**: Icons render at 20x20px with `border-radius: 4px` and `object-fit: contain`
+7. **Source**: Get official logomarks from the service's brand/press page, or create a clean SVG representation
+
 ## CI/CD Pipeline
 
 Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main`:

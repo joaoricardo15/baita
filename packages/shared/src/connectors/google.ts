@@ -4,7 +4,7 @@ import { ConnectorManifest } from './index'
 export const googleConnector: ConnectorManifest = {
   id: 'google',
   name: 'Google',
-  icon: 'https://www.google.com/favicon.ico',
+  icon: '/icons/google.png',
   category: 'Productivity',
   appId: '5c16e311-a65a-449c-ad82-1f23a41cf89c',
   auth: {

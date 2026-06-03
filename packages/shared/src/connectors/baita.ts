@@ -9,7 +9,7 @@ import { ConnectorManifest } from './index'
 export const baitaConnector: ConnectorManifest = {
   id: 'baita',
   name: 'Baita',
-  icon: 'https://www.baita.help/logo.png',
+  icon: '/icons/baita.png',
   category: 'Platform',
   appId: '2d12accb-4b7c-4d22-bdbc-4875a404b929',
   auth: { type: 'none' },
