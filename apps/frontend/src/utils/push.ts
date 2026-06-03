@@ -43,8 +43,10 @@ export function isInstalledPWA(): boolean {
 
 export async function getExistingSubscription(): Promise<PushSubscription | null> {
   if (!('serviceWorker' in navigator)) return null
-  const registrations = await navigator.serviceWorker.getRegistrations()
-  if (registrations.length === 0) return null
+  if (navigator.serviceWorker.getRegistrations) {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    if (registrations.length === 0) return null
+  }
   const registration = await navigator.serviceWorker.ready
   return registration.pushManager.getSubscription()
 }
