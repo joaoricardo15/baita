@@ -172,10 +172,7 @@ const VariableInput: FC<
 
     if (isContainer) {
       return (
-        <li
-          {...props}
-          style={{ ...props.style, pointerEvents: 'none', opacity: 0.6 }}
-        >
+        <li {...props} style={{ ...props.style, opacity: 0.8 }}>
           <Box
             sx={{
               pl: Math.max(0, depth - 1) * 2,
@@ -277,9 +274,6 @@ const VariableInput: FC<
     )
   }
 
-  const isOutputOptionDisabled = (option: IVariable): boolean =>
-    isContainerValue(option.value)
-
   const toggleGroup = (group: string) => {
     setExpandedGroups((prev) => ({ ...prev, [group]: !prev[group] }))
   }
@@ -347,7 +341,6 @@ const VariableInput: FC<
               options={outputFields}
               renderOption={renderOutputOption}
               renderGroup={renderCollapsibleGroup}
-              getOptionDisabled={isOutputOptionDisabled}
               onSearchChange={setSearchInput}
             />
           </div>

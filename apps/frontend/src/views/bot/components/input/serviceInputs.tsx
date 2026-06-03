@@ -14,11 +14,10 @@ const ServiceInputs: FC<{
   }
 
   const getInputDataValue = (fieldName: string) => {
-    return (
-      inputData
-        ?.find((x: IVariable) => x.name === fieldName)
-        ?.value?.toString() || ''
-    )
+    const field = inputData?.find((x: IVariable) => x.name === fieldName)
+    if (!field?.value) return ''
+    if (typeof field.value === 'object') return field.label || ''
+    return field.value.toString()
   }
 
   return (
