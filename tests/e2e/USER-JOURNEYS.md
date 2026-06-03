@@ -123,6 +123,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 - **Unit (Backend):** `apps/backend/src/endpoints/bot/create/tests/index.test.ts` — Creation handler
 - **Unit (Shared):** `packages/shared/src/tests/bot.test.ts` — validateBot, step references, config hashing
 - **E2E:** `tests/e2e/tests/resource-crud.spec.ts` — Create → logs → read → delete lifecycle
+- **E2E:** `tests/e2e/tests/bot-journey.spec.ts` — Full lifecycle: create → configure → test task → deploy → trigger → verify logs → delete/re-add → re-deploy → deactivate → cleanup
 
 ---
 

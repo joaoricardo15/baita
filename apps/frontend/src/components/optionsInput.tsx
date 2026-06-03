@@ -1,4 +1,9 @@
-import { Autocomplete, Chip, TextField } from '@mui/material'
+import {
+  Autocomplete,
+  AutocompleteRenderGroupParams,
+  Chip,
+  TextField,
+} from '@mui/material'
 import { FC, ReactNode, useEffect, useState } from 'react'
 
 import { getLabels, Labels } from '@/utils/labels'
@@ -21,6 +26,8 @@ export const OptionsInput: FC<
       props: React.HTMLAttributes<HTMLLIElement>,
       option: any
     ) => ReactNode
+    renderGroup?: (params: AutocompleteRenderGroupParams) => ReactNode
+    getOptionDisabled?: (option: any) => boolean
   } & ComponentProps
 > = ({
   value,
@@ -34,6 +41,8 @@ export const OptionsInput: FC<
   optionLabelPath,
   groupLabelPath,
   renderOption: customRenderOption,
+  renderGroup: customRenderGroup,
+  getOptionDisabled,
   className,
   style,
 }) => {
@@ -87,6 +96,8 @@ export const OptionsInput: FC<
           }
           isOptionEqualToValue={() => true}
           renderOption={getDefaultRenderOption()}
+          renderGroup={customRenderGroup}
+          getOptionDisabled={getOptionDisabled}
           renderInput={(params) => (
             <TextField
               {...params}

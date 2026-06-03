@@ -133,30 +133,138 @@ const VariableInput: FC<
     </Tooltip>
   )
 
+  const getTypeIndicator = (val: unknown): string => {
+    if (Array.isArray(val)) return '[]'
+    if (typeof val === 'object' && val !== null) return '{}'
+    if (typeof val === 'number') return '#'
+    if (typeof val === 'boolean') return '◉'
+    return 'Aa'
+  }
+
+  const isContainerValue = (val: unknown): boolean =>
+    Array.isArray(val) || (typeof val === 'object' && val !== null)
+
   const renderOutputOption = (
     props: React.HTMLAttributes<HTMLLIElement>,
     option: IVariable
   ) => {
+    const path = option.outputPath || option.name || ''
+    const parts = path.split('.').filter(Boolean)
+    const depth = parts.length
+    const leafName = parts[parts.length - 1] || path
+    const parentPath = parts.slice(0, -1).join('.')
+    const isContainer = isContainerValue(option.value)
+    const typeLabel = getTypeIndicator(option.value)
+
+    if (isContainer) {
+      return (
+        <li
+          {...props}
+          style={{ ...props.style, pointerEvents: 'none', opacity: 0.6 }}
+        >
+          <Box
+            sx={{
+              pl: Math.max(0, depth - 1) * 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontFamily: 'monospace',
+                fontSize: '0.7rem',
+                color: 'text.disabled',
+                minWidth: 16,
+              }}
+            >
+              {typeLabel}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                fontFamily: 'monospace',
+                color: 'text.secondary',
+                fontWeight: 600,
+              }}
+            >
+              {leafName}
+            </Typography>
+          </Box>
+        </li>
+      )
+    }
+
     const sampleText =
       typeof option.value === 'string' || typeof option.value === 'number'
-        ? String(option.value).slice(0, 50)
+        ? String(option.value).slice(0, 40)
         : ''
 
     return (
       <li {...props}>
-        <Box sx={{ overflow: 'hidden' }}>
-          <Typography variant="body2" noWrap>
-            {option.name || option.outputPath}
+        <Box
+          sx={{
+            pl: Math.max(0, depth - 1) * 2,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            overflow: 'hidden',
+            width: '100%',
+          }}
+        >
+          <Typography
+            variant="caption"
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: '0.7rem',
+              color: 'text.disabled',
+              minWidth: 16,
+            }}
+          >
+            {typeLabel}
           </Typography>
-          {sampleText && (
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {sampleText}
-            </Typography>
-          )}
+          <Box sx={{ overflow: 'hidden', flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.25 }}>
+              {parentPath && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.7rem',
+                    color: 'text.disabled',
+                  }}
+                  noWrap
+                >
+                  {parentPath}.
+                </Typography>
+              )}
+              <Typography
+                variant="body2"
+                sx={{ fontFamily: 'monospace', fontWeight: 600 }}
+                noWrap
+              >
+                {leafName}
+              </Typography>
+            </Box>
+            {sampleText && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontStyle: 'italic' }}
+                noWrap
+              >
+                {sampleText}
+              </Typography>
+            )}
+          </Box>
         </Box>
       </li>
     )
   }
+
+  const isOutputOptionDisabled = (option: IVariable): boolean =>
+    isContainerValue(option.value)
 
   return (
     <div className={className} style={style}>
@@ -183,6 +291,7 @@ const VariableInput: FC<
               onBlur={onBlur}
               options={outputFields}
               renderOption={renderOutputOption}
+              getOptionDisabled={isOutputOptionDisabled}
             />
           </div>
           {hasOutputOptions && renderToggleButton()}

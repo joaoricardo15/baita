@@ -32,6 +32,26 @@ Before reporting a task as done, self-check:
 - For layout changes: visually verify before/after.
 - When writing tests: every bug fix or new feature must include a unit/integration test that would catch the issue if it regressed.
 
+### Visual Verification with Playwright (Layout Changes)
+
+For ANY change involving UI layout, component rendering, or visual presentation:
+
+1. Run the Playwright visual verification tool:
+   ```bash
+   cd tests/e2e
+   VERIFY_PATH=/bots npm run verify
+   ```
+2. This opens a headed browser with Playwright Inspector — navigate to the affected page, inspect the rendering, take screenshots
+3. Iterate on the code until the visual result matches expectations
+4. Only then proceed to commit
+
+The `verify` script auto-starts the Vite dev server, authenticates via Auth0, and navigates to `VERIFY_PATH`. Use it for:
+
+- New components or layout changes
+- Dropdown/modal/popover rendering
+- Responsive behavior verification
+- Any change where "it compiles" is not sufficient to confirm correctness
+
 ## Tech Stack
 
 - **Framework**: React 18 + TypeScript (strict mode)
