@@ -50,6 +50,18 @@ export const configMapping: { [key in Environment]: EnvConfig } = {
 
 export const PRODUCTION_API_URL = ApiUrl.remote
 
+// Google Maps: API keys for Maps JavaScript API are inherently public (loaded in browser).
+// Security is enforced via HTTP referrer restrictions in Google Cloud Console.
+// Restrict to: https://www.baita.help/*, http://localhost:3000/*
+// Set VITE_GOOGLE_MAPS_API_KEY in:
+//   - Local: apps/frontend/.env.local
+//   - Production: AWS Amplify Console > App settings > Environment variables
+export const GOOGLE_MAPS_API_KEY =
+  import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+export const GOOGLE_MAPS_MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || ''
+export const FILES_BASE_URL =
+  'https://baita-help-prod-files.s3.us-east-1.amazonaws.com'
+
 const appConfig: AppConfig = {
   language:
     Language[navigator.language as keyof typeof Language] || defaultLanguage,

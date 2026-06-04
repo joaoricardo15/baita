@@ -74,7 +74,7 @@ baita/
 
 - Node.js 22+ (see `.nvmrc`)
 - pnpm 11+ (`npm install -g pnpm`)
-- AWS CLI configured with profile `joao` (for deployment)
+- AWS CLI configured with profile `baita` (for deployment)
 
 ### Setup
 
@@ -171,7 +171,7 @@ Results published to user's SQS queue → content feed
 ## AWS Resources
 
 - **Region**: `us-east-1`
-- **Profile**: `joao`
+- \*\*Profile`: `baita`
 - **Amplify App**: `d35kx8fgop2qtf`
 - **DynamoDB Table**: `baita-help-prod` (on-demand billing)
 - **S3 Buckets**: `baita-help-prod-bots`, `baita-help-prod-files`, `baita-help-prod-docs`

@@ -96,11 +96,11 @@ export { slackConnector } from './connectors/slack'
 ### 3. Store OAuth Secrets in AWS SSM
 
 ```bash
-aws ssm put-parameter --profile joao --region us-east-1 \
+aws ssm put-parameter --profile baita --region us-east-1 \
   --name "/baita/prod/slack-client-id" --value "<your-client-id>" \
   --type SecureString
 
-aws ssm put-parameter --profile joao --region us-east-1 \
+aws ssm put-parameter --profile baita --region us-east-1 \
   --name "/baita/prod/slack-client-secret" --value "<your-client-secret>" \
   --type SecureString
 ```

@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "author": "Joao Ricardo Cardoso",
   "scripts": {
-    "start": "AWS_PROFILE=joao serverless offline --httpPort 5000 --stage prod",
-    "deploy": "AWS_PROFILE=joao serverless deploy --stage prod",
+    "start": "AWS_PROFILE=baita serverless offline --httpPort 5000 --stage prod",
+    "deploy": "AWS_PROFILE=baita serverless deploy --stage prod",
     "test:run": "jest",
-    "docs": "aws s3 cp src/docs/openapi.json s3://baita-help-prod-docs/openapi.json --profile joao --region us-east-1",
+    "docs": "aws s3 cp src/docs/openapi.json s3://baita-help-prod-docs/openapi.json --profile baita --region us-east-1",
     "test": "jest --watchAll",
     "lint": "eslint 'src/**/*.ts' --fix",
     "format": "prettier './**/*.{js,ts,json,yml}' --write",

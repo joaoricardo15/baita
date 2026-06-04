@@ -48,7 +48,7 @@ export const Logs: FC = () => {
       <TopBar botName={bot?.name} onRefreshClick={refresh} />
       <div className="mt-4">
         {fetching || !botLogs ? (
-          <Skeleton height={120} />
+          <Skeleton elements={3} height={100} />
         ) : !botLogs.length ? (
           <Text>{labels.noLogs}</Text>
         ) : (

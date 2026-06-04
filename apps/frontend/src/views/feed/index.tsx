@@ -3,7 +3,7 @@ import { FC, useContext, useEffect, useState } from 'react'
 import { CardSwiper } from 'react-card-rotate-swiper'
 import { TwitterTweetEmbed } from 'react-twitter-embed'
 
-import { Button, Loading, Logo, Skeleton, Text } from '@/components'
+import { Button, EmptyState, Loading, Logo, Skeleton } from '@/components'
 import { IContent } from '@baita/shared'
 import { NotificationContext } from '@/providers/notification'
 import { UserContext } from '@/providers/user'
@@ -77,19 +77,18 @@ export const Feed: FC = () => {
           style={{ height: 'calc(100vh - 80px)' }}
         />
       ) : contents.length === 0 ? (
-        <div className="d-flex justify-content-center">
-          <div>
-            <Button
-              iconButton
-              className="mt-2"
-              onClick={() => updateContent()}
-              icon={<Logo size={150} />}
-            />
-            <Text className="fw-light text-secondary mt-2">
-              {labels.noContent}
-            </Text>
+        <>
+          <EmptyState
+            icon={<Logo size={80} />}
+            title={labels.noContent}
+            description={labels.noContentHint}
+          />
+          <div className="d-flex align-items-center justify-content-center mt-5">
+            <Button type="text" color="primary" onClick={() => updateContent()}>
+              {labels.refresh}
+            </Button>
           </div>
-        </div>
+        </>
       ) : (
         <div
           className="position-relative"
@@ -149,10 +148,14 @@ export default withAuthenticationRequired(Feed, {
 
 const LABELS: Labels = {
   en: {
-    noContent: 'nothing to see here.',
+    noContent: 'No content yet',
+    noContentHint: 'Your feed will show content from your connected services.',
+    refresh: 'Refresh',
   },
   pt: {
-    noContent: 'Nada pra ver aqui.',
+    noContent: 'Nenhum conteudo ainda',
+    noContentHint: 'Seu feed mostrara conteudo dos seus servicos conectados.',
+    refresh: 'Atualizar',
   },
 }
 

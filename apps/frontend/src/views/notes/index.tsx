@@ -1,24 +1,18 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
 import {
   Add as AddIcon,
-  ArrowBackOutlined as ArrowBackOutlinedIcon,
-  Delete as DeleteIcon,
+  InterestsOutlined as InterestsOutlinedIcon,
 } from '@mui/icons-material'
-import { Fab, TextareaAutosize } from '@mui/material'
+import { Dialog, DialogContent, TextareaAutosize } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 
-import { Button, Loading, Skeleton, Text } from '@/components'
+import { Button, EmptyState, Loading, Skeleton } from '@/components'
+import { INote } from '@baita/shared'
 import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
 import ApiRequest from '@/utils/requests'
 
-export interface INote {
-  noteId: string
-  title: string
-  createdAt: number
-  updatedAt: number
-  category?: string
-}
+import NoteCard from './components/noteCard'
 
 const emptyNote: () => INote = () => ({
   noteId: Date.now().toString(),
@@ -29,125 +23,118 @@ const emptyNote: () => INote = () => ({
 
 export const Notes: FC = () => {
   const apiRequest = ApiRequest()
+  const { showLoading, showSnack } = useContext(NotificationContext)
 
   const [notes, setNotes] = useState<INote[] | undefined>()
-  const [note, setNote] = useState<INote | undefined>(emptyNote())
-  const { showLoading } = useContext(NotificationContext)
+  const [editingNote, setEditingNote] = useState<INote | undefined>()
 
-  const onNoteChange = (value: string) => {
-    if (note) {
-      setNote({ ...note, title: value, updatedAt: Date.now() })
-    }
+  const refreshNotes = () => {
+    apiRequest
+      .getNotes()
+      .then((notes) => setNotes(notes))
+      .catch(() => showSnack(labels.loadError, 'error'))
   }
 
   const onNewNote = () => {
-    if (note?.title) {
-      apiRequest
-        .addNote(note.noteId, note)
-        .then(() => apiRequest.getNotes().then((notes) => setNotes(notes)))
-    }
-    setNote(emptyNote())
+    setEditingNote(emptyNote())
   }
 
-  const onNoteSelect = (note: INote) => {
-    setNote(note)
+  const onEditNote = (note: INote) => {
+    setEditingNote(note)
   }
 
-  const onPublishNoteChange = () => {
-    if (note?.title) {
-      apiRequest
-        .addNote(note.noteId, note)
-        .then(() => apiRequest.getNotes().then((notes) => setNotes(notes)))
+  const onNoteChange = (value: string) => {
+    if (editingNote) {
+      setEditingNote({ ...editingNote, title: value, updatedAt: Date.now() })
     }
   }
 
-  const onNotesPageNavigate = () => {
-    if (note?.title) {
+  const onSaveNote = () => {
+    if (editingNote?.title) {
       showLoading(true)
-      apiRequest.addNote(note.noteId, note).then(() =>
-        apiRequest.getNotes().then((notes) => {
-          setNotes(notes)
-          setNote(undefined)
-          showLoading(false)
-        })
-      )
-    } else {
-      setNote(undefined)
+      apiRequest
+        .addNote(editingNote.noteId, editingNote)
+        .then(() => refreshNotes())
+        .catch(() => showSnack(labels.saveError, 'error'))
+        .finally(() => showLoading(false))
     }
+    setEditingNote(undefined)
   }
 
   const onDeleteNote = (noteId: string) => {
     showLoading(true)
-    apiRequest.deleteNote(noteId).then(() =>
-      apiRequest.getNotes().then((notes) => {
-        setNotes(notes)
-        showLoading(false)
-      })
-    )
+    apiRequest
+      .deleteNote(noteId)
+      .then(() => refreshNotes())
+      .catch(() => showSnack(labels.deleteError, 'error'))
+      .finally(() => showLoading(false))
   }
 
   useEffect(() => {
-    apiRequest.getNotes().then((notes) => setNotes(notes))
+    refreshNotes()
   }, [])
 
   return (
     <>
-      <Fab
-        color="primary"
-        style={{ position: 'absolute', right: 10 }}
-        onClick={() => onNewNote()}
-        disabled={note && !note.title}
-      >
-        <AddIcon />
-      </Fab>
-      {note !== undefined ? (
-        <>
-          <Button
-            type="text"
-            icon={<ArrowBackOutlinedIcon />}
-            onClick={onNotesPageNavigate}
-          >
-            Notes
-          </Button>
-
-          <div
-            style={{ marginTop: '10vh' }}
-            className="d-flex justify-content-center mx-4"
-          >
-            <TextareaAutosize
-              className="w-100"
-              value={note.title}
-              onChange={(event) => onNoteChange(event.target.value)}
-              onBlur={onPublishNoteChange}
-              placeholder={labels.notePlaceHolder}
+      {!notes ? (
+        <Skeleton elements={3} height={100} />
+      ) : notes.length === 0 ? (
+        <EmptyState
+          icon={<InterestsOutlinedIcon style={{ fontSize: 48 }} />}
+          title={labels.emptyTitle}
+          description={labels.emptyDescription}
+        />
+      ) : (
+        notes.map((note) => (
+          <div className="mb-2" key={note.noteId}>
+            <NoteCard
+              note={note}
+              onEdit={() => onEditNote(note)}
+              onDelete={() => onDeleteNote(note.noteId)}
             />
           </div>
-        </>
-      ) : !notes ? (
-        <div className="d-flex m-2">
-          <Skeleton elements={5} width={36} height={36} />
-          <Skeleton elements={5} height={36} className="w-100 mx-2" />
-        </div>
-      ) : (
-        <div style={{ maxHeight: '70vh', overflow: 'scroll' }}>
-          {notes.map((note, index) => (
-            <div key={index} className="d-flex w-100 m-2">
-              <Text
-                style={{ lineBreak: 'anywhere' }}
-                className="text-wrap fw-bold"
-                onClick={() => onNoteSelect(note)}
-              >
-                {note.title}
-              </Text>
-              <Button
-                iconButton
-                icon={<DeleteIcon color="secondary" />}
-                onClick={() => onDeleteNote(note.noteId)}
-              ></Button>
-            </div>
-          ))}
-        </div>
+        ))
       )}
+
+      <div className="d-flex align-items-center justify-content-center mt-5">
+        <Button
+          type="text"
+          color="primary"
+          icon={<AddIcon />}
+          onClick={onNewNote}
+        >
+          {labels.addNote}
+        </Button>
+      </div>
+
+      <Dialog
+        open={editingNote !== undefined}
+        onClose={onSaveNote}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogContent>
+          <TextareaAutosize
+            autoFocus
+            className="w-100 border-0"
+            minRows={5}
+            value={editingNote?.title || ''}
+            onChange={(event) => onNoteChange(event.target.value)}
+            placeholder={labels.notePlaceholder}
+            style={{ outline: 'none', resize: 'none', fontSize: '1rem' }}
+          />
+          <div className="d-flex justify-content-end mt-3">
+            <Button
+              type="text"
+              color="primary"
+              onClick={onSaveNote}
+              disabled={!editingNote?.title}
+            >
+              {labels.save}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
@@ -158,10 +145,24 @@ export default withAuthenticationRequired(Notes, {
 
 const LABELS: Labels = {
   en: {
-    notePlaceHolder: 'What is in your mind?',
+    emptyTitle: 'No notes yet',
+    emptyDescription: 'Capture your thoughts and ideas here.',
+    addNote: 'Add note',
+    notePlaceholder: 'What is on your mind?',
+    save: 'Save',
+    loadError: 'Could not load notes',
+    saveError: 'Could not save note',
+    deleteError: 'Could not delete note',
   },
   pt: {
-    notePlaceHolder: 'O que tá passando da tua cabeça?',
+    emptyTitle: 'Nenhuma nota ainda',
+    emptyDescription: 'Capture seus pensamentos e ideias aqui.',
+    addNote: 'Adicionar nota',
+    notePlaceholder: 'O que esta passando na sua cabeca?',
+    save: 'Salvar',
+    loadError: 'Nao foi possivel carregar notas',
+    saveError: 'Nao foi possivel salvar nota',
+    deleteError: 'Nao foi possivel excluir nota',
   },
 }
 

@@ -129,10 +129,74 @@ cd tests/e2e && npm test
 
 ## AWS Context
 
-- **Profile**: Always use `--profile joao --region us-east-1`
+- **Profile**: Always use `--profile baita --region us-east-1`
 - **Frontend (Amplify)**: App ID `d35kx8fgop2qtf`, branch `main`
 - **Backend (Serverless)**: Deployed via GitHub Actions on push to `main`
 - **Region**: `us-east-1` for everything
+
+## Environment Variables & Secrets
+
+Consistent pattern across the monorepo: **no secrets in source code**.
+
+### Backend (AWS Lambda + SSM Parameter Store)
+
+Secrets stored in AWS SSM under `/baita/prod/*` and resolved at deploy time by Serverless Framework:
+
+| SSM Parameter                         | Purpose                       |
+| ------------------------------------- | ----------------------------- |
+| `/baita/prod/pipedrive-auth-url`      | Pipedrive OAuth token URL     |
+| `/baita/prod/pipedrive-client-id`     | Pipedrive OAuth client ID     |
+| `/baita/prod/pipedrive-client-secret` | Pipedrive OAuth client secret |
+| `/baita/prod/google-auth-url`         | Google OAuth token URL        |
+| `/baita/prod/google-client-id`        | Google OAuth client ID        |
+| `/baita/prod/google-client-secret`    | Google OAuth client secret    |
+| `/baita/prod/news-api-key`            | NewsAPI key                   |
+| `/baita/prod/vapid-public-key`        | Web Push VAPID public key     |
+| `/baita/prod/vapid-private-key`       | Web Push VAPID private key    |
+
+```bash
+# List all parameters
+aws ssm describe-parameters --profile baita --region us-east-1 \
+  --parameter-filters "Key=Name,Option=BeginsWith,Values=/baita/prod/"
+
+# Update a secret
+aws ssm put-parameter --profile baita --region us-east-1 \
+  --name "/baita/prod/<param>" --value "<value>" --type SecureString --overwrite
+
+# After updating: redeploy backend to pick up new values
+cd apps/backend && npm run deploy
+```
+
+### Frontend (Vite + Amplify build-time injection)
+
+Frontend env vars use Vite's `import.meta.env.VITE_*` pattern — injected at **build time**, NOT runtime.
+
+| Variable                   | Purpose                      | Security                                           |
+| -------------------------- | ---------------------------- | -------------------------------------------------- |
+| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JS API key       | Public (restrict via HTTP referrer in GCP Console) |
+| `VITE_GOOGLE_MAPS_MAP_ID`  | Google Maps custom map style | Public                                             |
+
+**Local development** — create `apps/frontend/.env.local` (gitignored):
+
+```bash
+VITE_GOOGLE_MAPS_API_KEY=<key>
+VITE_GOOGLE_MAPS_MAP_ID=<map-id>
+```
+
+**Production** — set in Amplify Console (or via CLI):
+
+```bash
+aws amplify update-app --app-id d35kx8fgop2qtf \
+  --environment-variables VITE_GOOGLE_MAPS_API_KEY=<key>,VITE_GOOGLE_MAPS_MAP_ID=<map-id> \
+  --profile baita --region us-east-1
+```
+
+### Key Principles
+
+1. **Never hardcode secrets** in source code — use SSM (backend) or env vars (frontend)
+2. **Frontend keys are inherently public** — security comes from provider-side restrictions (HTTP referrer, API scoping), not from hiding the key
+3. **Rotate keys immediately** if accidentally committed — rotate in SSM/GCP Console, update env vars, redeploy
+4. **`.env.local` is gitignored** — safe for local development secrets
 
 ## Consistency Checks
 

@@ -7,14 +7,14 @@ import {
   IBotLog,
   IBotModel,
   IContent,
+  INote,
+  IPlace,
   ITask,
   ITaskExecutionResult,
   ITodo,
   ITodoTask,
 } from '@baita/shared'
 import { AuthContext } from '@/providers/auth'
-import { INote } from '@/views/notes'
-import { IPlace } from '@/views/places'
 import appConfig from './config'
 
 const ApiRequest = () => {
@@ -151,7 +151,7 @@ const ApiRequest = () => {
   }
 
   const listPlaces = () => {
-    return getApiResponse<IPlace>('post', `resource/place/list`)
+    return getApiResponse<IPlace[]>('post', `resource/place/list`)
   }
 
   const getNotes = () => {
@@ -162,7 +162,7 @@ const ApiRequest = () => {
     return getApiResponse<INote>('post', `resource/note/create/${noteId}`, note)
   }
 
-  const updateNote = (noteId: string, note: any) => {
+  const updateNote = (noteId: string, note: INote) => {
     return getApiResponse<INote>('post', `resource/note/update/${noteId}`, note)
   }
 

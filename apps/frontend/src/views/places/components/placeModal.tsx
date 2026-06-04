@@ -1,0 +1,188 @@
+import {
+  AddLocationAltOutlined as AddLocationAltOutlinedIcon,
+  AddPhotoAlternateOutlined as AddPhotoAlternateOutlinedIcon,
+  Close as CloseIcon,
+  EditLocationOutlined as EditLocationOutlinedIcon,
+  MyLocationOutlined as MyLocationOutlinedIcon,
+  WrongLocationOutlined as WrongLocationOutlinedIcon,
+} from '@mui/icons-material'
+import { Dialog, DialogContent } from '@mui/material'
+import axios from 'axios'
+import { FC, useState } from 'react'
+
+import { Button, Highlight, TextInput } from '@/components'
+import { IPlace } from '@baita/shared'
+import { FILES_BASE_URL } from '@/utils/config'
+import { getLabels, Labels } from '@/utils/labels'
+import ApiRequest from '@/utils/requests'
+
+const PlaceModal: FC<{
+  place: IPlace
+  open: boolean
+  onClose: () => void
+}> = ({ place, open, onClose }) => {
+  const apiRequest = ApiRequest()
+  const [localPlace, setPlace] = useState<IPlace>(place)
+
+  const onNameChange = (name: string) => {
+    setPlace({ ...localPlace, name })
+  }
+
+  const onCoordinatesChange = () => {
+    navigator.geolocation.getCurrentPosition((position) => {
+      setPlace({
+        ...localPlace,
+        position: {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        },
+      })
+    })
+  }
+
+  const onAddPhoto = () => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (event) => {
+      const files = (event.target as HTMLInputElement).files || []
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const fileId = file.name
+        const presignedUrl = await apiRequest.getImageUploadUrl(fileId)
+        await axios.put(presignedUrl, file)
+
+        setPlace({
+          ...localPlace,
+          pictures: [...localPlace.pictures, fileId],
+        })
+      }
+    }
+    input.click()
+  }
+
+  const onAddPlace = async () => {
+    const placeId = btoa(
+      `${localPlace.position.lat}:${localPlace.position.lng}`
+    )
+
+    await apiRequest.addPlace(placeId, { ...localPlace, placeId })
+    onClose()
+  }
+
+  const onUpdatePlace = async () => {
+    await apiRequest.updatePlace(localPlace.placeId, {
+      ...localPlace,
+      userId: undefined,
+      sortKey: undefined,
+    } as IPlace)
+    onClose()
+  }
+
+  const onDeletePlace = async () => {
+    await Promise.all(
+      localPlace.pictures.map((pictureId) => apiRequest.removeImage(pictureId))
+    )
+    await apiRequest.deletePlace(localPlace.placeId)
+    onClose()
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogContent>
+        <div className="d-flex justify-content-end">
+          <Button iconButton icon={<CloseIcon />} onClick={onClose} />
+        </div>
+        <div>
+          <Highlight data={localPlace} />
+          <TextInput
+            label="Place"
+            variant="outlined"
+            placeholder="place name"
+            value={localPlace.name}
+            onChange={onNameChange}
+          />
+          <div className="mt-3">
+            <Button
+              className="mt-2"
+              icon={<AddPhotoAlternateOutlinedIcon />}
+              onClick={onAddPhoto}
+            >
+              {labels.addPicture}
+            </Button>
+
+            {localPlace.placeId ? (
+              <>
+                <Button
+                  className="mt-2"
+                  icon={<EditLocationOutlinedIcon />}
+                  onClick={onUpdatePlace}
+                >
+                  {labels.updatePlace}
+                </Button>
+                <Button
+                  className="mt-2"
+                  icon={<WrongLocationOutlinedIcon />}
+                  onClick={onDeletePlace}
+                >
+                  {labels.deletePlace}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  className="mt-2"
+                  icon={<MyLocationOutlinedIcon />}
+                  onClick={onCoordinatesChange}
+                >
+                  {labels.addCoordinates}
+                </Button>
+                <Button
+                  className="mt-2"
+                  icon={<AddLocationAltOutlinedIcon />}
+                  onClick={onAddPlace}
+                >
+                  {labels.addNewPlace}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="d-flex mt-3 overflow-auto">
+          {localPlace.pictures.map((picture, index) => (
+            <div key={index} className="me-2">
+              <img
+                height={200}
+                style={{ borderRadius: 8, objectFit: 'cover' }}
+                src={`${FILES_BASE_URL}/${encodeURIComponent(picture)}`}
+                alt={`Place photo ${index + 1}`}
+              />
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+export default PlaceModal
+
+const LABELS: Labels = {
+  en: {
+    addPicture: 'Add picture',
+    updatePlace: 'Update place',
+    deletePlace: 'Delete place',
+    addCoordinates: 'Add coordinates',
+    addNewPlace: 'Add new place',
+  },
+  pt: {
+    addPicture: 'Adicionar foto',
+    updatePlace: 'Atualizar lugar',
+    deletePlace: 'Excluir lugar',
+    addCoordinates: 'Adicionar coordenadas',
+    addNewPlace: 'Adicionar novo lugar',
+  },
+}
+
+const labels = getLabels(LABELS)

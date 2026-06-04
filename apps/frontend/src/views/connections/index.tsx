@@ -1,8 +1,11 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
-import { Add as AddIcon } from '@mui/icons-material'
+import {
+  Add as AddIcon,
+  CableOutlined as CableOutlinedIcon,
+} from '@mui/icons-material'
 import { FC, useContext, useState } from 'react'
 
-import { Button, Loading, Skeleton, Text } from '@/components'
+import { Button, EmptyState, Loading, Skeleton } from '@/components'
 import { UserContext } from '@/providers/user'
 import { getLabels, Labels } from '@/utils/labels'
 
@@ -20,12 +23,11 @@ export const Connections: FC = () => {
   return (
     <>
       {connections.length === 0 ? (
-        <div className="text-center mt-5">
-          <Text color="textSecondary">{labels.empty}</Text>
-          <Text color="textSecondary" className="mt-1">
-            {labels.emptyHint}
-          </Text>
-        </div>
+        <EmptyState
+          icon={<CableOutlinedIcon style={{ fontSize: 48 }} />}
+          title={labels.empty}
+          description={labels.emptyHint}
+        />
       ) : (
         connections.map((connection) => (
           <div className="mb-2" key={String(connection.connectionId)}>

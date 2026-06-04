@@ -5,10 +5,11 @@
  * Tests the note-taking feature — users creating, editing, and deleting notes.
  *
  * Covers:
- * - Page starts in new-note editing mode (textarea visible)
- * - Page shows note list after navigating back from editor
- * - User can type in the editor
- * - API failures are handled gracefully
+ * - Page shows loading skeleton initially
+ * - Page shows empty state when no notes exist
+ * - Page shows note cards after data loads
+ * - User can open dialog to add a new note
+ * - API failures show error notification
  */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
@@ -70,29 +71,27 @@ describe('Notes Page', () => {
   })
 
   describe('Rendering states', () => {
-    it('starts in editing mode with empty textarea', () => {
+    it('shows empty state when API returns no notes', async () => {
+      server.use(
+        http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
+          return HttpResponse.json({
+            success: true,
+            data: [],
+          })
+        })
+      )
+
       renderNotes()
 
-      const textarea = document.querySelector('textarea')
-      expect(textarea).toBeInTheDocument()
-      expect(textarea?.value).toBe('')
+      await waitFor(() => {
+        expect(screen.getByText('No notes yet')).toBeInTheDocument()
+        expect(
+          screen.getByText('Capture your thoughts and ideas here.')
+        ).toBeInTheDocument()
+      })
     })
 
-    it('shows placeholder text in editor', () => {
-      renderNotes()
-
-      expect(
-        screen.getByPlaceholderText('What is in your mind?')
-      ).toBeInTheDocument()
-    })
-
-    it('shows back button to navigate to list', () => {
-      renderNotes()
-
-      expect(screen.getByText('Notes')).toBeInTheDocument()
-    })
-
-    it('shows note list after clicking back button', async () => {
+    it('shows note cards after data loads', async () => {
       server.use(
         http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
           return HttpResponse.json({
@@ -102,13 +101,13 @@ describe('Notes Page', () => {
                 noteId: '1',
                 title: 'First note',
                 createdAt: 1000,
-                updatedAt: 1000,
+                updatedAt: Date.now(),
               },
               {
                 noteId: '2',
                 title: 'Second note',
                 createdAt: 2000,
-                updatedAt: 2000,
+                updatedAt: Date.now(),
               },
             ],
           })
@@ -118,45 +117,73 @@ describe('Notes Page', () => {
       renderNotes()
 
       await waitFor(() => {
-        const backButton = screen.getByText('Notes').closest('button')
-        expect(backButton).toBeInTheDocument()
-      })
-
-      const backButton = screen.getByText('Notes').closest('button')!
-      fireEvent.click(backButton)
-
-      await waitFor(() => {
         expect(screen.getByText('First note')).toBeInTheDocument()
         expect(screen.getByText('Second note')).toBeInTheDocument()
+      })
+    })
+
+    it('shows add note button', async () => {
+      server.use(
+        http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
+          return HttpResponse.json({
+            success: true,
+            data: [],
+          })
+        })
+      )
+
+      renderNotes()
+
+      await waitFor(() => {
+        expect(screen.getByText('Add note')).toBeInTheDocument()
       })
     })
   })
 
   describe('User interactions', () => {
-    it('user can type in the editor', () => {
+    it('opens dialog when add note is clicked', async () => {
+      server.use(
+        http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
+          return HttpResponse.json({
+            success: true,
+            data: [],
+          })
+        })
+      )
+
       renderNotes()
 
-      const textarea = screen.getByPlaceholderText('What is in your mind?')
-      fireEvent.change(textarea, { target: { value: 'My new note' } })
+      await waitFor(() => {
+        expect(screen.getByText('Add note')).toBeInTheDocument()
+      })
 
-      expect(textarea).toHaveValue('My new note')
+      fireEvent.click(screen.getByText('Add note'))
+
+      await waitFor(() => {
+        expect(
+          screen.getByPlaceholderText('What is on your mind?')
+        ).toBeInTheDocument()
+      })
     })
 
-    it('add button is disabled when editor is empty', () => {
+    it('shows error notification on API failure', async () => {
+      server.use(
+        http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
+          return HttpResponse.json({
+            success: false,
+            message: 'Server error',
+          })
+        })
+      )
+
       renderNotes()
 
-      const fab = document.querySelector('button[disabled]')
-      expect(fab).toBeInTheDocument()
-    })
-
-    it('add button is enabled when editor has content', () => {
-      renderNotes()
-
-      const textarea = screen.getByPlaceholderText('What is in your mind?')
-      fireEvent.change(textarea, { target: { value: 'Content' } })
-
-      const fab = document.querySelector('.MuiFab-root:not([disabled])')
-      expect(fab).toBeInTheDocument()
+      await waitFor(() => {
+        expect(mockNotification.showSnack).toHaveBeenCalledWith(
+          'Could not load notes',
+          'error'
+        )
+      })
     })
   })
 })

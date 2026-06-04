@@ -2,318 +2,129 @@ import { withAuthenticationRequired } from '@auth0/auth0-react'
 import {
   Add as AddIcon,
   AddLocationAltOutlined as AddLocationAltOutlinedIcon,
-  AddPhotoAlternateOutlined as AddPhotoAlternateOutlinedIcon,
-  Close as CloseIcon,
-  EditLocationOutlined as EditLocationOutlinedIcon,
-  MyLocationOutlined as MyLocationOutlinedIcon,
-  WrongLocationOutlined as WrongLocationOutlinedIcon,
 } from '@mui/icons-material'
-import { Fab, Modal } from '@mui/material'
 import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps'
-import axios from 'axios'
-import { FC, useEffect, useState } from 'react'
+import { FC, useContext, useEffect, useState } from 'react'
 
-import {
-  Button,
-  Highlight,
-  Loading,
-  Logo,
-  Skeleton,
-  Text,
-  TextInput,
-} from '@/components'
+import { Button, EmptyState, Loading, Logo, Skeleton, Text } from '@/components'
+import { IPlace } from '@baita/shared'
+import { NotificationContext } from '@/providers/notification'
+import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_MAP_ID } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'
 import ApiRequest from '@/utils/requests'
 
-const googleMapsApiKey = 'AIzaSyDtemIhgSV-6K1y4jGStXVSKTKeEUY2Vh8'
-const googleMapsMapId = '9bc619eba69cb21f'
+import PlaceModal from './components/placeModal'
 
-export interface IPlace {
-  placeId: string
-  name: string
-  pictures: string[]
-  position: { lat: number; lng: number }
-}
-
-const Place: FC<{ place: IPlace; onClose: () => void }> = ({
-  place,
-  onClose,
-}) => {
-  const apiRequest = ApiRequest()
-  const [localPlace, setPlace] = useState<IPlace>(place)
-
-  const onNameChange = (name: string) => {
-    setPlace({ ...localPlace, name })
-  }
-
-  const onCoordinatesChange = () => {
-    navigator.geolocation.getCurrentPosition((position) => {
-      setPlace({
-        ...localPlace,
-        position: {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        },
-      })
-    })
-  }
-
-  const onAddPhoto = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.onchange = async (event) => {
-      const files = (event.target as HTMLInputElement).files || []
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        console.log('file:', file)
-
-        const fileId = file.name
-        const presignedUrl = await apiRequest.getImageUploadUrl(fileId)
-        console.log('presignedUrl:', presignedUrl)
-
-        const result = await axios.put(presignedUrl, file)
-        console.log('result:', result)
-
-        setPlace({
-          ...localPlace,
-          pictures: [...localPlace.pictures, fileId],
-        })
-      }
-    }
-    input.click()
-  }
-
-  const onAddPlace = async () => {
-    const placeId = btoa(
-      `${localPlace.position.lat}:${localPlace.position.lng}`
-    )
-
-    await apiRequest.addPlace(placeId, { ...localPlace, placeId })
-
-    onClose()
-  }
-
-  const onUpdatePlace = async () => {
-    await apiRequest.updatePlace(localPlace.placeId, {
-      ...localPlace,
-      userId: undefined,
-      sortKey: undefined,
-    } as IPlace)
-
-    onClose()
-  }
-
-  const onDeletePlace = async () => {
-    await Promise.all(
-      localPlace.pictures.map((pictureId) => apiRequest.removeImage(pictureId))
-    )
-
-    await apiRequest.deletePlace(localPlace.placeId)
-
-    onClose()
-  }
-
-  return (
-    <div className="bg-white m-5 p-5">
-      <Button
-        iconButton={true}
-        icon={<CloseIcon />}
-        onClick={() => onClose()}
-      />
-      <div>
-        <Highlight data={localPlace} />
-        <TextInput
-          label="Place"
-          placeholder="place name"
-          value={localPlace.name}
-          onChange={onNameChange}
-        />
-        <div>
-          <Button
-            className="mt-2"
-            icon={<AddPhotoAlternateOutlinedIcon />}
-            onClick={onAddPhoto}
-          >
-            Add a picture
-          </Button>
-
-          {localPlace.placeId ? (
-            <>
-              <Button
-                className="mt-2"
-                icon={<EditLocationOutlinedIcon />}
-                onClick={() => onUpdatePlace()}
-              >
-                Update place
-              </Button>
-              <Button
-                className="mt-2"
-                icon={<WrongLocationOutlinedIcon />}
-                onClick={() => onDeletePlace()}
-              >
-                Delete place
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                className="mt-2"
-                icon={<MyLocationOutlinedIcon />}
-                onClick={onCoordinatesChange}
-              >
-                Add coordinates
-              </Button>
-              <Button
-                className="mt-2"
-                icon={<AddLocationAltOutlinedIcon />}
-                onClick={onAddPlace}
-              >
-                Add new place
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="d-flex mt-2">
-        {localPlace.pictures.map((picture, index) => (
-          <div key={index}>
-            <img
-              height={300}
-              src={`https://baita-help-prod-files.s3.us-east-1.amazonaws.com/${encodeURIComponent(
-                picture
-              )}`}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+const newPlace: () => IPlace = () => ({
+  placeId: '',
+  name: '',
+  pictures: [],
+  position: { lat: 0, lng: 0 },
+})
 
 export const Places: FC = () => {
   const apiRequest = ApiRequest()
+  const { showSnack } = useContext(NotificationContext)
 
   const [place, setPlace] = useState<IPlace>()
   const [places, setPlaces] = useState<IPlace[]>()
 
-  const onPlaceCLick = (place: IPlace) => {
+  const onPlaceClick = (place: IPlace) => {
     setPlace(place)
   }
 
   const onClose = () => {
     setPlace(undefined)
-    apiRequest.listPlaces().then((places: any) => {
-      setPlaces(places)
-    })
+    apiRequest
+      .listPlaces()
+      .then((result: IPlace[]) => setPlaces(result))
+      .catch(() => showSnack(labels.loadError, 'error'))
   }
 
   useEffect(() => {
     apiRequest
       .listPlaces()
-      .then((places: any) => {
-        setPlaces(places ?? [])
-      })
+      .then((result: IPlace[]) => setPlaces(result ?? []))
       .catch(() => setPlaces([]))
   }, [])
 
   return (
     <>
       {!places ? (
-        <div className="d-flex m-2">
-          <Skeleton elements={5} width={36} height={36} />
-          <Skeleton elements={5} height={36} className="w-100 mx-2" />
-        </div>
+        <Skeleton elements={3} height={100} />
       ) : places.length === 0 ? (
-        <div className="d-flex flex-column align-items-center justify-content-center mt-5 p-4">
-          <AddLocationAltOutlinedIcon
-            style={{ fontSize: 64 }}
-            className="text-secondary mb-3"
+        <>
+          <EmptyState
+            icon={<AddLocationAltOutlinedIcon style={{ fontSize: 48 }} />}
+            title={labels.emptyTitle}
+            description={labels.emptyDescription}
           />
-          <Text className="fs-4 fw-bold text-center mb-2">
-            {labels.emptyTitle}
-          </Text>
-          <Text className="text-center text-secondary mb-4">
-            {labels.emptyDescription}
-          </Text>
-          <Fab
-            color="primary"
-            variant="extended"
-            onClick={() =>
-              setPlace({
-                placeId: '',
-                name: '',
-                pictures: [],
-                position: { lat: 0, lng: 0 },
-              })
-            }
-          >
-            <AddIcon className="me-1" />
-            {labels.addFirst}
-          </Fab>
-        </div>
+          <div className="d-flex align-items-center justify-content-center mt-5">
+            <Button
+              type="text"
+              color="primary"
+              icon={<AddIcon />}
+              onClick={() => setPlace(newPlace())}
+            >
+              {labels.addFirst}
+            </Button>
+          </div>
+        </>
       ) : (
         <>
-          <div>
-            <Fab
-              color="primary"
-              style={{ position: 'absolute', right: 10 }}
-              onClick={() =>
-                setPlace({
-                  placeId: '',
-                  name: '',
-                  pictures: [],
-                  position: { lat: 0, lng: 0 },
-                })
-              }
+          <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+            <Map
+              defaultZoom={14}
+              disableDefaultUI={true}
+              mapId={GOOGLE_MAPS_MAP_ID}
+              defaultCenter={places[0].position}
+              style={{
+                left: 0,
+                width: '100vw',
+                height: 'calc(100vh - 140px)',
+                position: 'fixed',
+                marginTop: '-0.5rem',
+              }}
             >
-              <AddIcon />
-            </Fab>
-            <APIProvider apiKey={googleMapsApiKey}>
-              <Map
-                defaultZoom={14}
-                disableDefaultUI={true}
-                mapId={googleMapsMapId}
-                defaultCenter={places[0].position}
-                style={{
-                  left: 0,
-                  width: '100vw',
-                  height: '100%',
-                  position: 'fixed',
-                  marginTop: '-0.5rem',
-                }}
-              >
-                {places.map((place) => (
-                  <AdvancedMarker
-                    key={place.placeId}
-                    clickable={true}
-                    onClick={() => onPlaceCLick(place)}
-                    position={place.position}
+              {places.map((p) => (
+                <AdvancedMarker
+                  key={p.placeId}
+                  clickable={true}
+                  onClick={() => onPlaceClick(p)}
+                  position={p.position}
+                >
+                  <Logo size={80} />
+                  <Text
+                    className="position-absolute bg-secondary px-1 rounded-3 text-white"
+                    style={{
+                      top: 10,
+                      left: 8,
+                      width: 'max-content',
+                    }}
                   >
-                    <Logo size={80} />
-                    <Text
-                      className="position-absolute bg-secondary px-1 rounded-3 text-white"
-                      style={{
-                        top: 10,
-                        left: 8,
-                        width: 'max-content',
-                      }}
-                    >
-                      {place.name}
-                    </Text>
-                  </AdvancedMarker>
-                ))}
-              </Map>
-            </APIProvider>
+                    {p.name}
+                  </Text>
+                </AdvancedMarker>
+              ))}
+            </Map>
+          </APIProvider>
+          <div
+            className="d-flex align-items-center justify-content-center"
+            style={{ position: 'fixed', bottom: 20, left: 0, right: 0 }}
+          >
+            <Button
+              type="contained"
+              color="primary"
+              icon={<AddIcon />}
+              onClick={() => setPlace(newPlace())}
+            >
+              {labels.addPlace}
+            </Button>
           </div>
-          {place && (
-            <Modal open={true}>
-              <Place place={place} onClose={onClose} />
-            </Modal>
-          )}
         </>
       )}
+
+      {place && <PlaceModal place={place} open={true} onClose={onClose} />}
     </>
   )
 }
@@ -328,12 +139,16 @@ const LABELS: Labels = {
     emptyDescription:
       'Save your favorite spots and they will appear here on the map.',
     addFirst: 'Add your first place',
+    addPlace: 'Add place',
+    loadError: 'Could not load places',
   },
   pt: {
     emptyTitle: 'Nenhum lugar ainda',
     emptyDescription:
       'Salve seus lugares favoritos e eles aparecerão aqui no mapa.',
     addFirst: 'Adicione seu primeiro lugar',
+    addPlace: 'Adicionar lugar',
+    loadError: 'Nao foi possivel carregar lugares',
   },
 }
 

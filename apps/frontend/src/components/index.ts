@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react'
 import Button from './button'
 import CheckBox from './checkBox'
 import CodeInput from './codeInput'
+import EmptyState from './emptyState'
 import Error from './error'
 import Highlight from './highlight'
 import InstallCard from './installCard'
@@ -25,6 +26,7 @@ export {
   Button,
   CheckBox,
   CodeInput,
+  EmptyState,
   Error,
   Highlight,
   InstallCard,

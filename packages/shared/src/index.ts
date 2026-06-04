@@ -1,6 +1,8 @@
 export * from './schemas/api'
 export * from './schemas/app'
 export * from './schemas/bot'
+export * from './schemas/note'
+export * from './schemas/place'
 export * from './schemas/service'
 export * from './schemas/user'
 export { validate } from './utils/validate'

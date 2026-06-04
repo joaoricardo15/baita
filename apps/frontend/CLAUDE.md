@@ -112,11 +112,11 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 
 ## AWS / Deployment
 
-- **AWS Profile:** Always use `--profile joao` for AWS CLI commands in this repo
+- **AWS Profile:** Always use `--profile baita` for AWS CLI commands in this repo
 - **Amplify App ID:** `d35kx8fgop2qtf`
 - **Region:** `us-east-1`
 - **Branch:** `main` (production)
-- **Fetch build logs:** `aws amplify list-jobs --app-id d35kx8fgop2qtf --branch-name main --profile joao --region us-east-1`
+- **Fetch build logs:** `aws amplify list-jobs --app-id d35kx8fgop2qtf --branch-name main --profile baita --region us-east-1`
 - **Before pushing:** Always `git pull --rebase` to sync with remote
 
 ## Architecture Decisions
@@ -124,7 +124,7 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 - **Auth0 over Firebase Auth** — Simpler multi-provider OAuth setup
 - **Context API over Redux** — Simpler for current scale; providers are: Auth → Error → Notification → User → Apps → Bot
 - **SCSS + Bootstrap utilities** — Quick prototyping with utility classes, MUI for complex components
-- **No .env file** — Config auto-detected from `window.location.hostname` (localhost vs www.baita.help)
+- **Environment variables via `.env.local`** — Sensitive config (API keys) stored in `.env.local` (gitignored); production values set in AWS Amplify Console
 - **Vite over CRA** — Faster dev/build, actively maintained, eliminates react-scripts vulnerability debt
 
 ## Environment Configuration
@@ -133,6 +133,32 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 - **Local dev**: hostname `localhost` → API at `http://localhost:5000/dev`
 - **Mock mode**: Uses Vite plugin (configureServer hook in vite.config.ts) pointing to local JSON files
 - **Language**: Auto-detected from `navigator.language` (en-US or pt-BR)
+
+### Environment Variables
+
+Frontend env vars use Vite's `import.meta.env.VITE_*` pattern. They are injected at **build time** (not runtime).
+
+| Variable                   | Purpose                         | Where to set                                 |
+| -------------------------- | ------------------------------- | -------------------------------------------- |
+| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JavaScript API key  | `.env.local` (local), Amplify Console (prod) |
+| `VITE_GOOGLE_MAPS_MAP_ID`  | Google Maps custom map style ID | `.env.local` (local), Amplify Console (prod) |
+
+**Local development:** Create `apps/frontend/.env.local` (gitignored):
+
+```bash
+VITE_GOOGLE_MAPS_API_KEY=<your-key>
+VITE_GOOGLE_MAPS_MAP_ID=<your-map-id>
+```
+
+**Production (AWS Amplify):**
+
+```bash
+aws amplify update-app --app-id d35kx8fgop2qtf \
+  --environment-variables VITE_GOOGLE_MAPS_API_KEY=<key>,VITE_GOOGLE_MAPS_MAP_ID=<map-id> \
+  --profile baita --region us-east-1
+```
+
+**Security note:** Frontend API keys (Maps, Analytics) are inherently public — they end up in the JS bundle. Security is enforced via **API key restrictions** (HTTP referrer, API scoping) in the provider's console, not by hiding the key.
 
 ## Code Quality Enforcement
 
@@ -361,3 +387,63 @@ The system prompt in `ai.ts` teaches the LLM the bot schema structure (services,
 - No lazy loading / code splitting on routes
 - No memoization (React.memo, useMemo, useCallback) applied yet
 - Admin detection is hardcoded (email check)
+
+## UI Pattern Reference (Canonical Patterns)
+
+Every list view MUST follow these patterns. The Bots and Connections pages are the reference implementations.
+
+### Loading Skeleton
+
+```tsx
+<Skeleton elements={3} height={100} />
+```
+
+### Empty State
+
+```tsx
+<EmptyState
+  icon={<SomeIcon style={{ fontSize: 48 }} />}
+  title="No items yet"
+  description="A helpful hint about what to do next."
+/>
+```
+
+Uses the shared `EmptyState` component from `src/components/emptyState.tsx`.
+
+### List Item (Card)
+
+```tsx
+<Card className="p-2">
+  <div className="d-flex justify-content-between align-items-center">
+    <div className="d-flex align-items-center">
+      <div style={{ width: 30 }} className="m-2 d-flex align-items-center">
+        <Icon style={{ width: 30, height: 30 }} color="secondary" />
+      </div>
+      <div className="mx-2">
+        <Text className="fw-bold">{name}</Text>
+        <Text className="fw-light fs-6">{subtitle}</Text>
+      </div>
+    </div>
+    <Menu links={[...]}><MoreVertIcon /></Menu>
+  </div>
+</Card>
+```
+
+### Add Action (centered at bottom)
+
+```tsx
+<div className="d-flex align-items-center justify-content-center mt-5">
+  <Button type="text" color="primary" icon={<AddIcon />}>
+    {label}
+  </Button>
+</div>
+```
+
+### Rules
+
+- **No FABs** — always use centered `<Button>` instead
+- **No page titles** — the nav tells users where they are
+- **Cards for list items** — wrap every list item in `<Card className="p-2">`
+- **3-dot menu for actions** — use `<Menu>` with `<MoreVertIcon />`
+- **Consistent spacing** — `mb-2` between cards, `mt-5` before add button
+- **Modals for creation/editing** — use MUI `<Dialog>` for forms, not separate routes

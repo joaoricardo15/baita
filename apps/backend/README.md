@@ -130,7 +130,7 @@ All endpoints return:
 
 ### Requirements
 
-1. AWS CLI configured with profile `joao` (`~/.aws/credentials`)
+1. AWS CLI configured with profile `baita` (`~/.aws/credentials`)
 2. Node.js 20.x+
 3. SSM parameters in AWS (`/baita/prod/*`) — resolved at deploy time
 
@@ -140,11 +140,11 @@ All secrets stored in AWS SSM Parameter Store under `/baita/prod/`:
 
 ```bash
 # List all parameters
-aws ssm describe-parameters --profile joao --region us-east-1 \
+aws ssm describe-parameters --profile baita --region us-east-1 \
   --parameter-filters "Key=Name,Option=BeginsWith,Values=/baita/prod/"
 
 # Update a secret
-aws ssm put-parameter --profile joao --region us-east-1 \
+aws ssm put-parameter --profile baita --region us-east-1 \
   --name "/baita/prod/<parameter-name>" --value "<new-value>" \
   --type SecureString --overwrite
 
@@ -176,7 +176,7 @@ Part of the monorepo unified workflow (`.github/workflows/ci.yml`) on push to `m
 ## AWS Resources
 
 - **Region**: `us-east-1`
-- **Profile**: `joao`
+- \*\*Profile`: `baita`
 - **DynamoDB Table**: `baita-help-prod` (on-demand billing, single-table design)
 - **S3 Buckets**: `baita-help-prod-bots`, `baita-help-prod-files`, `baita-help-prod-docs`
 - **SQS Queues**: `baita-help-prod-{userId}` (per-user, with DLQ)

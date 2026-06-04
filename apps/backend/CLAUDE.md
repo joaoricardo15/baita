@@ -62,7 +62,7 @@ src/
 ## Commands
 
 ```bash
-npm start          # Local dev server on localhost:5000 (serverless-offline, uses AWS_PROFILE=joao)
+npm start          # Local dev server on localhost:5000 (serverless-offline, uses AWS_PROFILE=baita)
 npm test           # Jest in watch mode
 npm run test:run   # Jest single run (CI-friendly)
 npm run deploy     # Deploy to production (serverless deploy --stage prod)
@@ -75,7 +75,7 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 
 ## AWS / Deployment
 
-- **AWS Profile**: Always use `--profile joao` for AWS CLI commands in this repo
+- **AWS Profile**: Always use `--profile baita` for AWS CLI commands in this repo
 - **CI/CD**: GitHub Actions (unified pipeline in monorepo root `.github/workflows/ci.yml`)
 - **Region**: `us-east-1`
 - **Custom Domain**: `api.baita.help` (Route53 + serverless-domain-manager)
@@ -94,7 +94,7 @@ Part of the monorepo unified workflow (`.github/workflows/ci.yml`) on push to `m
 
 ### Local Development Requirements
 
-1. AWS profile `joao` configured in `~/.aws/credentials`
+1. AWS profile `baita` configured in `~/.aws/credentials`
 2. Node.js 20.x installed
 3. SSM parameters stored in `/baita/prod/*` (resolved at deploy time via `${ssm:...}` in serverless.yml)
 
@@ -104,11 +104,11 @@ All secrets are stored in AWS SSM Parameter Store under `/baita/prod/`:
 
 ```bash
 # List all parameters
-aws ssm describe-parameters --profile joao --region us-east-1 \
+aws ssm describe-parameters --profile baita --region us-east-1 \
   --parameter-filters "Key=Name,Option=BeginsWith,Values=/baita/prod/"
 
 # Update a secret
-aws ssm put-parameter --profile joao --region us-east-1 \
+aws ssm put-parameter --profile baita --region us-east-1 \
   --name "/baita/prod/<parameter-name>" --value "<new-value>" \
   --type SecureString --overwrite
 
