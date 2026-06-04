@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { useEffect } from 'react'
 
-import ErrorProvider from './error'
+import ErrorProvider from '../error'
 
 const mockErrorMessage = 'Test error'
 

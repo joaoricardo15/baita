@@ -1,11 +1,10 @@
-import { validateBot } from '@baita/shared'
-import { validateTasks } from '@baita/shared'
+import { validateBot, validateTasks } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import Bot from '@/controllers/bot'
 import Api, { ApiRequestStatus } from '@/utils/api'
 
-exports.handler = async (
+export const handler = async (
   event: APIGatewayProxyEvent,
   context: Context,
   callback: Callback

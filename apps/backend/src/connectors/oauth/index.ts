@@ -10,7 +10,7 @@ import { getConnectorById } from './registry'
 
 const SERVICE_API_URL = process.env.SERVICE_API_URL || ''
 
-exports.handler = async (
+export const handler = async (
   event: APIGatewayProxyEvent,
   context: Context,
   callback: Callback

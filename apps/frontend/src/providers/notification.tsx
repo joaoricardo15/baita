@@ -15,7 +15,7 @@ export const NotificationContext = createContext<{
   showLoading: () => undefined,
 })
 
-const SnackProvider: FC<{ children: ReactNode }> = ({ children }) => {
+const NotificationProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [snack, setSnack] = useState<{
     message: string
     type: MessageType
@@ -76,4 +76,4 @@ const SnackProvider: FC<{ children: ReactNode }> = ({ children }) => {
   )
 }
 
-export default SnackProvider
+export default NotificationProvider

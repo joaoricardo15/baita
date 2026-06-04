@@ -7,7 +7,7 @@ import Resource, {
 } from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
 
-exports.handler = async (
+export const handler = async (
   event: APIGatewayProxyEvent,
   context: Context,
   callback: Callback

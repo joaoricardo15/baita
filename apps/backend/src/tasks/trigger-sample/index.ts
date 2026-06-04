@@ -1,9 +1,10 @@
-import { ITaskExecutionInput, TaskExecutionStatus } from '@baita/shared'
 import {
+  DataType,
+  ITaskExecutionInput,
+  TaskExecutionStatus,
   validateTaskExecutionInput,
   validateTaskExecutionResult,
 } from '@baita/shared'
-import { DataType } from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
 
 import Bot from '@/controllers/bot'
@@ -15,7 +16,7 @@ interface ITriggerSample {
   outputData: DataType
 }
 
-exports.handler = async (
+export const handler = async (
   event: ITaskExecutionInput<ITriggerSample>,
   context: Context,
   callback: Callback

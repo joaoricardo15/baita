@@ -12,21 +12,14 @@
  * - OAuth callback endpoint: handles errors, missing params, invalid state gracefully
  * - Connection lifecycle: full create → use → update → delete flow
  */
-import { APIRequestContext, expect, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-import { API_URL, authHeaders, loadAuthData } from './helpers'
+import { API_URL, authHeaders, deleteConnection, loadAuthData } from './helpers'
 
 let token: string
 let userId: string
 
 const createdConnections: string[] = []
-
-async function deleteConnection(request: APIRequestContext, id: string) {
-  await request.post(
-    `${API_URL}/user/${userId}/resource/connection/delete/${id}`,
-    { headers: authHeaders(token), data: {} }
-  )
-}
 
 test.beforeAll(() => {
   const data = loadAuthData()
@@ -36,22 +29,11 @@ test.beforeAll(() => {
 
 test.afterAll(async ({ request }) => {
   for (const id of createdConnections) {
-    await deleteConnection(request, id).catch(() => {})
+    await deleteConnection(request, userId, token, id).catch(() => {})
   }
 })
 
 test.describe('Connection Storage', () => {
-  test('list connections returns array', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/list`,
-      { headers: authHeaders(token), data: {} }
-    )
-    expect(res.status()).toBe(200)
-    const body = await res.json()
-    expect(body.success).toBe(true)
-    expect(Array.isArray(body.data)).toBe(true)
-  })
-
   test('create and read connection with credentials', async ({ request }) => {
     const connectionId = `smoke-conn-${Date.now()}`
     createdConnections.push(connectionId)

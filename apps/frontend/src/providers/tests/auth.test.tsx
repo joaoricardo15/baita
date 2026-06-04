@@ -10,7 +10,7 @@ vi.mock('@auth0/auth0-react', () => ({
   useAuth0: () => mockUseAuth0(),
 }))
 
-vi.mock('../utils/push', () => ({
+vi.mock('../../utils/push', () => ({
   unsubscribeFromPush: vi.fn(),
 }))
 

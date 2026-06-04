@@ -16,34 +16,34 @@ import {
 import { ContentSchema, TodoTaskSchema, UserSchema } from '../schemas/user'
 import { validate } from './validate'
 
-export const validateTasks = (tasks: ITask[]) => {
+export function validateTasks(tasks: ITask[]): void {
   tasks.forEach((task, i) => validate(TaskSchema, task, `Task[${i}]`))
 }
 
-export const validateTaskExecutionResult = (
+export function validateTaskExecutionResult(
   taskResult: ITaskExecutionResult
-) => {
+): void {
   validate(TaskExecutionResultSchema, taskResult, 'TaskExecutionResult')
 }
 
-export const validateTaskExecutionInput = (
+export function validateTaskExecutionInput(
   input: ITaskExecutionInput<DataType>
-) => {
+): void {
   validate(TaskExecutionInputSchema, input, 'TaskExecutionInput')
 }
 
-export const validateBotLog = (log: IBotLog) => {
+export function validateBotLog(log: IBotLog): void {
   validate(BotLogSchema, log, 'BotLog')
 }
 
-export const validateUser = (user: IUser) => {
+export function validateUser(user: IUser): void {
   validate(UserSchema, user, 'User')
 }
 
-export const validateContent = (content: IContent[]) => {
+export function validateContent(content: IContent[]): void {
   content.forEach((c, i) => validate(ContentSchema, c, `Content[${i}]`))
 }
 
-export const validateTodoTasks = (todoTasks: ITodoTask[]) => {
+export function validateTodoTasks(todoTasks: ITodoTask[]): void {
   todoTasks.forEach((t, i) => validate(TodoTaskSchema, t, `TodoTask[${i}]`))
 }

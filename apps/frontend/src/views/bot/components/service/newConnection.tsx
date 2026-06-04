@@ -7,10 +7,9 @@ import {
   TextField,
 } from '@mui/material'
 import { FC, useContext, useState } from 'react'
-import { getConnectorByAppId } from '@baita/shared'
+import { getConnectorByAppId, IAppConnection } from '@baita/shared'
 
 import { Button, OptionsInput } from '@/components'
-import { IAppConnection } from '@baita/shared'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { UserContext } from '@/providers/user'

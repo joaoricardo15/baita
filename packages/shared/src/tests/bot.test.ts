@@ -577,7 +577,7 @@ describe('Zod Schema Parsing', () => {
         conditions: [
           [
             {
-              operator: 'Equals',
+              operator: 'equals',
               operand: { type: 'text', name: 'x', label: 'X' },
             },
           ],

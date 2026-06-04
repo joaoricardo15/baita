@@ -1,6 +1,6 @@
 import { vi } from 'vitest'
 
-import { canUsePushNotifications, isInstalledPWA, isIOSDevice } from './push'
+import { canUsePushNotifications, isInstalledPWA, isIOSDevice } from '../push'
 
 describe('Push notification utilities', () => {
   const originalNavigator = navigator
@@ -144,7 +144,7 @@ describe('Push notification utilities', () => {
   describe('checkSubscriptionHealth', () => {
     it('returns null when serviceWorker is not available', async () => {
       vi.stubGlobal('navigator', { userAgent: 'test' })
-      const { getExistingSubscription } = await import('./push')
+      const { getExistingSubscription } = await import('../push')
       const result = await getExistingSubscription()
       expect(result).toBeNull()
     })
@@ -152,7 +152,7 @@ describe('Push notification utilities', () => {
 
   describe('unsubscribeFromPush', () => {
     it('returns false when no subscription exists', async () => {
-      const { unsubscribeFromPush } = await import('./push')
+      const { unsubscribeFromPush } = await import('../push')
       vi.stubGlobal('navigator', {
         ...originalNavigator,
         serviceWorker: {
@@ -168,7 +168,7 @@ describe('Push notification utilities', () => {
     })
 
     it('calls unsubscribe on existing subscription', async () => {
-      const { unsubscribeFromPush } = await import('./push')
+      const { unsubscribeFromPush } = await import('../push')
       const mockUnsubscribe = vi.fn(() => Promise.resolve(true))
       vi.stubGlobal('navigator', {
         ...originalNavigator,

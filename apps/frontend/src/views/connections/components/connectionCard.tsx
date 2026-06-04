@@ -1,5 +1,4 @@
-import { getConnectorByAppId } from '@baita/shared'
-import { IAppConnection } from '@baita/shared'
+import { getConnectorByAppId, IAppConnection } from '@baita/shared'
 import {
   Delete as DeleteIcon,
   MoreVert as MoreVertIcon,

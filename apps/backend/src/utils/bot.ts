@@ -2,10 +2,10 @@ import { DataType, ITransform, IVariable, VariableType } from '@baita/shared'
 
 export const OUTPUT_CODE = '###baita.help###'
 
-export const getDataFromPath = (
+export function getDataFromPath(
   data: DataType,
   outputPath?: string
-): DataType | undefined => {
+): DataType | undefined {
   if (!outputPath) {
     return data
   }
@@ -31,10 +31,10 @@ export const getDataFromPath = (
   return current
 }
 
-export const getDataFromMapping = (
+export function getDataFromMapping(
   data: DataType,
   outputMapping: Record<string, string>
-): Record<string, DataType> => {
+): Record<string, DataType> {
   let mappedData: Record<string, DataType> = {}
   const outputKeys = Object.keys(outputMapping)
 
@@ -53,10 +53,10 @@ export const getDataFromMapping = (
   return mappedData
 }
 
-export const getMappedData = (
+export function getMappedData(
   data: DataType,
   outputMapping?: Record<string, string>
-): DataType => {
+): DataType {
   if (!outputMapping) return data
 
   return Array.isArray(data)
@@ -66,11 +66,11 @@ export const getMappedData = (
     : getDataFromMapping(data, outputMapping)
 }
 
-export const setObjectDataFromPath = (
+export function setObjectDataFromPath(
   data: object,
   value: DataType,
   inputPath?: string
-): object => {
+): object {
   if (!inputPath) {
     return data
   }
@@ -99,21 +99,18 @@ export const setObjectDataFromPath = (
   return data
 }
 
-export const getOutputVariableString = (
-  index: number,
-  path: string
-): string => {
+export function getOutputVariableString(index: number, path: string): string {
   return `task${index}_outputData${path
     .split('.')
     .map((x) => x && (!isNaN(Number(x)) ? `[${x}]` : `['${x}']`))
     .join('')}`
 }
 
-export const getOutputVariableStringById = (
+export function getOutputVariableStringById(
   taskId: number,
   path: string,
   tasks: { taskId: number }[]
-): string => {
+): string {
   const index = tasks.findIndex((t) => t.taskId === taskId)
   if (index === -1) return `undefined`
   return getOutputVariableString(index, path)
@@ -137,7 +134,7 @@ const operatorToJs = (op?: string): string => {
   }
 }
 
-export const buildTransformExpression = (transform: ITransform): string => {
+export function buildTransformExpression(transform: ITransform): string {
   const { operation, index, property, operator, value, direction } = transform
   const prop = property ? escapeString(property) : ''
   const val = value ? escapeString(value) : ''
@@ -172,10 +169,10 @@ export const buildTransformExpression = (transform: ITransform): string => {
   }
 }
 
-export const applyTransformToValue = (
+export function applyTransformToValue(
   data: DataType,
   transform: ITransform
-): DataType => {
+): DataType {
   if (!data || !transform) return data
   const { operation, index, property, operator, value, direction } = transform
 
@@ -229,10 +226,10 @@ export const applyTransformToValue = (
   }
 }
 
-export const getValueFromInputVariable = (
+export function getValueFromInputVariable(
   variable: IVariable,
   testData?: boolean
-): DataType | undefined => {
+): DataType | undefined {
   const { label, value, sampleValue, type, outputIndex, outputPath } = variable
 
   if (testData) {
@@ -263,9 +260,9 @@ export const getValueFromInputVariable = (
   return value
 }
 
-export const getValueFromServiceVariable = (
+export function getValueFromServiceVariable(
   variable: IVariable
-): DataType | undefined => {
+): DataType | undefined {
   const { label, value, type } = variable
 
   if (type === VariableType.constant) {
@@ -287,11 +284,11 @@ export const getValueFromServiceVariable = (
   return undefined
 }
 
-export const getDataFromService = (
+export function getDataFromService(
   serviceFields: IVariable[],
   inputData: IVariable[],
   testData?: boolean
-): DataType => {
+): DataType {
   let data: object = {}
 
   for (let j = 0; j < serviceFields.length; j++) {

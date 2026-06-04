@@ -8,14 +8,14 @@ import {
   VariableType,
 } from '../schemas/service'
 
-import { ConnectorManifest, ConnectorOperation } from './index'
+import { IConnectorManifest, IConnectorOperation } from './index'
 import { baitaConnector } from './baita'
 import { googleConnector } from './google'
 import { newsapiConnector } from './newsapi'
 import { openaiConnector } from './openai'
 import { pipedriveConnector } from './pipedrive'
 
-const connectors: ConnectorManifest[] = [
+const connectors: IConnectorManifest[] = [
   baitaConnector,
   pipedriveConnector,
   googleConnector,
@@ -23,22 +23,22 @@ const connectors: ConnectorManifest[] = [
   newsapiConnector,
 ]
 
-export function getAllConnectors(): ConnectorManifest[] {
+export function getAllConnectors(): IConnectorManifest[] {
   return connectors
 }
 
-export function getConnectorById(id: string): ConnectorManifest | undefined {
+export function getConnectorById(id: string): IConnectorManifest | undefined {
   return connectors.find((c) => c.id === id)
 }
 
 export function getConnectorByAppId(
   appId: string
-): ConnectorManifest | undefined {
+): IConnectorManifest | undefined {
   return connectors.find((c) => c.appId === appId)
 }
 
 export function connectorToAppService(
-  connector: ConnectorManifest
+  connector: IConnectorManifest
 ): IAppService {
   const services = connector.services
     ? connector.services
@@ -77,8 +77,8 @@ export function connectorToAppService(
 }
 
 function operationToService(
-  connector: ConnectorManifest,
-  op: ConnectorOperation
+  connector: IConnectorManifest,
+  op: IConnectorOperation
 ): IService {
   const methodName =
     connector.auth.type === 'apiKey' || connector.auth.type === 'userApiKey'

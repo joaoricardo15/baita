@@ -84,10 +84,8 @@ The `verify` script auto-starts the Vite dev server, authenticates via Auth0, an
 src/
 ├── assets/        # SCSS styles + images
 ├── components/    # Shared reusable UI components
-├── defines/       # Static app/service definitions
-├── models/        # TypeScript interfaces (IUser, IBot, IApp, IService)
 ├── providers/     # React Context providers (auth, user, bot, apps, error, notification)
-├── utils/         # Helpers (API client, firebase, config, date, connections)
+├── utils/         # Helpers (API client, firebase, config, date, labels, oauth)
 ├── views/         # Page-level components (each feature has index.tsx + components/)
 ├── app.tsx        # Theme + provider composition
 ├── router.tsx     # Route definitions + LINKS constants
@@ -183,9 +181,10 @@ Consistency is enforced at 3 levels:
 
 ### Internationalization
 
-- Use `useLabels(LABELS)` from `src/utils/useLabels.ts` for all label access
+- Use `getLabels(LABELS)` from `src/utils/labels.ts` for all label access
 - Define `LABELS` object with `en` and `pt` keys at the bottom of the file
-- Import `{ useLabels, Labels }` from the same module
+- Call `const labels = getLabels(LABELS)` at module level (outside component body)
+- Import `{ getLabels, Labels }` from `@/utils/labels`
 
 ### State
 
@@ -197,7 +196,9 @@ Consistency is enforced at 3 levels:
 
 - Bootstrap utilities for layout (`d-flex`, `m-2`, `text-primary`)
 - MUI components for interactive elements (Button, TextField, Modal)
-- SCSS variables for color tokens and spacing (see `assets/variables.scss`)
+- SCSS variables for color tokens and spacing (see `assets/variables.scss`, `assets/variables.module.scss`)
+- Global styles in `assets/index.scss`, reusable classes in `assets/classes.scss`
+- Animations in `assets/animations.scss`
 - Avoid inline styles when a utility class or SCSS variable exists
 
 ## Key Files

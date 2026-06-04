@@ -1,6 +1,5 @@
-import { FlashOnSharp as FlashOnSharpIcon } from '@mui/icons-material'
-import { Card, IconButton, Switch } from '@mui/material'
-import { FC, ReactNode, useState } from 'react'
+import { Card, Switch } from '@mui/material'
+import { FC, ReactNode } from 'react'
 
 import { Text } from '@/components'
 import { getLabels, Labels } from '@/utils/labels'
@@ -11,7 +10,6 @@ const BotCard: FC<{
   active?: boolean
   description?: string
   onToggleBot: () => void
-  onTestBot?: () => void
   actionComponent?: ReactNode
 }> = ({
   name,
@@ -19,21 +17,8 @@ const BotCard: FC<{
   active = false,
   description,
   onToggleBot,
-  onTestBot,
   actionComponent,
 }) => {
-  const [highlight, setHighlight] = useState(false)
-
-  const handleToggle = () => {
-    if (!active) {
-      setTimeout(() => {
-        setHighlight(true)
-        setTimeout(() => setHighlight(false), 1500)
-      }, 500)
-    }
-    onToggleBot()
-  }
-
   return (
     <Card className="p-2">
       <div className="d-flex justify-content-between align-items-center">
@@ -50,26 +35,14 @@ const BotCard: FC<{
               ) : (
                 <Text>{labels.noName}</Text>
               )}
-              <Switch checked={active} onChange={handleToggle} />
+              <Switch checked={active} onChange={onToggleBot} />
             </div>
             {description && (
               <Text className="fw-light fs-6">{description}</Text>
             )}
           </div>
         </div>
-        <div className="d-flex align-items-center">
-          {active && onTestBot && (
-            <IconButton
-              size="small"
-              onClick={onTestBot}
-              color="secondary"
-              className={highlight ? 'animate-pulse-once' : undefined}
-            >
-              <FlashOnSharpIcon />
-            </IconButton>
-          )}
-          {actionComponent}
-        </div>
+        {actionComponent}
       </div>
     </Card>
   )

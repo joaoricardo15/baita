@@ -1,6 +1,10 @@
-import { ITaskExecutionInput, TaskExecutionStatus } from '@baita/shared'
-import { validateTaskExecutionInput } from '@baita/shared'
-import { DataType, MethodName } from '@baita/shared'
+import {
+  DataType,
+  ITaskExecutionInput,
+  MethodName,
+  TaskExecutionStatus,
+  validateTaskExecutionInput,
+} from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
 
 import Api from '@/utils/api'
@@ -21,7 +25,7 @@ const METHODS: Record<
   oauth2Request,
 }
 
-exports.handler = async (
+export const handler = async (
   event: ITaskExecutionInput<DataType>,
   context: Context,
   callback: Callback

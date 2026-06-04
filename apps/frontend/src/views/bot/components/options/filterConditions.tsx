@@ -3,9 +3,24 @@ import { Divider } from '@mui/material'
 import { FC } from 'react'
 
 import { Button, OptionsInput, TextInput, VariableInput } from '@/components'
-import { ConditionOperator, ITask, ITaskCondition } from '@baita/shared'
-import { IVariable, VariableType } from '@baita/shared'
+import {
+  ConditionOperator,
+  ITask,
+  ITaskCondition,
+  IVariable,
+  VariableType,
+} from '@baita/shared'
 import { getLabels, Labels } from '@/utils/labels'
+
+const CONDITION_OPERATOR_LABELS: Record<ConditionOperator, string> = {
+  [ConditionOperator.equals]: 'Equals',
+  [ConditionOperator.notEquals]: 'Not equals',
+  [ConditionOperator.exists]: 'Exists',
+  [ConditionOperator.doesNotExist]: 'Does not exist',
+  [ConditionOperator.contains]: 'Contains',
+  [ConditionOperator.startsWith]: 'Starts with',
+  [ConditionOperator.endsWith]: 'Ends with',
+}
 
 export const newEmptyCondition: ITaskCondition = {
   operator: ConditionOperator.exists,
@@ -205,7 +220,7 @@ const FilterConditions: FC<{
                       }
                       options={Object.values(ConditionOperator).map((x) => ({
                         value: x,
-                        label: x,
+                        label: CONDITION_OPERATOR_LABELS[x],
                       }))}
                     />
                     {andCondition.operator &&

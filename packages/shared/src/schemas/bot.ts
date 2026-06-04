@@ -17,13 +17,13 @@ export enum TaskExecutionStatus {
 export const TaskExecutionStatusSchema = z.nativeEnum(TaskExecutionStatus)
 
 export enum ConditionOperator {
-  equals = 'Equals',
-  notEquals = 'Not equals',
-  exists = 'Exists',
-  doNotExists = 'Do not exists',
-  contains = 'Contains',
-  startsWith = 'Starts with',
-  endsWith = 'Ends with',
+  equals = 'equals',
+  notEquals = 'not-equals',
+  exists = 'exists',
+  doesNotExist = 'does-not-exist',
+  contains = 'contains',
+  startsWith = 'starts-with',
+  endsWith = 'ends-with',
 }
 export const ConditionOperatorSchema = z.nativeEnum(ConditionOperator)
 

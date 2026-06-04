@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 import Resource from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
 
-exports.handler = async (
+export const handler = async (
   event: APIGatewayProxyEvent,
   context: Context,
   callback: Callback

@@ -2,10 +2,10 @@ import { act, renderHook } from '@testing-library/react'
 import { FC, ReactNode, useContext } from 'react'
 import { vi } from 'vitest'
 
-import { AuthContext } from './auth'
-import BotProvider, { BotContext } from './bot'
+import { AuthContext } from '../auth'
+import BotProvider, { BotContext } from '../bot'
 
-vi.mock('../utils/push', () => ({
+vi.mock('../../utils/push', () => ({
   getExistingSubscription: vi.fn().mockResolvedValue(null),
 }))
 

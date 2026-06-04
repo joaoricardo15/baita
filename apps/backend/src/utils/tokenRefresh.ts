@@ -1,4 +1,4 @@
-import { ConnectorManifest } from '@baita/shared'
+import { IConnectorManifest } from '@baita/shared'
 import axios from 'axios'
 import qs from 'qs'
 
@@ -10,7 +10,7 @@ export interface ITokenCredentials {
 }
 
 export async function refreshOAuth2Token(
-  connector: ConnectorManifest,
+  connector: IConnectorManifest,
   credentials: ITokenCredentials,
   redirectUri: string
 ): Promise<ITokenCredentials> {

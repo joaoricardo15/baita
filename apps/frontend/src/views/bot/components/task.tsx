@@ -1,5 +1,9 @@
-import { ITask, removeStepReferences } from '@baita/shared'
-import { ServiceName, ServiceType } from '@baita/shared'
+import {
+  ITask,
+  removeStepReferences,
+  ServiceName,
+  ServiceType,
+} from '@baita/shared'
 import {
   Add as AddIcon,
   Delete as DeleteIcon,

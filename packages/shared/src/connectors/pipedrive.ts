@@ -1,7 +1,7 @@
 import { VariableType } from '../schemas/service'
-import { ConnectorManifest } from './index'
+import { IConnectorManifest } from './index'
 
-export const pipedriveConnector: ConnectorManifest = {
+export const pipedriveConnector: IConnectorManifest = {
   id: 'pipedrive',
   name: 'Pipedrive',
   icon: '/icons/pipedrive.png',

@@ -1,12 +1,12 @@
 import { VariableType } from '../schemas/service'
-import { ConnectorManifest } from './index'
+import { IConnectorManifest } from './index'
 
-export const newsapiConnector: ConnectorManifest = {
+export const newsapiConnector: IConnectorManifest = {
   id: 'newsapi',
   name: 'NewsAPI',
   icon: '/icons/newsapi.png',
   category: 'News',
-  appId: 'f9686ea8-ac80-4f70-b35b-asd',
+  appId: 'dcf88373-238e-4335-8ba1-81a81fa73874',
   auth: {
     type: 'apiKey',
     headerName: 'X-Api-Key',

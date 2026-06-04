@@ -1,6 +1,9 @@
-import { ITaskExecutionInput, TaskExecutionStatus } from '@baita/shared'
-import { validateTaskExecutionInput } from '@baita/shared'
-import { DataType } from '@baita/shared'
+import {
+  DataType,
+  ITaskExecutionInput,
+  TaskExecutionStatus,
+  validateTaskExecutionInput,
+} from '@baita/shared'
 import { Callback, Context } from 'aws-lambda'
 import vm from 'vm'
 
@@ -12,7 +15,7 @@ interface ICodeExecute {
   [key: string]: DataType
 }
 
-exports.handler = async (
+export const handler = async (
   event: ITaskExecutionInput<ICodeExecute>,
   context: Context,
   callback: Callback

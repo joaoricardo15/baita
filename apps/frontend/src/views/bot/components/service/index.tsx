@@ -1,10 +1,10 @@
 import { FC, useContext, useEffect, useState } from 'react'
 
 import { OptionsInput } from '@/components'
-import { IAppConnection } from '@baita/shared'
-import { ITask } from '@baita/shared'
 import {
+  IAppConnection,
   IServiceApp,
+  ITask,
   IVariable,
   MethodName,
   ServiceName,

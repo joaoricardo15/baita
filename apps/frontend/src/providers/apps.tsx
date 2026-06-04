@@ -1,8 +1,10 @@
 import { createContext, FC, ReactNode, useState } from 'react'
-import { connectorToAppService, getAllConnectors } from '@baita/shared'
-
-import { IApp } from '@baita/shared'
-import { IServiceApp } from '@baita/shared'
+import {
+  connectorToAppService,
+  getAllConnectors,
+  IApp,
+  IServiceApp,
+} from '@baita/shared'
 
 export const AppsContext = createContext<{
   apps: IApp[]

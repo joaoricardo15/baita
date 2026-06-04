@@ -43,7 +43,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     }
   })
 
-  test('4.1 create a new bot', async ({ request }) => {
+  test('create a new bot', async ({ request }) => {
     const res = await request.post(`${API_URL}/user/${userId}/bot`, {
       headers: authHeaders(token),
       data: {},
@@ -60,7 +60,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     triggerUrl = body.data.triggerUrl
   })
 
-  test('4.2 update bot with name and webhook trigger', async ({ request }) => {
+  test('update bot with name and webhook trigger', async ({ request }) => {
     const res = await request.put(`${API_URL}/user/${userId}/bot/${botId}`, {
       headers: authHeaders(token),
       data: {
@@ -87,7 +87,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(body.success).toBe(true)
   })
 
-  test('4.3 add a code-execute task', async ({ request }) => {
+  test('add a code-execute task', async ({ request }) => {
     const res = await request.put(`${API_URL}/user/${userId}/bot/${botId}`, {
       headers: authHeaders(token),
       data: {
@@ -141,7 +141,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(body.success).toBe(true)
   })
 
-  test('4.4 test individual task', async ({ request }) => {
+  test('test individual task', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/bot/${botId}/test/1`,
       {
@@ -153,9 +153,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(body.success).toBe(true)
   })
 
-  test('4.5 read bot and verify task has sample result', async ({
-    request,
-  }) => {
+  test('read bot and verify task has sample result', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
       { headers: authHeaders(token), data: {} }
@@ -166,7 +164,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(body.data.tasks[1].sampleResult.outputData).toBeTruthy()
   })
 
-  test('4.6 deploy bot', async ({ request }) => {
+  test('deploy bot', async ({ request }) => {
     const getRes = await request.post(
       `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
       { headers: authHeaders(token), data: {} }
@@ -188,14 +186,14 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(body.data.active).toBe(true)
   })
 
-  test('4.7 trigger bot via webhook', async ({ request }) => {
+  test('trigger bot via webhook', async ({ request }) => {
     const res = await request.post(triggerUrl, {
       data: { source: 'e2e-test', timestamp: Date.now() },
     })
     expect(res.status()).toBe(200)
   })
 
-  test('4.8 verify execution in logs', async ({ request }) => {
+  test('verify execution in logs', async ({ request }) => {
     // Wait for CloudWatch to index the log
     await new Promise((r) => setTimeout(r, 3000))
 
@@ -208,7 +206,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(Array.isArray(body.data)).toBe(true)
   })
 
-  test('4.9 delete a task and verify bot state', async ({ request }) => {
+  test('delete a task and verify bot state', async ({ request }) => {
     const getRes = await request.post(
       `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
       { headers: authHeaders(token), data: {} }
@@ -234,7 +232,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(updated.tasks).toHaveLength(1)
   })
 
-  test('4.10 re-add task and re-deploy', async ({ request }) => {
+  test('re-add task and re-deploy', async ({ request }) => {
     const getRes = await request.post(
       `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
       { headers: authHeaders(token), data: {} }
@@ -276,7 +274,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(body.data.tasks).toHaveLength(2)
   })
 
-  test('4.11 deactivate bot', async ({ request }) => {
+  test('deactivate bot', async ({ request }) => {
     const getRes = await request.post(
       `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
       { headers: authHeaders(token), data: {} }
@@ -295,7 +293,7 @@ test.describe('Bot Journey: Full Lifecycle', () => {
     expect(body.data.active).toBe(false)
   })
 
-  test('4.12 delete bot cleans up', async ({ request }) => {
+  test('delete bot cleans up', async ({ request }) => {
     const res = await request.delete(
       `${API_URL}/user/${userId}/bot/${botId}/api/${apiId}`,
       { headers: authHeaders(token) }

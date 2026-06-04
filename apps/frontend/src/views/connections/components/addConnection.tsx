@@ -10,7 +10,7 @@ import {
   TextField,
 } from '@mui/material'
 import { FC, useContext, useState } from 'react'
-import { ConnectorManifest, getAllConnectors } from '@baita/shared'
+import { IConnectorManifest, getAllConnectors } from '@baita/shared'
 
 import { Button } from '@/components'
 import { AuthContext } from '@/providers/auth'
@@ -32,7 +32,7 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
 
   const connectors = getAllConnectors()
 
-  const [apiKeyDialog, setApiKeyDialog] = useState<ConnectorManifest | null>(
+  const [apiKeyDialog, setApiKeyDialog] = useState<IConnectorManifest | null>(
     null
   )
   const [apiKeyValue, setApiKeyValue] = useState('')

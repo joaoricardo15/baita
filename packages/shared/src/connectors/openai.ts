@@ -1,12 +1,12 @@
 import { VariableType } from '../schemas/service'
-import { ConnectorManifest } from './index'
+import { IConnectorManifest } from './index'
 
-export const openaiConnector: ConnectorManifest = {
+export const openaiConnector: IConnectorManifest = {
   id: 'openai',
   name: 'ChatGPT',
   icon: '/icons/openai.png',
   category: 'AI',
-  appId: 'f9686ea8-ac80-4f70-b35b-hggfhjhk',
+  appId: '0f7bb503-b9b4-4fd5-80ab-9a97d52397bb',
   auth: {
     type: 'userApiKey',
     headerName: 'Authorization',

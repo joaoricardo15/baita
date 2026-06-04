@@ -15,8 +15,8 @@ import { FC, ReactNode, useContext } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import { AuthContext } from './auth'
-import UserProvider, { UserContext } from './user'
+import { AuthContext } from '../auth'
+import UserProvider, { UserContext } from '../user'
 
 const mockGetContent = vi.fn()
 const mockReactToContent = vi.fn()
@@ -24,7 +24,7 @@ const mockGetTodo = vi.fn()
 const mockUpdateTodo = vi.fn()
 const mockGetAppConnections = vi.fn()
 
-vi.mock('../utils/requests', () => ({
+vi.mock('../../utils/requests', () => ({
   default: () => ({
     getContent: mockGetContent,
     reactToContent: mockReactToContent,

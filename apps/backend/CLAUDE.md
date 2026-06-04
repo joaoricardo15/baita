@@ -52,12 +52,6 @@ src/
 ├── connectors/     # OAuth callback handlers (Google, Pipedrive)
 ├── controllers/    # Business logic classes (User, Bot, Resource)
 ├── endpoints/      # REST API Lambda handlers (one folder per endpoint)
-├── models/         # TypeScript interfaces + JSON schemas + validation
-│   ├── app/        # App definitions (IApp, IAppConfig)
-│   ├── bot/        # Bot models (IBot, ITask, ITaskCondition)
-│   ├── user/       # User models (IUser, IContent)
-│   ├── service/    # Service models (IService, IVariable, DataType)
-│   └── api/        # API response schema
 ├── tasks/          # Background Lambda task handlers (code-execute, method-execute)
 ├── utils/          # Helpers (api response, bot data manipulation, code generation)
 │   └── tests/      # Unit tests
@@ -173,21 +167,27 @@ Endpoint (handler) → Controller (business logic) → AWS SDK (data)
 Every endpoint follows this structure:
 
 ```typescript
-import Api, { ApiRequestStatus } from 'src/utils/api'
-import SomeController from 'src/controllers/someController'
+import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
-exports.handler = async (event, context, callback) => {
+import Api, { ApiRequestStatus } from '@/utils/api'
+import SomeController from '@/controllers/someController'
+
+export const handler = async (
+  event: APIGatewayProxyEvent,
+  context: Context,
+  callback: Callback
+) => {
   const api = new Api(event, context)
   const controller = new SomeController()
 
   try {
-    const { userId } = event.pathParameters
-    const body = JSON.parse(event.body)
+    const { userId } = event.pathParameters || {}
+    const body = JSON.parse(event.body || '{}')
 
     const data = await controller.doSomething(userId, body)
 
     api.httpResponse(callback, ApiRequestStatus.success, undefined, data)
-  } catch (err) {
+  } catch (err: unknown) {
     api.httpResponse(callback, ApiRequestStatus.fail, err)
   }
 }

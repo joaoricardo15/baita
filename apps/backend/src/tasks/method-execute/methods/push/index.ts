@@ -59,6 +59,6 @@ export const sendNotification = async (
 
     return { statusCode: result.statusCode, body: result.body }
   } catch (err: unknown) {
-    throw (err as Error).message || err
+    throw err instanceof Error ? err : new Error(String(err))
   }
 }

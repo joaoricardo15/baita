@@ -1,5 +1,10 @@
-import { ConditionOperator, ITask, ITaskCondition } from '@baita/shared'
-import { DataType, VariableType } from '@baita/shared'
+import {
+  ConditionOperator,
+  DataType,
+  ITask,
+  ITaskCondition,
+  VariableType,
+} from '@baita/shared'
 import JSZip from 'jszip'
 
 import {
@@ -12,7 +17,7 @@ const zip = new JSZip()
 
 const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
 
-export const sanitizeForCodeString = (value: string): string => {
+export function sanitizeForCodeString(value: string): string {
   return value
     .replace(/\\/g, '\\\\')
     .replace(/'/g, "\\'")
@@ -20,15 +25,15 @@ export const sanitizeForCodeString = (value: string): string => {
     .replace(/\$/g, '\\$')
 }
 
-export const getInputString = (input: DataType = ''): string => {
+export function getInputString(input: DataType = ''): string {
   return JSON.stringify(input)
     .replace(new RegExp(`"${OUTPUT_CODE}`, 'g'), '')
     .replace(new RegExp(`${OUTPUT_CODE}"`, 'g'), '')
 }
 
-export const getConditionsString = (
+export function getConditionsString(
   conditions?: ITaskCondition[][]
-): string | undefined => {
+): string | undefined {
   return conditions
     ?.map((orConditions) =>
       orConditions
@@ -39,7 +44,7 @@ export const getConditionsString = (
     .join(' || ')
 }
 
-export const decodeCondition = (condition: ITaskCondition): string => {
+export function decodeCondition(condition: ITaskCondition): string {
   const {
     operator,
     operand,
@@ -64,12 +69,12 @@ export const decodeCondition = (condition: ITaskCondition): string => {
       return `${stringOperand}.endsWith(${stringComparison})`
     case ConditionOperator.exists:
       return `!!${stringOperand}`
-    case ConditionOperator.doNotExists:
+    case ConditionOperator.doesNotExist:
       return `!${stringOperand}`
   }
 }
 
-export const getParseEventFunctionCode = (): string => {
+export function getParseEventFunctionCode(): string {
   return `(() => {
     if (event.body) {
       try {
@@ -94,7 +99,7 @@ export const getParseEventFunctionCode = (): string => {
   })()`
 }
 
-export const getBotSampleCode = (userId: string, botId: string): string => {
+export function getBotSampleCode(userId: string, botId: string): string {
   const safeUserId = sanitizeForCodeString(userId)
   const safeBotId = sanitizeForCodeString(botId)
 
@@ -151,11 +156,11 @@ module.exports.handler = async (event, context, callback) => {
     `
 }
 
-export const getCompleteBotCode = (
+export function getCompleteBotCode(
   userId: string,
   botId: string,
   tasks: ITask[]
-): string => {
+): string {
   const safeUserId = sanitizeForCodeString(userId)
   const safeBotId = sanitizeForCodeString(botId)
   const safeTaskLabel = sanitizeForCodeString(tasks[0].service?.label || '')
@@ -229,7 +234,7 @@ module.exports.handler = async (event, context, callback) => {
 };`
 }
 
-export const getBotInnerCode = (tasks: ITask[]): string => {
+export function getBotInnerCode(tasks: ITask[]): string {
   let innerCode = ''
 
   for (let i = 1; i < tasks.length; i++) {
@@ -361,7 +366,7 @@ ${
   return innerCode
 }
 
-export const getCodeFile = async (code: string): Promise<Buffer> => {
+export async function getCodeFile(code: string): Promise<Buffer> {
   zip.file('index.js', code)
 
   const archive = await zip.generateAsync({ type: 'base64' })

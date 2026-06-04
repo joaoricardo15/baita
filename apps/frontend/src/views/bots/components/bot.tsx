@@ -2,6 +2,7 @@ import {
   AutoFixHigh as AutoFixHighIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  FlashOnSharp as FlashOnSharpIcon,
   History as HistoryIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material'
@@ -112,10 +113,15 @@ const Bot: FC<{
       active={bot.active}
       description={bot.description}
       onToggleBot={onDeployBot}
-      onTestBot={() => onTestBot(bot)}
       actionComponent={
         <Menu
           links={[
+            {
+              label: labels.testButton,
+              icon: <FlashOnSharpIcon color="secondary" />,
+              onClick: () => onTestBot(bot),
+              condition: bot.active,
+            },
             {
               label: labels.editButton,
               icon: <EditIcon color="secondary" />,

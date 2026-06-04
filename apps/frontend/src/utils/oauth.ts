@@ -1,9 +1,9 @@
-import { ConnectorManifest } from '@baita/shared'
+import { IConnectorManifest } from '@baita/shared'
 
 import { PRODUCTION_API_URL } from './config'
 
 export function buildOAuthUrl(
-  connector: ConnectorManifest,
+  connector: IConnectorManifest,
   state: string
 ): string {
   if (connector.auth.type !== 'oauth2') return ''

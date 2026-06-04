@@ -4,9 +4,9 @@ import {
   ServiceType,
   VariableType,
 } from '../schemas/service'
-import { ConnectorManifest } from './index'
+import { IConnectorManifest } from './index'
 
-export const baitaConnector: ConnectorManifest = {
+export const baitaConnector: IConnectorManifest = {
   id: 'baita',
   name: 'Baita',
   icon: '/icons/baita.png',

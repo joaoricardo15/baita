@@ -73,6 +73,6 @@ export const ConnectorManifestSchema = z.object({
   services: z.array(z.lazy(() => ServiceSchema)).optional(),
 })
 
-export type ConnectorManifest = z.infer<typeof ConnectorManifestSchema>
-export type ConnectorOperation = z.infer<typeof ConnectorOperationSchema>
-export type ConnectorAuth = z.infer<typeof ConnectorAuthSchema>
+export type IConnectorManifest = z.infer<typeof ConnectorManifestSchema>
+export type IConnectorOperation = z.infer<typeof ConnectorOperationSchema>
+export type IConnectorAuth = z.infer<typeof ConnectorAuthSchema>

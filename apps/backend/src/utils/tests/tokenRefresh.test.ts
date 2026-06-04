@@ -1,4 +1,4 @@
-import { ConnectorManifest } from '@baita/shared'
+import { IConnectorManifest } from '@baita/shared'
 import axios from 'axios'
 
 import { refreshOAuth2Token } from '@/utils/tokenRefresh'
@@ -6,7 +6,7 @@ import { refreshOAuth2Token } from '@/utils/tokenRefresh'
 jest.mock('axios')
 const mockAxios = axios as jest.Mocked<typeof axios>
 
-const mockConnector: ConnectorManifest = {
+const mockConnector: IConnectorManifest = {
   id: 'test-connector',
   name: 'Test',
   category: 'Test',
@@ -28,7 +28,7 @@ const mockConnector: ConnectorManifest = {
   operations: [],
 }
 
-const mockBasicConnector: ConnectorManifest = {
+const mockBasicConnector: IConnectorManifest = {
   ...mockConnector,
   id: 'test-basic',
   auth: {

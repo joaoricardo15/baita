@@ -1,6 +1,4 @@
-import { ITaskExecutionInput } from '@baita/shared'
-import { IContent } from '@baita/shared'
-import { validateContent } from '@baita/shared'
+import { IContent, ITaskExecutionInput, validateContent } from '@baita/shared'
 
 import Resource from '@/controllers/resource'
 import User from '@/controllers/user'
@@ -15,7 +13,7 @@ export const getTodo = async (taskInput: ITaskExecutionInput<undefined>) => {
 
     return data
   } catch (err: unknown) {
-    throw (err as Error).message || err
+    throw err instanceof Error ? err : new Error(String(err))
   }
 }
 
@@ -43,6 +41,6 @@ export const publishToFeed = async (
       message: 'Content published successfully.',
     }
   } catch (err: unknown) {
-    throw (err as Error).message || err
+    throw err instanceof Error ? err : new Error(String(err))
   }
 }

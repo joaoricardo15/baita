@@ -94,7 +94,6 @@ const BotAssistant: FC<{ bot: IBot; task: ITask; taskIndex: number }> = ({
   const [proposedTask, setProposedTask] = useState<ITask | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const labels = getLabels(LABELS)
 
   const handleSend = async () => {
     if (!input.trim() || loading) return
@@ -260,5 +259,7 @@ const LABELS: Labels = {
     cancel: 'Cancelar',
   },
 }
+
+const labels = getLabels(LABELS)
 
 export default BotAssistant

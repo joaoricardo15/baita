@@ -6,10 +6,12 @@ import {
 } from '@aws-sdk/client-s3'
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { IBotModel } from '@baita/shared'
-import { validateTasks } from '@baita/shared'
-import { ITodo } from '@baita/shared'
-import { validateTodoTasks } from '@baita/shared'
+import {
+  IBotModel,
+  ITodo,
+  validateTasks,
+  validateTodoTasks,
+} from '@baita/shared'
 
 const CORE_TABLE = process.env.CORE_TABLE || ''
 const FILES_BUCKET = process.env.FILES_BUCKET || ''

@@ -10,10 +10,10 @@ import {
   IBotModel,
   ITask,
   ITaskExecutionResult,
+  ServiceName,
   TaskExecutionStatus,
+  validateTaskExecutionResult,
 } from '@baita/shared'
-import { validateTaskExecutionResult } from '@baita/shared'
-import { ServiceName } from '@baita/shared'
 import { v4 as uuidv4 } from 'uuid'
 
 import { getDataFromService } from '@/utils/bot'

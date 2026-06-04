@@ -12,9 +12,9 @@
  * 8. Deploy: cd apps/backend && npm run deploy
  */
 import { VariableType } from '../schemas/service'
-import { ConnectorManifest } from './index'
+import { IConnectorManifest } from './index'
 
-export const templateConnector: ConnectorManifest = {
+export const templateConnector: IConnectorManifest = {
   // Unique identifier (lowercase, no spaces)
   id: 'your-connector',
 
@@ -22,7 +22,7 @@ export const templateConnector: ConnectorManifest = {
   name: 'Your Connector',
 
   // Optional icon key (used for displaying logos)
-  icon: 'your-connector',
+  icon: '/icons/your-connector.svg',
 
   // Category for grouping in the connector picker
   category: 'CRM', // Options: CRM, Productivity, Communication, Marketing, etc.

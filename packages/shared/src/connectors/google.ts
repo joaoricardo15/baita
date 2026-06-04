@@ -1,7 +1,7 @@
 import { VariableType } from '../schemas/service'
-import { ConnectorManifest } from './index'
+import { IConnectorManifest } from './index'
 
-export const googleConnector: ConnectorManifest = {
+export const googleConnector: IConnectorManifest = {
   id: 'google',
   name: 'Google',
   icon: '/icons/google.png',

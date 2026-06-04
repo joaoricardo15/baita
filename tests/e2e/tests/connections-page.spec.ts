@@ -12,21 +12,14 @@
  * - Connection deletion works
  * - Connection details (linked bots) endpoint responds
  */
-import { APIRequestContext, expect, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
-import { API_URL, authHeaders, loadAuthData } from './helpers'
+import { API_URL, authHeaders, deleteConnection, loadAuthData } from './helpers'
 
 let token: string
 let userId: string
 
 const createdConnections: string[] = []
-
-async function deleteConnection(request: APIRequestContext, id: string) {
-  await request.post(
-    `${API_URL}/user/${userId}/resource/connection/delete/${id}`,
-    { headers: authHeaders(token), data: {} }
-  )
-}
 
 test.beforeAll(() => {
   const data = loadAuthData()
@@ -36,7 +29,7 @@ test.beforeAll(() => {
 
 test.afterAll(async ({ request }) => {
   for (const id of createdConnections) {
-    await deleteConnection(request, id).catch(() => {})
+    await deleteConnection(request, userId, token, id).catch(() => {})
   }
 })
 
