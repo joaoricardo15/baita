@@ -142,11 +142,39 @@ test.describe('Bot Journey: Full Lifecycle', () => {
   })
 
   test('test individual task', async ({ request }) => {
+    const task = {
+      taskId: 2,
+      service: {
+        type: 'invoke',
+        name: 'code-execute',
+        label: 'Run Code',
+        config: {
+          inputFields: [
+            {
+              name: 'code',
+              label: 'Code',
+              type: 'code',
+              required: true,
+            },
+          ],
+        },
+      },
+      inputData: [
+        {
+          name: 'code',
+          label: 'Code',
+          type: 'code',
+          value: 'return { result: "hello from e2e" }',
+          sampleValue: 'return { result: "hello from e2e" }',
+        },
+      ],
+    }
+
     const res = await request.post(
       `${API_URL}/user/${userId}/bot/${botId}/test/1`,
       {
         headers: authHeaders(token),
-        data: {},
+        data: task,
       }
     )
     const body = await res.json()
