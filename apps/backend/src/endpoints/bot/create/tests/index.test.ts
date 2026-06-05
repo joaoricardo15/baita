@@ -59,13 +59,27 @@ describe('Bot Create Endpoint', () => {
     expect(result.body.data.active).toBe(false)
   })
 
-  it('returns error when userId is missing', async () => {
+  it('returns error when unauthenticated', async () => {
     const result = await invokeHandler(handler, {
       pathParameters: {},
+      requestContext: {
+        accountId: '123456789',
+        apiId: 'test-api',
+        authorizer: {},
+        protocol: 'HTTP/1.1',
+        httpMethod: 'POST',
+        identity: {} as any,
+        path: '/',
+        stage: 'dev',
+        requestId: 'req-123',
+        requestTimeEpoch: Date.now(),
+        resourceId: 'resource-1',
+        resourcePath: '/',
+      },
     })
 
     expect(result.body.success).toBe(false)
-    expect(result.body.message).toContain('Missing userId parameter')
+    expect(result.body.message).toContain('Unauthorized')
   })
 
   it('returns error when Lambda creation fails', async () => {

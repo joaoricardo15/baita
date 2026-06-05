@@ -1,10 +1,8 @@
-import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import {
   DeleteObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3'
-import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import {
   IBotModel,
@@ -12,6 +10,8 @@ import {
   validateTasks,
   validateTodoTasks,
 } from '@baita/shared'
+
+import { ddb } from '@/lib/dynamodb'
 
 const CORE_TABLE = process.env.CORE_TABLE || ''
 const FILES_BUCKET = process.env.FILES_BUCKET || ''
@@ -35,14 +35,10 @@ export const resourceValidations: Record<string, (data: unknown) => void> = {
 class Resource {
   userId: string
   resourceName: string
-  private ddb: DynamoDBDocument
 
   constructor(userId: string, resourceName: string) {
     this.userId = userId
     this.resourceName = resourceName.toUpperCase()
-    this.ddb = DynamoDBDocument.from(new DynamoDB({}), {
-      marshallOptions: { removeUndefinedValues: true },
-    })
   }
 
   sortKey(resourceId?: string): string {
@@ -51,7 +47,7 @@ class Resource {
 
   async list() {
     try {
-      const result = await this.ddb.query({
+      const result = await ddb.query({
         TableName: CORE_TABLE,
         KeyConditionExpression:
           'userId = :userId and begins_with(sortKey, :sortKey)',
@@ -69,7 +65,7 @@ class Resource {
 
   async read(resourceId?: string) {
     try {
-      const result = await this.ddb.get({
+      const result = await ddb.get({
         TableName: CORE_TABLE,
         Key: {
           userId: this.userId,
@@ -85,7 +81,7 @@ class Resource {
 
   async delete(resourceId: string) {
     try {
-      await this.ddb.delete({
+      await ddb.delete({
         TableName: CORE_TABLE,
         Key: {
           userId: this.userId,
@@ -99,7 +95,7 @@ class Resource {
 
   async create(resourceId: string, resource: Record<string, unknown>) {
     try {
-      await this.ddb.put({
+      await ddb.put({
         TableName: CORE_TABLE,
         Item: {
           userId: this.userId,
@@ -116,7 +112,7 @@ class Resource {
     try {
       const resourceKeys = Object.keys(resource)
 
-      await this.ddb.update({
+      await ddb.update({
         TableName: CORE_TABLE,
         Key: {
           userId: this.userId,

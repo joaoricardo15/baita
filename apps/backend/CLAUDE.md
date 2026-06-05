@@ -49,13 +49,14 @@ Before reporting a task as done, self-check:
 
 ```
 src/
+├── authorizer/     # Lambda authorizer (Auth0 JWT verification)
 ├── connectors/     # OAuth callback handlers (Google, Pipedrive)
 ├── controllers/    # Business logic classes (User, Bot, Resource)
 ├── endpoints/      # REST API Lambda handlers (one folder per endpoint)
+├── lib/            # Module-level AWS SDK clients (DynamoDB singleton)
 ├── tasks/          # Background Lambda task handlers (code-execute, method-execute)
-├── utils/          # Helpers (api response, bot data manipulation, code generation)
+├── utils/          # Helpers (api response, bot data manipulation, code generation, auth guard)
 │   └── tests/      # Unit tests
-├── authorizer/     # Lambda authorizer (Auth0 JWT verification)
 └── docs/           # OpenAPI generated docs
 ```
 
@@ -159,8 +160,9 @@ Endpoint (handler) → Controller (business logic) → AWS SDK (data)
 ```
 
 - **Endpoints**: Parse request, call controller, return HTTP response via `Api` class
-- **Controllers**: Contain all business logic, instantiate AWS SDK clients, perform operations
+- **Controllers**: Contain all business logic, use shared AWS SDK clients, perform operations
 - **Utils**: Shared helpers for code generation, data manipulation, response formatting
+- **Lib**: Module-level AWS SDK clients (DynamoDB) — reused across warm Lambda invocations
 
 ### Handler Pattern
 
@@ -170,6 +172,7 @@ Every endpoint follows this structure:
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import Api, { ApiRequestStatus } from '@/utils/api'
+import { getAuthenticatedUserId } from '@/utils/authGuard'
 import SomeController from '@/controllers/someController'
 
 export const handler = async (
@@ -181,7 +184,7 @@ export const handler = async (
   const controller = new SomeController()
 
   try {
-    const { userId } = event.pathParameters || {}
+    const userId = getAuthenticatedUserId(event)
     const body = JSON.parse(event.body || '{}')
 
     const data = await controller.doSomething(userId, body)
@@ -273,9 +276,18 @@ userId      | #CONNECTION#{connectionId}      | OAuth connection
 
 ### AWS SDK Usage
 
-- Instantiate SDK clients inside controller methods (not at module level)
+- DynamoDB client lives at module level in `src/lib/dynamodb.ts` — shared across warm Lambda invocations
+- Other SDK clients (Lambda, S3, Scheduler, etc.) instantiated in controller constructors
 - Use `DynamoDBDocument.from()` for simplified DynamoDB operations
 - `removeUndefinedValues: true` in marshall options for DynamoDB puts
+
+### Authentication & Authorization
+
+- The Lambda authorizer verifies Auth0 JWTs and returns `context: { userId: verified.sub }`
+- **Every endpoint MUST use `getAuthenticatedUserId(event)`** from `src/utils/authGuard.ts`
+- This utility extracts userId from the authorizer context AND validates it matches the path parameter
+- Never trust `event.pathParameters.userId` alone — always use the auth guard
+- The guard throws `'Unauthorized'` if no auth context, or `'Forbidden'` if user mismatch
 
 ## API Endpoints
 

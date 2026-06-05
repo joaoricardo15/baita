@@ -3,6 +3,7 @@ import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import Bot from '@/controllers/bot'
 import Api, { ApiRequestStatus } from '@/utils/api'
+import { getAuthenticatedUserId } from '@/utils/authGuard'
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -13,9 +14,10 @@ export const handler = async (
   const bot = new Bot()
 
   try {
-    const { userId, botId } = event.pathParameters || {}
+    const userId = getAuthenticatedUserId(event)
+    const { botId } = event.pathParameters || {}
 
-    if (!userId || !botId) {
+    if (!botId) {
       throw new Error('Missing required path parameters')
     }
 

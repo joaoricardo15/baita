@@ -2,34 +2,40 @@ import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 export const createMockEvent = (
   overrides: Partial<APIGatewayProxyEvent> = {}
-): APIGatewayProxyEvent => ({
-  httpMethod: 'POST',
-  path: '/',
-  pathParameters: null,
-  queryStringParameters: null,
-  headers: { 'Content-Type': 'application/json' },
-  multiValueHeaders: {},
-  multiValueQueryStringParameters: null,
-  body: null,
-  isBase64Encoded: false,
-  stageVariables: null,
-  requestContext: {
-    accountId: '123456789',
-    apiId: 'test-api',
-    authorizer: { userId: 'test-user' },
-    protocol: 'HTTP/1.1',
+): APIGatewayProxyEvent => {
+  const pathUserId =
+    (overrides.pathParameters as Record<string, string> | undefined)?.userId ||
+    'test-user'
+
+  return {
     httpMethod: 'POST',
-    identity: {} as any,
     path: '/',
-    stage: 'dev',
-    requestId: 'req-123',
-    requestTimeEpoch: Date.now(),
-    resourceId: 'resource-1',
-    resourcePath: '/',
-  },
-  resource: '/',
-  ...overrides,
-})
+    pathParameters: null,
+    queryStringParameters: null,
+    headers: { 'Content-Type': 'application/json' },
+    multiValueHeaders: {},
+    multiValueQueryStringParameters: null,
+    body: null,
+    isBase64Encoded: false,
+    stageVariables: null,
+    requestContext: {
+      accountId: '123456789',
+      apiId: 'test-api',
+      authorizer: { userId: pathUserId },
+      protocol: 'HTTP/1.1',
+      httpMethod: 'POST',
+      identity: {} as any,
+      path: '/',
+      stage: 'dev',
+      requestId: 'req-123',
+      requestTimeEpoch: Date.now(),
+      resourceId: 'resource-1',
+      resourcePath: '/',
+    },
+    resource: '/',
+    ...overrides,
+  }
+}
 
 export const createMockContext = (): Context => ({
   callbackWaitsForEmptyEventLoop: false,

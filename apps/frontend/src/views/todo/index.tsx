@@ -41,7 +41,9 @@ export const ToDo: FC = () => {
   }
 
   useEffect(() => {
-    retrieveTodoTasks()
+    if (!todoTasks) {
+      retrieveTodoTasks()
+    }
   }, [])
 
   return (

@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import Resource from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
+import { getAuthenticatedUserId } from '@/utils/authGuard'
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -11,10 +12,11 @@ export const handler = async (
   const api = new Api(event, context)
 
   try {
-    const { userId, connectionId } = event.pathParameters || {}
+    const userId = getAuthenticatedUserId(event)
+    const { connectionId } = event.pathParameters || {}
 
-    if (!userId || !connectionId) {
-      throw new Error('Missing userId or connectionId')
+    if (!connectionId) {
+      throw new Error('Missing connectionId')
     }
 
     const connectionResource = new Resource(userId, 'connection')

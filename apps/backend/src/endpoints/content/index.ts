@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import User from '@/controllers/user'
 import Api, { ApiRequestStatus } from '@/utils/api'
+import { getAuthenticatedUserId } from '@/utils/authGuard'
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -12,11 +13,7 @@ export const handler = async (
   const user = new User()
 
   try {
-    const { userId } = event.pathParameters || {}
-
-    if (!userId) {
-      throw new Error('Missing userId parameter')
-    }
+    const userId = getAuthenticatedUserId(event)
 
     const data = await user.getContent(userId)
 

@@ -1,8 +1,7 @@
-import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import { SQS } from '@aws-sdk/client-sqs'
-import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 import { IContent, IUser } from '@baita/shared'
 
+import { ddb } from '@/lib/dynamodb'
 import { CONTENT_BATCH_LIMIT, SQS_RETENTION_SECONDS } from '@/utils/constants'
 
 const CORE_TABLE = process.env.CORE_TABLE || ''
@@ -10,18 +9,14 @@ const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
 
 class User {
   private sqs: SQS
-  private ddb: DynamoDBDocument
 
   constructor() {
     this.sqs = new SQS({})
-    this.ddb = DynamoDBDocument.from(new DynamoDB({}), {
-      marshallOptions: { removeUndefinedValues: true },
-    })
   }
 
   async createUser(user: IUser) {
     try {
-      await this.ddb.put({
+      await ddb.put({
         TableName: CORE_TABLE,
         Item: {
           ...user,
@@ -101,7 +96,7 @@ class User {
         QueueName: `${SERVICE_PREFIX}-${userId}`,
       })
 
-      const { Items: alreadySeen } = await this.ddb.query({
+      const { Items: alreadySeen } = await ddb.query({
         TableName: CORE_TABLE,
         KeyConditionExpression:
           'userId = :userId and begins_with(sortKey, :sortKey)',

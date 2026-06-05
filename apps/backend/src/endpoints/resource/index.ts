@@ -6,6 +6,7 @@ import Resource, {
   resourceValidations,
 } from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
+import { getAuthenticatedUserId } from '@/utils/authGuard'
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -15,10 +16,10 @@ export const handler = async (
   const api = new Api(event, context)
 
   try {
-    const { userId, resourceName, operation, resourceId } =
-      event.pathParameters || {}
+    const userId = getAuthenticatedUserId(event)
+    const { resourceName, operation, resourceId } = event.pathParameters || {}
 
-    if (!userId || !resourceName || !operation) {
+    if (!resourceName || !operation) {
       throw new Error('Missing required path parameters')
     }
 

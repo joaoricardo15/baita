@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import Resource from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
+import { getAuthenticatedUserId } from '@/utils/authGuard'
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -13,11 +14,11 @@ export const handler = async (
   const api = new Api(event, context)
 
   try {
-    const { userId } = event.pathParameters || {}
+    const userId = getAuthenticatedUserId(event)
     const body = JSON.parse(event.body || '{}')
     const { connectorId, apiKey } = body
 
-    if (!userId || !connectorId || !apiKey) {
+    if (!connectorId || !apiKey) {
       throw new Error('Missing required fields: connectorId, apiKey')
     }
 

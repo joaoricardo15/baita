@@ -71,14 +71,28 @@ describe('Bot Deploy Endpoint', () => {
     )
   })
 
-  test('missing userId returns error', async () => {
+  test('unauthenticated request returns error', async () => {
     const result = await invokeHandler(handler, {
       pathParameters: { botId: 'bot-1' } as any,
       body: JSON.stringify({ name: 'Bot', active: true, tasks: [] }),
+      requestContext: {
+        accountId: '123456789',
+        apiId: 'test-api',
+        authorizer: {},
+        protocol: 'HTTP/1.1',
+        httpMethod: 'POST',
+        identity: {} as any,
+        path: '/',
+        stage: 'dev',
+        requestId: 'req-123',
+        requestTimeEpoch: Date.now(),
+        resourceId: 'resource-1',
+        resourcePath: '/',
+      },
     })
 
     expect(result.body.success).toBe(false)
-    expect(result.body.message).toContain('Missing required path parameters')
+    expect(result.body.message).toContain('Unauthorized')
   })
 
   test('missing botId returns error', async () => {

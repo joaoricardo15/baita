@@ -27,6 +27,9 @@ export const Logs: FC = () => {
         .then((logs) => {
           setBotLogs(logs)
         })
+        .catch(() => {
+          setBotLogs([])
+        })
         .finally(() => {
           setFetching(false)
         })

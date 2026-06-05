@@ -1,10 +1,13 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
+import { ErrorOutline as ErrorOutlineIcon } from '@mui/icons-material'
 import { FC, useContext, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { Loading } from '@/components'
+import { EmptyState, Loading } from '@/components'
 import { BotContext } from '@/providers/bot'
+import { NotificationContext } from '@/providers/notification'
 import { getAiService } from '@/utils/ai'
+import { getLabels, Labels } from '@/utils/labels'
 
 import BotAssistant from './components/assistant'
 import Skeleton from './components/skeleton'
@@ -14,7 +17,9 @@ import TopBar from './components/topBar'
 export const BotComponent: FC = () => {
   const { botId } = useParams()
   const { bot, getBot } = useContext(BotContext)
+  const { showSnack } = useContext(NotificationContext)
   const [aiAvailable, setAiAvailable] = useState<boolean | null>(null)
+  const [error, setError] = useState(false)
   const [selectedTaskIndex, setSelectedTaskIndex] = useState<number | null>(
     null
   )
@@ -22,7 +27,10 @@ export const BotComponent: FC = () => {
 
   useEffect(() => {
     if (botId && !bot) {
-      getBot(botId)
+      getBot(botId).catch(() => {
+        setError(true)
+        showSnack(labels.loadError, 'error')
+      })
     }
   }, [botId])
 
@@ -49,7 +57,13 @@ export const BotComponent: FC = () => {
 
   return (
     <div className="mt-2" style={{ paddingBottom: '12rem' }}>
-      {!bot ? (
+      {error ? (
+        <EmptyState
+          icon={<ErrorOutlineIcon style={{ fontSize: 48 }} />}
+          title={labels.errorTitle}
+          description={labels.errorDescription}
+        />
+      ) : !bot ? (
         <Skeleton />
       ) : (
         <>
@@ -91,3 +105,19 @@ export const BotComponent: FC = () => {
 export default withAuthenticationRequired(BotComponent, {
   onRedirecting: () => <Loading />,
 })
+
+const LABELS: Labels = {
+  en: {
+    loadError: 'Could not load bot',
+    errorTitle: 'Bot not found',
+    errorDescription: 'This bot could not be loaded. It may have been deleted.',
+  },
+  pt: {
+    loadError: 'Nao foi possivel carregar o bot',
+    errorTitle: 'Bot nao encontrado',
+    errorDescription:
+      'Nao foi possivel carregar este bot. Ele pode ter sido excluido.',
+  },
+}
+
+const labels = getLabels(LABELS)

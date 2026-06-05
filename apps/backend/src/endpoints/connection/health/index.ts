@@ -4,6 +4,7 @@ import axios from 'axios'
 
 import Resource from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
+import { getAuthenticatedUserId } from '@/utils/authGuard'
 import { ITokenCredentials, refreshOAuth2Token } from '@/utils/tokenRefresh'
 
 const SERVICE_API_URL = process.env.SERVICE_API_URL || ''
@@ -16,10 +17,11 @@ export const handler = async (
   const api = new Api(event, context)
 
   try {
-    const { userId, connectionId } = event.pathParameters || {}
+    const userId = getAuthenticatedUserId(event)
+    const { connectionId } = event.pathParameters || {}
 
-    if (!userId || !connectionId) {
-      throw new Error('Missing userId or connectionId')
+    if (!connectionId) {
+      throw new Error('Missing connectionId')
     }
 
     const resource = new Resource(userId, 'connection')

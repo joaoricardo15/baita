@@ -59,7 +59,9 @@ export const Feed: FC = () => {
 
   const updateContent = () => {
     setFetching(true)
-    retrieveContent().then(() => setFetching(false))
+    retrieveContent()
+      .catch(() => showSnack(labels.loadError, 'error'))
+      .finally(() => setFetching(false))
   }
 
   useEffect(() => {
@@ -151,11 +153,13 @@ const LABELS: Labels = {
     noContent: 'No content yet',
     noContentHint: 'Your feed will show content from your connected services.',
     refresh: 'Refresh',
+    loadError: 'Could not load content',
   },
   pt: {
     noContent: 'Nenhum conteudo ainda',
     noContentHint: 'Seu feed mostrara conteudo dos seus servicos conectados.',
     refresh: 'Atualizar',
+    loadError: 'Nao foi possivel carregar conteudo',
   },
 }
 

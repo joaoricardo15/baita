@@ -1,10 +1,8 @@
 import { ApiGatewayV2 } from '@aws-sdk/client-apigatewayv2'
 import { CloudWatchLogs } from '@aws-sdk/client-cloudwatch-logs'
-import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import { Lambda } from '@aws-sdk/client-lambda'
 import { S3 } from '@aws-sdk/client-s3'
 import { Scheduler } from '@aws-sdk/client-scheduler'
-import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 import {
   IBot,
   IBotModel,
@@ -16,6 +14,7 @@ import {
 } from '@baita/shared'
 import { v4 as uuidv4 } from 'uuid'
 
+import { ddb } from '@/lib/dynamodb'
 import { getDataFromService } from '@/utils/bot'
 import { getBotSampleCode, getCodeFile, getCompleteBotCode } from '@/utils/code'
 import {
@@ -32,7 +31,6 @@ const BOTS_PERMISSION = process.env.BOTS_PERMISSION || ''
 const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
 
 class Bot {
-  private ddb: DynamoDBDocument
   private lambda: Lambda
   private s3: S3
   private scheduler: Scheduler
@@ -40,9 +38,6 @@ class Bot {
   private cloudWatchLogs: CloudWatchLogs
 
   constructor() {
-    this.ddb = DynamoDBDocument.from(new DynamoDB({}), {
-      marshallOptions: { removeUndefinedValues: true },
-    })
     this.lambda = new Lambda({})
     this.s3 = new S3({})
     this.scheduler = new Scheduler({})
@@ -172,7 +167,7 @@ class Bot {
         ],
       }
 
-      await this.ddb.put({
+      await ddb.put({
         TableName: CORE_TABLE,
         Item: {
           ...bot,
@@ -288,7 +283,7 @@ class Bot {
         description: model.description,
       }
 
-      await this.ddb.put({
+      await ddb.put({
         TableName: CORE_TABLE,
         Item: {
           ...bot,
@@ -306,7 +301,7 @@ class Bot {
     try {
       const botPrefix = `${SERVICE_PREFIX}-${botId}`
 
-      await this.ddb.delete({
+      await ddb.delete({
         TableName: CORE_TABLE,
         Key: { userId, sortKey: `#BOT#${botId}` },
       })
@@ -346,7 +341,7 @@ class Bot {
     tasks: ITask[]
   ) {
     try {
-      const result = await this.ddb.update({
+      const result = await ddb.update({
         TableName: CORE_TABLE,
         Key: { userId, sortKey: `#BOT#${botId}` },
         UpdateExpression:
@@ -430,7 +425,7 @@ class Bot {
         })
       }
 
-      const dbResult = await this.ddb.update({
+      const dbResult = await ddb.update({
         TableName: CORE_TABLE,
         Key: { userId, sortKey: `#BOT#${botId}` },
         UpdateExpression: 'set #name = :name, tasks = :tasks, active = :active',
@@ -502,7 +497,7 @@ class Bot {
 
       validateTaskExecutionResult(sample)
 
-      await this.ddb.update({
+      await ddb.update({
         TableName: CORE_TABLE,
         Key: { userId, sortKey: `#BOT#${botId}` },
         ReturnValues: 'ALL_NEW',
@@ -524,7 +519,7 @@ class Bot {
     sample: ITaskExecutionResult
   ) {
     try {
-      await this.ddb.update({
+      await ddb.update({
         TableName: CORE_TABLE,
         Key: { userId, sortKey: `#BOT#${botId}` },
         ReturnValues: 'ALL_NEW',
@@ -547,7 +542,7 @@ class Bot {
     taskIndex: number
   ) {
     try {
-      await this.ddb.update({
+      await ddb.update({
         TableName: CORE_TABLE,
         Key: { userId, sortKey: `#BOT#${botId}` },
         UpdateExpression: `set tasks[${taskIndex}].connectionId = :connectionId`,
