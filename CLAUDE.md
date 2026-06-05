@@ -73,6 +73,16 @@ The bot schema includes validation and integrity helpers that protect against co
 - Backend endpoints define the contract
 - Frontend Axios calls must match the backend contract exactly
 
+### Runtime Data Patterns (Not Visible in Static Code)
+
+The generic Resource controller (`src/controllers/resource.ts`) constructs DynamoDB sortKeys dynamically as `#{resourceName}#{resourceId}`. This means some data records **cannot be found by grepping the codebase** — they are written at runtime via `POST /resource/{name}/create/{id}`. Key examples:
+
+- `#CONTENT#{contentId}` — Written by the frontend when user reacts to feed content (swipe). Used by `publishContent()` for deduplication. The dedup query in `controllers/user.ts` references `#CONTENT` but the write happens through the generic Resource CRUD path.
+- `#CONNECTION#{connectionId}` — OAuth connections
+- Any custom resource the user creates
+
+**When debugging data flow**: always consider that DynamoDB records with any `#RESOURCENAME#` pattern may be written through the generic resource endpoint, not through a dedicated code path.
+
 ### Connector Icons
 
 All connector/service icons live in `apps/frontend/public/icons/` and are referenced as `/icons/{name}.{ext}` in connector manifests (`packages/shared/src/connectors/*.ts`).

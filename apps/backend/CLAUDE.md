@@ -230,6 +230,21 @@ userId      | #CONNECTION#{connectionId}      | OAuth connection
 6. Results published to user's SQS queue for content feed
 7. Execution logs captured in CloudWatch, queryable via logs endpoint
 
+### Content Feed Lifecycle
+
+The content feed uses SQS as a transient message queue + DynamoDB for deduplication:
+
+1. **Publish**: Bot's "Publish content to feed" step calls `publishContent()` which:
+   - Queries DynamoDB for `#CONTENT#{contentId}` records (already-seen items)
+   - Filters out duplicates, limits to `CONTENT_BATCH_LIMIT` (10) new items
+   - Sends new items to the user's SQS queue
+   - **Note**: Returns success even when 0 items are published (all filtered as duplicates)
+2. **Consume**: Frontend calls `GET /content` → `getContent()` reads up to 10 messages from SQS and **deletes them immediately** (one-time consumption)
+3. **Deduplicate**: When user swipes/reacts to content in the feed, the frontend calls `POST /resource/content/create/{contentId}` which writes a `#CONTENT#{contentId}` record to DynamoDB via the **generic Resource controller** (runtime operation — not visible as a static code reference to `#CONTENT`)
+4. **Retention**: SQS messages expire after 2 days if not consumed
+
+**Important for debugging**: Because `#CONTENT` records are written by the generic Resource controller at runtime (via `POST /resource/content/create`), you cannot find explicit `#CONTENT` write references by grepping the codebase. The Resource controller dynamically constructs sortKeys as `#{resourceName}#{resourceId}` — for content, this becomes `#CONTENT#{contentId}`. Always consider this runtime behavior when tracing data flow.
+
 ### Code Execution Safety
 
 - Uses Node.js `vm` module with isolated context (`vm.createContext()`)

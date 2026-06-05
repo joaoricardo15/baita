@@ -35,10 +35,16 @@ export const publishToFeed = async (
 
     const user = new User()
 
-    await user.publishContent(userId, contentList)
+    const { published, total } = await user.publishContent(userId, contentList)
+
+    if (published === 0) {
+      throw new Error(
+        `No new content to publish (${total} items already seen).`
+      )
+    }
 
     return {
-      message: 'Content published successfully.',
+      message: `Published ${published} of ${total} items to feed.`,
     }
   } catch (err: unknown) {
     throw err instanceof Error ? err : new Error(String(err))

@@ -90,7 +90,10 @@ class User {
     }
   }
 
-  async publishContent(userId: string, content: IContent[]) {
+  async publishContent(
+    userId: string,
+    content: IContent[]
+  ): Promise<{ published: number; total: number }> {
     try {
       const queueResult = await this.sqs.getQueueUrl({
         QueueName: `${SERVICE_PREFIX}-${userId}`,
@@ -124,6 +127,8 @@ class User {
           })),
         })
       }
+
+      return { published: newContent.length, total: content.length }
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }
