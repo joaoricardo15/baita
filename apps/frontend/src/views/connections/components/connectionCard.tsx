@@ -1,8 +1,8 @@
 import { getConnectorByAppId, IAppConnection } from '@baita/shared'
 import {
   Delete as DeleteIcon,
+  FlashOnSharp as FlashOnSharpIcon,
   MoreVert as MoreVertIcon,
-  Sync as SyncIcon,
 } from '@mui/icons-material'
 import { Card, Chip } from '@mui/material'
 import { FC, useContext } from 'react'
@@ -106,7 +106,7 @@ const ConnectionCard: FC<{ connection: IAppConnection }> = ({ connection }) => {
               links={[
                 {
                   label: labels.test,
-                  icon: <SyncIcon color="secondary" />,
+                  icon: <FlashOnSharpIcon color="secondary" />,
                   onClick: handleTest,
                 },
                 {
