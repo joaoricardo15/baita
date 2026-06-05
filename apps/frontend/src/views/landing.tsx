@@ -70,12 +70,20 @@ const LandingPage: FC = () => {
       </div>
       <div className="text-center pb-3">
         <p className="text-secondary mx-3 mb-2">{labels.purpose}</p>
-        <Link to={LINKS.privacy} className="text-secondary mx-2">
-          {labels.privacy}
-        </Link>
-        <Link to={LINKS.terms} className="text-secondary mx-2">
-          {labels.terms}
-        </Link>
+        <div className="d-flex justify-content-center gap-3">
+          <Link
+            to={LINKS.privacy}
+            className="text-decoration-underline text-primary"
+          >
+            {labels.privacy}
+          </Link>
+          <Link
+            to={LINKS.terms}
+            className="text-decoration-underline text-primary"
+          >
+            {labels.terms}
+          </Link>
+        </div>
       </div>
     </div>
   )

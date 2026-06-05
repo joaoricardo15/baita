@@ -15,6 +15,7 @@ export const googleConnector: IConnectorManifest = {
     scopes: [
       'https://www.googleapis.com/auth/userinfo.email',
       'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/gmail.readonly',
       'https://www.googleapis.com/auth/gmail.send',
     ],
     userInfoUrl: 'https://www.googleapis.com/oauth2/v3/userinfo',
@@ -57,6 +58,44 @@ export const googleConnector: IConnectorManifest = {
         },
       ],
       outputPath: 'id',
+    },
+    {
+      id: 'list-messages',
+      name: 'List emails',
+      description: 'List email messages from inbox',
+      method: 'GET',
+      path: '/gmail/v1/users/me/messages',
+      inputFields: [
+        {
+          name: 'q',
+          label: 'Search query',
+          type: VariableType.output,
+          required: false,
+        },
+        {
+          name: 'maxResults',
+          label: 'Max results',
+          type: VariableType.output,
+          required: false,
+        },
+      ],
+      outputPath: 'messages',
+    },
+    {
+      id: 'get-message',
+      name: 'Get email',
+      description: 'Get a specific email message by ID',
+      method: 'GET',
+      path: '/gmail/v1/users/me/messages/{messageId}',
+      inputFields: [
+        {
+          name: 'messageId',
+          label: 'Message ID',
+          type: VariableType.output,
+          required: true,
+        },
+      ],
+      outputPath: '',
     },
   ],
 }
