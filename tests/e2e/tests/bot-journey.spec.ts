@@ -303,6 +303,9 @@ test.describe('Bot Journey: Full Lifecycle', () => {
   })
 
   test('deactivate bot', async ({ request }) => {
+    // Allow previous deploy to fully propagate
+    await new Promise((r) => setTimeout(r, 2000))
+
     const getRes = await request.post(
       `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
       { headers: authHeaders(token), data: {} }
