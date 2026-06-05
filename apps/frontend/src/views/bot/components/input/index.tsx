@@ -1,17 +1,31 @@
 import { Divider } from '@mui/material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 import { ITask, IVariable } from '@baita/shared'
-import { BotContext } from '@/providers/bot'
+import { getBotInputs, useBot, useUpdateBot } from '@/hooks/useBots'
 import CustomInputs from './customInputs'
 import ServiceInputs from './serviceInputs'
 
 const TaskInput: FC<{
   taskIndex: number
 }> = ({ taskIndex }) => {
-  const { bot, getBotInputs, updateBotTask } = useContext(BotContext)
+  const { botId } = useParams()
+  const { data: bot } = useBot(botId)
+  const updateBotMutation = useUpdateBot()
 
   const [task, setTask] = useState<ITask>()
+
+  const updateBotTask = (updatedTask: ITask) => {
+    if (bot) {
+      const updatedTasks = [...bot.tasks]
+      updatedTasks[taskIndex] = updatedTask
+      updateBotMutation.mutate({
+        botId: bot.botId,
+        bot: { ...bot, tasks: updatedTasks },
+      })
+    }
+  }
 
   const updateBotInputField = (inputField: IVariable) => {
     if (bot && task) {
@@ -25,7 +39,7 @@ const TaskInput: FC<{
         task.inputData.push(inputField)
       }
 
-      updateBotTask(bot.botId, taskIndex, task, false)
+      updateBotTask(task)
     }
   }
 
@@ -44,16 +58,14 @@ const TaskInput: FC<{
         task.inputData.push(inputField)
       }
 
-      updateBotTask(bot.botId, taskIndex, task, false)
+      updateBotTask(task)
     }
   }
 
   const addBotInputField = (inputField: IVariable) => {
     if (bot && task) {
       task.inputData.push(inputField)
-      bot.tasks[taskIndex] = task
-
-      updateBotTask(bot.botId, taskIndex, task)
+      updateBotTask(task)
     }
   }
 
@@ -62,8 +74,7 @@ const TaskInput: FC<{
       task.inputData = task.inputData.filter(
         (x) => x.customFieldId !== customFieldId
       )
-
-      updateBotTask(bot.botId, taskIndex, task)
+      updateBotTask(task)
     }
   }
 

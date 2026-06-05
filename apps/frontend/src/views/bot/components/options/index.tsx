@@ -1,21 +1,29 @@
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 import { ITask, ServiceName, ServiceType } from '@baita/shared'
-import { BotContext } from '@/providers/bot'
+import { getBotInputs, useBot, useUpdateBot } from '@/hooks/useBots'
 import ExtraOptions from './extraOptions'
 import FilterConditions from './filterConditions'
 
 const TaskOptions: FC<{
   taskIndex: number
 }> = ({ taskIndex }) => {
-  const { bot, getBotInputs, updateBotTask } = useContext(BotContext)
+  const { botId } = useParams()
+  const { data: bot } = useBot(botId)
+  const updateBotMutation = useUpdateBot()
 
   const [task, setTask] = useState<ITask>()
 
   const updateTaskOptions = (fieldName: string, value: any) => {
     if (bot) {
       const updatedTask = { ...task, [fieldName]: value } as ITask
-      updateBotTask(bot.botId, taskIndex, updatedTask, false)
+      const updatedTasks = [...bot.tasks]
+      updatedTasks[taskIndex] = updatedTask
+      updateBotMutation.mutate({
+        botId: bot.botId,
+        bot: { ...bot, tasks: updatedTasks },
+      })
     }
   }
 

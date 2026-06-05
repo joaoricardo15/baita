@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, RenderOptions } from '@testing-library/react'
 import { FC, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -27,15 +28,26 @@ interface WrapperOptions {
   authValue?: Partial<typeof defaultAuthValue>
 }
 
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: { retry: false, gcTime: 0 },
+      mutations: { retry: false },
+    },
+  })
+
 export const createWrapper = (options: WrapperOptions = {}) => {
   const { route = '/', authValue = {} } = options
+  const queryClient = createTestQueryClient()
 
   const Wrapper: FC<{ children: ReactNode }> = ({ children }) => (
-    <MemoryRouter initialEntries={[route]}>
-      <AuthContext.Provider value={{ ...defaultAuthValue, ...authValue }}>
-        {children}
-      </AuthContext.Provider>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={[route]}>
+        <AuthContext.Provider value={{ ...defaultAuthValue, ...authValue }}>
+          {children}
+        </AuthContext.Provider>
+      </MemoryRouter>
+    </QueryClientProvider>
   )
 
   return Wrapper

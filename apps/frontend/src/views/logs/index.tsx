@@ -1,54 +1,22 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { Loading, Skeleton, Text } from '@/components'
-import { IBotLog } from '@baita/shared'
-import { BotContext } from '@/providers/bot'
+import { useBot } from '@/hooks/useBots'
+import { useLogs } from '@/hooks/useLogs'
 import { getLabels, Labels } from '@/utils/labels'
-import ApiRequest from '@/utils/requests'
 import Log from './components/log'
 import TopBar from './components/topBar'
 
 export const Logs: FC = () => {
   const { botId } = useParams()
-  const apiRequest = ApiRequest()
-  const { bot, getBot } = useContext(BotContext)
-
-  const [fetching, setFetching] = useState<boolean>(false)
-  const [botLogs, setBotLogs] = useState<IBotLog[]>()
-
-  const refresh = () => {
-    if (botId && !fetching) {
-      setFetching(true)
-
-      apiRequest
-        .getLogs(botId)
-        .then((logs) => {
-          setBotLogs(logs)
-        })
-        .catch(() => {
-          setBotLogs([])
-        })
-        .finally(() => {
-          setFetching(false)
-        })
-    }
-  }
-
-  useEffect(() => {
-    if (botId && !bot) {
-      getBot(botId)
-    }
-  }, [botId])
-
-  useEffect(() => {
-    refresh()
-  }, [])
+  const { data: bot } = useBot(botId)
+  const { data: botLogs, isLoading: fetching, refetch } = useLogs(botId)
 
   return (
     <div className="mt-2">
-      <TopBar botName={bot?.name} onRefreshClick={refresh} />
+      <TopBar botName={bot?.name} onRefreshClick={() => refetch()} />
       <div className="mt-4">
         {fetching || !botLogs ? (
           <Skeleton elements={3} height={100} />

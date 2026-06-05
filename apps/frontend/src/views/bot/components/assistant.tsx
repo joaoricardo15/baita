@@ -12,10 +12,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { FC, useContext, useState } from 'react'
+import { FC, useState } from 'react'
 
 import { IBot, ITask } from '@baita/shared'
-import { BotContext } from '@/providers/bot'
+import { useUpdateBot } from '@/hooks/useBots'
 import {
   AiMessage,
   buildMessagesWithContext,
@@ -88,7 +88,7 @@ const BotAssistant: FC<{ bot: IBot; task: ITask; taskIndex: number }> = ({
   task,
   taskIndex,
 }) => {
-  const { updateBotTask } = useContext(BotContext)
+  const updateBot = useUpdateBot()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [proposedTask, setProposedTask] = useState<ITask | null>(null)
@@ -150,7 +150,9 @@ const BotAssistant: FC<{ bot: IBot; task: ITask; taskIndex: number }> = ({
 
   const handleApply = () => {
     if (!proposedTask) return
-    updateBotTask(bot.botId, taskIndex, proposedTask)
+    const updatedTasks = [...bot.tasks]
+    updatedTasks[taskIndex] = proposedTask
+    updateBot.mutate({ botId: bot.botId, bot: { ...bot, tasks: updatedTasks } })
     setDialogOpen(false)
     setProposedTask(null)
   }

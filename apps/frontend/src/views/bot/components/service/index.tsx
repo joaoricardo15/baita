@@ -1,4 +1,5 @@
 import { FC, useContext, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 import { OptionsInput } from '@/components'
 import {
@@ -10,8 +11,8 @@ import {
   ServiceName,
   ServiceType,
 } from '@baita/shared'
+import { useBot, useUpdateBot } from '@/hooks/useBots'
 import { AppsContext } from '@/providers/apps'
-import { BotContext } from '@/providers/bot'
 import { getLabels, Labels } from '@/utils/labels'
 import NewConnection from './newConnection'
 import PushNotificationService from './pushNotification'
@@ -20,10 +21,27 @@ import WebhookService from './webhook'
 const TaskService: FC<{
   taskIndex: number
 }> = ({ taskIndex }) => {
+  const { botId } = useParams()
   const { services } = useContext(AppsContext)
-  const { bot, getBot, updateBotTask } = useContext(BotContext)
+  const { data: bot } = useBot(botId)
+  const updateBot = useUpdateBot()
 
   const [task, setTask] = useState<ITask>()
+
+  const updateBotTask = (
+    botId: string,
+    taskIndex: number,
+    updatedTask: Partial<ITask>
+  ) => {
+    if (bot) {
+      const updatedTasks = [...bot.tasks]
+      updatedTasks[taskIndex] = {
+        ...updatedTasks[taskIndex],
+        ...updatedTask,
+      } as ITask
+      updateBot.mutate({ botId, bot: { ...bot, tasks: updatedTasks } })
+    }
+  }
 
   const onSelectService = (appService: IServiceApp) => {
     if (bot && task) {
@@ -74,9 +92,7 @@ const TaskService: FC<{
   }
 
   const refreshAfterConnection = () => {
-    if (bot) {
-      getBot(bot.botId)
-    }
+    // No-op: useBot query will refetch automatically via queryClient
   }
 
   useEffect(() => {

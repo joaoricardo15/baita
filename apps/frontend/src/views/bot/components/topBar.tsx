@@ -5,11 +5,11 @@ import {
 } from '@mui/icons-material'
 import { FC, useContext, useState } from 'react'
 import ReactConfetti from 'react-confetti'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { Button, TextInput } from '@/components'
 import { validateBot } from '@baita/shared'
-import { BotContext } from '@/providers/bot'
+import { useBot, useDeployBot, useUpdateBot } from '@/hooks/useBots'
 import { NotificationContext } from '@/providers/notification'
 import { LINKS } from '@/router'
 import { getLabels, Labels } from '@/utils/labels'
@@ -20,9 +20,12 @@ const TopBar: FC<{
   description?: string
   isActive: boolean
 }> = ({ name, description, image, isActive }) => {
+  const { botId } = useParams()
   const navigate = useNavigate()
   const { showLoading, showSnack } = useContext(NotificationContext)
-  const { bot, updateBot, deployBot } = useContext(BotContext)
+  const { data: bot } = useBot(botId)
+  const updateBot = useUpdateBot()
+  const deployBot = useDeployBot()
 
   const [botName, setBotName] = useState(name)
   const [botDescription, setBotDescription] = useState(description)
@@ -31,19 +34,19 @@ const TopBar: FC<{
 
   const onNameChange = (name: string) => {
     if (bot) {
-      updateBot({ ...bot, name })
+      updateBot.mutate({ botId: bot.botId, bot: { ...bot, name } })
     }
   }
 
   const onDescriptionChange = (description?: string) => {
     if (bot) {
-      updateBot({ ...bot, description })
+      updateBot.mutate({ botId: bot.botId, bot: { ...bot, description } })
     }
   }
 
   const onImageChange = (image?: string) => {
     if (bot) {
-      updateBot({ ...bot, image })
+      updateBot.mutate({ botId: bot.botId, bot: { ...bot, image } })
     }
   }
 
@@ -63,7 +66,8 @@ const TopBar: FC<{
         }
       }
       showLoading(true)
-      deployBot({ ...bot, active: !bot.active })
+      deployBot
+        .mutateAsync({ ...bot, active: !bot.active })
         .catch((err: { message?: string }) => {
           const message = err?.message || labels.toggleError
           showSnack(message, 'error')

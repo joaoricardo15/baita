@@ -4,13 +4,12 @@ import {
   InterestsOutlined as InterestsOutlinedIcon,
 } from '@mui/icons-material'
 import { Dialog, DialogContent, TextareaAutosize } from '@mui/material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useState } from 'react'
 
 import { Button, EmptyState, Loading, Skeleton } from '@/components'
 import { INote } from '@baita/shared'
-import { NotificationContext } from '@/providers/notification'
+import { useDeleteNote, useNotes, useSaveNote } from '@/hooks/useNotes'
 import { getLabels, Labels } from '@/utils/labels'
-import ApiRequest from '@/utils/requests'
 
 import NoteCard from './components/noteCard'
 
@@ -22,18 +21,11 @@ const emptyNote: () => INote = () => ({
 })
 
 export const Notes: FC = () => {
-  const apiRequest = ApiRequest()
-  const { showLoading, showSnack } = useContext(NotificationContext)
+  const { data: notes, isLoading: loading } = useNotes()
+  const saveNote = useSaveNote()
+  const deleteNote = useDeleteNote()
 
-  const [notes, setNotes] = useState<INote[] | undefined>()
   const [editingNote, setEditingNote] = useState<INote | undefined>()
-
-  const refreshNotes = () => {
-    apiRequest
-      .getNotes()
-      .then((notes) => setNotes(notes))
-      .catch(() => showSnack(labels.loadError, 'error'))
-  }
 
   const onNewNote = () => {
     setEditingNote(emptyNote())
@@ -51,32 +43,18 @@ export const Notes: FC = () => {
 
   const onSaveNote = () => {
     if (editingNote?.title) {
-      showLoading(true)
-      apiRequest
-        .addNote(editingNote.noteId, editingNote)
-        .then(() => refreshNotes())
-        .catch(() => showSnack(labels.saveError, 'error'))
-        .finally(() => showLoading(false))
+      saveNote.mutate(editingNote)
     }
     setEditingNote(undefined)
   }
 
   const onDeleteNote = (noteId: string) => {
-    showLoading(true)
-    apiRequest
-      .deleteNote(noteId)
-      .then(() => refreshNotes())
-      .catch(() => showSnack(labels.deleteError, 'error'))
-      .finally(() => showLoading(false))
+    deleteNote.mutate(noteId)
   }
-
-  useEffect(() => {
-    refreshNotes()
-  }, [])
 
   return (
     <>
-      {!notes ? (
+      {loading || !notes ? (
         <Skeleton elements={3} height={100} />
       ) : notes.length === 0 ? (
         <EmptyState

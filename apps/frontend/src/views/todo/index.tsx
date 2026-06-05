@@ -1,15 +1,15 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
 import { Add as AddIcon } from '@mui/icons-material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useState } from 'react'
 
 import { Button, Loading, Skeleton, TextInput } from '@/components'
-import { UserContext } from '@/providers/user'
+import { useTodo, useUpdateTodo } from '@/hooks/useTodo'
 import { getLabels, Labels } from '@/utils/labels'
 import ToDoList from './components/todoList'
 
 export const ToDo: FC = () => {
-  const { todoTasks, retrieveTodoTasks, updateTodoTasks, setTodoTasks } =
-    useContext(UserContext)
+  const { data: todoTasks, isLoading: loading } = useTodo()
+  const updateTodo = useUpdateTodo()
   const [newTaskTitle, setNewTaskTitle] = useState('')
 
   const onNewTodoTitleChange = (value: string) => {
@@ -35,20 +35,13 @@ export const ToDo: FC = () => {
         ...doneTasks,
       ]
       setNewTaskTitle('')
-      setTodoTasks(updatedTasks)
-      updateTodoTasks(updatedTasks)
+      updateTodo.mutate(updatedTasks)
     }
   }
 
-  useEffect(() => {
-    if (!todoTasks) {
-      retrieveTodoTasks()
-    }
-  }, [])
-
   return (
     <>
-      {!todoTasks ? (
+      {loading || !todoTasks ? (
         <div className="d-flex m-2">
           <Skeleton elements={5} width={36} height={36} />
           <Skeleton elements={5} height={36} className="w-100 mx-2" />
@@ -58,9 +51,8 @@ export const ToDo: FC = () => {
           <div style={{ maxHeight: '70vh', overflow: 'scroll' }}>
             <ToDoList
               tasks={todoTasks.filter((task) => !task.done)}
-              onChange={(todoTasks) => {
-                setTodoTasks(todoTasks)
-                updateTodoTasks(todoTasks)
+              onChange={(tasks) => {
+                updateTodo.mutate(tasks)
               }}
             />
           </div>

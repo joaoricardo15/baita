@@ -12,8 +12,8 @@ import { useNavigate } from 'react-router-dom'
 
 import Menu from '@/components/menu'
 import { IBot, IBotModel, validateBot } from '@baita/shared'
+import { useDeleteBot, useDeployBot, usePublishBotModel } from '@/hooks/useBots'
 import { AuthContext } from '@/providers/auth'
-import { BotContext } from '@/providers/bot'
 import { NotificationContext } from '@/providers/notification'
 import { LINKS } from '@/router'
 import { getLabels, Labels } from '@/utils/labels'
@@ -24,23 +24,24 @@ const Bot: FC<{
 }> = ({ bot }) => {
   const navigate = useNavigate()
   const { user, isAdmin } = useContext(AuthContext)
-  const { setBot, deleteBot, deployBot, publishBotModel } =
-    useContext(BotContext)
+  const deleteBot = useDeleteBot()
+  const deployBot = useDeployBot()
+  const publishBotModel = usePublishBotModel()
   const { showLoading, showSnack } = useContext(NotificationContext)
 
   const onNavigateToBot = () => {
-    setBot(bot)
     navigate(LINKS.bot(bot.botId))
   }
 
   const onNavigateToLogs = () => {
-    setBot(bot)
     navigate(LINKS.logs(bot.botId))
   }
 
   const onDeleteBot = () => {
     showLoading(true)
-    deleteBot(bot.botId, bot.apiId).then(() => showLoading(false))
+    deleteBot
+      .mutateAsync({ botId: bot.botId, apiId: bot.apiId })
+      .finally(() => showLoading(false))
   }
 
   const onDeployBot = () => {
@@ -52,7 +53,8 @@ const Bot: FC<{
       }
     }
     showLoading(true)
-    deployBot({ ...bot, active: !bot.active })
+    deployBot
+      .mutateAsync({ ...bot, active: !bot.active })
       .catch((err: { message?: string }) => {
         const message = err?.message || labels.toggleError
         showSnack(message, 'error')
@@ -95,7 +97,8 @@ const Bot: FC<{
 
   const onPublishModel = () => {
     showLoading(true)
-    publishBotModel(parseModelBot(bot))
+    publishBotModel
+      .mutateAsync(parseModelBot(bot))
       .then(() => showSnack(labels.publishSuccess, 'success'))
       .catch((error) =>
         showSnack(

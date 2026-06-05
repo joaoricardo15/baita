@@ -1,21 +1,26 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useContext } from 'react'
 import { CardSwiper } from 'react-card-rotate-swiper'
 import { TwitterTweetEmbed } from 'react-twitter-embed'
 
 import { Button, EmptyState, Loading, Logo, Skeleton } from '@/components'
 import { IContent } from '@baita/shared'
+import {
+  useContent,
+  usePopContent,
+  useReactToContent,
+  useRefreshContent,
+} from '@/hooks/useContent'
 import { NotificationContext } from '@/providers/notification'
-import { UserContext } from '@/providers/user'
 import { getLabels, Labels } from '@/utils/labels'
 import ContentCard from './components/contentCard'
 
 export const Feed: FC = () => {
-  const { contents, popContent, retrieveContent, reactToContent } =
-    useContext(UserContext)
+  const { data: contents, isLoading: loading } = useContent()
+  const popContent = usePopContent()
+  const refreshContent = useRefreshContent()
+  const reactToContent = useReactToContent()
   const { showSnack } = useContext(NotificationContext)
-
-  const [fetching, setFetching] = useState(false)
 
   const onSwipe = (direction: string, content: IContent) => {
     if (direction !== 'none') {
@@ -36,43 +41,36 @@ export const Feed: FC = () => {
             showSnack('Invalid URL', 'error')
           }
         } else {
-          showSnack('No URL for this content 😫', 'error')
+          showSnack('No URL for this content', 'error')
         }
       }
 
       if (direction === 'down') {
-        reactToContent(content, 'skip')
+        reactToContent.mutate({ content, reaction: 'skip' })
         showSnack('Skip', 'info')
       }
 
       if (direction === 'right') {
-        reactToContent(content, 'like')
+        reactToContent.mutate({ content, reaction: 'like' })
         showSnack('Like', 'success')
       }
 
       if (direction === 'left') {
-        reactToContent(content, 'dislike')
+        reactToContent.mutate({ content, reaction: 'dislike' })
         showSnack('Dislike', 'error')
       }
     }
   }
 
   const updateContent = () => {
-    setFetching(true)
-    retrieveContent()
-      .catch(() => showSnack(labels.loadError, 'error'))
-      .finally(() => setFetching(false))
+    refreshContent.mutate(undefined, {
+      onError: () => showSnack(labels.loadError, 'error'),
+    })
   }
-
-  useEffect(() => {
-    if (!contents || contents.length === 0) {
-      updateContent()
-    }
-  }, [])
 
   return (
     <>
-      {!contents || fetching ? (
+      {loading || !contents || refreshContent.isPending ? (
         <Skeleton
           elements={1}
           height="100%"

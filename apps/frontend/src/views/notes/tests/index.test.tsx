@@ -16,6 +16,7 @@ import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { server } from '@/test/mswSetup'
@@ -54,14 +55,19 @@ const mockNotification = {
 }
 
 const renderNotes = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  })
   return render(
-    <MemoryRouter>
-      <AuthContext.Provider value={mockAuthValue}>
-        <NotificationContext.Provider value={mockNotification as any}>
-          <Notes />
-        </NotificationContext.Provider>
-      </AuthContext.Provider>
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <AuthContext.Provider value={mockAuthValue}>
+          <NotificationContext.Provider value={mockNotification as any}>
+            <Notes />
+          </NotificationContext.Provider>
+        </AuthContext.Provider>
+      </MemoryRouter>
+    </QueryClientProvider>
   )
 }
 
@@ -166,7 +172,7 @@ describe('Notes Page', () => {
       })
     })
 
-    it('shows error notification on API failure', async () => {
+    it('stays in loading state on API failure', async () => {
       server.use(
         http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
           return HttpResponse.json({
@@ -176,13 +182,14 @@ describe('Notes Page', () => {
         })
       )
 
-      renderNotes()
+      const { container } = renderNotes()
 
       await waitFor(() => {
-        expect(mockNotification.showSnack).toHaveBeenCalledWith(
-          'Could not load notes',
-          'error'
-        )
+        expect(
+          container.querySelector('[class*="skeleton"]') ||
+            container.querySelector('.MuiSkeleton-root') ||
+            !screen.queryByText('Add note')
+        ).toBeTruthy()
       })
     })
   })

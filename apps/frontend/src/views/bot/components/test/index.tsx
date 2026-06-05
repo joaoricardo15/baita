@@ -1,15 +1,18 @@
 import { FlashOnSharp as FlashOnSharpIcon } from '@mui/icons-material'
 import { FC, useContext, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 import { Button, Highlight, StatusChip, Text } from '@/components'
 import { getTaskLabel, ITask, validateBot } from '@baita/shared'
-import { BotContext } from '@/providers/bot'
+import { useBot, useTestBotTask } from '@/hooks/useBots'
 import { NotificationContext } from '@/providers/notification'
 import { getTimeDiffLabel } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 
 const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
-  const { bot, testBotTask } = useContext(BotContext)
+  const { botId } = useParams()
+  const { data: bot } = useBot(botId)
+  const testBotTask = useTestBotTask()
   const { showSnack, showLoading } = useContext(NotificationContext)
 
   const [task, setTask] = useState<ITask>()
@@ -25,7 +28,8 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
       }
 
       showLoading(true)
-      testBotTask(bot, taskIndex)
+      testBotTask
+        .mutateAsync({ bot, taskIndex })
         .then(() => {
           showSnack(labels.testSuccess, 'success')
         })

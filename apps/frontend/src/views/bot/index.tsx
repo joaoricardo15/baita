@@ -1,11 +1,10 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
 import { ErrorOutline as ErrorOutlineIcon } from '@mui/icons-material'
-import { FC, useContext, useEffect, useRef, useState } from 'react'
+import { FC, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { EmptyState, Loading } from '@/components'
-import { BotContext } from '@/providers/bot'
-import { NotificationContext } from '@/providers/notification'
+import { useBot } from '@/hooks/useBots'
 import { getAiService } from '@/utils/ai'
 import { getLabels, Labels } from '@/utils/labels'
 
@@ -16,23 +15,12 @@ import TopBar from './components/topBar'
 
 export const BotComponent: FC = () => {
   const { botId } = useParams()
-  const { bot, getBot } = useContext(BotContext)
-  const { showSnack } = useContext(NotificationContext)
+  const { data: bot, isError: error } = useBot(botId)
   const [aiAvailable, setAiAvailable] = useState<boolean | null>(null)
-  const [error, setError] = useState(false)
   const [selectedTaskIndex, setSelectedTaskIndex] = useState<number | null>(
     null
   )
   const prevTaskCount = useRef(bot?.tasks.length ?? 0)
-
-  useEffect(() => {
-    if (botId && !bot) {
-      getBot(botId).catch(() => {
-        setError(true)
-        showSnack(labels.loadError, 'error')
-      })
-    }
-  }, [botId])
 
   useEffect(() => {
     getAiService().then((svc) => setAiAvailable(svc !== null))

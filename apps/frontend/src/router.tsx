@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { FC, useContext, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
@@ -6,8 +7,6 @@ import PushHealthCheck from './components/pushHealthCheck'
 import NavBar from './navBar'
 import AppsProvider from './providers/apps'
 import { AuthContext } from './providers/auth'
-import BotProvider from './providers/bot'
-import UserProvider from './providers/user'
 import { publishEvent } from './utils/firebase'
 import Bot from './views/bot'
 import Bots from './views/bots'
@@ -21,6 +20,15 @@ import NotFound from './views/notFound'
 import Places from './views/places'
 import Profile from './views/profile'
 import ToDo from './views/todo'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 2,
+    },
+  },
+})
 
 const Router: FC = () => {
   const location = useLocation()
@@ -52,34 +60,29 @@ const Router: FC = () => {
                 {publicRoutes()}
               </Routes>
             ) : (
-              <UserProvider>
+              <QueryClientProvider client={queryClient}>
                 <AppsProvider>
-                  <BotProvider>
-                    <PushHealthCheck />
-                    <Routes>
-                      {publicRoutes()}
-                      <Route path={LINKS.home} element={<ToDo />} />
-                      <Route path={LINKS.todo} element={<ToDo />} />
-                      <Route path={LINKS.feed} element={<Feed />} />
-                      <Route path={LINKS.bots} element={<Bots />} />
-                      <Route
-                        path={LINKS.connections}
-                        element={<Connections />}
-                      />
-                      <Route path={LINKS.notes} element={<Notes />} />
-                      <Route path={LINKS.place} element={<Places />} />
-                      <Route path={LINKS.profile} element={<Profile />} />
-                      <Route path={LINKS.notFound} element={<NotFound />} />
-                      <Route path={LINKS.bot(':botId')} element={<Bot />} />
-                      <Route path={LINKS.logs(':botId')} element={<Logs />} />
-                      <Route
-                        path="*"
-                        element={<Navigate replace to={LINKS.notFound} />}
-                      />
-                    </Routes>
-                  </BotProvider>
+                  <PushHealthCheck />
+                  <Routes>
+                    {publicRoutes()}
+                    <Route path={LINKS.home} element={<ToDo />} />
+                    <Route path={LINKS.todo} element={<ToDo />} />
+                    <Route path={LINKS.feed} element={<Feed />} />
+                    <Route path={LINKS.bots} element={<Bots />} />
+                    <Route path={LINKS.connections} element={<Connections />} />
+                    <Route path={LINKS.notes} element={<Notes />} />
+                    <Route path={LINKS.place} element={<Places />} />
+                    <Route path={LINKS.profile} element={<Profile />} />
+                    <Route path={LINKS.notFound} element={<NotFound />} />
+                    <Route path={LINKS.bot(':botId')} element={<Bot />} />
+                    <Route path={LINKS.logs(':botId')} element={<Logs />} />
+                    <Route
+                      path="*"
+                      element={<Navigate replace to={LINKS.notFound} />}
+                    />
+                  </Routes>
                 </AppsProvider>
-              </UserProvider>
+              </QueryClientProvider>
             )}
           </div>
         </div>

@@ -1,7 +1,8 @@
 import { useAuth0 } from '@auth0/auth0-react'
-import { createContext, FC, ReactNode } from 'react'
+import { createContext, FC, ReactNode, useEffect, useRef } from 'react'
 
 import { IUser } from '@baita/shared'
+import { setupAuthInterceptor } from '@/api/client'
 import { unsubscribeFromPush } from '@/utils/push'
 
 export const AuthContext = createContext<{
@@ -32,6 +33,15 @@ const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     getAccessTokenSilently,
     error,
   } = useAuth0()
+
+  const interceptorSetup = useRef(false)
+
+  useEffect(() => {
+    if (isAuthenticated && !interceptorSetup.current) {
+      setupAuthInterceptor(getAccessTokenSilently)
+      interceptorSetup.current = true
+    }
+  }, [isAuthenticated, getAccessTokenSilently])
 
   return (
     <AuthContext.Provider

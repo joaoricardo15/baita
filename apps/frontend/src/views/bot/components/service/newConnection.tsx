@@ -8,14 +8,14 @@ import {
 } from '@mui/material'
 import { FC, useContext, useState } from 'react'
 import { getConnectorByAppId, IAppConnection } from '@baita/shared'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { Button, OptionsInput } from '@/components'
+import { useConnections, useCreateConnection } from '@/hooks/useConnections'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
-import { UserContext } from '@/providers/user'
 import { getLabels, Labels } from '@/utils/labels'
 import { buildOAuthUrl } from '@/utils/oauth'
-import ApiRequest from '@/utils/requests'
 import { useOauthPopup } from '@/utils/useOauthPopup'
 
 const NewConnection: FC<{
@@ -35,8 +35,9 @@ const NewConnection: FC<{
 }) => {
   const { user } = useContext(AuthContext)
   const { showSnack } = useContext(NotificationContext)
-  const { connections, retrieveConnections } = useContext(UserContext)
-  const apiRequest = ApiRequest()
+  const { data: connections } = useConnections()
+  const createConnection = useCreateConnection()
+  const queryClient = useQueryClient()
 
   const connector = getConnectorByAppId(appId)
 
@@ -67,15 +68,18 @@ const NewConnection: FC<{
   const handleApiKeySubmit = () => {
     if (!connector || !apiKeyValue.trim()) return
 
-    apiRequest
-      .createApiKeyConnection(connector.id, apiKeyValue.trim())
-      .then(() => {
-        showSnack(labels.newConnectionSuccess, 'success')
-        retrieveConnections()
-        setApiKeyDialog(false)
-        onNewConnectionAttempt()
-      })
-      .catch(() => showSnack(labels.newConnectionError, 'error'))
+    createConnection.mutate(
+      { connectorId: connector.id, apiKey: apiKeyValue.trim() },
+      {
+        onSuccess: () => {
+          showSnack(labels.newConnectionSuccess, 'success')
+          queryClient.invalidateQueries({ queryKey: ['connections'] })
+          setApiKeyDialog(false)
+          onNewConnectionAttempt()
+        },
+        onError: () => showSnack(labels.newConnectionError, 'error'),
+      }
+    )
   }
 
   return (

@@ -1,11 +1,22 @@
+/**
+ * Connections Page Tests
+ *
+ * User Journey: Connection Management
+ * Tests connection listing, health checks, and OAuth flow.
+ *
+ * Covers:
+ * - Page renders correctly in all states (loading, empty, with data)
+ * - Connection cards display correctly
+ * - Health check updates connection status
+ * - OAuth URL construction is correct
+ * - Popup close behavior shows correct notifications
+ */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
 import { server } from '@/test/mswSetup'
-import { AuthContext } from '@/providers/auth'
-import { UserContext } from '@/providers/user'
+import { renderWithProviders, createWrapper } from '@/test/renderWithProviders'
 import { NotificationContext } from '@/providers/notification'
 import { Connections } from '@/views/connections/index'
 import AddConnection from '@/views/connections/components/addConnection'
@@ -19,139 +30,135 @@ vi.mock('../../../utils/labels', () => ({
   Labels: {},
 }))
 
-const mockAuthValue = {
-  user: {
-    userId: 'test-user',
-    email: 'test@test.com',
-    name: 'Test',
-    picture: '',
-  },
-  isLoading: false,
-  error: undefined,
-  isAdmin: false,
-  login: vi.fn(),
-  logout: vi.fn(),
-  getToken: vi.fn().mockResolvedValue('token'),
-}
-
-const createUserContextValue = (overrides = {}) => ({
-  connections: undefined as any,
-  retrieveConnections: vi.fn().mockResolvedValue(undefined),
-  deleteConnection: vi.fn().mockResolvedValue(undefined),
-  contents: undefined as any,
-  retrieveContent: vi.fn().mockResolvedValue(undefined),
-  reactToContent: vi.fn().mockResolvedValue(undefined),
-  popContent: vi.fn(),
-  todoTasks: undefined as any,
-  retrieveTodoTasks: vi.fn().mockResolvedValue(undefined),
-  updateTodoTasks: vi.fn().mockResolvedValue([]),
-  setTodoTasks: vi.fn(),
-  ...overrides,
-})
-
-const renderConnections = (userContextOverrides = {}) => {
-  const userContext = createUserContextValue(userContextOverrides)
-
-  return render(
-    <MemoryRouter>
-      <AuthContext.Provider value={mockAuthValue}>
-        <UserContext.Provider value={userContext}>
-          <Connections />
-        </UserContext.Provider>
-      </AuthContext.Provider>
-    </MemoryRouter>
-  )
-}
+const API_BASE = 'http://localhost:5000/prod'
 
 describe('Connections page', () => {
   it('renders skeleton while loading', () => {
-    renderConnections({ connections: undefined })
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () => {
+        return new Promise(() => {}) // never resolves — stays loading
+      })
+    )
+
+    renderWithProviders(<Connections />)
     expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument()
   })
 
-  it('renders empty state when no connections', () => {
-    renderConnections({ connections: [] })
-    expect(screen.getByText('No connections yet')).toBeInTheDocument()
-    expect(
-      screen.getByText('Connect your first app to get started')
-    ).toBeInTheDocument()
-  })
+  it('renders empty state when no connections', async () => {
+    renderWithProviders(<Connections />)
 
-  it('renders connection cards when connections exist', () => {
-    renderConnections({
-      connections: [
-        {
-          appId: 'test-app',
-          userId: 'test-user',
-          connectionId: 'conn-1',
-          name: 'My Pipedrive',
-          email: 'user@company.com',
-          credentials: {},
-        },
-        {
-          appId: 'test-app-2',
-          userId: 'test-user',
-          connectionId: 'conn-2',
-          name: 'My Google',
-          email: 'user@gmail.com',
-          credentials: {},
-        },
-      ],
+    await waitFor(() => {
+      expect(screen.getByText('No connections yet')).toBeInTheDocument()
+      expect(
+        screen.getByText('Connect your first app to get started')
+      ).toBeInTheDocument()
     })
-
-    expect(screen.getByText('My Pipedrive')).toBeInTheDocument()
-    expect(screen.getByText('My Google')).toBeInTheDocument()
-    expect(screen.getByText('user@company.com')).toBeInTheDocument()
-    expect(screen.getByText('user@gmail.com')).toBeInTheDocument()
   })
 
-  it('renders add connection button', () => {
-    renderConnections({ connections: [] })
-    expect(screen.getByText('Add connection')).toBeInTheDocument()
-  })
+  it('renders connection cards when connections exist', async () => {
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              appId: 'test-app',
+              userId: 'test-user',
+              connectionId: 'conn-1',
+              name: 'My Pipedrive',
+              email: 'user@company.com',
+              credentials: {},
+            },
+            {
+              appId: 'test-app-2',
+              userId: 'test-user',
+              connectionId: 'conn-2',
+              name: 'My Google',
+              email: 'user@gmail.com',
+              credentials: {},
+            },
+          ],
+        })
+      )
+    )
 
-  it('renders menu for each connection', () => {
-    renderConnections({
-      connections: [
-        {
-          appId: 'app-1',
-          userId: 'test-user',
-          connectionId: 'conn-1',
-          name: 'Connection 1',
-          email: 'a@b.com',
-          credentials: {},
-        },
-      ],
+    renderWithProviders(<Connections />)
+
+    await waitFor(() => {
+      expect(screen.getByText('My Pipedrive')).toBeInTheDocument()
+      expect(screen.getByText('My Google')).toBeInTheDocument()
+      expect(screen.getByText('user@company.com')).toBeInTheDocument()
+      expect(screen.getByText('user@gmail.com')).toBeInTheDocument()
     })
+  })
 
-    expect(
-      document.querySelector('[data-testid="MoreVertIcon"]')
-    ).toBeInTheDocument()
+  it('renders add connection button', async () => {
+    renderWithProviders(<Connections />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Add connection')).toBeInTheDocument()
+    })
+  })
+
+  it('renders menu for each connection', async () => {
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              appId: 'app-1',
+              userId: 'test-user',
+              connectionId: 'conn-1',
+              name: 'Connection 1',
+              email: 'a@b.com',
+              credentials: {},
+            },
+          ],
+        })
+      )
+    )
+
+    renderWithProviders(<Connections />)
+
+    await waitFor(() => {
+      expect(
+        document.querySelector('[data-testid="MoreVertIcon"]')
+      ).toBeInTheDocument()
+    })
   })
 
   it('health check updates status via menu', async () => {
     server.use(
-      http.post(
-        'http://localhost:5000/prod/user/:userId/connection/:id/health',
-        () =>
-          HttpResponse.json({
-            success: true,
-            data: { status: 'healthy' },
-          })
+      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              appId: 'app-1',
+              userId: 'test-user',
+              connectionId: 'conn-1',
+              name: 'Test Conn',
+              email: 'test@test.com',
+              credentials: {},
+            },
+          ],
+        })
+      ),
+      http.post(`${API_BASE}/user/:userId/connection/:id/health`, () =>
+        HttpResponse.json({
+          success: true,
+          data: { status: 'healthy' },
+        })
       )
     )
 
-    renderConnections({
-      connections: [
-        {
-          appId: 'app-1',
-          userId: 'test-user',
-          connectionId: 'conn-1',
-          name: 'Test Conn',
-          email: 'test@test.com',
-          credentials: {},
-        },
-      ],
+    renderWithProviders(<Connections />)
+
+    await waitFor(() => {
+      expect(
+        document.querySelector('[data-testid="MoreVertIcon"]')
+      ).toBeInTheDocument()
     })
 
     fireEvent.click(document.querySelector('[data-testid="MoreVertIcon"]')!)
@@ -170,23 +177,22 @@ describe('AddConnection OAuth URL construction', () => {
     showModal: vi.fn(),
   }
 
+  const renderAddConnection = (props = {}) => {
+    const Wrapper = createWrapper()
+    return render(
+      <Wrapper>
+        <NotificationContext.Provider value={mockNotificationValue}>
+          <AddConnection open={true} onClose={vi.fn()} {...props} />
+        </NotificationContext.Provider>
+      </Wrapper>
+    )
+  }
+
   it('uses production redirect URI, never localhost', () => {
     const openSpy = vi.fn()
     vi.spyOn(window, 'open').mockImplementation(openSpy)
 
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={mockAuthValue}>
-          <UserContext.Provider
-            value={createUserContextValue({ connections: [] })}
-          >
-            <NotificationContext.Provider value={mockNotificationValue}>
-              <AddConnection open={true} onClose={vi.fn()} />
-            </NotificationContext.Provider>
-          </UserContext.Provider>
-        </AuthContext.Provider>
-      </MemoryRouter>
-    )
+    renderAddConnection()
 
     fireEvent.click(screen.getByText('Pipedrive'))
 
@@ -208,19 +214,7 @@ describe('AddConnection OAuth URL construction', () => {
     const openSpy = vi.fn()
     vi.spyOn(window, 'open').mockImplementation(openSpy)
 
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={mockAuthValue}>
-          <UserContext.Provider
-            value={createUserContextValue({ connections: [] })}
-          >
-            <NotificationContext.Provider value={mockNotificationValue}>
-              <AddConnection open={true} onClose={vi.fn()} />
-            </NotificationContext.Provider>
-          </UserContext.Provider>
-        </AuthContext.Provider>
-      </MemoryRouter>
-    )
+    renderAddConnection()
 
     fireEvent.click(screen.getByText('Pipedrive'))
 
@@ -250,34 +244,39 @@ describe('AddConnection popup close behavior', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.useFakeTimers()
   })
 
   afterEach(() => {
-    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
-  it('shows success message when connection count increases after popup closes', async () => {
-    vi.useRealTimers()
+  const renderAddConnection = (onClose = vi.fn()) => {
+    const Wrapper = createWrapper()
+    return render(
+      <Wrapper>
+        <NotificationContext.Provider value={mockNotificationValue}>
+          <AddConnection open={true} onClose={onClose} />
+        </NotificationContext.Provider>
+      </Wrapper>
+    )
+  }
 
+  it('shows success message when connection count increases after popup closes', async () => {
     server.use(
-      http.post(
-        'http://localhost:5000/prod/user/:userId/resource/connection/list',
-        () =>
-          HttpResponse.json({
-            success: true,
-            data: [
-              {
-                appId: 'new-app',
-                userId: 'test-user',
-                connectionId: 'new-conn',
-                name: 'New Connection',
-                email: 'new@test.com',
-                credentials: {},
-              },
-            ],
-          })
+      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              appId: 'new-app',
+              userId: 'test-user',
+              connectionId: 'new-conn',
+              name: 'New Connection',
+              email: 'new@test.com',
+              credentials: {},
+            },
+          ],
+        })
       )
     )
 
@@ -285,20 +284,7 @@ describe('AddConnection popup close behavior', () => {
     vi.spyOn(window, 'open').mockReturnValue(mockPopup as any)
 
     const onClose = vi.fn()
-
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={mockAuthValue}>
-          <UserContext.Provider
-            value={createUserContextValue({ connections: [] })}
-          >
-            <NotificationContext.Provider value={mockNotificationValue}>
-              <AddConnection open={true} onClose={onClose} />
-            </NotificationContext.Provider>
-          </UserContext.Provider>
-        </AuthContext.Provider>
-      </MemoryRouter>
-    )
+    renderAddConnection(onClose)
 
     fireEvent.click(screen.getByText('Pipedrive'))
 
@@ -315,12 +301,9 @@ describe('AddConnection popup close behavior', () => {
   })
 
   it('shows cancelled message when connection count stays the same after popup closes', async () => {
-    vi.useRealTimers()
-
     server.use(
-      http.post(
-        'http://localhost:5000/prod/user/:userId/resource/connection/list',
-        () => HttpResponse.json({ success: true, data: [] })
+      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+        HttpResponse.json({ success: true, data: [] })
       )
     )
 
@@ -328,20 +311,7 @@ describe('AddConnection popup close behavior', () => {
     vi.spyOn(window, 'open').mockReturnValue(mockPopup as any)
 
     const onClose = vi.fn()
-
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={mockAuthValue}>
-          <UserContext.Provider
-            value={createUserContextValue({ connections: [] })}
-          >
-            <NotificationContext.Provider value={mockNotificationValue}>
-              <AddConnection open={true} onClose={onClose} />
-            </NotificationContext.Provider>
-          </UserContext.Provider>
-        </AuthContext.Provider>
-      </MemoryRouter>
-    )
+    renderAddConnection(onClose)
 
     fireEvent.click(screen.getByText('Pipedrive'))
 
@@ -361,24 +331,10 @@ describe('AddConnection popup close behavior', () => {
     const mockPopup = { closed: false, close: vi.fn() }
     vi.spyOn(window, 'open').mockReturnValue(mockPopup as any)
 
-    render(
-      <MemoryRouter>
-        <AuthContext.Provider value={mockAuthValue}>
-          <UserContext.Provider
-            value={createUserContextValue({ connections: [] })}
-          >
-            <NotificationContext.Provider value={mockNotificationValue}>
-              <AddConnection open={true} onClose={vi.fn()} />
-            </NotificationContext.Provider>
-          </UserContext.Provider>
-        </AuthContext.Provider>
-      </MemoryRouter>
-    )
+    renderAddConnection()
 
     fireEvent.click(screen.getByText('Pipedrive'))
 
     expect(mockShowSnack).not.toHaveBeenCalled()
-
-    vi.restoreAllMocks()
   })
 })

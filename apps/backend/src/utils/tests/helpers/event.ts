@@ -21,7 +21,7 @@ export const createMockEvent = (
     requestContext: {
       accountId: '123456789',
       apiId: 'test-api',
-      authorizer: { userId: pathUserId },
+      authorizer: { userId: `auth0|${pathUserId}` },
       protocol: 'HTTP/1.1',
       httpMethod: 'POST',
       identity: {} as any,

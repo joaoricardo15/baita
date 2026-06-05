@@ -3,8 +3,8 @@ import { FC, useContext } from 'react'
 
 import { Button } from '@/components'
 import { IBotModel } from '@baita/shared'
+import { useDeleteBotModel, useDeployBotModel } from '@/hooks/useBots'
 import { AuthContext } from '@/providers/auth'
-import { BotContext } from '@/providers/bot'
 import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
 import BotCard from './botCard'
@@ -14,11 +14,13 @@ const BotModel: FC<{
 }> = ({ botModel }) => {
   const { isAdmin } = useContext(AuthContext)
   const { showLoading, showSnack } = useContext(NotificationContext)
-  const { deployBotModel, deleteBotModel } = useContext(BotContext)
+  const deployBotModel = useDeployBotModel()
+  const deleteBotModel = useDeleteBotModel()
 
   const onDeployBotModel = () => {
     showLoading(true)
-    deployBotModel(botModel.modelId, botModel)
+    deployBotModel
+      .mutateAsync({ modelId: botModel.modelId, model: botModel })
       .then(() => {
         showLoading(false)
         showSnack(labels.testSuccess, 'success')
@@ -31,7 +33,9 @@ const BotModel: FC<{
 
   const onDeleteBot = () => {
     showLoading(true)
-    deleteBotModel(botModel.modelId).then(() => showLoading(false))
+    deleteBotModel
+      .mutateAsync(botModel.modelId)
+      .finally(() => showLoading(false))
   }
 
   return (

@@ -15,15 +15,15 @@ import { TypeAnimation } from 'react-type-animation'
 import trophySrc from '@/assets/trophy.gif'
 import { Loading, Skeleton, Text } from '@/components'
 import { ITodoTask } from '@baita/shared'
+import { useTodo } from '@/hooks/useTodo'
 import { AuthContext } from '@/providers/auth'
-import { UserContext } from '@/providers/user'
 import { getTimeDiffLabel, isToday } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 import Avatar from './components/avatar'
 
 export const ProfileComponent: FC = () => {
   const { user } = useContext(AuthContext)
-  const { todoTasks } = useContext(UserContext)
+  const { data: todoTasks } = useTodo()
 
   const [statistics, setStatistics] = useState<{
     doneTasks: ITodoTask[]

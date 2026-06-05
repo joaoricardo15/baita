@@ -9,8 +9,8 @@ import { createContext, FC, useContext, useMemo, useState } from 'react'
 
 import { CheckBox, TextInput } from '@/components'
 import { ITodoTask } from '@baita/shared'
+import { useTodo, useUpdateTodo } from '@/hooks/useTodo'
 import { NotificationContext } from '@/providers/notification'
-import { UserContext } from '@/providers/user'
 
 interface Context {
   attributes: Record<string, any>
@@ -60,7 +60,8 @@ export const ToDoTask: FC<{
     }),
     [attributes, listeners, setActivatorNodeRef]
   )
-  const { todoTasks, setTodoTasks, updateTodoTasks } = useContext(UserContext)
+  const { data: todoTasks } = useTodo()
+  const updateTodo = useUpdateTodo()
   const { showSnack } = useContext(NotificationContext)
 
   const [editMode, setEditMode] = useState(false)
@@ -73,8 +74,7 @@ export const ToDoTask: FC<{
           ? { ...t, done: true, updatedAt: Date.now() }
           : t
       )
-      setTodoTasks(updatedTasks)
-      updateTodoTasks(updatedTasks)
+      updateTodo.mutate(updatedTasks)
       showSnack(task.title, 'success')
     }
   }
@@ -96,8 +96,7 @@ export const ToDoTask: FC<{
       const updatedTasks = todoTasks.map((t) =>
         t.taskId === task.taskId ? { ...t, title: taskTitle } : t
       )
-      setTodoTasks(updatedTasks)
-      updateTodoTasks(updatedTasks)
+      updateTodo.mutate(updatedTasks)
 
       if (prefixChain && taskTitle.startsWith(`${prefixChain}/`)) {
         const newSuffix = taskTitle.replace(`${prefixChain}/`, '')
@@ -109,8 +108,7 @@ export const ToDoTask: FC<{
   const onDeleteTask = () => {
     if (todoTasks) {
       const updatedTasks = todoTasks.filter((t) => t.taskId !== task.taskId)
-      setTodoTasks(updatedTasks)
-      updateTodoTasks(updatedTasks)
+      updateTodo.mutate(updatedTasks)
     }
   }
 

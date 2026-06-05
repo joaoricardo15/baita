@@ -1,8 +1,22 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+/**
+ * BotAssistant Tests
+ *
+ * User Journey: AI-assisted bot editing
+ * Tests the task-level AI assistant that helps users edit bot tasks via natural language.
+ *
+ * Covers:
+ * - Renders input placeholder
+ * - Shows confirmation dialog on valid AI result
+ * - Apply calls updateBot mutation with modified task
+ * - Shows error after 3 failed attempts
+ */
+import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { beforeAll, vi } from 'vitest'
 
 import { IBot, ITask } from '@baita/shared'
-import { BotContext } from '@/providers/bot'
+import { server } from '@/test/mswSetup'
+import { renderWithProviders } from '@/test/renderWithProviders'
 import BotAssistant from '@/views/bot/components/assistant'
 
 vi.mock('@auth0/auth0-react', () => ({
@@ -52,39 +66,12 @@ const mockBot: IBot = {
   active: true,
 } as any
 
-const createBotContextValue = (overrides = {}) => ({
-  bots: undefined as any,
-  getBots: vi.fn(),
-  bot: undefined,
-  setBot: vi.fn(),
-  getBot: vi.fn(),
-  createBot: vi.fn(),
-  deleteBot: vi.fn(),
-  getBotInputs: vi.fn().mockReturnValue([]),
-  updateBot: vi.fn().mockResolvedValue(undefined),
-  deployBot: vi.fn().mockResolvedValue({}),
-  testBotTask: vi.fn(),
-  updateBotTask: vi.fn().mockResolvedValue(undefined),
-  botModels: undefined as any,
-  getBotModels: vi.fn(),
-  deleteBotModel: vi.fn(),
-  deployBotModel: vi.fn(),
-  publishBotModel: vi.fn(),
-  ...overrides,
-})
+const API_BASE = 'http://localhost:5000/prod'
 
-const renderAssistant = (options: { botContextOverrides?: any } = {}) => {
-  const { botContextOverrides = {} } = options
-  const botContext = createBotContextValue(botContextOverrides)
-
-  return {
-    ...render(
-      <BotContext.Provider value={botContext}>
-        <BotAssistant bot={mockBot} task={mockTask} taskIndex={0} />
-      </BotContext.Provider>
-    ),
-    botContext,
-  }
+const renderAssistant = () => {
+  return renderWithProviders(
+    <BotAssistant bot={mockBot} task={mockTask} taskIndex={0} />
+  )
 }
 
 describe('BotAssistant (task-level)', () => {
@@ -131,7 +118,7 @@ describe('BotAssistant (task-level)', () => {
     })
   })
 
-  it('Apply calls updateBotTask with modified task', async () => {
+  it('Apply calls updateBot with modified task', async () => {
     const modifiedTask = { ...mockTask, inputData: [] }
     mockGetAiService.mockResolvedValue({
       provider: 'chrome-ai',
@@ -139,8 +126,18 @@ describe('BotAssistant (task-level)', () => {
     })
     mockParseTaskFromResponse.mockReturnValue(modifiedTask)
 
-    const updateBotTask = vi.fn().mockResolvedValue(undefined)
-    renderAssistant({ botContextOverrides: { updateBotTask } })
+    let capturedBody: any = null
+    server.use(
+      http.put(`${API_BASE}/user/:userId/bot/:botId`, async ({ request }) => {
+        capturedBody = await request.json()
+        return HttpResponse.json({
+          success: true,
+          data: { ...mockBot, tasks: [modifiedTask] },
+        })
+      })
+    )
+
+    renderAssistant()
 
     const input = screen.getByPlaceholderText('Edit this task...')
     fireEvent.change(input, { target: { value: 'remove inputs' } })
@@ -153,7 +150,8 @@ describe('BotAssistant (task-level)', () => {
     fireEvent.click(screen.getByText('Apply'))
 
     await waitFor(() => {
-      expect(updateBotTask).toHaveBeenCalledWith('bot-1', 0, modifiedTask)
+      expect(capturedBody).not.toBeNull()
+      expect(capturedBody.tasks[0]).toEqual(modifiedTask)
     })
   })
 

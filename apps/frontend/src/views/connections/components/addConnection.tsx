@@ -11,14 +11,14 @@ import {
 } from '@mui/material'
 import { FC, useContext, useState } from 'react'
 import { IConnectorManifest, getAllConnectors } from '@baita/shared'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { Button } from '@/components'
+import { useCreateConnection } from '@/hooks/useConnections'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
-import { UserContext } from '@/providers/user'
 import { getLabels, Labels } from '@/utils/labels'
 import { buildOAuthUrl } from '@/utils/oauth'
-import ApiRequest from '@/utils/requests'
 import { useOauthPopup } from '@/utils/useOauthPopup'
 
 const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
@@ -27,8 +27,8 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
 }) => {
   const { user } = useContext(AuthContext)
   const { showSnack } = useContext(NotificationContext)
-  const { retrieveConnections } = useContext(UserContext)
-  const apiRequest = ApiRequest()
+  const queryClient = useQueryClient()
+  const createConnection = useCreateConnection()
 
   const connectors = getAllConnectors()
 
@@ -61,15 +61,18 @@ const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
   const handleApiKeySubmit = () => {
     if (!apiKeyDialog || !apiKeyValue.trim()) return
 
-    apiRequest
-      .createApiKeyConnection(apiKeyDialog.id, apiKeyValue.trim())
-      .then(() => {
-        showSnack(labels.success, 'success')
-        retrieveConnections()
-        setApiKeyDialog(null)
-        onClose()
-      })
-      .catch(() => showSnack(labels.error, 'error'))
+    createConnection.mutate(
+      { connectorId: apiKeyDialog.id, apiKey: apiKeyValue.trim() },
+      {
+        onSuccess: () => {
+          showSnack(labels.success, 'success')
+          queryClient.invalidateQueries({ queryKey: ['connections'] })
+          setApiKeyDialog(null)
+          onClose()
+        },
+        onError: () => showSnack(labels.error, 'error'),
+      }
+    )
   }
 
   const grouped = connectors.reduce(

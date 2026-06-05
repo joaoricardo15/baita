@@ -10,10 +10,11 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material'
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 
 import { Button, Text } from '@/components'
-import { BotContext } from '@/providers/bot'
+import { useBot, useUpdateBot } from '@/hooks/useBots'
 import { getLabels, Labels } from '@/utils/labels'
 
 import TaskInput from './input'
@@ -26,7 +27,9 @@ const Task: FC<{
   isSelected?: boolean
   onSelect?: () => void
 }> = ({ taskIndex, isSelected, onSelect }) => {
-  const { bot, updateBot } = useContext(BotContext)
+  const { botId } = useParams()
+  const { data: bot } = useBot(botId)
+  const updateBotMutation = useUpdateBot()
 
   const [task, setTask] = useState<ITask>()
   const [openedPanel, setOpenedPanel] = useState<string>()
@@ -39,18 +42,22 @@ const Task: FC<{
 
   const addTask = (taskIndex: number) => {
     if (bot) {
-      bot.tasks.splice(taskIndex + 1, 0, {
+      const updatedTasks = [...bot.tasks]
+      updatedTasks.splice(taskIndex + 1, 0, {
         taskId: Date.now(),
         inputData: [],
       })
-      updateBot({ ...bot })
+      updateBotMutation.mutate({
+        botId: bot.botId,
+        bot: { ...bot, tasks: updatedTasks },
+      })
     }
   }
 
   const deleteTask = (taskId: number) => {
     if (bot) {
       const { tasks } = removeStepReferences(bot.tasks, taskId)
-      updateBot({ ...bot, tasks })
+      updateBotMutation.mutate({ botId: bot.botId, bot: { ...bot, tasks } })
     }
   }
 

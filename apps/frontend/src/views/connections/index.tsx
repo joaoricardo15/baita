@@ -3,20 +3,20 @@ import {
   Add as AddIcon,
   CableOutlined as CableOutlinedIcon,
 } from '@mui/icons-material'
-import { FC, useContext, useState } from 'react'
+import { FC, useState } from 'react'
 
 import { Button, EmptyState, Loading, Skeleton } from '@/components'
-import { UserContext } from '@/providers/user'
+import { useConnections } from '@/hooks/useConnections'
 import { getLabels, Labels } from '@/utils/labels'
 
 import AddConnection from './components/addConnection'
 import ConnectionCard from './components/connectionCard'
 
 export const Connections: FC = () => {
-  const { connections } = useContext(UserContext)
+  const { data: connections, isLoading: loading } = useConnections()
   const [showAdd, setShowAdd] = useState(false)
 
-  if (connections === undefined) {
+  if (loading || connections === undefined) {
     return <Skeleton elements={3} height={100} />
   }
 

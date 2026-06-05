@@ -4,14 +4,13 @@ import {
   AddLocationAltOutlined as AddLocationAltOutlinedIcon,
 } from '@mui/icons-material'
 import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useState } from 'react'
 
 import { Button, EmptyState, Loading, Logo, Skeleton, Text } from '@/components'
 import { IPlace } from '@baita/shared'
-import { NotificationContext } from '@/providers/notification'
+import { usePlaces } from '@/hooks/usePlaces'
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_MAP_ID } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'
-import ApiRequest from '@/utils/requests'
 
 import PlaceModal from './components/placeModal'
 
@@ -23,34 +22,21 @@ const newPlace: () => IPlace = () => ({
 })
 
 export const Places: FC = () => {
-  const apiRequest = ApiRequest()
-  const { showSnack } = useContext(NotificationContext)
+  const { data: places, isLoading: loading } = usePlaces()
 
   const [place, setPlace] = useState<IPlace>()
-  const [places, setPlaces] = useState<IPlace[]>()
 
-  const onPlaceClick = (place: IPlace) => {
-    setPlace(place)
+  const onPlaceClick = (p: IPlace) => {
+    setPlace(p)
   }
 
   const onClose = () => {
     setPlace(undefined)
-    apiRequest
-      .listPlaces()
-      .then((result: IPlace[]) => setPlaces(result))
-      .catch(() => showSnack(labels.loadError, 'error'))
   }
-
-  useEffect(() => {
-    apiRequest
-      .listPlaces()
-      .then((result: IPlace[]) => setPlaces(result ?? []))
-      .catch(() => setPlaces([]))
-  }, [])
 
   return (
     <>
-      {!places ? (
+      {loading || !places ? (
         <Skeleton elements={3} height={100} />
       ) : places.length === 0 ? (
         <>

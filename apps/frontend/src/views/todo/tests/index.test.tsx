@@ -8,14 +8,15 @@
  * - Page renders correctly in all states (loading, empty, with data)
  * - User can add a new task
  * - User can mark a task as complete
- * - Data fetching triggers on mount
+ * - Data fetching triggers on mount (via TanStack Query)
  * - API failures are handled gracefully
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { vi } from 'vitest'
 
-import { UserContext } from '@/providers/user'
+import { server } from '@/test/mswSetup'
+import { renderWithProviders } from '@/test/renderWithProviders'
 import { ToDo } from '@/views/todo/index'
 
 vi.mock('@auth0/auth0-react', () => ({
@@ -27,59 +28,49 @@ vi.mock('../../../utils/labels', () => ({
   Labels: {},
 }))
 
-const createUserContextValue = (overrides = {}) => ({
-  connections: undefined,
-  contents: undefined,
-  retrieveContent: vi.fn().mockResolvedValue(undefined),
-  reactToContent: vi.fn().mockResolvedValue(undefined),
-  popContent: vi.fn(),
-  todoTasks: undefined as any,
-  retrieveTodoTasks: vi.fn().mockResolvedValue(undefined),
-  updateTodoTasks: vi.fn().mockResolvedValue([]),
-  setTodoTasks: vi.fn(),
-  ...overrides,
-})
-
-const renderTodo = (userContextOverrides = {}) => {
-  const userContext = createUserContextValue(userContextOverrides)
-
-  const result = render(
-    <MemoryRouter>
-      <UserContext.Provider value={userContext}>
-        <ToDo />
-      </UserContext.Provider>
-    </MemoryRouter>
-  )
-
-  return { ...result, userContext }
-}
+const API_BASE = 'http://localhost:5000/prod'
 
 describe('ToDo Page', () => {
   describe('Rendering states', () => {
-    it('shows skeleton while loading (todoTasks is undefined)', () => {
-      renderTodo()
+    it('shows skeleton while loading (data is fetching)', () => {
+      server.use(
+        http.post(`${API_BASE}/user/:userId/resource/todo/read`, () => {
+          return new Promise(() => {}) // never resolves — stays loading
+        })
+      )
+
+      renderWithProviders(<ToDo />)
       expect(document.body.innerHTML).toContain('MuiSkeleton')
     })
 
     it('renders task content after loading', async () => {
-      renderTodo({
-        todoTasks: [
-          {
-            taskId: '1',
-            done: false,
-            title: 'Buy milk',
-            createdAt: 1000,
-            updatedAt: 1000,
-          },
-          {
-            taskId: '2',
-            done: true,
-            title: 'Read book',
-            createdAt: 1000,
-            updatedAt: 1000,
-          },
-        ],
-      })
+      server.use(
+        http.post(`${API_BASE}/user/:userId/resource/todo/read`, () =>
+          HttpResponse.json({
+            success: true,
+            data: {
+              tasks: [
+                {
+                  taskId: '1',
+                  done: false,
+                  title: 'Buy milk',
+                  createdAt: 1000,
+                  updatedAt: 1000,
+                },
+                {
+                  taskId: '2',
+                  done: true,
+                  title: 'Read book',
+                  createdAt: 1000,
+                  updatedAt: 1000,
+                },
+              ],
+            },
+          })
+        )
+      )
+
+      renderWithProviders(<ToDo />)
 
       await waitFor(() => {
         expect(document.body.innerHTML).not.toContain('MuiSkeleton')
@@ -88,7 +79,7 @@ describe('ToDo Page', () => {
     })
 
     it('shows empty state when tasks array is empty', async () => {
-      renderTodo({ todoTasks: [] })
+      renderWithProviders(<ToDo />)
 
       await waitFor(() => {
         expect(document.body.innerHTML).not.toContain('MuiSkeleton')
@@ -97,59 +88,79 @@ describe('ToDo Page', () => {
   })
 
   describe('User interactions', () => {
-    it('calls retrieveTodoTasks on mount', () => {
-      const retrieveTodoTasks = vi.fn().mockResolvedValue(undefined)
-      renderTodo({ retrieveTodoTasks })
+    it('renders input field for adding new tasks', async () => {
+      renderWithProviders(<ToDo />)
 
-      expect(retrieveTodoTasks).toHaveBeenCalledTimes(1)
-    })
-
-    it('renders input field for adding new tasks', () => {
-      renderTodo({ todoTasks: [] })
+      await waitFor(() => {
+        expect(document.body.innerHTML).not.toContain('MuiSkeleton')
+      })
 
       const input = document.querySelector('input[type="text"]')
       expect(input).toBeInTheDocument()
     })
 
     it('marks a task as complete when checkbox is clicked', async () => {
-      const setTodoTasks = vi.fn()
-      const updateTodoTasks = vi.fn().mockResolvedValue([])
+      let updateCalled = false
+      server.use(
+        http.post(`${API_BASE}/user/:userId/resource/todo/read`, () =>
+          HttpResponse.json({
+            success: true,
+            data: {
+              tasks: [
+                {
+                  taskId: '1',
+                  done: false,
+                  title: 'Test task',
+                  createdAt: 1000,
+                  updatedAt: 1000,
+                },
+              ],
+            },
+          })
+        ),
+        http.post(
+          `${API_BASE}/user/:userId/resource/todo/update`,
+          async ({ request }) => {
+            updateCalled = true
+            const body = (await request.json()) as any
+            expect(body.tasks[0].done).toBe(true)
+            return HttpResponse.json({ success: true, data: body.tasks })
+          }
+        )
+      )
 
-      renderTodo({
-        todoTasks: [
-          {
-            taskId: '1',
-            done: false,
-            title: 'Test task',
-            createdAt: 1000,
-            updatedAt: 1000,
-          },
-        ],
-        setTodoTasks,
-        updateTodoTasks,
-      })
+      renderWithProviders(<ToDo />)
 
       await waitFor(() => {
         expect(document.body.innerHTML).toContain('Test task')
       })
 
       const checkbox = document.querySelector('input[type="checkbox"]')
-      if (checkbox) {
-        fireEvent.click(checkbox)
+      expect(checkbox).toBeInTheDocument()
+      fireEvent.click(checkbox!)
 
-        await waitFor(() => {
-          expect(setTodoTasks).toHaveBeenCalled()
-        })
-      }
+      await waitFor(() => {
+        expect(updateCalled).toBe(true)
+      })
     })
   })
 
   describe('Error handling', () => {
-    it('handles API failure without crashing', () => {
-      const retrieveTodoTasks = vi.fn().mockRejectedValue(new Error('fail'))
-      renderTodo({ retrieveTodoTasks })
+    it('handles API failure without crashing', async () => {
+      server.use(
+        http.post(`${API_BASE}/user/:userId/resource/todo/read`, () =>
+          HttpResponse.json(
+            { success: false, message: 'fail' },
+            { status: 500 }
+          )
+        )
+      )
 
-      expect(document.body.innerHTML).not.toBe('')
+      renderWithProviders(<ToDo />)
+
+      await waitFor(() => {
+        expect(document.body.innerHTML).not.toBe('')
+      })
     })
   })
 })

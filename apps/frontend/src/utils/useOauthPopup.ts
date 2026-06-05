@@ -1,11 +1,16 @@
 import { useContext, useEffect, useRef } from 'react'
 
-import { UserContext } from '@/providers/user'
-import ApiRequest from './requests'
+import { IAppConnection } from '@baita/shared'
+import { useQueryClient } from '@tanstack/react-query'
+
+import { fetchConnections } from '@/api/queries'
+import { useConnections } from '@/hooks/useConnections'
+import { AuthContext } from '@/providers/auth'
 
 export function useOauthPopup(onComplete?: (created: boolean) => void) {
-  const { connections, retrieveConnections } = useContext(UserContext)
-  const apiRequest = ApiRequest()
+  const { user } = useContext(AuthContext)
+  const { data: connections } = useConnections()
+  const queryClient = useQueryClient()
   const popupRef = useRef<Window | null>(null)
   const timerRef = useRef<number>()
   const countBeforeRef = useRef(0)
@@ -26,16 +31,15 @@ export function useOauthPopup(onComplete?: (created: boolean) => void) {
     timerRef.current = window.setInterval(() => {
       if (!popupRef.current || popupRef.current.closed) {
         window.clearInterval(timerRef.current)
-        apiRequest
-          .getAppConnections()
-          .then((freshConnections) => {
+        fetchConnections(user!.userId)
+          .then((freshConnections: IAppConnection[]) => {
             const created = freshConnections.length > countBeforeRef.current
             onComplete?.(created)
-            retrieveConnections()
+            queryClient.invalidateQueries({ queryKey: ['connections'] })
           })
           .catch(() => {
             onComplete?.(false)
-            retrieveConnections()
+            queryClient.invalidateQueries({ queryKey: ['connections'] })
           })
       }
     }, 700)

@@ -67,9 +67,10 @@ The `verify` script auto-starts the Vite dev server, authenticates via Auth0, an
 - **Framework**: React 18 + TypeScript (strict mode)
 - **Build**: Vite 8 + @vitejs/plugin-react
 - **Routing**: React Router v6
-- **State**: React Context API (no Redux)
+- **Server State**: TanStack Query v5 (caching, dedup, retry, optimistic updates)
+- **UI State**: React Context (auth, errors, notifications)
 - **UI**: MUI Material v5 + SCSS + Bootstrap utilities
-- **HTTP**: Axios (wrapped in custom hook)
+- **HTTP**: Axios (module-level singleton with Bearer interceptor)
 - **Auth**: Auth0 (@auth0/auth0-react)
 - **Push**: Web Push API (VAPID-based, works on all platforms including iOS PWA)
 - **Analytics**: Firebase Analytics (production only)
@@ -214,9 +215,10 @@ Consistency is enforced at 3 levels:
 
 ### State
 
-- Context providers hold both state and API methods
-- `useContext()` hook for consuming state in components
-- API calls made directly inside provider functions via `ApiRequest()` hook
+- **Server state**: TanStack Query hooks (`src/hooks/use*.ts`) — caching, dedup, retry, optimistic updates
+- **UI state**: React Context (`AuthProvider`, `ErrorProvider`, `NotificationProvider`, `AppsProvider`)
+- API layer: `src/api/client.ts` (singleton Axios) + `src/api/queries.ts` + `src/api/mutations.ts`
+- Views consume data via `useQuery` / `useMutation` hooks — no manual `useEffect` for fetching
 
 ### Styling
 
@@ -383,7 +385,6 @@ The system prompt in `ai.ts` teaches the LLM the bot schema structure (services,
 
 ## Known Limitations
 
-- API logic is coupled to Context providers (no separate service layer)
 - No lazy loading / code splitting on routes
 - No memoization (React.memo, useMemo, useCallback) applied yet
 - Admin detection is hardcoded (email check)

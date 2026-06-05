@@ -1,9 +1,25 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+/**
+ * Bots Page Tests
+ *
+ * User Journey: Bot Management
+ * Tests the bots listing page — loading, rendering, model separation.
+ *
+ * Covers:
+ * - Page renders without crashing
+ * - Shows skeleton during loading
+ * - Shows bots list after loading
+ * - Shows Add bot button
+ * - Separates model bots from custom bots
+ * - Shows bot models that are not yet deployed
+ * - Hides bot models that are already deployed by user
+ * - Handles API failure gracefully
+ */
+import { screen, waitFor } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { vi } from 'vitest'
 
-import { AuthContext } from '@/providers/auth'
-import { BotContext } from '@/providers/bot'
+import { server } from '@/test/mswSetup'
+import { renderWithProviders } from '@/test/renderWithProviders'
 import { Bots } from '@/views/bots/index'
 
 vi.mock('@auth0/auth0-react', () => ({
@@ -15,94 +31,56 @@ vi.mock('../../../utils/labels', () => ({
   Labels: {},
 }))
 
-const mockAuthValue = {
-  user: {
-    userId: 'test-user',
-    email: 'test@test.com',
-    name: 'Test',
-    picture: '',
-  },
-  isLoading: false,
-  error: undefined,
-  isAdmin: false,
-  login: vi.fn(),
-  logout: vi.fn(),
-  getToken: vi.fn().mockResolvedValue('token'),
-}
-
-const createBotContextValue = (overrides = {}) => ({
-  bots: undefined as any,
-  getBots: vi.fn().mockResolvedValue(undefined),
-  bot: undefined,
-  setBot: vi.fn(),
-  getBot: vi.fn().mockResolvedValue(undefined),
-  createBot: vi.fn().mockResolvedValue('new-id'),
-  deleteBot: vi.fn().mockResolvedValue(undefined),
-  getBotInputs: vi.fn().mockReturnValue([]),
-  updateBot: vi.fn().mockResolvedValue(undefined),
-  deployBot: vi.fn().mockResolvedValue({} as any),
-  testBotTask: vi.fn().mockResolvedValue(undefined),
-  updateBotTask: vi.fn().mockResolvedValue(undefined),
-  botModels: undefined as any,
-  getBotModels: vi.fn().mockResolvedValue(undefined),
-  deleteBotModel: vi.fn().mockResolvedValue(undefined),
-  deployBotModel: vi.fn().mockResolvedValue({} as any),
-  publishBotModel: vi.fn().mockResolvedValue({} as any),
-  ...overrides,
-})
-
-const renderBots = (botContextOverrides = {}) => {
-  const botContext = createBotContextValue(botContextOverrides)
-
-  return render(
-    <MemoryRouter>
-      <AuthContext.Provider value={mockAuthValue}>
-        <BotContext.Provider value={botContext}>
-          <Bots />
-        </BotContext.Provider>
-      </AuthContext.Provider>
-    </MemoryRouter>
-  )
-}
+const API_BASE = 'http://localhost:5000/prod'
 
 describe('Bots Page', () => {
   it('renders without crashing', () => {
-    renderBots()
+    renderWithProviders(<Bots />)
     expect(document.body).toBeDefined()
   })
 
   it('shows skeleton while fetching', () => {
-    renderBots()
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/bot/list`, () => {
+        return new Promise(() => {}) // never resolves — stays loading
+      })
+    )
+
+    renderWithProviders(<Bots />)
     expect(
       document.querySelector('[class*="skeleton"]') || document.body.innerHTML
     ).toBeDefined()
   })
 
   it('shows bots list after loading', async () => {
-    const getBots = vi.fn().mockImplementation(() => Promise.resolve())
-    const getBotModels = vi.fn().mockImplementation(() => Promise.resolve())
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/bot/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              botId: 'bot-1',
+              userId: 'test',
+              name: 'My Bot',
+              tasks: [],
+              active: true,
+            },
+            {
+              botId: 'bot-2',
+              userId: 'test',
+              name: 'Other Bot',
+              tasks: [],
+              active: false,
+            },
+          ],
+        })
+      ),
+      http.post(`${API_BASE}/user/:userId/resource/model/list`, () =>
+        HttpResponse.json({ success: true, data: [] })
+      )
+    )
 
-    renderBots({
-      bots: [
-        {
-          botId: 'bot-1',
-          userId: 'test',
-          name: 'My Bot',
-          tasks: [],
-          active: true,
-        },
-        {
-          botId: 'bot-2',
-          userId: 'test',
-          name: 'Other Bot',
-          tasks: [],
-          active: false,
-        },
-      ],
-      botModels: [],
-      getBots,
-      getBotModels,
-    })
+    renderWithProviders(<Bots />)
 
     await waitFor(() => {
       expect(screen.getByText('My Bot')).toBeDefined()
@@ -111,10 +89,7 @@ describe('Bots Page', () => {
   })
 
   it('shows Add bot button when loaded', async () => {
-    renderBots({
-      bots: [],
-      botModels: [],
-    })
+    renderWithProviders(<Bots />)
 
     await waitFor(() => {
       expect(screen.getByText('Add bot')).toBeDefined()
@@ -122,62 +97,66 @@ describe('Bots Page', () => {
   })
 
   it('shows Admin panel divider', async () => {
-    renderBots({
-      bots: [],
-      botModels: [],
-    })
+    renderWithProviders(<Bots />)
 
     await waitFor(() => {
       expect(screen.getByText('Admin panel')).toBeDefined()
     })
   })
 
-  it('calls getBots and getBotModels on mount', async () => {
-    const getBots = vi.fn().mockResolvedValue(undefined)
-    const getBotModels = vi.fn().mockResolvedValue(undefined)
-
-    renderBots({ getBots, getBotModels })
-
-    await waitFor(() => {
-      expect(getBots).toHaveBeenCalledTimes(1)
-      expect(getBotModels).toHaveBeenCalledTimes(1)
-    })
-  })
-
   it('handles API failure gracefully without crashing', async () => {
-    const getBots = vi.fn().mockRejectedValue(new Error('Network Error'))
-    const getBotModels = vi.fn().mockRejectedValue(new Error('Network Error'))
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/bot/list`, () =>
+        HttpResponse.json(
+          { success: false, message: 'Network Error' },
+          { status: 500 }
+        )
+      ),
+      http.post(`${API_BASE}/user/:userId/resource/model/list`, () =>
+        HttpResponse.json(
+          { success: false, message: 'Network Error' },
+          { status: 500 }
+        )
+      )
+    )
 
-    renderBots({ getBots, getBotModels })
+    renderWithProviders(<Bots />)
 
     await waitFor(() => {
-      expect(getBots).toHaveBeenCalled()
+      expect(document.body.innerHTML).not.toBe('')
     })
-
-    expect(document.body.innerHTML).not.toBe('')
   })
 
   it('separates model bots from custom bots', async () => {
-    renderBots({
-      bots: [
-        {
-          botId: 'bot-1',
-          userId: 'test',
-          name: 'Model Bot',
-          modelId: 'model-1',
-          tasks: [],
-          active: true,
-        },
-        {
-          botId: 'bot-2',
-          userId: 'test',
-          name: 'Custom Bot',
-          tasks: [],
-          active: true,
-        },
-      ],
-      botModels: [],
-    })
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/bot/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              botId: 'bot-1',
+              userId: 'test',
+              name: 'Model Bot',
+              modelId: 'model-1',
+              tasks: [],
+              active: true,
+            },
+            {
+              botId: 'bot-2',
+              userId: 'test',
+              name: 'Custom Bot',
+              tasks: [],
+              active: true,
+            },
+          ],
+        })
+      ),
+      http.post(`${API_BASE}/user/:userId/resource/model/list`, () =>
+        HttpResponse.json({ success: true, data: [] })
+      )
+    )
+
+    renderWithProviders(<Bots />)
 
     await waitFor(() => {
       expect(screen.getByText('Model Bot')).toBeDefined()
@@ -186,17 +165,26 @@ describe('Bots Page', () => {
   })
 
   it('shows bot models that are not yet deployed', async () => {
-    renderBots({
-      bots: [],
-      botModels: [
-        {
-          modelId: 'model-1',
-          name: 'Template Bot',
-          author: 'baita',
-          tasks: [],
-        },
-      ],
-    })
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/bot/list`, () =>
+        HttpResponse.json({ success: true, data: [] })
+      ),
+      http.post(`${API_BASE}/user/:userId/resource/model/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              modelId: 'model-1',
+              name: 'Template Bot',
+              author: 'baita',
+              tasks: [],
+            },
+          ],
+        })
+      )
+    )
+
+    renderWithProviders(<Bots />)
 
     await waitFor(() => {
       expect(screen.getByText('Template Bot')).toBeDefined()
@@ -204,26 +192,38 @@ describe('Bots Page', () => {
   })
 
   it('hides bot models that are already deployed by user', async () => {
-    renderBots({
-      bots: [
-        {
-          botId: 'bot-1',
-          userId: 'test',
-          name: 'Deployed',
-          modelId: 'model-1',
-          tasks: [],
-          active: true,
-        },
-      ],
-      botModels: [
-        {
-          modelId: 'model-1',
-          name: 'Template Bot',
-          author: 'baita',
-          tasks: [],
-        },
-      ],
-    })
+    server.use(
+      http.post(`${API_BASE}/user/:userId/resource/bot/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              botId: 'bot-1',
+              userId: 'test',
+              name: 'Deployed',
+              modelId: 'model-1',
+              tasks: [],
+              active: true,
+            },
+          ],
+        })
+      ),
+      http.post(`${API_BASE}/user/:userId/resource/model/list`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              modelId: 'model-1',
+              name: 'Template Bot',
+              author: 'baita',
+              tasks: [],
+            },
+          ],
+        })
+      )
+    )
+
+    renderWithProviders(<Bots />)
 
     await waitFor(() => {
       expect(screen.getByText('Deployed')).toBeDefined()
