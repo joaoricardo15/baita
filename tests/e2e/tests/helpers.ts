@@ -55,7 +55,9 @@ export async function copyGoogleConnection(
 ): Promise<{ connectionId: string }> {
   const client = new DynamoDBClient({
     region: 'us-east-1',
-    credentials: fromIni({ profile: 'baita' }),
+    ...(process.env.AWS_ACCESS_KEY_ID
+      ? {}
+      : { credentials: fromIni({ profile: 'baita' }) }),
   })
   const docClient = DynamoDBDocumentClient.from(client)
 
@@ -168,7 +170,7 @@ export async function signUpUser(
     await acceptBtn.click()
   }
 
-  await page.waitForURL(/localhost|baita\.help/, { timeout: 20000 })
+  await page.waitForURL(/localhost:3000|www\.baita\.help/, { timeout: 20000 })
   await page.waitForLoadState('domcontentloaded')
 }
 
@@ -194,7 +196,7 @@ export async function loginUser(
     await acceptBtn.click()
   }
 
-  await page.waitForURL(/localhost|baita\.help/, { timeout: 20000 })
+  await page.waitForURL(/localhost:3000|www\.baita\.help/, { timeout: 20000 })
   await page.waitForLoadState('domcontentloaded')
 }
 

@@ -28,7 +28,7 @@ Auth0 callback → App receives JWT → API calls with Bearer token
 - Custom domain: `auth.baita.help`
 - Callback URLs: `https://www.baita.help`, `http://localhost:3000`
 - Connections: `baita-users` (email/password), `google-oauth2`
-- E2E testing: real Auth0 login via Playwright (test user: `test@baita.help`)
+- E2E testing: real Auth0 signup via Playwright (random ephemeral user each run, deleted in teardown)
 
 **Key behaviors**:
 

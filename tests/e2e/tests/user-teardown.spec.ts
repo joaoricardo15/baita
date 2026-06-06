@@ -2,19 +2,13 @@
  * User Teardown E2E Test
  *
  * Part of the 'teardown' project — runs after all journey specs.
- * Deletes the test user and verifies COMPLETE cleanup:
+ * Deletes the ephemeral test user and verifies COMPLETE cleanup:
  * - All resource lists return empty
  * - No stale data remains for the next test run
- * - Cached auth state is cleared
  */
 import { expect, test } from '@playwright/test'
-import fs from 'fs'
-import path from 'path'
 
 import { API_URL, authHeaders, loadAuthData, logResult } from './helpers'
-
-const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
-const authFile = path.join(__dirname, '../playwright/.auth/user.json')
 
 let token: string
 let userId: string
@@ -63,15 +57,6 @@ test.describe('User Teardown', () => {
       bots: botsBody.data?.length || 0,
       connections: connectionsBody.data?.length || 0,
       notes: notesBody.data?.length || 0,
-    })
-  })
-
-  test('clear cached auth state', async () => {
-    if (fs.existsSync(tokenFile)) fs.unlinkSync(tokenFile)
-    if (fs.existsSync(authFile)) fs.unlinkSync(authFile)
-    logResult('Auth state cleared', {
-      tokenFile: 'deleted',
-      authFile: 'deleted',
     })
   })
 })

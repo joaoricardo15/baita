@@ -110,10 +110,10 @@ Changes to `packages/shared/` trigger BOTH branches.
 
 ## E2E Testing
 
-Shared E2E tests in `tests/e2e/` use Playwright and simulate real user flows. They log in via Auth0 (real credentials), then test pages, API endpoints, security, and bot lifecycle.
+Shared E2E tests in `tests/e2e/` use Playwright and simulate real user flows. Each run creates a random ephemeral user via Auth0 signup, exercises all journeys, then deletes the user.
 
 ```bash
-# Run E2E tests (starts Vite automatically, logs in via Auth0)
+# Run E2E tests (starts Vite automatically, signs up via Auth0)
 cd tests/e2e && npm test
 ```
 

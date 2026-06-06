@@ -14,11 +14,15 @@ setup (user-lifecycle.spec.ts)
        └→ teardown (user-teardown.spec.ts)
 ```
 
+### Ephemeral Test Users
+
+Each test run creates a **fresh random user** (`e2e-{timestamp}@baita.help`) via Auth0 signup, exercises all journeys, then deletes the user in teardown. No shared credentials, no state between runs.
+
 ## Test Files
 
 | File                           | Journey               | Responsibility                                                 |
 | ------------------------------ | --------------------- | -------------------------------------------------------------- |
-| `tests/user-lifecycle.spec.ts` | Setup                 | Sign up/login, provision resources, copy Google connection     |
+| `tests/user-lifecycle.spec.ts` | Setup                 | Sign up fresh user, verify clean state, copy Google connection |
 | `tests/google-gmail.spec.ts`   | Gmail Integration     | Gmail API call via bot task testing                            |
 | `tests/todo-journey.spec.ts`   | To-Do Management      | Task CRUD lifecycle (create, complete, verify, cleanup)        |
 | `tests/bot-journey.spec.ts`    | Bot Automation        | Full bot lifecycle (create → deploy → trigger → logs → delete) |
@@ -42,13 +46,6 @@ Both servers auto-start (reuses existing if already running):
 - **Backend**: `serverless offline` on port 5000 (requires AWS profile `baita`)
 - **Frontend**: Vite on port 3000
 
-Requires `.env` file with test credentials (gitignored):
-
-```
-TEST_EMAIL=test@baita.help
-TEST_PASSWORD=Baita123$
-```
-
 ### Against production (same as CI)
 
 ```bash
@@ -62,7 +59,7 @@ This hits `https://api.baita.help` and `https://www.baita.help` — identical to
 The CI workflow (`e2e` job) runs after both frontend and backend deploy:
 
 - Sets `API_URL=https://api.baita.help`
-- Uses `TEST_EMAIL` and `TEST_PASSWORD` from GitHub Secrets
+- No credentials needed — each run creates its own ephemeral user
 - Same project structure (setup → journeys → teardown)
 
 ### Execution modes summary
@@ -86,13 +83,13 @@ The CI workflow (`e2e` job) runs after both frontend and backend deploy:
 
 ## Infrastructure
 
-- **Auth**: Real Auth0 login via Playwright (test user: `test@baita.help`)
-- **Token caching**: If `playwright/.auth/token.json` exists and is still valid (API returns 200), the browser login is skipped entirely — avoids Auth0 rate limits during repeated local runs
+- **Auth**: Real Auth0 signup via Playwright (random ephemeral user each run)
+- **No shared credentials**: Each run generates `e2e-{timestamp}@baita.help` and deletes it after
 - **Token sharing**: `user-lifecycle.spec.ts` saves access token to `playwright/.auth/token.json`; all journey specs load it via `loadAuthData()`
 - **Google connection**: Copied from admin user via DynamoDB (AWS SDK) since the auth guard blocks cross-user API reads
 - **Shared helpers**: `tests/helpers.ts` — token loading, auth headers, API URL, connection utilities
 - **Config**: `playwright.config.ts` — three projects (setup → journeys → teardown) with dependency chaining
-- **CI**: GitHub Actions uses `TEST_EMAIL` + `TEST_PASSWORD` secrets, `API_URL` env var
+- **CI**: GitHub Actions, no secrets required for test execution
 
 ## Local vs Production Differences
 

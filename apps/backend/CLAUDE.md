@@ -385,7 +385,7 @@ Consistency is enforced at 3 levels:
 
 ## E2E Tests
 
-E2E tests live in `tests/e2e/` at the monorepo root. They use Playwright with real Auth0 login (test user: `test@baita.help`) — no token bypass.
+E2E tests live in `tests/e2e/` at the monorepo root. They use Playwright with real Auth0 signup (random ephemeral user each run, deleted in teardown).
 
 ```bash
 cd tests/e2e && npm test
@@ -421,9 +421,9 @@ When adding a new endpoint or feature:
 
 ### Infrastructure
 
-- **Auth**: Real Auth0 login via Playwright (`user-lifecycle.spec.ts` extracts token from localStorage)
-- **Test user**: `test@baita.help` (Auth0 database connection `baita-users`)
-- **CI**: GitHub Actions uses `TEST_EMAIL` + `TEST_PASSWORD` secrets
+- **Auth**: Real Auth0 signup via Playwright (random ephemeral user each run)
+- **Ephemeral users**: `e2e-{timestamp}@baita.help` — created in setup, deleted in teardown
+- **CI**: GitHub Actions, no test credentials needed
 
 ## Known Limitations
 
