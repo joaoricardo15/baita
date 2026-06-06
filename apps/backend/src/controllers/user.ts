@@ -1,6 +1,6 @@
-import axios from 'axios'
 import { SQS } from '@aws-sdk/client-sqs'
 import { IContent, IUser } from '@baita/shared'
+import axios from 'axios'
 
 import Bot from '@/controllers/bot'
 import { ddb } from '@/lib/dynamodb'
