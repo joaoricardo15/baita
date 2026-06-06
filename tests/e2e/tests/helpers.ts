@@ -8,6 +8,9 @@ import { APIRequestContext, Page } from '@playwright/test'
 export const API_URL = process.env.API_URL || 'https://api.baita.help'
 export const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
 
+export const TEST_EMAIL = 'e2e-test@baita.help'
+export const TEST_PASSWORD = 'BaitaE2e!2024'
+
 export const GOOGLE_CONNECTION_SOURCE_USER = '110944657139284874166'
 export const GOOGLE_APP_ID = '5c16e311-a65a-449c-ad82-1f23a41cf89c'
 

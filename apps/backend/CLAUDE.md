@@ -88,10 +88,9 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 
 Part of the monorepo unified workflow (`.github/workflows/ci.yml`) on push to `main`:
 
-1. **Shared Checks**: Type-check `@baita/shared`
-2. **Backend Quality**: Lint → Type-check → Jest tests
-3. **Backend Deploy**: `serverless deploy --stage prod`
-4. **E2E Tests**: Playwright against production
+Single "Backend" job: Type-check shared → Lint → Type-check → Test → Deploy (`serverless deploy --stage prod --conceal`)
+
+Runs in parallel with the Frontend job. E2E tests run after both complete.
 
 ### Local Development Requirements
 
@@ -385,7 +384,7 @@ Consistency is enforced at 3 levels:
 
 ## E2E Tests
 
-E2E tests live in `tests/e2e/` at the monorepo root. They use Playwright with real Auth0 signup (random ephemeral user each run, deleted in teardown).
+E2E tests live in `tests/e2e/` at the monorepo root. They use Playwright with a fixed test user (`e2e-test@baita.help`) — each run cleans up the previous state, signs up fresh, and deletes in teardown.
 
 ```bash
 cd tests/e2e && npm test
@@ -421,9 +420,9 @@ When adding a new endpoint or feature:
 
 ### Infrastructure
 
-- **Auth**: Real Auth0 signup via Playwright (random ephemeral user each run)
-- **Ephemeral users**: `e2e-{timestamp}@baita.help` — created in setup, deleted in teardown
-- **CI**: GitHub Actions, no test credentials needed
+- **Auth**: Real Auth0 signup/login via Playwright
+- **Fixed test user**: `e2e-test@baita.help` — same email every run, cleaned up before and after
+- **CI**: GitHub Actions, AWS credentials for DynamoDB access
 
 ## Known Limitations
 

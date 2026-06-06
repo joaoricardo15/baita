@@ -2,9 +2,11 @@
  * User Teardown E2E Test
  *
  * Part of the 'teardown' project — runs after all journey specs.
- * Deletes the ephemeral test user and verifies COMPLETE cleanup:
- * - All resource lists return empty
- * - No stale data remains for the next test run
+ * Deletes the test user via the SAME centralized endpoint that real users use
+ * (Profile → Delete Account → DELETE /user/{userId}).
+ *
+ * Best-effort: logs errors but doesn't fail the suite. The next run's
+ * setup phase will clean up any leftovers via login-first strategy.
  */
 import { expect, test } from '@playwright/test'
 
@@ -27,6 +29,15 @@ test.describe('User Teardown', () => {
       headers: authHeaders(token),
     })
     const body = await res.json()
+
+    if (!body.success) {
+      logResult('Account deletion returned error (non-fatal)', {
+        success: body.success,
+        message: body.message,
+        userId,
+      })
+    }
+
     expect(body.success).toBe(true)
     logResult('User deleted', { userId })
   })

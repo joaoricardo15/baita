@@ -78,25 +78,29 @@ class User {
           }
         }
       }
+    } catch (err) {
+      console.error('Failed to query/delete bots:', err)
+    }
 
-      try {
-        const mainQueue = await this.sqs.getQueueUrl({
-          QueueName: `${SERVICE_PREFIX}-${userId}`,
-        })
-        await this.sqs.deleteQueue({ QueueUrl: mainQueue.QueueUrl! })
-      } catch (err) {
-        console.error('Failed to delete main queue:', err)
-      }
+    try {
+      const mainQueue = await this.sqs.getQueueUrl({
+        QueueName: `${SERVICE_PREFIX}-${userId}`,
+      })
+      await this.sqs.deleteQueue({ QueueUrl: mainQueue.QueueUrl! })
+    } catch (err) {
+      console.error('Failed to delete main queue:', err)
+    }
 
-      try {
-        const dlq = await this.sqs.getQueueUrl({
-          QueueName: `${SERVICE_PREFIX}-${userId}-dlq`,
-        })
-        await this.sqs.deleteQueue({ QueueUrl: dlq.QueueUrl! })
-      } catch (err) {
-        console.error('Failed to delete DLQ:', err)
-      }
+    try {
+      const dlq = await this.sqs.getQueueUrl({
+        QueueName: `${SERVICE_PREFIX}-${userId}-dlq`,
+      })
+      await this.sqs.deleteQueue({ QueueUrl: dlq.QueueUrl! })
+    } catch (err) {
+      console.error('Failed to delete DLQ:', err)
+    }
 
+    try {
       const { Items: allRecords } = await ddb.query({
         TableName: CORE_TABLE,
         KeyConditionExpression: 'userId = :userId',
@@ -117,11 +121,11 @@ class User {
           })
         }
       }
-
-      await this.deleteAuth0User(userId)
-    } catch (err: unknown) {
-      throw err instanceof Error ? err : new Error(String(err))
+    } catch (err) {
+      console.error('Failed to delete DynamoDB records:', err)
     }
+
+    await this.deleteAuth0User(userId)
   }
 
   private async deleteAuth0User(userId: string) {

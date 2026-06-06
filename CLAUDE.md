@@ -102,15 +102,15 @@ All connector/service icons live in `apps/frontend/public/icons/` and are refere
 Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main`:
 
 ```
-shared → frontend-quality → frontend-deploy ─┐
-       ↘ backend-quality  → backend-deploy  ──┤→ e2e
+frontend (type-check → lint → spell → build → test → deploy) ─┐
+backend  (type-check → lint → type-check → test → deploy)     ─┤→ e2e
 ```
 
-Changes to `packages/shared/` trigger BOTH branches.
+Both jobs run in parallel. Each includes `packages/shared/` type-check as its first quality step. Frontend deploys pre-built artifacts directly to Amplify via manual deployment API (no remote rebuild). Backend deploys via Serverless Framework.
 
 ## E2E Testing
 
-Shared E2E tests in `tests/e2e/` use Playwright and simulate real user flows. Each run creates a random ephemeral user via Auth0 signup, exercises all journeys, then deletes the user.
+Shared E2E tests in `tests/e2e/` use Playwright and simulate real user flows. They use a fixed test user (`e2e-test@baita.help`) — each run cleans up the previous state, signs up fresh, and deletes it in teardown.
 
 ```bash
 # Run E2E tests (starts Vite automatically, signs up via Auth0)
