@@ -29,6 +29,9 @@ jobs:
         run: cd apps/frontend && npm run spell
 
       - name: Build
+        env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+          VITE_GOOGLE_MAPS_MAP_ID: ${{ secrets.VITE_GOOGLE_MAPS_MAP_ID }}
         run: cd apps/frontend && npm run build
 
       - name: Test
@@ -40,40 +43,34 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Deploy to Amplify
+      - name: Package build artifact
+        run: cd apps/frontend/dist && zip -qr /tmp/deploy.zip .
+
+      - name: Upload and deploy to Amplify
+        id: deploy
         run: |
-          APP_ID="d35kx8fgop2qtf"
-          BRANCH="main"
+          DEPLOY=$(aws amplify create-deployment \
+            --app-id d1yzzk62iq66zd --branch-name main --output json)
+          curl --fail -s -T /tmp/deploy.zip \
+            "$(echo $DEPLOY | jq -r '.zipUploadUrl')"
+          JOB=$(echo $DEPLOY | jq -r '.jobId')
+          aws amplify start-deployment \
+            --app-id d1yzzk62iq66zd --branch-name main --job-id "$JOB"
+          echo "job-id=$JOB" >> "$GITHUB_OUTPUT"
 
-          cd apps/frontend/dist && zip -r /tmp/deploy.zip . && cd -
-
-          RESULT=$(aws amplify create-deployment --app-id "$APP_ID" --branch-name "$BRANCH" --output json)
-          JOB_ID=$(echo "$RESULT" | jq -r '.jobId')
-          UPLOAD_URL=$(echo "$RESULT" | jq -r '.zipUploadUrl')
-
-          curl --fail --silent -T /tmp/deploy.zip "$UPLOAD_URL"
-
-          aws amplify start-deployment --app-id "$APP_ID" --branch-name "$BRANCH" --job-id "$JOB_ID"
-
-          echo "Waiting for deployment to complete..."
-          for i in $(seq 1 20); do
-            STATUS=$(aws amplify get-job --app-id "$APP_ID" --branch-name "$BRANCH" \
-              --job-id "$JOB_ID" --query 'job.summary.status' --output text)
-            echo "  Attempt $i: status=[$STATUS]"
-            case "$STATUS" in
-              SUCCEED)
-                echo "Deployment $JOB_ID succeeded!"
-                exit 0
-                ;;
-              FAILED|CANCELLED)
-                echo "Deployment $JOB_ID failed with status: $STATUS"
-                exit 1
-                ;;
+      - name: Wait for deployment
+        timeout-minutes: 2
+        run: |
+          while true; do
+            STATUS=$(aws amplify get-job --app-id d1yzzk62iq66zd \
+              --branch-name main --job-id ${{ steps.deploy.outputs.job-id }} \
+              --query 'job.summary.status' --output text)
+            case $STATUS in
+              SUCCEED) exit 0 ;;
+              FAILED|CANCELLED) exit 1 ;;
             esac
-            sleep 5
+            sleep 3
           done
-          echo "Timeout waiting for deployment $JOB_ID"
-          exit 1
 
   backend:
     name: Backend

@@ -172,7 +172,7 @@ Results published to user's SQS queue → content feed
 
 - **Region**: `us-east-1`
 - \*\*Profile`: `baita`
-- **Amplify App**: `d35kx8fgop2qtf`
+- **Amplify App**: `d1yzzk62iq66zd`
 - **DynamoDB Table**: `baita-help-prod` (on-demand billing)
 - **S3 Buckets**: `baita-help-prod-bots`, `baita-help-prod-files`, `baita-help-prod-docs`
 - **SQS Queues**: `baita-help-prod-{userId}` (per-user, with DLQ)

@@ -140,7 +140,7 @@ cd tests/e2e && npm test
 ## AWS Context
 
 - **Profile**: Always use `--profile baita --region us-east-1`
-- **Frontend (Amplify)**: App ID `d35kx8fgop2qtf`, branch `main`
+- **Frontend (Amplify)**: App ID `d1yzzk62iq66zd`, branch `main`
 - **Backend (Serverless)**: Deployed via GitHub Actions on push to `main`
 - **Region**: `us-east-1` for everything
 
@@ -196,7 +196,7 @@ VITE_GOOGLE_MAPS_MAP_ID=<map-id>
 **Production** — set in Amplify Console (or via CLI):
 
 ```bash
-aws amplify update-app --app-id d35kx8fgop2qtf \
+aws amplify update-app --app-id d1yzzk62iq66zd \
   --environment-variables VITE_GOOGLE_MAPS_API_KEY=<key>,VITE_GOOGLE_MAPS_MAP_ID=<map-id> \
   --profile baita --region us-east-1
 ```

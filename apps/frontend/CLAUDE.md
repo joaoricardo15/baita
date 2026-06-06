@@ -114,10 +114,10 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 ## AWS / Deployment
 
 - **AWS Profile:** Always use `--profile baita` for AWS CLI commands in this repo
-- **Amplify App ID:** `d35kx8fgop2qtf`
+- **Amplify App ID:** `d1yzzk62iq66zd`
 - **Region:** `us-east-1`
 - **Branch:** `main` (production)
-- **Fetch build logs:** `aws amplify list-jobs --app-id d35kx8fgop2qtf --branch-name main --profile baita --region us-east-1`
+- **Fetch build logs:** `aws amplify list-jobs --app-id d1yzzk62iq66zd --branch-name main --profile baita --region us-east-1`
 - **Before pushing:** Always `git pull --rebase` to sync with remote
 
 ## Architecture Decisions
@@ -139,10 +139,10 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 
 Frontend env vars use Vite's `import.meta.env.VITE_*` pattern. They are injected at **build time** (not runtime).
 
-| Variable                   | Purpose                         | Where to set                                 |
-| -------------------------- | ------------------------------- | -------------------------------------------- |
-| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JavaScript API key  | `.env.local` (local), Amplify Console (prod) |
-| `VITE_GOOGLE_MAPS_MAP_ID`  | Google Maps custom map style ID | `.env.local` (local), Amplify Console (prod) |
+| Variable                   | Purpose                         | Where to set                                |
+| -------------------------- | ------------------------------- | ------------------------------------------- |
+| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JavaScript API key  | `.env.local` (local), GitHub Secrets (prod) |
+| `VITE_GOOGLE_MAPS_MAP_ID`  | Google Maps custom map style ID | `.env.local` (local), GitHub Secrets (prod) |
 
 **Local development:** Create `apps/frontend/.env.local` (gitignored):
 
@@ -151,13 +151,7 @@ VITE_GOOGLE_MAPS_API_KEY=<your-key>
 VITE_GOOGLE_MAPS_MAP_ID=<your-map-id>
 ```
 
-**Production (AWS Amplify):**
-
-```bash
-aws amplify update-app --app-id d35kx8fgop2qtf \
-  --environment-variables VITE_GOOGLE_MAPS_API_KEY=<key>,VITE_GOOGLE_MAPS_MAP_ID=<map-id> \
-  --profile baita --region us-east-1
-```
+**Production:** Set as GitHub Actions secrets (`VITE_GOOGLE_MAPS_API_KEY`, `VITE_GOOGLE_MAPS_MAP_ID`). They're passed to the build step in `.github/workflows/ci.yml`.
 
 **Security note:** Frontend API keys (Maps, Analytics) are inherently public — they end up in the JS bundle. Security is enforced via **API key restrictions** (HTTP referrer, API scoping) in the provider's console, not by hiding the key.
 
