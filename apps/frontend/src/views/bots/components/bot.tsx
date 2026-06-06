@@ -129,7 +129,6 @@ const Bot: FC<{
               label: labels.editButton,
               icon: <EditIcon color="secondary" />,
               onClick: () => onNavigateToBot(),
-              condition: isAdmin && !bot.modelId,
             },
             {
               label: labels.logsButton,

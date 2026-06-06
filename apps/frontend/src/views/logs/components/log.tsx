@@ -1,15 +1,12 @@
 import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material'
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material'
-import { FC, useContext } from 'react'
+import { FC } from 'react'
 
 import { Highlight, StatusChip, Text } from '@/components'
 import { IBotLog } from '@baita/shared'
-import { AuthContext } from '@/providers/auth'
 import { getLabels, Labels } from '@/utils/labels'
 
 const Log: FC<{ botLog: IBotLog }> = ({ botLog }) => {
-  const { isAdmin } = useContext(AuthContext)
-
   return (
     <div className="mb-5" key={botLog.timestamp}>
       <Accordion>
@@ -28,10 +25,10 @@ const Log: FC<{ botLog: IBotLog }> = ({ botLog }) => {
             <Text className="mx-3 align-self-center">{log.name}</Text>
           </AccordionSummary>
           <AccordionDetails className="d-block">
-            {isAdmin && log.inputData && (
+            {log.inputData && (
               <>
                 <Text className="mb-1">{labels.inputData}</Text>
-                {log.inputData ? <Highlight data={log.inputData} /> : ''}
+                <Highlight data={log.inputData} />
               </>
             )}
             {log.outputData && (

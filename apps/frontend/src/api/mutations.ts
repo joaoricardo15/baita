@@ -125,3 +125,6 @@ export const publishBotModel = (model: IBotModel) =>
 
 export const deleteBotModel = (modelId: string) =>
   getApiResponse<void>('post', `user/baita/resource/model/delete/${modelId}`)
+
+export const deleteUser = (userId: string) =>
+  getApiResponse<void>('delete', `user/${userId}`)

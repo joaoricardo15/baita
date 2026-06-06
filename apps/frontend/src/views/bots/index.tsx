@@ -1,10 +1,9 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
 import { Add as AddIcon } from '@mui/icons-material'
-import { Divider } from '@mui/material'
 import { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Button, Loading, Skeleton, Text } from '@/components'
+import { Button, Loading, Skeleton } from '@/components'
 import { useBotModels, useBots, useCreateBot } from '@/hooks/useBots'
 import { LINKS } from '@/router'
 import { getLabels, Labels } from '@/utils/labels'
@@ -45,31 +44,24 @@ export const Bots: FC = () => {
                 </div>
               )
           )}
-          <div className="my-5">
-            <Divider>
-              <Text type="h5" className="my-1">
-                {labels.panelTitle}
-              </Text>
-            </Divider>
-            <div className="mt-5">
-              {bots
-                .filter((bot) => !bot.modelId)
-                .map((bot, i) => (
-                  <div className="mb-2" key={i}>
-                    <Bot bot={bot} />
-                  </div>
-                ))}
-            </div>
-            <div className="d-flex align-items-center justify-content-center mt-5">
-              <Button
-                type="text"
-                color="primary"
-                icon={<AddIcon />}
-                onClick={onCreateBot}
-              >
-                {labels.addBot}
-              </Button>
-            </div>
+
+          {bots
+            .filter((bot) => !bot.modelId)
+            .map((bot, i) => (
+              <div className="mb-2" key={i}>
+                <Bot bot={bot} />
+              </div>
+            ))}
+
+          <div className="d-flex align-items-center justify-content-center mt-5">
+            <Button
+              type="text"
+              color="primary"
+              icon={<AddIcon />}
+              onClick={onCreateBot}
+            >
+              {labels.addBot}
+            </Button>
           </div>
         </>
       )}
@@ -83,11 +75,9 @@ export default withAuthenticationRequired(Bots, {
 
 const LABELS: Labels = {
   en: {
-    panelTitle: 'Admin panel',
     addBot: 'Add bot',
   },
   pt: {
-    panelTitle: 'Painel de administrador',
     addBot: 'Adicionar bot',
   },
 }

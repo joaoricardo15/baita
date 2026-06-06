@@ -6,11 +6,12 @@
  * - Create tasks
  * - Mark tasks as complete
  * - Verify task persistence across reads
+ * - Verify profile reflects daily progress
  * - Clean up (restore original state)
  */
 import { expect, test } from '@playwright/test'
 
-import { API_URL, authHeaders, loadAuthData } from './helpers'
+import { API_URL, authHeaders, loadAuthData, logResult } from './helpers'
 
 let token: string
 let userId: string
@@ -21,9 +22,14 @@ test.beforeAll(() => {
   userId = data.userId
 })
 
+test.describe.configure({ mode: 'serial' })
+
 test.describe('To-Do Lifecycle', () => {
-  const taskId = `e2e-task-${Date.now()}`
-  const taskTitle = 'E2E test task'
+  const taskIds = [
+    `e2e-task-1-${Date.now()}`,
+    `e2e-task-2-${Date.now()}`,
+    `e2e-task-3-${Date.now()}`,
+  ]
 
   test.afterAll(async ({ request }) => {
     const res = await request.post(
@@ -31,11 +37,9 @@ test.describe('To-Do Lifecycle', () => {
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
-    if (
-      body.data?.tasks?.some((t: { taskId: string }) => t.taskId === taskId)
-    ) {
+    if (body.data?.tasks) {
       const tasks = body.data.tasks.filter(
-        (t: { taskId: string }) => t.taskId !== taskId
+        (t: { taskId: string }) => !taskIds.includes(t.taskId)
       )
       await request.post(`${API_URL}/user/${userId}/resource/todo/update`, {
         headers: authHeaders(token),
@@ -52,9 +56,12 @@ test.describe('To-Do Lifecycle', () => {
     expect(res.status()).toBe(200)
     const body = await res.json()
     expect(body.success).toBe(true)
+    logResult('Initial todo state', {
+      taskCount: body.data?.tasks?.length ?? 0,
+    })
   })
 
-  test('create a new task via update', async ({ request }) => {
+  test('create 3 new tasks', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/todo/read`,
       { headers: authHeaders(token), data: {} }
@@ -62,47 +69,49 @@ test.describe('To-Do Lifecycle', () => {
     const current = await res.json()
     const existingTasks = current.data?.tasks ?? []
 
-    const newTask = {
+    const newTasks = taskIds.map((taskId, i) => ({
       taskId,
-      title: taskTitle,
+      title: `E2E task ${i + 1}`,
       done: false,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    }
+    }))
 
     const updateRes = await request.post(
       `${API_URL}/user/${userId}/resource/todo/update`,
       {
         headers: authHeaders(token),
-        data: { tasks: [...existingTasks, newTask] },
+        data: { tasks: [...existingTasks, ...newTasks] },
       }
     )
     expect(updateRes.status()).toBe(200)
     expect((await updateRes.json()).success).toBe(true)
+    logResult('Created 3 tasks', { taskIds })
   })
 
-  test('verify task appears in todo list', async ({ request }) => {
+  test('verify all 3 tasks exist', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/todo/read`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
-    const found = body.data?.tasks?.find(
-      (t: { taskId: string }) => t.taskId === taskId
+    const found = body.data?.tasks?.filter((t: { taskId: string }) =>
+      taskIds.includes(t.taskId)
     )
-    expect(found).toBeTruthy()
-    expect(found.title).toBe(taskTitle)
-    expect(found.done).toBe(false)
+    expect(found).toHaveLength(3)
+    expect(found.every((t: { done: boolean }) => !t.done)).toBe(true)
   })
 
-  test('mark task as complete', async ({ request }) => {
+  test('mark 2 tasks as done', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/todo/read`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
     const tasks = body.data.tasks.map((t: { taskId: string; done: boolean }) =>
-      t.taskId === taskId ? { ...t, done: true, updatedAt: Date.now() } : t
+      taskIds.slice(0, 2).includes(t.taskId)
+        ? { ...t, done: true, updatedAt: Date.now() }
+        : t
     )
 
     const updateRes = await request.post(
@@ -112,26 +121,30 @@ test.describe('To-Do Lifecycle', () => {
     expect((await updateRes.json()).success).toBe(true)
   })
 
-  test('verify task is marked complete', async ({ request }) => {
+  test('verify 2 done, 1 pending', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/todo/read`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
-    const found = body.data?.tasks?.find(
-      (t: { taskId: string }) => t.taskId === taskId
+    const e2eTasks = body.data?.tasks?.filter((t: { taskId: string }) =>
+      taskIds.includes(t.taskId)
     )
-    expect(found.done).toBe(true)
+    const done = e2eTasks.filter((t: { done: boolean }) => t.done)
+    const pending = e2eTasks.filter((t: { done: boolean }) => !t.done)
+    expect(done).toHaveLength(2)
+    expect(pending).toHaveLength(1)
+    logResult('Task status', { done: done.length, pending: pending.length })
   })
 
-  test('remove test task (cleanup)', async ({ request }) => {
+  test('delete all test tasks (cleanup)', async ({ request }) => {
     const res = await request.post(
       `${API_URL}/user/${userId}/resource/todo/read`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
     const tasks = body.data.tasks.filter(
-      (t: { taskId: string }) => t.taskId !== taskId
+      (t: { taskId: string }) => !taskIds.includes(t.taskId)
     )
 
     const updateRes = await request.post(
@@ -139,5 +152,6 @@ test.describe('To-Do Lifecycle', () => {
       { headers: authHeaders(token), data: { tasks } }
     )
     expect((await updateRes.json()).success).toBe(true)
+    logResult('Cleanup', { removedTasks: taskIds.length })
   })
 })

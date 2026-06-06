@@ -1,6 +1,7 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
 import {
   CheckBox as CheckBoxIcon,
+  Delete as DeleteIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material'
 import {
@@ -8,23 +9,33 @@ import {
   AccordionDetails,
   AccordionSummary,
   Card,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from '@mui/material'
 import { FC, useContext, useEffect, useState } from 'react'
 import { TypeAnimation } from 'react-type-animation'
 
 import trophySrc from '@/assets/trophy.gif'
-import { Loading, Skeleton, Text } from '@/components'
+import { Button, Loading, Skeleton, Text } from '@/components'
 import { ITodoTask } from '@baita/shared'
+import { useDeleteUser } from '@/hooks/useUser'
 import { useTodo } from '@/hooks/useTodo'
 import { AuthContext } from '@/providers/auth'
+import { NotificationContext } from '@/providers/notification'
 import { getTimeDiffLabel, isToday } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 import Avatar from './components/avatar'
 
 export const ProfileComponent: FC = () => {
-  const { user } = useContext(AuthContext)
+  const { user, logout } = useContext(AuthContext)
+  const { showLoading } = useContext(NotificationContext)
   const { data: todoTasks } = useTodo()
+  const deleteUser = useDeleteUser()
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [statistics, setStatistics] = useState<{
     doneTasks: ITodoTask[]
     doneToday: ITodoTask[]
@@ -43,6 +54,15 @@ export const ProfileComponent: FC = () => {
       })
     }
   }, [todoTasks])
+
+  const onDeleteAccount = () => {
+    setDeleteDialogOpen(false)
+    showLoading(true)
+    deleteUser
+      .mutateAsync()
+      .then(() => logout())
+      .catch(() => showLoading(false))
+  }
 
   return (
     <div className="mt-5">
@@ -100,6 +120,35 @@ export const ProfileComponent: FC = () => {
           </div>
         )}
       </div>
+
+      <div className="d-flex justify-content-center mt-5">
+        <Button
+          type="text"
+          color="error"
+          icon={<DeleteIcon />}
+          onClick={() => setDeleteDialogOpen(true)}
+        >
+          {labels.deleteAccount}
+        </Button>
+      </div>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>{labels.deleteTitle}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{labels.deleteWarning}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>
+            {labels.cancel}
+          </Button>
+          <Button color="error" onClick={onDeleteAccount}>
+            {labels.confirmDelete}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   )
 }
@@ -112,10 +161,22 @@ const LABELS: Labels = {
   en: {
     doneTodayTasks: 'Tasks done today:',
     dailyGoal: 'Congrats, you have reached your daily goal 🎉🎉🎉',
+    deleteAccount: 'Delete account',
+    deleteTitle: 'Delete your account?',
+    deleteWarning:
+      'This action is permanent. All your bots, connections, data, and account will be deleted forever.',
+    cancel: 'Cancel',
+    confirmDelete: 'Delete forever',
   },
   pt: {
     doneTodayTasks: 'Tarefas feitas hoje:',
     dailyGoal: 'Parabéns, você atingiu sua cota diária 🎉🎉🎉',
+    deleteAccount: 'Deletar conta',
+    deleteTitle: 'Deletar sua conta?',
+    deleteWarning:
+      'Esta ação é permanente. Todos os seus bots, conexões, dados e conta serão deletados para sempre.',
+    cancel: 'Cancelar',
+    confirmDelete: 'Deletar para sempre',
   },
 }
 

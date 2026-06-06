@@ -248,17 +248,17 @@ Tests are organized around **user journeys** — every test file maps to a custo
 ### E2E Test Suite
 
 ```bash
-cd tests/e2e && npm test
+cd tests/e2e && npm test        # Local (auto-starts backend + frontend)
+cd tests/e2e && npm run test:prod  # Against production (same as CI)
 ```
 
-- Logs in via Auth0 (`auth.setup.ts`), saves token + storageState
-- Tests all pages for JS errors and network failures (`pages.spec.ts`)
-- Tests resource CRUD, bot lifecycle, content feed (`resource-crud.spec.ts`)
-- Tests todo task lifecycle end-to-end (`todo-journey.spec.ts`)
-- Tests OAuth connector operations (`connector-oauth.spec.ts`)
-- Tests auth flow, security gates, CORS (`user-auth.spec.ts`)
-- Shared helpers in `tests/helpers.ts` (token loading, auth headers)
-- Auto-starts Vite dev server, points API to `localhost:5000/dev`
+- Three-phase execution: setup → journeys → teardown (Playwright project dependencies)
+- Setup (`user-lifecycle.spec.ts`): Clean slate (delete stale user), sign up fresh, provision resources, copy Google connection
+- Journeys: `google-gmail`, `todo-journey`, `bot-journey`, `connections`, `pages-security`, `notes-journey`, `content-feed`
+- Teardown (`user-teardown.spec.ts`): Delete account, verify all resource types return 401
+- Clean-state principle: nothing exists before tests, everything deleted after
+- Local: both servers auto-start (serverless offline + Vite)
+- CI: hits production after deploy (`API_URL=https://api.baita.help`)
 
 ### Test Cleanup Rules
 

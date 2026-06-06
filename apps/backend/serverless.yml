@@ -79,6 +79,7 @@ provider:
           sqs:DeleteMessageBatch,
           sqs:GetQueueAttributes,
           sqs:SetQueueAttributes,
+          sqs:DeleteQueue,
         ]
       Resource:
         - arn:aws:sqs:us-east-1:*:${self:provider.environment.SERVICE_PREFIX}-*
@@ -133,6 +134,10 @@ provider:
     BOTS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-bots
     FILES_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-files
     BOTS_PERMISSION: arn:aws:iam::${aws:accountId}:role/${self:provider.environment.SERVICE_PREFIX}
+    # Auth0 Management API (M2M)
+    AUTH0_DOMAIN: ${ssm:/baita/prod/auth0-domain}
+    AUTH0_M2M_CLIENT_ID: ${ssm:/baita/prod/auth0-m2m-client-id}
+    AUTH0_M2M_CLIENT_SECRET: ${ssm:/baita/prod/auth0-m2m-client-secret}
     # Partners (OAuth secrets resolved from SSM at deploy time)
     PIPEDRIVE_AUTH_URL: ${ssm:/baita/prod/pipedrive-auth-url}
     PIPEDRIVE_CLIENT_ID: ${ssm:/baita/prod/pipedrive-client-id}
@@ -164,6 +169,15 @@ functions:
       - http:
           path: user
           method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+  endpoint-user-delete:
+    handler: src/endpoints/user/delete/index.handler
+    timeout: 60
+    events:
+      - http:
+          path: user/{userId}
+          method: delete
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
   endpoint-content-get:

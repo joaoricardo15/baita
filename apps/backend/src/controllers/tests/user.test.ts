@@ -17,6 +17,15 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { mockClient } from 'aws-sdk-client-mock'
 
+jest.mock('@/controllers/bot', () => {
+  return {
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => ({
+      deleteBot: jest.fn().mockResolvedValue(undefined),
+    })),
+  }
+})
+
 const ddbMock = mockClient(DynamoDBDocument)
 const sqsMock = mockClient(SQS)
 

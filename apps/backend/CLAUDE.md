@@ -421,7 +421,7 @@ When adding a new endpoint or feature:
 
 ### Infrastructure
 
-- **Auth**: Real Auth0 login via Playwright (`auth.setup.ts` extracts token from localStorage)
+- **Auth**: Real Auth0 login via Playwright (`user-lifecycle.spec.ts` extracts token from localStorage)
 - **Test user**: `test@baita.help` (Auth0 database connection `baita-users`)
 - **CI**: GitHub Actions uses `TEST_EMAIL` + `TEST_PASSWORD` secrets
 

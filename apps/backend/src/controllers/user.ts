@@ -1,11 +1,16 @@
+import axios from 'axios'
 import { SQS } from '@aws-sdk/client-sqs'
 import { IContent, IUser } from '@baita/shared'
 
+import Bot from '@/controllers/bot'
 import { ddb } from '@/lib/dynamodb'
 import { CONTENT_BATCH_LIMIT, SQS_RETENTION_SECONDS } from '@/utils/constants'
 
 const CORE_TABLE = process.env.CORE_TABLE || ''
 const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || ''
+const AUTH0_M2M_CLIENT_ID = process.env.AUTH0_M2M_CLIENT_ID || ''
+const AUTH0_M2M_CLIENT_SECRET = process.env.AUTH0_M2M_CLIENT_SECRET || ''
 
 class User {
   private sqs: SQS
@@ -51,6 +56,105 @@ class User {
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }
+  }
+
+  async deleteUser(userId: string) {
+    try {
+      const { Items: bots } = await ddb.query({
+        TableName: CORE_TABLE,
+        KeyConditionExpression:
+          'userId = :userId and begins_with(sortKey, :sk)',
+        ExpressionAttributeValues: { ':userId': userId, ':sk': '#BOT#' },
+      })
+
+      if (bots && bots.length > 0) {
+        const botController = new Bot()
+        for (const bot of bots) {
+          try {
+            const botId = bot.sortKey.replace('#BOT#', '')
+            await botController.deleteBot(userId, botId, bot.apiId)
+          } catch (err) {
+            console.error(`Failed to delete bot ${bot.sortKey}:`, err)
+          }
+        }
+      }
+
+      try {
+        const mainQueue = await this.sqs.getQueueUrl({
+          QueueName: `${SERVICE_PREFIX}-${userId}`,
+        })
+        await this.sqs.deleteQueue({ QueueUrl: mainQueue.QueueUrl! })
+      } catch (err) {
+        console.error('Failed to delete main queue:', err)
+      }
+
+      try {
+        const dlq = await this.sqs.getQueueUrl({
+          QueueName: `${SERVICE_PREFIX}-${userId}-dlq`,
+        })
+        await this.sqs.deleteQueue({ QueueUrl: dlq.QueueUrl! })
+      } catch (err) {
+        console.error('Failed to delete DLQ:', err)
+      }
+
+      const { Items: allRecords } = await ddb.query({
+        TableName: CORE_TABLE,
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: { ':userId': userId },
+      })
+
+      if (allRecords && allRecords.length > 0) {
+        const chunks = this.chunkArray(allRecords, 25)
+        for (const chunk of chunks) {
+          await ddb.batchWrite({
+            RequestItems: {
+              [CORE_TABLE]: chunk.map((item) => ({
+                DeleteRequest: {
+                  Key: { userId: item.userId, sortKey: item.sortKey },
+                },
+              })),
+            },
+          })
+        }
+      }
+
+      await this.deleteAuth0User(userId)
+    } catch (err: unknown) {
+      throw err instanceof Error ? err : new Error(String(err))
+    }
+  }
+
+  private async deleteAuth0User(userId: string) {
+    try {
+      const tokenResponse = await axios.post(
+        `https://${AUTH0_DOMAIN}/oauth/token`,
+        {
+          grant_type: 'client_credentials',
+          client_id: AUTH0_M2M_CLIENT_ID,
+          client_secret: AUTH0_M2M_CLIENT_SECRET,
+          audience: `https://${AUTH0_DOMAIN}/api/v2/`,
+        }
+      )
+
+      await axios.delete(
+        `https://${AUTH0_DOMAIN}/api/v2/users/auth0|${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.data.access_token}`,
+          },
+        }
+      )
+    } catch (err) {
+      console.error('Failed to delete Auth0 user:', err)
+    }
+  }
+
+  private chunkArray<T>(array: T[], size: number): T[][] {
+    const chunks: T[][] = []
+    for (let i = 0; i < array.length; i += size) {
+      chunks.push(array.slice(i, i + size))
+    }
+    return chunks
   }
 
   async getContent(userId: string) {

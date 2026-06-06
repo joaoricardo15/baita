@@ -284,7 +284,7 @@ When a deployed bot runs a task using the connection, the **app config** from `a
 After integrating a new partner, verify these flows:
 
 1. **Unit tests** — OAuth handler + token refresh (`apps/backend/src/connectors/oauth/tests/`)
-2. **E2E tests** — Connection CRUD with partner-specific credential shape (`tests/e2e/tests/connector-oauth.spec.ts`)
+2. **E2E tests** — Connection CRUD with partner-specific credential shape (`tests/e2e/tests/connections.spec.ts`)
 3. **Manual test** — Open bot builder → add task → click "New Connection" → authorize → verify connection saved
 4. **Bot execution test** — Deploy a bot with the partner task → run it → verify API call succeeds with refreshed token
 

@@ -79,12 +79,12 @@ Credentials stored in DynamoDB → Connection linked to bot task
 
 ## E2E Test Coverage
 
-| Flow           | Test File                                 | What's Verified                                                    |
-| -------------- | ----------------------------------------- | ------------------------------------------------------------------ |
-| User Auth      | `tests/e2e/tests/user-auth.spec.ts`       | Login button, Auth0 redirect, callback handling, token validation  |
-| Connector Auth | `tests/e2e/tests/connector-oauth.spec.ts` | Connection CRUD, token persistence, OAuth endpoint, error handling |
-| API Health     | `tests/e2e/tests/api-health.spec.ts`      | All endpoints, bot lifecycle, security, CORS                       |
-| Page Health    | `tests/e2e/tests/pages.spec.ts`           | All pages render without JS errors or network failures             |
+| Flow           | Test File                                | What's Verified                                             |
+| -------------- | ---------------------------------------- | ----------------------------------------------------------- |
+| User Auth      | `tests/e2e/tests/user-lifecycle.spec.ts` | Login/signup flow, resource provisioning, token persistence |
+| Connector Auth | `tests/e2e/tests/connections.spec.ts`    | Connection CRUD, health checks, details, linked bots        |
+| Auth Security  | `tests/e2e/tests/pages-security.spec.ts` | 401 enforcement, CORS headers, invalid/missing token        |
+| Page Health    | `tests/e2e/tests/pages-security.spec.ts` | All pages render without JS errors or network failures      |
 
 ---
 

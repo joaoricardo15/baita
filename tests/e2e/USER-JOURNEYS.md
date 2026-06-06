@@ -30,7 +30,8 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 - **Unit (Frontend):** `apps/frontend/src/providers/auth.test.tsx` — userId extraction, admin detection, token delegation
 - **Unit (Backend):** `apps/backend/src/authorizer/tests/index.test.ts` — JWT verification, policy generation
-- **E2E:** `tests/e2e/tests/user-auth.spec.ts` — Full login flow, 401 enforcement, CORS headers
+- **E2E:** `tests/e2e/tests/user-lifecycle.spec.ts` — Full login/signup flow, resource provisioning
+- **E2E:** `tests/e2e/tests/pages-security.spec.ts` — 401 enforcement, CORS headers, invalid/missing token
 
 ---
 
@@ -57,7 +58,6 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 - **Unit (Frontend):** `apps/frontend/src/providers/user.test.tsx` — retrieveTodoTasks, updateTodoTasks, setTodoTasks
 - **Unit (Backend):** `apps/backend/src/controllers/tests/resource.test.ts` — CRUD operations
 - **E2E:** `tests/e2e/tests/todo-journey.spec.ts` — Full lifecycle (create → complete → verify → cleanup)
-- **E2E:** `tests/e2e/tests/resource-crud.spec.ts` — Todo list endpoint returns array
 
 ---
 
@@ -82,7 +82,8 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 - **Unit (Frontend):** `apps/frontend/src/providers/user.test.tsx` — retrieveContent, reactToContent, popContent, auto-refresh
 - **Unit (Backend):** `apps/backend/src/controllers/tests/user.test.ts` — SQS message parsing, deduplication, batch delete
-- **E2E:** `tests/e2e/tests/resource-crud.spec.ts` — GET /content returns valid response
+- **E2E:** `tests/e2e/tests/content-feed.spec.ts` — Publish content via bot task, read from feed, verify structure, confirm consumption
+- **E2E:** `tests/e2e/tests/pages-security.spec.ts` — Feed page renders without errors
 
 ---
 
@@ -122,8 +123,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 - **Unit (Backend):** `apps/backend/src/endpoints/bot/deploy/tests/index.test.ts` — Deploy validation + handler
 - **Unit (Backend):** `apps/backend/src/endpoints/bot/create/tests/index.test.ts` — Creation handler
 - **Unit (Shared):** `packages/shared/src/tests/bot.test.ts` — validateBot, step references, config hashing
-- **E2E:** `tests/e2e/tests/resource-crud.spec.ts` — Create → logs → read → delete lifecycle
-- **E2E:** `tests/e2e/tests/bot-journey.spec.ts` — Full lifecycle: create → configure → test task → deploy → trigger → verify logs → delete/re-add → re-deploy → deactivate → cleanup
+- **E2E:** `tests/e2e/tests/bot-journey.spec.ts` — Full lifecycle: create → configure → test task → deploy → trigger → verify logs → deactivate → delete
 
 ---
 
@@ -146,8 +146,8 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 - **Unit (Frontend):** `apps/frontend/src/views/notes/tests/index.test.tsx` — Rendering, editing, interactions
 - **Unit (Backend):** `apps/backend/src/controllers/tests/resource.test.ts` — Generic CRUD (covers notes)
-- **E2E:** `tests/e2e/tests/resource-crud.spec.ts` — Resource CRUD lifecycle (generic)
-- **E2E:** `tests/e2e/tests/pages.spec.ts` — Notes page renders without errors
+- **E2E:** `tests/e2e/tests/notes-journey.spec.ts` — Full lifecycle (create → read → update → delete → verify)
+- **E2E:** `tests/e2e/tests/pages-security.spec.ts` — Notes page renders without errors
 
 ---
 
@@ -169,7 +169,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 ### Test Coverage
 
 - **Unit (Backend):** `apps/backend/src/controllers/tests/resource.test.ts` — Generic CRUD + upload/remove
-- **E2E:** `tests/e2e/tests/pages.spec.ts` — Places page renders without errors
+- **E2E:** `tests/e2e/tests/pages-security.spec.ts` — Places page renders without errors (smoke)
 
 ---
 
@@ -201,8 +201,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 - **Unit (Backend):** `apps/backend/src/endpoints/connection/details/tests/index.test.ts` — Details with linked bots
 - **Unit (Backend):** `apps/backend/src/utils/tests/tokenRefresh.test.ts` — Token refresh utility
 - **Unit (Backend):** `apps/backend/src/connectors/oauth/tests/index.test.ts` — OAuth callback handler
-- **E2E:** `tests/e2e/tests/connector-oauth.spec.ts` — Connection CRUD, token refresh, callback edge cases
-- **E2E:** `tests/e2e/tests/connections-page.spec.ts` — Health check, details, delete endpoints
+- **E2E:** `tests/e2e/tests/connections.spec.ts` — Connection CRUD lifecycle, health check, details, linked bots
 
 ---
 
@@ -244,23 +243,85 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 ### Test Coverage
 
-- **E2E:** `tests/e2e/tests/pages.spec.ts` — Profile page renders without errors
+- **E2E:** `tests/e2e/tests/pages-security.spec.ts` — Profile page renders without errors (smoke)
+
+---
+
+## Journey 10: Account Management
+
+**Who:** Any visitor → Authenticated user → Deleted user  
+**Goal:** Create an account, use the platform, and delete all data permanently when done
+
+### Use Cases
+
+| #    | Use Case       | User Action                          | Expected Outcome                                       |
+| ---- | -------------- | ------------------------------------ | ------------------------------------------------------ |
+| 10.1 | Sign up        | Click "Log in" → Sign up tab         | Auth0 account created, redirected to app authenticated |
+| 10.2 | Provisioning   | First login                          | DynamoDB record + SQS queue created automatically      |
+| 10.3 | Delete account | Profile → "Delete Account" → Confirm | All bots, queues, DynamoDB records, Auth0 user deleted |
+| 10.4 | Post-delete    | Try to access API with old token     | 401 Unauthorized (auth guard rejects deleted user)     |
+
+### Test Coverage
+
+- **E2E:** `tests/e2e/tests/user-lifecycle.spec.ts` — Sign up/login, verify provisioning
+- **E2E:** `tests/e2e/tests/user-teardown.spec.ts` — Delete account via API, verify 401 post-delete
+- **Unit (Backend):** `apps/backend/src/controllers/tests/user.test.ts` — deleteUser cascade logic
+
+---
+
+## Journey 11: Gmail Integration
+
+**Who:** Authenticated user with Google connection  
+**Goal:** Use Gmail API in bot automations (read emails, send emails)
+
+### Use Cases
+
+| #    | Use Case         | User Action                            | Expected Outcome                             |
+| ---- | ---------------- | -------------------------------------- | -------------------------------------------- |
+| 11.1 | Connect Google   | OAuth flow → grant Gmail scopes        | Connection stored with refresh token         |
+| 11.2 | List emails      | Add Gmail task to bot → Test           | Email messages returned from API             |
+| 11.3 | Token refresh    | Bot uses connection after hours        | Refresh token exchanges for new access token |
+| 11.4 | Scope validation | Test Gmail task without required scope | Clear error about missing permission         |
+
+### Test Coverage
+
+- **E2E:** `tests/e2e/tests/google-gmail.spec.ts` — Verify connection, create bot with Gmail task, test API call, verify output
 
 ---
 
 ## Coverage Matrix
 
-| Journey               | Unit (FE) | Unit (BE) | Unit (Shared) | E2E        |
-| --------------------- | --------- | --------- | ------------- | ---------- |
-| 1. Authentication     | ✅        | ✅        | —             | ✅         |
-| 2. To-Do              | ✅        | ✅        | —             | ✅         |
-| 3. Content Feed       | ✅        | ✅        | —             | ✅         |
-| 4. Bot Automation     | ✅        | ✅        | ✅            | ✅         |
-| 5. Notes              | ✅        | ✅        | —             | ✅         |
-| 6. Places             | —         | ✅        | —             | ✅ (smoke) |
-| 7. OAuth Connections  | ✅        | ✅        | —             | ✅         |
-| 8. Push Notifications | ✅        | ✅        | —             | —          |
-| 9. Profile & Stats    | —         | —         | —             | ✅ (smoke) |
+| Journey                | Unit (FE) | Unit (BE) | Unit (Shared) | E2E        |
+| ---------------------- | --------- | --------- | ------------- | ---------- |
+| 1. Authentication      | ✅        | ✅        | —             | ✅         |
+| 2. To-Do               | ✅        | ✅        | —             | ✅         |
+| 3. Content Feed        | ✅        | ✅        | —             | ✅         |
+| 4. Bot Automation      | ✅        | ✅        | ✅            | ✅         |
+| 5. Notes               | ✅        | ✅        | —             | ✅         |
+| 6. Places              | —         | ✅        | —             | ✅ (smoke) |
+| 7. OAuth Connections   | ✅        | ✅        | —             | ✅         |
+| 8. Push Notifications  | ✅        | ✅        | —             | —          |
+| 9. Profile & Stats     | —         | —         | —             | ✅ (smoke) |
+| 10. Account Management | —         | ✅        | —             | ✅         |
+| 11. Gmail Integration  | —         | —         | —             | ✅         |
+
+---
+
+## E2E Test Architecture
+
+Tests use Playwright project dependencies to enforce execution order:
+
+```
+setup (user-lifecycle.spec.ts)
+  └→ journeys (google-gmail, todo-journey, bot-journey, connections, pages-security, notes-journey, content-feed)
+       └→ teardown (user-teardown.spec.ts)
+```
+
+- **Setup** creates a test user via Auth0, provisions resources, copies a Google OAuth connection
+- **Journeys** exercise individual feature flows independently (can run in any order)
+- **Teardown** deletes the test user and verifies all data is gone
+
+All specs share auth state via a file-based token (`playwright/.auth/token.json`).
 
 ---
 
@@ -270,4 +331,4 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 2. **Tests that create resources MUST clean up** — Use `afterAll` hooks or cleanup steps. No orphaned data in DynamoDB.
 3. **Test the flow, not the implementation** — Test what the user sees and does, not internal function calls.
 4. **Cover the unhappy path** — API failures, invalid input, network errors. Users hit these every day.
-5. **Keep tests independent** — Each test should be runnable alone. Use timestamp-based IDs to avoid collisions.
+5. **Keep tests independent** — Each journey spec should be runnable alone (given setup has run). Use timestamp-based IDs to avoid collisions.

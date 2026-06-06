@@ -3,7 +3,6 @@ import path from 'path'
 
 import { defineConfig } from '@playwright/test'
 
-// Load .env file if it exists (local dev credentials)
 const envFile = path.join(__dirname, '.env')
 if (fs.existsSync(envFile)) {
   for (const line of fs.readFileSync(envFile, 'utf-8').split('\n')) {
@@ -16,13 +15,14 @@ const isLocal = process.env.TEST_ENV === 'local'
 const isLocalBackend = isLocal && !process.env.API_URL
 
 if (isLocalBackend) {
-  process.env.API_URL = 'http://localhost:5000/dev'
+  process.env.API_URL = 'http://localhost:5000/prod'
 }
 
 export default defineConfig({
   testDir: './tests',
-  timeout: 30000,
-  retries: 1,
+  timeout: 60000,
+  retries: 0,
+  fullyParallel: false,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
     baseURL: isLocalBackend
@@ -31,27 +31,50 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [
-    ...(isLocal
-      ? [{ name: 'setup', testMatch: /auth\.setup\.ts/, testDir: '.' }]
-      : []),
     {
-      name: 'e2e',
+      name: 'setup',
+      testMatch: '**/user-lifecycle.spec.ts',
+    },
+    {
+      name: 'journeys',
+      dependencies: ['setup'],
       use: {
-        browserName: 'chromium' as const,
-        ...(isLocal ? { storageState: 'playwright/.auth/user.json' } : {}),
+        storageState: 'playwright/.auth/user.json',
       },
-      ...(isLocal ? { dependencies: ['setup'] } : {}),
+      testMatch: [
+        '**/google-gmail.spec.ts',
+        '**/todo-journey.spec.ts',
+        '**/bot-journey.spec.ts',
+        '**/connections.spec.ts',
+        '**/pages-security.spec.ts',
+        '**/notes-journey.spec.ts',
+        '**/content-feed.spec.ts',
+      ],
+    },
+    {
+      name: 'teardown',
+      dependencies: ['journeys'],
+      testMatch: '**/user-teardown.spec.ts',
     },
   ],
   ...(isLocalBackend
     ? {
-        webServer: {
-          command: 'npx vite --port 3000 --open false',
-          cwd: '../../apps/frontend',
-          url: 'http://localhost:3000',
-          reuseExistingServer: true,
-          timeout: 30000,
-        },
+        webServer: [
+          {
+            command: 'npm start',
+            cwd: '../../apps/backend',
+            url: 'http://localhost:5000/prod/connectors/oauth',
+            reuseExistingServer: true,
+            timeout: 60000,
+          },
+          {
+            command: 'npx vite --port 3000 --open false',
+            cwd: '../../apps/frontend',
+            url: 'http://localhost:3000',
+            reuseExistingServer: true,
+            timeout: 30000,
+          },
+        ],
       }
     : {}),
 })

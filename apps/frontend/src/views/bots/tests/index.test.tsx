@@ -96,14 +96,6 @@ describe('Bots Page', () => {
     })
   })
 
-  it('shows Admin panel divider', async () => {
-    renderWithProviders(<Bots />)
-
-    await waitFor(() => {
-      expect(screen.getByText('Admin panel')).toBeDefined()
-    })
-  })
-
   it('handles API failure gracefully without crashing', async () => {
     server.use(
       http.post(`${API_BASE}/user/:userId/resource/bot/list`, () =>
