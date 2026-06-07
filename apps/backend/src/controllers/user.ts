@@ -101,16 +101,30 @@ class User {
     }
 
     try {
-      const { Items: allRecords } = await ddb.query({
-        TableName: CORE_TABLE,
-        KeyConditionExpression: 'userId = :userId',
-        ExpressionAttributeValues: { ':userId': userId },
-      })
+      let lastEvaluatedKey: Record<string, unknown> | undefined
+      const allRecords: { userId: string; sortKey: string }[] = []
 
-      if (allRecords && allRecords.length > 0) {
+      do {
+        const result = await ddb.query({
+          TableName: CORE_TABLE,
+          KeyConditionExpression: 'userId = :userId',
+          ExpressionAttributeValues: { ':userId': userId },
+          ConsistentRead: true,
+          ExclusiveStartKey: lastEvaluatedKey,
+        })
+        if (result.Items)
+          allRecords.push(
+            ...(result.Items as { userId: string; sortKey: string }[])
+          )
+        lastEvaluatedKey = result.LastEvaluatedKey as
+          | Record<string, unknown>
+          | undefined
+      } while (lastEvaluatedKey)
+
+      if (allRecords.length > 0) {
         const chunks = this.chunkArray(allRecords, 25)
         for (const chunk of chunks) {
-          await ddb.batchWrite({
+          const result = await ddb.batchWrite({
             RequestItems: {
               [CORE_TABLE]: chunk.map((item) => ({
                 DeleteRequest: {
@@ -119,6 +133,12 @@ class User {
               })),
             },
           })
+          if (
+            result.UnprocessedItems &&
+            Object.keys(result.UnprocessedItems).length > 0
+          ) {
+            await ddb.batchWrite({ RequestItems: result.UnprocessedItems })
+          }
         }
       }
     } catch (err) {

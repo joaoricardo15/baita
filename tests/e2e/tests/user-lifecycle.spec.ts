@@ -4,10 +4,13 @@
  * Part of the 'setup' project — runs before all journey specs.
  * Uses a FIXED test email to ensure cleanup across runs:
  * 1. Try to log in (user may exist from a previous failed run)
- * 2. If login works → delete account via API (cleanup stale state)
+ * 2. If login works → delete account via centralized DELETE /user endpoint
  * 3. Sign up fresh → guaranteed clean slate
  * 4. Provision user in backend (DynamoDB + SQS)
  * 5. Copy Google connection for journey specs that need it
+ *
+ * Cleanup is ALWAYS performed via the DELETE /user/{userId} endpoint which
+ * handles: bots, SQS queues, all DynamoDB records, and Auth0 user deletion.
  */
 import { expect, test } from '@playwright/test'
 import fs from 'fs'
@@ -50,20 +53,26 @@ test.describe('User Lifecycle Setup', () => {
       })
 
       if (tokenData?.accessToken && tokenData?.userId) {
-        logResult('Stale user found, cleaning up', {
+        logResult('Stale user found, deleting via DELETE /user endpoint', {
           userId: tokenData.userId,
         })
-        await request.delete(`${API_URL}/user/${tokenData.userId}`, {
-          headers: authHeaders(tokenData.accessToken),
+        const deleteRes = await request.delete(
+          `${API_URL}/user/${tokenData.userId}`,
+          { headers: authHeaders(tokenData.accessToken) }
+        )
+        const deleteBody = await deleteRes.json()
+        logResult('Delete endpoint response', {
+          success: deleteBody.success,
+          message: deleteBody.message,
         })
-        await page.waitForTimeout(2000)
+        await page.waitForTimeout(5000)
       }
     } catch {
       logResult('No stale user (login failed — expected on clean run)', {})
     }
   })
 
-  test('create test user (signup)', async ({ page }) => {
+  test('create test user (signup)', async ({ page, request }) => {
     await signUpUser(page, TEST_EMAIL, TEST_PASSWORD)
 
     await page.waitForFunction(
@@ -72,7 +81,7 @@ test.describe('User Lifecycle Setup', () => {
       { timeout: 15000 }
     )
 
-    const tokenData = await page.evaluate(() => {
+    let tokenData = await page.evaluate(() => {
       const keys = Object.keys(localStorage)
       const auth0Key = keys.find((k) => k.startsWith('@@auth0spajs@@'))
       if (!auth0Key) return null
@@ -85,6 +94,44 @@ test.describe('User Lifecycle Setup', () => {
 
     expect(tokenData?.accessToken).toBeTruthy()
     expect(tokenData?.userId).toBeTruthy()
+
+    // If signUpUser fell back to login (stale user), delete via endpoint and re-signup
+    const checkRes = await request.post(
+      `${API_URL}/user/${tokenData!.userId}/resource/bot/list`,
+      { headers: authHeaders(tokenData!.accessToken), data: {} }
+    )
+    const checkBody = await checkRes.json()
+    const isStaleUser = checkBody.success && checkBody.data?.length > 0
+
+    if (isStaleUser) {
+      logResult('Stale user detected via fallback login, cleaning up', {
+        userId: tokenData!.userId,
+        bots: checkBody.data.length,
+      })
+      await request.delete(`${API_URL}/user/${tokenData!.userId}`, {
+        headers: authHeaders(tokenData!.accessToken),
+      })
+      await page.waitForTimeout(5000)
+      await page.context().clearCookies()
+      await page.evaluate(() => localStorage.clear())
+      await signUpUser(page, TEST_EMAIL, TEST_PASSWORD)
+      await page.waitForFunction(
+        () =>
+          Object.keys(localStorage).some((k) => k.startsWith('@@auth0spajs@@')),
+        { timeout: 15000 }
+      )
+      tokenData = await page.evaluate(() => {
+        const keys = Object.keys(localStorage)
+        const auth0Key = keys.find((k) => k.startsWith('@@auth0spajs@@'))
+        if (!auth0Key) return null
+        const data = JSON.parse(localStorage.getItem(auth0Key) || '{}')
+        return {
+          accessToken: data?.body?.access_token,
+          userId: data?.body?.decodedToken?.user?.sub?.split('|')[1],
+        }
+      })
+      expect(tokenData?.accessToken).toBeTruthy()
+    }
 
     accessToken = tokenData!.accessToken
     userId = tokenData!.userId
@@ -108,10 +155,12 @@ test.describe('User Lifecycle Setup', () => {
         userId,
         email: TEST_EMAIL,
         name: 'E2E Test User',
+        picture: '',
       },
     })
     const body = await res.json()
-    logResult('User provisioned', { success: body.success })
+    expect(body.success).toBe(true)
+    logResult('User provisioned', { success: body.success, userId })
   })
 
   test('verify clean state', async ({ request }) => {

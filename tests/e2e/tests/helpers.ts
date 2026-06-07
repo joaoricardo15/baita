@@ -121,7 +121,9 @@ async function fillAuth0Credentials(
     'input[name="username"], input[name="email"], input[type="email"]'
   )
   await emailInput.first().waitFor({ state: 'visible', timeout: 5000 })
-  await emailInput.first().fill(email)
+  await emailInput.first().click()
+  await emailInput.first().fill('')
+  await emailInput.first().pressSequentially(email, { delay: 30 })
 
   const passwordInput = page.locator(
     'input[name="password"], input[type="password"]'
@@ -132,7 +134,6 @@ async function fillAuth0Credentials(
     .catch(() => false)
 
   if (!passwordVisible) {
-    // Identifier-first flow: submit email, then fill password
     const continueBtn = page.locator(
       'button[type="submit"], button:has-text("Continue")'
     )
@@ -140,7 +141,9 @@ async function fillAuth0Credentials(
     await passwordInput.first().waitFor({ state: 'visible', timeout: 5000 })
   }
 
-  await passwordInput.first().fill(password)
+  await passwordInput.first().click()
+  await passwordInput.first().fill('')
+  await passwordInput.first().pressSequentially(password, { delay: 30 })
 }
 
 export async function signUpUser(
@@ -165,12 +168,34 @@ export async function signUpUser(
   )
   await submitBtn.first().click()
 
-  // Accept consent if shown
   const acceptBtn = page.locator(
     'button:has-text("Accept"), button:has-text("Aceitar")'
   )
   if (await acceptBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
     await acceptBtn.click()
+  }
+
+  // If signup fails (user already exists), Auth0 shows an alert.
+  // Fall back to login in that case.
+  const alert = page.locator('[role="alert"], [class*="alert"]')
+  const hasError = await alert
+    .filter({ hasText: /went wrong|already exists|error/i })
+    .isVisible({ timeout: 3000 })
+    .catch(() => false)
+
+  if (hasError) {
+    logResult('Signup failed (user may exist), falling back to login', {})
+    const loginLink = page.locator('a:has-text("Log in"), a:has-text("Entrar")')
+    await loginLink.first().click()
+    await page.waitForTimeout(1000)
+    await fillAuth0Credentials(page, email, password)
+    const loginBtn = page.locator(
+      'button[type="submit"], button:has-text("Continue")'
+    )
+    await loginBtn.first().click()
+    if (await acceptBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await acceptBtn.click()
+    }
   }
 
   await page.waitForURL(/localhost:3000|www\.baita\.help/, { timeout: 20000 })
@@ -182,25 +207,34 @@ export async function loginUser(
   email: string,
   password: string
 ): Promise<void> {
-  await navigateToAuth0(page)
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await navigateToAuth0(page)
+      await fillAuth0Credentials(page, email, password)
 
-  await fillAuth0Credentials(page, email, password)
+      const submitBtn = page.locator(
+        'button[type="submit"], button:has-text("Continue"), button:has-text("Log In")'
+      )
+      await submitBtn.first().click()
 
-  const submitBtn = page.locator(
-    'button[type="submit"], button:has-text("Continue"), button:has-text("Log In")'
-  )
-  await submitBtn.first().click()
+      const acceptBtn = page.locator(
+        'button:has-text("Accept"), button:has-text("Aceitar")'
+      )
+      if (await acceptBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await acceptBtn.click()
+      }
 
-  // Accept consent if shown
-  const acceptBtn = page.locator(
-    'button:has-text("Accept"), button:has-text("Aceitar")'
-  )
-  if (await acceptBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await acceptBtn.click()
+      await page.waitForURL(/localhost:3000|www\.baita\.help/, {
+        timeout: 15000,
+      })
+      await page.waitForLoadState('domcontentloaded')
+      return
+    } catch (err) {
+      if (attempt === 2) throw err
+      logResult('Login attempt failed, retrying', { attempt })
+      await page.waitForTimeout(2000)
+    }
   }
-
-  await page.waitForURL(/localhost:3000|www\.baita\.help/, { timeout: 20000 })
-  await page.waitForLoadState('domcontentloaded')
 }
 
 export function logResult(label: string, data: unknown): void {

@@ -468,7 +468,7 @@ class Bot {
             botId,
             userId,
             connectionId: task.connectionId,
-            appConfig: task.app?.config,
+            appConfig: task.app?.config || {},
             serviceConfig: task.service?.config,
             inputData,
           }) as unknown as Uint8Array,

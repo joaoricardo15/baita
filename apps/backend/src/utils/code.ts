@@ -286,8 +286,8 @@ ${
             botId,
             userId,
             inputData: task${i}_inputData,
-            appConfig: ${JSON.stringify(task.app?.config)},
-            serviceConfig: ${JSON.stringify(task.service?.config)},
+            appConfig: ${JSON.stringify(task.app?.config || {})},
+            serviceConfig: ${JSON.stringify(task.service?.config || {})},
             connectionId: ${task.connectionId || 'undefined'}
           }),
         });

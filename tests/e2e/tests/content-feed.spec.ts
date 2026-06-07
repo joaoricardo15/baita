@@ -2,11 +2,12 @@
  * Content Feed E2E Tests
  *
  * User Journey: Content Feed
- * Tests the full content lifecycle:
- * - Publish content to feed (via bot task execution)
- * - Read content from feed (GET /content)
- * - Verify content structure matches what was published
- * - Content is consumed on read (SQS deletes after delivery)
+ * Tests the full content lifecycle using real AWS resources:
+ * 1. Create a bot with a publishToFeed task
+ * 2. Execute the task (writes to user's SQS queue)
+ * 3. Read content from feed (GET /content consumes from SQS)
+ * 4. Verify content structure matches what was published
+ * 5. Verify consumption (second read returns empty — SQS deletes on delivery)
  *
  * Part of the 'journeys' project — depends on user-lifecycle.spec.ts setup.
  */
@@ -114,7 +115,7 @@ test.describe('Content Feed', () => {
                 label: 'content',
                 type: 'output',
                 value: JSON.stringify(testContent),
-                sampleValue: JSON.stringify(testContent),
+                sampleValue: testContent,
               },
             ],
           },
@@ -126,9 +127,7 @@ test.describe('Content Feed', () => {
     logResult('Bot configured with publishToFeed', { tasks: 2 })
   })
 
-  test('test publishToFeed task pushes content to feed', async ({
-    request,
-  }) => {
+  test('execute publishToFeed task', async ({ request }) => {
     const task = {
       taskId: 2,
       service: {
@@ -153,7 +152,7 @@ test.describe('Content Feed', () => {
           label: 'content',
           type: 'output',
           value: JSON.stringify(testContent),
-          sampleValue: JSON.stringify(testContent),
+          sampleValue: testContent,
         },
       ],
     }
@@ -164,39 +163,53 @@ test.describe('Content Feed', () => {
     )
     const body = await res.json()
     expect(body.success).toBe(true)
-    logResult('publishToFeed result', body.data)
+    logResult('publishToFeed executed', {
+      status: body.data?.status,
+      outputData: body.data?.outputData,
+      inputData: body.data?.inputData,
+    })
+    expect(body.data?.status).toBe('success')
   })
 
   test('read content from feed and verify structure', async ({ request }) => {
-    await new Promise((r) => setTimeout(r, 2000))
+    // SQS messages are available almost immediately after sendMessageBatch,
+    // but allow a short window for propagation
+    let content: {
+      contentId: string
+      header: string
+      author: { name: string }
+    }[] = []
 
-    const res = await request.get(`${API_URL}/user/${userId}/content`, {
-      headers: authHeaders(token),
-    })
-    expect(res.status()).toBe(200)
-    const body = await res.json()
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      await new Promise((r) => setTimeout(r, 2000))
 
-    if (!body.success || !body.data?.length) {
-      // Content publish depends on bot task execution + SQS propagation timing
-      logResult('Content feed empty (task execution or SQS delay)', {})
-      test.skip()
-      return
+      const res = await request.get(`${API_URL}/user/${userId}/content`, {
+        headers: authHeaders(token),
+      })
+      expect(res.status()).toBe(200)
+      const body = await res.json()
+      expect(body.success).toBe(true)
+
+      if (body.data?.length > 0) {
+        content = body.data
+        logResult('Content available', { attempt, items: content.length })
+        break
+      }
+      logResult('Feed empty, retrying', { attempt })
     }
 
-    expect(Array.isArray(body.data)).toBe(true)
-    expect(body.data.length).toBeGreaterThan(0)
+    expect(content.length).toBeGreaterThan(0)
 
-    const found = body.data.find(
-      (item: { contentId: string }) =>
-        item.contentId === testContent[0].contentId
+    const found = content.find(
+      (item) => item.contentId === testContent[0].contentId
     )
     expect(found).toBeTruthy()
-    expect(found.header).toBe('E2E Test Article 1')
-    expect(found.author.name).toBe('E2E Bot')
+    expect(found!.header).toBe('E2E Test Article 1')
+    expect(found!.author.name).toBe('E2E Bot')
 
-    logResult('Content feed read', {
-      totalItems: body.data.length,
-      foundTestContent: !!found,
+    logResult('Content verified', {
+      totalItems: content.length,
+      matchedTestContent: true,
     })
   })
 
@@ -206,20 +219,18 @@ test.describe('Content Feed', () => {
     const res = await request.get(`${API_URL}/user/${userId}/content`, {
       headers: authHeaders(token),
     })
+    expect(res.status()).toBe(200)
     const body = await res.json()
-
-    if (!body.success) {
-      logResult('Content consumption skipped (SQS unavailable)', {})
-      test.skip()
-      return
-    }
+    expect(body.success).toBe(true)
 
     const stillPresent = body.data?.find(
       (item: { contentId: string }) =>
         item.contentId === testContent[0].contentId
     )
     expect(stillPresent).toBeFalsy()
-    logResult('Content consumed', { remainingItems: body.data?.length ?? 0 })
+    logResult('Content consumed (not present on second read)', {
+      remainingItems: body.data?.length ?? 0,
+    })
   })
 
   test('cleanup: delete content bot', async ({ request }) => {
