@@ -351,6 +351,27 @@ export async function cleanupStaleUser(): Promise<void> {
       logResult('DynamoDB records deleted', { count: Items.length })
     }
 
+    // Delete SQS queue
+    const awsFlags = process.env.AWS_ACCESS_KEY_ID
+      ? '--region us-east-1'
+      : '--profile baita --region us-east-1'
+    try {
+      const queueUrl = execSync(
+        `aws sqs get-queue-url --queue-name baita-help-prod-${staleUserId} ${awsFlags} --output text --query QueueUrl`,
+        { encoding: 'utf8' }
+      ).trim()
+      if (queueUrl) {
+        execSync(`aws sqs delete-queue --queue-url ${queueUrl} ${awsFlags}`, {
+          stdio: 'ignore',
+        })
+        logResult('SQS queue deleted', {
+          queueName: `baita-help-prod-${staleUserId}`,
+        })
+      }
+    } catch {
+      logResult('No SQS queue found (already deleted)', { userId: staleUserId })
+    }
+
     // Delete Auth0 user
     const tokenRes = await fetch(`https://${AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',

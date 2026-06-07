@@ -64,25 +64,25 @@ interface OperationDoc {
 }
 
 const OPERATION_DOCS: Record<string, OperationDoc> = {
-  '/bot/{botId}:post': {
+  '/bot/{operation}:post': {
     summary: 'Bot operations (create, deploy, test, logs, model)',
     description:
-      'Performs a bot operation. The `botId` parameter is the operation name. For `create` and `model`, no second path segment is needed. **create** — creates a new bot. **deploy** — generates and deploys Lambda code for the bot. **test** — executes a single task step for testing. **logs** — retrieves recent CloudWatch logs. **model** — creates a bot from a shared model template.',
+      'Performs a bot operation. **create** — creates a new bot. **deploy** — generates and deploys Lambda code for the bot. **test** — executes a single task step for testing. **logs** — retrieves recent CloudWatch logs. **model** — creates a bot from a shared model template.',
     parameterOverrides: {
-      botId: {
+      operation: {
         description: 'Operation name',
         enum: ['create', 'deploy', 'test', 'logs', 'model'],
       },
     },
     responseSchema: 'Bot',
   },
-  '/bot/{botId}/{id}:post': {
+  '/bot/{operation}/{botId}:post': {
     summary: 'Bot operations with ID (update, delete)',
     description:
-      'Operations on a specific bot. `botId` is the operation name, `id` is the bot ID. **update** — updates bot name, description, image, active state, or tasks. **delete** — permanently deletes the bot and all deployed AWS resources (Lambda, API Gateway, EventBridge Scheduler).',
+      'Operations on a specific bot. **update** — updates bot name, description, image, active state, or tasks. **delete** — permanently deletes the bot and all deployed AWS resources (Lambda, API Gateway, EventBridge Scheduler).',
     parameterOverrides: {
-      botId: { description: 'Operation name', enum: ['update', 'delete'] },
-      id: { description: 'Bot ID' },
+      operation: { description: 'Operation name', enum: ['update', 'delete'] },
+      botId: { description: 'Bot ID' },
     },
     requestSchema: 'Bot',
     responseSchema: 'Bot',
@@ -115,26 +115,26 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
       resourceId: { description: 'Resource record ID' },
     },
   },
-  '/connection/{connectionId}:post': {
+  '/connection/{operation}:post': {
     summary: 'Create a connection',
     description:
       'Creates a new OAuth or API-key connection for a connector service. The request body should include the connector ID and credentials (API key or OAuth authorization code).',
     parameterOverrides: {
-      connectionId: { description: 'Operation name', enum: ['create'] },
+      operation: { description: 'Operation name', enum: ['create'] },
     },
     requestSchema: 'Connection',
     responseSchema: 'Connection',
   },
-  '/connection/{connectionId}/{id}:post': {
+  '/connection/{operation}/{connectionId}:post': {
     summary: 'Connection operations (health, details)',
     description:
       'Check health or retrieve details of an existing connection. **health** — validates the connection credentials are still working (makes a test API call). **details** — returns the full connection record including metadata.',
     parameterOverrides: {
-      connectionId: {
+      operation: {
         description: 'Operation name',
         enum: ['health', 'details'],
       },
-      id: { description: 'Connection ID' },
+      connectionId: { description: 'Connection ID' },
     },
     responseSchema: 'Connection',
   },
