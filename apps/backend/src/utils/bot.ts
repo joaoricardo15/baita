@@ -233,13 +233,14 @@ export function getValueFromInputVariable(
   const { label, value, sampleValue, type, outputIndex, outputPath } = variable
 
   if (testData) {
-    if (sampleValue === undefined) {
+    const testValue = sampleValue ?? value
+    if (testValue === undefined) {
       throw Error(`Variable '${label}' has no sample value`)
     }
 
     if (variable.transform)
-      return applyTransformToValue(sampleValue, variable.transform)
-    return sampleValue
+      return applyTransformToValue(testValue, variable.transform)
+    return testValue
   }
 
   if (type === VariableType.output) {

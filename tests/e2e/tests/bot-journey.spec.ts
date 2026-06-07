@@ -136,16 +136,16 @@ test.describe('Bot Lifecycle', () => {
           name: 'code',
           label: 'Code',
           type: 'code',
-          value: 'return { result: "hello from e2e", timestamp: Date.now() }',
+          value: 'output = { result: "hello from e2e", timestamp: Date.now() }',
           sampleValue:
-            'return { result: "hello from e2e", timestamp: Date.now() }',
+            'output = { result: "hello from e2e", timestamp: Date.now() }',
         },
       ],
     }
 
     const res = await request.post(
       `${API_URL}/user/${userId}/bot/test/${botId}`,
-      { headers: authHeaders(token), data: { ...task, taskIndex: 1 } }
+      { headers: authHeaders(token), data: { task, taskIndex: 1 } }
     )
     const body = await res.json()
     expect(body.success).toBe(true)

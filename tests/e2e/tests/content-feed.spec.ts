@@ -160,7 +160,7 @@ test.describe('Content Feed', () => {
 
     const res = await request.post(
       `${API_URL}/user/${userId}/bot/test/${botId}`,
-      { headers: authHeaders(token), data: { ...task, taskIndex: 1 } }
+      { headers: authHeaders(token), data: { task, taskIndex: 1 } }
     )
     const body = await res.json()
     expect(body.success).toBe(true)
