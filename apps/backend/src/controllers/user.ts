@@ -29,26 +29,10 @@ class User {
         },
       })
 
-      const dlq = await this.sqs.createQueue({
-        QueueName: `${SERVICE_PREFIX}-${user.userId}-dlq`,
-        Attributes: {
-          MessageRetentionPeriod: (86400 * 14).toString(),
-        },
-      })
-
-      const dlqAttrs = await this.sqs.getQueueAttributes({
-        QueueUrl: dlq.QueueUrl!,
-        AttributeNames: ['QueueArn'],
-      })
-
       await this.sqs.createQueue({
         QueueName: `${SERVICE_PREFIX}-${user.userId}`,
         Attributes: {
           MessageRetentionPeriod: SQS_RETENTION_SECONDS.toString(),
-          RedrivePolicy: JSON.stringify({
-            deadLetterTargetArn: dlqAttrs.Attributes!.QueueArn,
-            maxReceiveCount: '3',
-          }),
         },
       })
 
@@ -89,15 +73,6 @@ class User {
       await this.sqs.deleteQueue({ QueueUrl: mainQueue.QueueUrl! })
     } catch (err) {
       console.error('Failed to delete main queue:', err)
-    }
-
-    try {
-      const dlq = await this.sqs.getQueueUrl({
-        QueueName: `${SERVICE_PREFIX}-${userId}-dlq`,
-      })
-      await this.sqs.deleteQueue({ QueueUrl: dlq.QueueUrl! })
-    } catch (err) {
-      console.error('Failed to delete DLQ:', err)
     }
 
     try {

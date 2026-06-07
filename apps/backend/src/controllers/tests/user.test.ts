@@ -4,7 +4,6 @@ process.env.SERVICE_PREFIX = 'baita-help-prod'
 import {
   CreateQueueCommand,
   DeleteMessageBatchCommand,
-  GetQueueAttributesCommand,
   GetQueueUrlCommand,
   ReceiveMessageCommand,
   SendMessageBatchCommand,
@@ -41,10 +40,7 @@ describe('User', () => {
     it('stores user in DynamoDB with #USER sortKey', async () => {
       ddbMock.on(PutCommand).resolves({})
       sqsMock.on(CreateQueueCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/dlq',
-      })
-      sqsMock.on(GetQueueAttributesCommand).resolves({
-        Attributes: { QueueArn: 'arn:aws:sqs:us-east-1:123:dlq' },
+        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
       })
 
       const user = new User()
@@ -65,34 +61,19 @@ describe('User', () => {
       })
     })
 
-    it('creates DLQ and main queue with redrive policy', async () => {
+    it('creates SQS queue for the user', async () => {
       ddbMock.on(PutCommand).resolves({})
       sqsMock.on(CreateQueueCommand).resolves({
         QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
-      sqsMock.on(GetQueueAttributesCommand).resolves({
-        Attributes: {
-          QueueArn: 'arn:aws:sqs:us-east-1:123:baita-help-prod-auth0|user1-dlq',
-        },
       })
 
       const user = new User()
       await user.createUser({ userId: 'auth0|user1' } as any)
 
       const createQueueCalls = sqsMock.commandCalls(CreateQueueCommand)
-      expect(createQueueCalls).toHaveLength(2)
+      expect(createQueueCalls).toHaveLength(1)
       expect(createQueueCalls[0].args[0].input.QueueName).toBe(
-        'baita-help-prod-auth0|user1-dlq'
-      )
-      expect(createQueueCalls[1].args[0].input.QueueName).toBe(
         'baita-help-prod-auth0|user1'
-      )
-      expect(createQueueCalls[1].args[0].input.Attributes?.RedrivePolicy).toBe(
-        JSON.stringify({
-          deadLetterTargetArn:
-            'arn:aws:sqs:us-east-1:123:baita-help-prod-auth0|user1-dlq',
-          maxReceiveCount: '3',
-        })
       )
     })
 

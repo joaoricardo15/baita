@@ -42,7 +42,7 @@ Personal automation platform aimed at normal people. Create automated workflows 
 | **Backend**    | Node.js 20, TypeScript, Serverless Framework 3   | API + business logic                         |
 | **Database**   | DynamoDB (single-table design, on-demand)        | Data storage                                 |
 | **Storage**    | S3                                               | Bot code, file uploads, docs                 |
-| **Messaging**  | SQS (with dead letter queues)                    | Content feed delivery                        |
+| **Messaging**  | SQS                                              | Content feed delivery                        |
 | **Scheduling** | EventBridge Scheduler                            | Bot cron triggers                            |
 | **Monitoring** | CloudWatch Alarms                                | Lambda errors, DynamoDB throttle, API 5XX    |
 | **Hosting**    | AWS Amplify                                      | Frontend CDN + deploy                        |
@@ -175,7 +175,7 @@ Results published to user's SQS queue → content feed
 - **Amplify App**: `d1yzzk62iq66zd`
 - **DynamoDB Table**: `baita-help-prod` (on-demand billing)
 - **S3 Buckets**: `baita-help-prod-bots`, `baita-help-prod-files`, `baita-help-prod-docs`
-- **SQS Queues**: `baita-help-prod-{userId}` (per-user, with DLQ)
+- **SQS Queues**: `baita-help-prod-{userId}` (per-user content feed)
 - **Custom Domain**: `api.baita.help` (Route53 + API Gateway)
 
 ## Contributing

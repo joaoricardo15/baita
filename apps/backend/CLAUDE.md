@@ -468,6 +468,45 @@ When adding a new endpoint or feature:
 - **Fixed test user**: `e2e-test@baita.help` — same email every run, cleaned up before and after
 - **CI**: GitHub Actions, AWS credentials for DynamoDB access
 
+## User Lifecycle & AWS Resource Integrity
+
+Every user has **two coupled AWS resources** that MUST be created and destroyed together:
+
+| Resource                | Name Pattern               | Created By     | Destroyed By   |
+| ----------------------- | -------------------------- | -------------- | -------------- |
+| DynamoDB `#USER` record | `userId` + `#USER`         | `createUser()` | `deleteUser()` |
+| SQS queue               | `baita-help-prod-{userId}` | `createUser()` | `deleteUser()` |
+
+### Rules (NEVER violate)
+
+1. **Atomic creation** — `createUser()` MUST create both resources (DDB record + SQS queue). If any step fails, the user is in a broken state.
+2. **Atomic deletion** — `deleteUser()` MUST delete both resources (plus bots via `deleteBot()`). Errors in queue deletion are logged but don't block record deletion.
+3. **Never delete DynamoDB user records directly** — Always use `DELETE /user` endpoint which calls `deleteUser()`. Direct DDB deletes leave orphaned SQS queues and bot Lambdas.
+4. **Never delete SQS queues manually** unless auditing confirms the queue is orphaned (no matching DDB `#USER` record).
+5. **No partial user state** — A userId that exists in DynamoDB MUST have an SQS queue. A queue that exists MUST have a matching DynamoDB record.
+
+### Periodic Audit (run quarterly or after incidents)
+
+Cross-reference DynamoDB users against SQS queues to detect drift:
+
+```bash
+# List all SQS queues
+aws sqs list-queues --profile baita --region us-east-1 --queue-name-prefix baita-help-prod- --output json | jq -r '.QueueUrls[]'
+
+# List all DynamoDB users
+aws dynamodb scan --profile baita --region us-east-1 --table-name baita-help-prod \
+  --filter-expression "sortKey = :sk" --expression-attribute-values '{":sk":{"S":"#USER"}}' \
+  --projection-expression "userId, email" --output json | jq '.Items[] | {userId: .userId.S, email: .email.S}'
+
+# For each SQS queue, verify a matching #USER record exists
+# Orphaned queues (no DDB record) are safe to delete
+# Users missing queues need queues recreated
+```
+
+### Historical Context
+
+Orphaned queues were discovered in June 2026 — users deleted before `deleteUser()` had comprehensive SQS cleanup. The code is now correct; this section exists to prevent future regressions if the deletion logic is ever modified.
+
 ## Known Limitations
 
 - No structured logging library (raw `console.log` with JSON)

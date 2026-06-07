@@ -220,6 +220,16 @@ Before pushing, verify:
 - [ ] Every page handles API failures gracefully (no infinite loading)
 - [ ] E2E test changes are compatible with CI environment (tests hit `https://api.baita.help` in CI, not localhost)
 
+## AWS Resource Integrity
+
+User accounts have coupled AWS resources (DynamoDB + SQS queue) that MUST stay in sync. See `apps/backend/CLAUDE.md` → "User Lifecycle & AWS Resource Integrity" for full rules and audit commands.
+
+**Critical rules:**
+
+- **Never delete DynamoDB user records directly** — use `DELETE /user` endpoint
+- **Never delete bots directly from DynamoDB** — use `POST /bot/delete/{botId}` (cleans up Lambda + API Gateway + S3 + Scheduler)
+- **Any code that creates/deletes users or bots MUST go through the controller methods** — they handle all coupled resource cleanup
+
 ## Self-Verification with Playwright MCP
 
 After implementing frontend changes, verify them using the Playwright MCP browser tools:
