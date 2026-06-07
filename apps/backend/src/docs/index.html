@@ -8,16 +8,28 @@
     <div id="swagger-ui"></div>
     <script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js"></script>
     <script>
+      const hash = window.location.hash.substring(1)
+      const params = new URLSearchParams(hash)
+      let token = params.get("access_token")
+      if (token) {
+        sessionStorage.setItem("swagger_token", token)
+        window.history.replaceState(null, "", window.location.pathname)
+      } else {
+        token = sessionStorage.getItem("swagger_token")
+      }
+
       const ui = SwaggerUIBundle({
         url: "https://baita-help-prod-docs.s3.us-east-1.amazonaws.com/openapi.json",
         dom_id: "#swagger-ui",
-        oauth2RedirectUrl: "https://baita-help-prod-docs.s3.us-east-1.amazonaws.com/oauth2-redirect.html",
-        persistAuthorization: true
-      });
-      ui.initOAuth({
-        clientId: "Pq5VTtkIhUSfe9bqkoPsLvGCw1JBNf4c",
-        appName: "Baita Help"
-      });
+        persistAuthorization: true,
+        requestInterceptor: function(req) {
+          if (token) req.headers["Authorization"] = "Bearer " + token
+          return req
+        },
+        onComplete: function() {
+          if (token) ui.preauthorizeApiKey("bearerAuth", token)
+        }
+      })
     </script>
   </body>
 </html>
