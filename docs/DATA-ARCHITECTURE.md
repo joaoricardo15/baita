@@ -58,29 +58,28 @@ One table (`CORE_TABLE`), composite key: `userId` (PK) + `sortKey` (SK).
 
 ### Auth Guard
 
-Every endpoint uses `getAuthenticatedUserId(event)` from `src/utils/authGuard.ts`:
+Every endpoint uses `getAuthenticatedUserId(event)` from `src/utils/auth.ts`:
 
-- Extracts `userId` from JWT authorizer context
-- Validates it matches the path parameter
-- Throws `Unauthorized` or `Forbidden` on mismatch
+- Extracts `userId` from the Lambda authorizer context (strips `auth0|` prefix)
+- Throws `Unauthorized` if authorizer context is missing
 
 ### Generic Resource CRUD
 
-`POST /user/{userId}/resource/{name}/{operation}[/{id}]`
+`POST /resource/{name}/{operation}[/{id}]`
 
 Operations: `list`, `read`, `create`, `update`, `delete`, `upload`, `remove`
 
 ### Bot Endpoints (operation-based routing, all POST)
 
-| Endpoint                                 | Purpose                       |
-| ---------------------------------------- | ----------------------------- |
-| `POST /user/{userId}/bot/create`         | Create bot                    |
-| `POST /user/{userId}/bot/update/{botId}` | Update bot                    |
-| `POST /user/{userId}/bot/delete/{botId}` | Delete bot + Lambda + S3      |
-| `POST /user/{userId}/bot/deploy/{botId}` | Deploy (code gen + Lambda)    |
-| `POST /user/{userId}/bot/test/{botId}`   | Test step (taskIndex in body) |
-| `POST /user/{userId}/bot/logs/{botId}`   | CloudWatch logs               |
-| `POST /user/{userId}/bot/model`          | Deploy from bot model         |
+| Endpoint                   | Purpose                       |
+| -------------------------- | ----------------------------- |
+| `POST /bot/create`         | Create bot                    |
+| `POST /bot/update/{botId}` | Update bot                    |
+| `POST /bot/delete/{botId}` | Delete bot + Lambda + S3      |
+| `POST /bot/deploy/{botId}` | Deploy (code gen + Lambda)    |
+| `POST /bot/test/{botId}`   | Test step (taskIndex in body) |
+| `POST /bot/logs/{botId}`   | CloudWatch logs               |
+| `POST /model/{operation}`  | Shared bot models (CRUD)      |
 
 ## Frontend
 
@@ -104,17 +103,17 @@ src/hooks/use*.ts      — TanStack Query hooks per domain
 
 ### Query Hooks
 
-| Hook               | Query Key                 | Source              |
-| ------------------ | ------------------------- | ------------------- |
-| `useBots()`        | `['bots', userId]`        | `useBots.ts`        |
-| `useBot(botId)`    | `['bot', userId, botId]`  | `useBots.ts`        |
-| `useBotModels()`   | `['botModels', 'baita']`  | `useBots.ts`        |
-| `useTodo()`        | `['todo', userId]`        | `useTodo.ts`        |
-| `useConnections()` | `['connections', userId]` | `useConnections.ts` |
-| `useContent()`     | `['content', userId]`     | `useContent.ts`     |
-| `useNotes()`       | `['notes', userId]`       | `useNotes.ts`       |
-| `usePlaces()`      | `['places', userId]`      | `usePlaces.ts`      |
-| `useLogs(botId)`   | `['logs', userId, botId]` | `useLogs.ts`        |
+| Hook               | Query Key         | Source              |
+| ------------------ | ----------------- | ------------------- |
+| `useBots()`        | `['bots']`        | `useBots.ts`        |
+| `useBot(botId)`    | `['bot', botId]`  | `useBots.ts`        |
+| `useBotModels()`   | `['botModels']`   | `useBots.ts`        |
+| `useTodo()`        | `['todo']`        | `useTodo.ts`        |
+| `useConnections()` | `['connections']` | `useConnections.ts` |
+| `useContent()`     | `['content']`     | `useContent.ts`     |
+| `useNotes()`       | `['notes']`       | `useNotes.ts`       |
+| `usePlaces()`      | `['places']`      | `usePlaces.ts`      |
+| `useLogs(botId)`   | `['logs', botId]` | `useLogs.ts`        |
 
 ### Mutation Hooks
 

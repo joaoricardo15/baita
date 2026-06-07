@@ -18,8 +18,8 @@ import { getExistingSubscription } from '@/utils/push'
 export function useBots() {
   const { user } = useContext(AuthContext)
   return useQuery({
-    queryKey: ['bots', user?.userId],
-    queryFn: () => queries.fetchBots(user!.userId),
+    queryKey: ['bots'],
+    queryFn: () => queries.fetchBots(),
     enabled: !!user,
   })
 }
@@ -27,8 +27,8 @@ export function useBots() {
 export function useBot(botId: string | undefined) {
   const { user } = useContext(AuthContext)
   return useQuery({
-    queryKey: ['bot', user?.userId, botId],
-    queryFn: () => queries.fetchBot(user!.userId, botId!),
+    queryKey: ['bot', botId],
+    queryFn: () => queries.fetchBot(botId!),
     enabled: !!user && !!botId,
   })
 }
@@ -42,9 +42,8 @@ export function useBotModels() {
 
 export function useCreateBot() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
-    mutationFn: () => mutations.createBot(user!.userId),
+    mutationFn: () => mutations.createBot(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bots'] })
     },
@@ -53,32 +52,29 @@ export function useCreateBot() {
 
 export function useUpdateBot() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
     mutationFn: ({ botId, bot }: { botId: string; bot: Partial<IBot> }) =>
-      mutations.updateBot(user!.userId, botId, bot),
+      mutations.updateBot(botId, bot),
     onSuccess: (data, { botId }) => {
-      queryClient.setQueryData(['bot', user?.userId, botId], data)
+      queryClient.setQueryData(['bot', botId], data)
     },
   })
 }
 
 export function useDeleteBot() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
-    mutationFn: ({ botId }: { botId: string }) =>
-      mutations.deleteBot(user!.userId, botId),
+    mutationFn: ({ botId }: { botId: string }) => mutations.deleteBot(botId),
     onMutate: async ({ botId }) => {
-      await queryClient.cancelQueries({ queryKey: ['bots', user?.userId] })
-      const previous = queryClient.getQueryData<IBot[]>(['bots', user?.userId])
-      queryClient.setQueryData<IBot[]>(['bots', user?.userId], (old) =>
+      await queryClient.cancelQueries({ queryKey: ['bots'] })
+      const previous = queryClient.getQueryData<IBot[]>(['bots'])
+      queryClient.setQueryData<IBot[]>(['bots'], (old) =>
         old?.filter((b) => b.botId !== botId)
       )
       return { previous }
     },
     onError: (_, __, context) => {
-      queryClient.setQueryData(['bots', user?.userId], context?.previous)
+      queryClient.setQueryData(['bots'], context?.previous)
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['bots'] })
@@ -88,14 +84,13 @@ export function useDeleteBot() {
 
 export function useDeployBot() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
     mutationFn: async (bot: IBot) => {
       const tasks = await parseUserInputs(bot.tasks)
-      return mutations.deployBot(user!.userId, bot.botId, { ...bot, tasks })
+      return mutations.deployBot(bot.botId, { ...bot, tasks })
     },
     onSuccess: (data, bot) => {
-      queryClient.setQueryData(['bot', user?.userId, bot.botId], data)
+      queryClient.setQueryData(['bot', bot.botId], data)
       queryClient.invalidateQueries({ queryKey: ['bots'] })
     },
   })
@@ -103,17 +98,10 @@ export function useDeployBot() {
 
 export function useDeployBotModel() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
-    mutationFn: async ({
-      modelId,
-      model,
-    }: {
-      modelId: string
-      model: IBotModel
-    }) => {
+    mutationFn: async ({ model }: { model: IBotModel }) => {
       const tasks = await parseUserInputs(model.tasks)
-      return mutations.deployBotModel(user!.userId, modelId, {
+      return mutations.deployBotModel({
         ...model,
         tasks,
       })
@@ -126,7 +114,6 @@ export function useDeployBotModel() {
 
 export function useTestBotTask() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
     mutationFn: async ({
       bot,
@@ -137,17 +124,12 @@ export function useTestBotTask() {
     }) => {
       const tasks = await parseUserInputs(bot.tasks)
       const updatedBot = { ...bot, tasks }
-      await mutations.updateBot(user!.userId, updatedBot.botId, updatedBot)
-      await mutations.testBotTask(
-        user!.userId,
-        updatedBot.botId,
-        tasks[taskIndex],
-        taskIndex
-      )
-      return queries.fetchBot(user!.userId, updatedBot.botId)
+      await mutations.updateBot(updatedBot.botId, updatedBot)
+      await mutations.testBotTask(updatedBot.botId, tasks[taskIndex], taskIndex)
+      return queries.fetchBot(updatedBot.botId)
     },
     onSuccess: (data, { bot }) => {
-      queryClient.setQueryData(['bot', user?.userId, bot.botId], data)
+      queryClient.setQueryData(['bot', bot.botId], data)
     },
   })
 }

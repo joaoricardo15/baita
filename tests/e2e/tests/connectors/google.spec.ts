@@ -14,15 +14,12 @@ import { GOOGLE_APP_ID, loadAuthData, logResult } from '../helpers'
 import { buildGoogleTask, executeTask, findConnection } from './_helpers'
 
 let token: string
-let userId: string
 let googleConnectionId: string
 
 test.beforeAll(async ({ request }) => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
-
-  const conn = await findConnection(request, userId, token, GOOGLE_APP_ID)
+  const conn = await findConnection(request, token, GOOGLE_APP_ID)
   if (!conn) {
     logResult('Google connection not found — skipping all Google tests', {})
   }
@@ -53,7 +50,7 @@ test.describe('Google Connector — Gmail', () => {
       ],
     })
 
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
 
     if (body.data.status === 'fail') {
@@ -90,7 +87,7 @@ test.describe('Google Connector — Gmail', () => {
       method: 'get',
     })
 
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
 
     if (body.data.status === 'fail') {

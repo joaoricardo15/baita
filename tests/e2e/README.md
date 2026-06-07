@@ -26,7 +26,7 @@ The password (`BaitaE2e!2024`) is hardcoded — the account is ephemeral and ful
 
 ### Deletion Guarantee
 
-Account deletion uses the **same centralized endpoint** as real users (Profile → Delete Account → `DELETE /user/{userId}`). This ensures:
+Account deletion uses the **same centralized endpoint** as real users (Profile → Delete Account → `DELETE /user`). This ensures:
 
 - Real users and E2E use identical cleanup logic
 - All resource types are covered (bots, connections, SQS queues, DynamoDB records, Auth0 account)
@@ -34,18 +34,23 @@ Account deletion uses the **same centralized endpoint** as real users (Profile �
 
 ## Test Files
 
-| File                           | Journey               | Responsibility                                                 |
-| ------------------------------ | --------------------- | -------------------------------------------------------------- |
-| `tests/user-lifecycle.spec.ts` | Setup                 | Clean stale user, sign up fresh, provision, copy Google conn   |
-| `tests/google-gmail.spec.ts`   | Gmail Integration     | Gmail API call via bot task testing                            |
-| `tests/todo-journey.spec.ts`   | To-Do Management      | Task CRUD lifecycle (create, complete, verify, cleanup)        |
-| `tests/bot-journey.spec.ts`    | Bot Automation        | Full bot lifecycle (create → deploy → trigger → logs → delete) |
-| `tests/connections.spec.ts`    | OAuth Connections     | Connection CRUD, health checks, details                        |
-| `tests/pages-security.spec.ts` | Navigation & Security | Page rendering + auth gate enforcement                         |
-| `tests/notes-journey.spec.ts`  | Notes                 | Note CRUD lifecycle (create → read → update → delete)          |
-| `tests/content-feed.spec.ts`   | Content Feed          | Publish content via bot task, read, verify consumption         |
-| `tests/user-teardown.spec.ts`  | Teardown              | Delete account, verify all resources gone                      |
-| `tests/helpers.ts`             | —                     | Shared utilities (auth loading, headers, API URL)              |
+| File                                 | Journey               | Responsibility                                                         |
+| ------------------------------------ | --------------------- | ---------------------------------------------------------------------- |
+| `tests/user-lifecycle.spec.ts`       | Setup                 | Clean stale user, sign up fresh, verify provisioning, copy Google conn |
+| `tests/todo-journey.spec.ts`         | To-Do Management      | Task CRUD lifecycle (create, complete, verify, cleanup)                |
+| `tests/bot-journey.spec.ts`          | Bot Automation        | Full bot lifecycle (create → deploy → trigger → logs → delete)         |
+| `tests/connections.spec.ts`          | OAuth Connections     | Connection CRUD, health checks, details                                |
+| `tests/pages-security.spec.ts`       | Navigation & Security | Page rendering + auth gate enforcement                                 |
+| `tests/notes-journey.spec.ts`        | Notes                 | Note CRUD lifecycle (create → read → update → delete)                  |
+| `tests/content-feed.spec.ts`         | Content Feed          | Publish content via bot task, read, verify consumption                 |
+| `tests/connectors/baita.spec.ts`     | Baita Services        | Code execute, getTodo, publishToFeed                                   |
+| `tests/connectors/google.spec.ts`    | Google Connector      | Gmail API (list messages, labels) via OAuth2                           |
+| `tests/connectors/newsapi.spec.ts`   | NewsAPI Connector     | Top headlines, search (server-side API key)                            |
+| `tests/connectors/openai.spec.ts`    | OpenAI Connector      | Chat completion via userApiKey                                         |
+| `tests/connectors/pipedrive.spec.ts` | Pipedrive Connector   | Person/deal search via OAuth2                                          |
+| `tests/connectors/_helpers.ts`       | —                     | Connector test utilities (task builders, executeTask)                  |
+| `tests/user-teardown.spec.ts`        | Teardown              | Delete account, verify all resources gone                              |
+| `tests/helpers.ts`                   | —                     | Shared utilities (auth loading, headers, API URL)                      |
 
 ## Running
 

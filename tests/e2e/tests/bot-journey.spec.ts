@@ -17,12 +17,10 @@ import { expect, test } from '@playwright/test'
 import { API_URL, authHeaders, loadAuthData, logResult } from './helpers'
 
 let token: string
-let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
 })
 
 test.describe.configure({ mode: 'serial' })
@@ -34,7 +32,7 @@ test.describe('Bot Lifecycle', () => {
   test.afterAll(async ({ request }) => {
     if (botId) {
       await request
-        .post(`${API_URL}/user/${userId}/bot/delete/${botId}`, {
+        .post(`${API_URL}/bot/delete/${botId}`, {
           headers: authHeaders(token),
           data: {},
         })
@@ -43,7 +41,7 @@ test.describe('Bot Lifecycle', () => {
   })
 
   test('create a new bot', async ({ request }) => {
-    const res = await request.post(`${API_URL}/user/${userId}/bot/create`, {
+    const res = await request.post(`${API_URL}/bot/create`, {
       headers: authHeaders(token),
       data: {},
     })
@@ -61,59 +59,56 @@ test.describe('Bot Lifecycle', () => {
   test('configure bot with webhook trigger and code task', async ({
     request,
   }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/bot/update/${botId}`,
-      {
-        headers: authHeaders(token),
-        data: {
-          botId,
-          name: `e2e-bot-${Date.now()}`,
-          active: false,
-          triggerUrl,
-          tasks: [
-            {
-              taskId: 1,
-              service: {
-                type: 'trigger',
-                name: 'webhook',
-                label: 'Receive Webhook',
-                config: { inputFields: [] },
-              },
-              inputData: [],
+    const res = await request.post(`${API_URL}/bot/update/${botId}`, {
+      headers: authHeaders(token),
+      data: {
+        botId,
+        name: `e2e-bot-${Date.now()}`,
+        active: false,
+        triggerUrl,
+        tasks: [
+          {
+            taskId: 1,
+            service: {
+              type: 'trigger',
+              name: 'webhook',
+              label: 'Receive Webhook',
+              config: { inputFields: [] },
             },
-            {
-              taskId: 2,
-              service: {
-                type: 'invoke',
-                name: 'code-execute',
-                label: 'Run Code',
-                config: {
-                  inputFields: [
-                    {
-                      name: 'code',
-                      label: 'Code',
-                      type: 'code',
-                      required: true,
-                    },
-                  ],
-                },
+            inputData: [],
+          },
+          {
+            taskId: 2,
+            service: {
+              type: 'invoke',
+              name: 'code-execute',
+              label: 'Run Code',
+              config: {
+                inputFields: [
+                  {
+                    name: 'code',
+                    label: 'Code',
+                    type: 'code',
+                    required: true,
+                  },
+                ],
               },
-              inputData: [
-                {
-                  name: 'code',
-                  label: 'Code',
-                  type: 'code',
-                  value:
-                    'return { result: "hello from e2e", timestamp: Date.now() }',
-                  sampleValue:
-                    'return { result: "hello from e2e", timestamp: Date.now() }',
-                },
-              ],
             },
-          ],
-        },
-      }
-    )
+            inputData: [
+              {
+                name: 'code',
+                label: 'Code',
+                type: 'code',
+                value:
+                  'return { result: "hello from e2e", timestamp: Date.now() }',
+                sampleValue:
+                  'return { result: "hello from e2e", timestamp: Date.now() }',
+              },
+            ],
+          },
+        ],
+      },
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
   })
@@ -143,15 +138,15 @@ test.describe('Bot Lifecycle', () => {
       ],
     }
 
-    const res = await request.post(
-      `${API_URL}/user/${userId}/bot/test/${botId}`,
-      { headers: authHeaders(token), data: { task, taskIndex: 1 } }
-    )
+    const res = await request.post(`${API_URL}/bot/test/${botId}`, {
+      headers: authHeaders(token),
+      data: { task, taskIndex: 1 },
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
 
     const readRes = await request.post(
-      `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
+      `${API_URL}/resource/bot/read/${botId}`,
       { headers: authHeaders(token), data: {} }
     )
     const botData = (await readRes.json()).data
@@ -161,16 +156,16 @@ test.describe('Bot Lifecycle', () => {
   })
 
   test('deploy bot', async ({ request }) => {
-    const getRes = await request.post(
-      `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const getRes = await request.post(`${API_URL}/resource/bot/read/${botId}`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const bot = (await getRes.json()).data
 
-    const res = await request.post(
-      `${API_URL}/user/${userId}/bot/deploy/${botId}`,
-      { headers: authHeaders(token), data: { ...bot, active: true } }
-    )
+    const res = await request.post(`${API_URL}/bot/deploy/${botId}`, {
+      headers: authHeaders(token),
+      data: { ...bot, active: true },
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(body.data.active).toBe(true)
@@ -188,10 +183,10 @@ test.describe('Bot Lifecycle', () => {
   test('verify execution appears in logs', async ({ request }) => {
     await new Promise((r) => setTimeout(r, 3000))
 
-    const res = await request.post(
-      `${API_URL}/user/${userId}/bot/logs/${botId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/bot/logs/${botId}`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(Array.isArray(body.data)).toBe(true)
@@ -201,30 +196,30 @@ test.describe('Bot Lifecycle', () => {
   test('deactivate bot', async ({ request }) => {
     await new Promise((r) => setTimeout(r, 2000))
 
-    const getRes = await request.post(
-      `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const getRes = await request.post(`${API_URL}/resource/bot/read/${botId}`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const bot = (await getRes.json()).data
 
-    const res = await request.post(
-      `${API_URL}/user/${userId}/bot/deploy/${botId}`,
-      { headers: authHeaders(token), data: { ...bot, active: false } }
-    )
+    const res = await request.post(`${API_URL}/bot/deploy/${botId}`, {
+      headers: authHeaders(token),
+      data: { ...bot, active: false },
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(body.data.active).toBe(false)
   })
 
   test('delete bot and verify cleanup', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/bot/delete/${botId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/bot/delete/${botId}`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     expect(res.status()).toBe(200)
 
     const verifyRes = await request.post(
-      `${API_URL}/user/${userId}/resource/bot/read/${botId}`,
+      `${API_URL}/resource/bot/read/${botId}`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await verifyRes.json()

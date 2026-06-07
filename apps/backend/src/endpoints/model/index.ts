@@ -8,6 +8,8 @@ import Resource, {
 import Api, { ApiRequestStatus } from '@/utils/api'
 import { getAuthenticatedUserId } from '@/utils/auth'
 
+const SYSTEM_USER = 'baita'
+
 export const handler = async (
   event: APIGatewayProxyEvent,
   context: Context,
@@ -16,15 +18,14 @@ export const handler = async (
   const api = new Api(event, context)
 
   try {
-    const userId = getAuthenticatedUserId(event)
-    const { resourceName, operation, resourceId } = event.pathParameters || {}
+    getAuthenticatedUserId(event)
+    const { operation, modelId } = event.pathParameters || {}
 
-    if (!resourceName || !operation) {
+    if (!operation) {
       throw new Error('Missing required path parameters')
     }
 
-    const resource = new Resource(userId, resourceName)
-
+    const resource = new Resource(SYSTEM_USER, 'model')
     const body = JSON.parse(event.body || '{}')
 
     if (!resourceOperations.includes(operation)) {
@@ -33,9 +34,9 @@ export const handler = async (
 
     if (
       resourceValidationProneOperations.includes(operation) &&
-      Object.keys(resourceValidations).includes(resourceName)
+      Object.keys(resourceValidations).includes('model')
     ) {
-      resourceValidations[resourceName](body)
+      resourceValidations['model'](body)
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,7 +46,7 @@ export const handler = async (
       throw new Error('Operation not available')
     }
 
-    const data = await resourceAny[operation](resourceId, body)
+    const data = await resourceAny[operation](modelId, body)
 
     api.httpResponse(callback, ApiRequestStatus.success, undefined, data)
   } catch (err: unknown) {

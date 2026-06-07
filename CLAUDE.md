@@ -152,17 +152,18 @@ Consistent pattern across the monorepo: **no secrets in source code**.
 
 Secrets stored in AWS SSM under `/baita/prod/*` and resolved at deploy time by Serverless Framework:
 
-| SSM Parameter                         | Purpose                       |
-| ------------------------------------- | ----------------------------- |
-| `/baita/prod/pipedrive-auth-url`      | Pipedrive OAuth token URL     |
-| `/baita/prod/pipedrive-client-id`     | Pipedrive OAuth client ID     |
-| `/baita/prod/pipedrive-client-secret` | Pipedrive OAuth client secret |
-| `/baita/prod/google-auth-url`         | Google OAuth token URL        |
-| `/baita/prod/google-client-id`        | Google OAuth client ID        |
-| `/baita/prod/google-client-secret`    | Google OAuth client secret    |
-| `/baita/prod/news-api-key`            | NewsAPI key                   |
-| `/baita/prod/vapid-public-key`        | Web Push VAPID public key     |
-| `/baita/prod/vapid-private-key`       | Web Push VAPID private key    |
+| SSM Parameter                           | Purpose                         |
+| --------------------------------------- | ------------------------------- |
+| `/baita/prod/pipedrive-auth-url`        | Pipedrive OAuth token URL       |
+| `/baita/prod/pipedrive-client-id`       | Pipedrive OAuth client ID       |
+| `/baita/prod/pipedrive-client-secret`   | Pipedrive OAuth client secret   |
+| `/baita/prod/google-auth-url`           | Google OAuth token URL          |
+| `/baita/prod/google-client-id`          | Google OAuth client ID          |
+| `/baita/prod/google-client-secret`      | Google OAuth client secret      |
+| `/baita/prod/news-api-key`              | NewsAPI key                     |
+| `/baita/prod/vapid-public-key`          | Web Push VAPID public key       |
+| `/baita/prod/vapid-private-key`         | Web Push VAPID private key      |
+| `/baita/prod/auth0-create-user-api-key` | Auth0 Post-Login Action API key |
 
 ```bash
 # List all parameters

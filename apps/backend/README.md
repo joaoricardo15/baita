@@ -104,23 +104,39 @@ All endpoints return:
 
 ### User
 
-- `POST /user` — Create user account
+- `POST /user` — Create user account (Auth0 Post-Login Action only, API key auth)
+- `DELETE /user` — Delete user account (userId from JWT)
 
 ### Bots
 
-- `POST /user/{userId}/bot/create` — Create bot
-- `POST /user/{userId}/bot/update/{botId}` — Update bot
-- `POST /user/{userId}/bot/delete/{botId}` — Delete bot
-- `POST /user/{userId}/bot/deploy/{botId}` — Deploy bot
-- `POST /user/{userId}/bot/test/{botId}` — Test individual task (taskIndex in body)
-- `POST /user/{userId}/bot/logs/{botId}` — Get execution logs
-- `POST /user/{userId}/bot/model` — Deploy from bot model template
+- `POST /bot/create` — Create bot
+- `POST /bot/update/{botId}` — Update bot
+- `POST /bot/delete/{botId}` — Delete bot (+ Lambda, API Gateway, Scheduler, S3)
+- `POST /bot/deploy/{botId}` — Deploy bot (code gen + Lambda)
+- `POST /bot/test/{botId}` — Test individual task (taskIndex in body)
+- `POST /bot/logs/{botId}` — Get execution logs (CloudWatch)
+
+### Bot Models (shared templates)
+
+- `POST /model/list` — List available bot models
+- `POST /model/create` — Create a bot model
+- `POST /model/delete/{modelId}` — Delete a bot model
+- `POST /model/bud/{modelId}` — Deploy bot from model template
+
+### Tasks
+
+- `POST /task/execute` — Execute a single task (standalone, no bot)
 
 ### Content & Resources
 
-- `GET /user/{userId}/content` — Get user content feed (from SQS)
-- `POST /user/{userId}/resource/{resourceName}/{operation}` — Generic CRUD
+- `GET /content` — Get user content feed (from SQS)
+- `POST /resource/{resourceName}/{operation}[/{id}]` — Generic CRUD
   - Operations: `list`, `read`, `delete`, `create`, `update`, `upload`, `remove`
+
+### Connections
+
+- `POST /connection/health/{connectionId}` — Check connection health
+- `POST /connection/details/{connectionId}` — Get connection details + linked bots
 
 ### OAuth Connectors
 
@@ -160,8 +176,8 @@ A persistent test user exists in production DynamoDB for local endpoint testing:
 - **email**: `test@baita.help`
 
 ```bash
-curl http://localhost:5000/dev/user/test-user-local/content
-curl -X POST http://localhost:5000/dev/user/test-user-local/resource/bot/list -d '{}'
+curl http://localhost:5000/dev/content -H "Authorization: Bearer <token>"
+curl -X POST http://localhost:5000/dev/resource/bot/list -H "Authorization: Bearer <token>" -d '{}'
 ```
 
 ## CI/CD Pipeline

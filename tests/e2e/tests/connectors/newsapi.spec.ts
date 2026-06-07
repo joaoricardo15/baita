@@ -14,12 +14,10 @@ import { loadAuthData, logResult } from '../helpers'
 import { buildNewsApiTask, executeTask } from './_helpers'
 
 let token: string
-let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
 })
 
 test.describe('NewsAPI Connector — Top Headlines', () => {
@@ -31,7 +29,7 @@ test.describe('NewsAPI Connector — Top Headlines', () => {
       outputPath: 'articles',
     })
 
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
 
     if (body.data.status === 'fail') {
@@ -77,7 +75,7 @@ test.describe('NewsAPI Connector — Top Headlines', () => {
       },
     })
 
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     if (body.data.status === 'fail') {
       logResult('NewsAPI rate limited — skipping', {})
@@ -111,7 +109,7 @@ test.describe('NewsAPI Connector — Everything', () => {
       outputPath: 'articles',
     })
 
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
 
     if (body.data.status === 'fail') {

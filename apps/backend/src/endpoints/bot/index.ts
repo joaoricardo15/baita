@@ -4,7 +4,7 @@ import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 import Bot from '@/controllers/bot'
 import Resource from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
-import { getAuthenticatedUserId } from '@/utils/authGuard'
+import { getAuthenticatedUserId } from '@/utils/auth'
 
 const OPERATIONS = [
   'create',

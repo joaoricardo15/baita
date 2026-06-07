@@ -149,29 +149,34 @@ provider:
     NEWS_API_KEY: ${ssm:/baita/prod/news-api-key}
     VAPID_PUBLIC_KEY: ${ssm:/baita/prod/vapid-public-key}
     VAPID_PRIVATE_KEY: ${ssm:/baita/prod/vapid-private-key}
+    AUTH0_CREATE_USER_API_KEY: ${ssm:/baita/prod/auth0-create-user-api-key}
 
 functions:
   authorizer:
     handler: src/authorizer/index.handler
     timeout: 10
 
-  # User operations (create, delete, content)
+  # User provisioning (called by Auth0 Post-Login Action only — API key auth)
+  endpoint-user-create:
+    handler: src/endpoints/user/create.handler
+    timeout: 60
+    events:
+      - http:
+          path: user
+          method: post
+
+  # User-facing operations (JWT auth)
   endpoint-user:
     handler: src/endpoints/user/index.handler
     timeout: 60
     events:
       - http:
           path: user
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-      - http:
-          path: user/{userId}
           method: delete
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: user/{userId}/content
+          path: content
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -182,7 +187,7 @@ functions:
     timeout: 60
     events:
       - http:
-          path: user/{userId}/task/{operation}
+          path: task/{operation}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -193,12 +198,12 @@ functions:
     timeout: 60
     events:
       - http:
-          path: user/{userId}/bot/{botId}
+          path: bot/{botId}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: user/{userId}/bot/{botId}/{id}
+          path: bot/{botId}/{id}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -208,12 +213,27 @@ functions:
     handler: src/endpoints/resource/index.handler
     events:
       - http:
-          path: user/{userId}/resource/{resourceName}/{operation}
+          path: resource/{resourceName}/{operation}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: user/{userId}/resource/{resourceName}/{operation}/{resourceId}
+          path: resource/{resourceName}/{operation}/{resourceId}
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # Shared bot models (reads from system user 'baita')
+  endpoint-model:
+    handler: src/endpoints/model/index.handler
+    events:
+      - http:
+          path: model/{operation}
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: model/{operation}/{modelId}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -223,12 +243,12 @@ functions:
     handler: src/endpoints/connection/index.handler
     events:
       - http:
-          path: user/{userId}/connection/{connectionId}
+          path: connection/{connectionId}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: user/{userId}/connection/{connectionId}/{id}
+          path: connection/{connectionId}/{id}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}

@@ -128,16 +128,13 @@ describe('BotAssistant (task-level)', () => {
 
     let capturedBody: any = null
     server.use(
-      http.post(
-        `${API_BASE}/user/:userId/bot/update/:botId`,
-        async ({ request }) => {
-          capturedBody = await request.json()
-          return HttpResponse.json({
-            success: true,
-            data: { ...mockBot, tasks: [modifiedTask] },
-          })
-        }
-      )
+      http.post(`${API_BASE}/bot/update/:botId`, async ({ request }) => {
+        capturedBody = await request.json()
+        return HttpResponse.json({
+          success: true,
+          data: { ...mockBot, tasks: [modifiedTask] },
+        })
+      })
     )
 
     renderAssistant()

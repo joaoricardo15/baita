@@ -134,6 +134,7 @@ Parameters:
 - `/baita/prod/news-api-key` — NewsAPI key
 - `/baita/prod/vapid-public-key` — Web Push VAPID public key
 - `/baita/prod/vapid-private-key` — Web Push VAPID private key
+- `/baita/prod/auth0-create-user-api-key` — API key for Auth0 Post-Login Action user provisioning
 
 ### Test User (for local development)
 
@@ -143,17 +144,17 @@ A persistent test user exists in production DynamoDB for local endpoint testing:
 - **email**: `test@baita.help`
 - **SQS queue**: `baita-help-prod-test-user-local`
 
-Use this for manual API testing:
+Use this for manual API testing (requires a valid JWT token from Auth0):
 
 ```bash
 # Content feed (should return empty array or queued content)
-curl http://localhost:5000/dev/user/test-user-local/content
+curl http://localhost:5000/dev/content -H "Authorization: Bearer <token>"
 
 # List bots
-curl -X POST http://localhost:5000/dev/user/test-user-local/resource/bot/list -d '{}'
+curl -X POST http://localhost:5000/dev/resource/bot/list -H "Authorization: Bearer <token>" -d '{}'
 
 # List todos
-curl -X POST http://localhost:5000/dev/user/test-user-local/resource/todo/list -d '{}'
+curl -X POST http://localhost:5000/dev/resource/todo/list -H "Authorization: Bearer <token>" -d '{}'
 ```
 
 ## Architecture
@@ -177,7 +178,7 @@ Every endpoint follows this structure:
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import Api, { ApiRequestStatus } from '@/utils/api'
-import { getAuthenticatedUserId } from '@/utils/authGuard'
+import { getAuthenticatedUserId } from '@/utils/auth'
 import SomeController from '@/controllers/someController'
 
 export const handler = async (
@@ -311,45 +312,63 @@ The content feed uses SQS as a transient message queue + DynamoDB for deduplicat
 ### Authentication & Authorization
 
 - The Lambda authorizer verifies Auth0 JWTs and returns `context: { userId: verified.sub }`
-- **Every endpoint MUST use `getAuthenticatedUserId(event)`** from `src/utils/authGuard.ts`
-- This utility extracts userId from the authorizer context AND validates it matches the path parameter
-- Never trust `event.pathParameters.userId` alone — always use the auth guard
-- The guard throws `'Unauthorized'` if no auth context, or `'Forbidden'` if user mismatch
+- **Every user-facing endpoint MUST use `getAuthenticatedUserId(event)`** from `src/utils/auth.ts`
+- This utility extracts userId from the authorizer context (strips `auth0|` prefix)
+- Never trust path parameters for identity — the JWT is the single source of truth
+- The guard throws `'Unauthorized'` if no auth context is present
+
+#### System Endpoint: POST /user (API Key Auth)
+
+User provisioning is called exclusively by the Auth0 Post-Login Action on first signup:
+
+- **No Lambda authorizer** — validated by `X-Api-Key` header in the handler itself
+- **API key stored in SSM**: `/baita/prod/auth0-create-user-api-key`
+- **Handler**: `src/endpoints/user/create.ts` (separate Lambda from user-facing operations)
+- **Must NEVER be called by E2E tests, frontend, or any source other than Auth0**
+- Auth0 Action secrets: `BAITA_API_URL`, `BAITA_CREATE_USER_API_KEY`
 
 ## API Endpoints
 
-All authenticated endpoints follow operation-based routing: `POST /user/{userId}/{domain}/{operation}/{id?}`
+All authenticated endpoints extract userId from the JWT token (via Lambda authorizer). No userId in URL paths.
 
-### User
+### User (System Endpoints)
 
-- `POST /user` — Create user account
-- `DELETE /user/{userId}` — Delete user account
-- `GET /user/{userId}/content` — Get content feed (from SQS)
+- `POST /user` — Create user account (Auth0 Action only, API key auth, excluded from OpenAPI docs)
+- `DELETE /user` — Delete user account + all resources (JWT auth)
+
+### Content
+
+- `GET /content` — Get content feed (from SQS)
 
 ### Bots (all POST, operation-based routing)
 
-- `POST /user/{userId}/bot/create` — Create bot
-- `POST /user/{userId}/bot/update/{botId}` — Update bot
-- `POST /user/{userId}/bot/delete/{botId}` — Delete bot (reads apiId from DDB record)
-- `POST /user/{userId}/bot/deploy/{botId}` — Deploy/deactivate bot
-- `POST /user/{userId}/bot/test/{botId}` — Test individual task (taskIndex in body)
-- `POST /user/{userId}/bot/logs/{botId}` — Get execution logs
-- `POST /user/{userId}/bot/model` — Deploy from bot model (modelId in body)
+- `POST /bot/create` — Create bot
+- `POST /bot/update/{botId}` — Update bot
+- `POST /bot/delete/{botId}` — Delete bot (reads apiId from DDB record)
+- `POST /bot/deploy/{botId}` — Deploy/deactivate bot
+- `POST /bot/test/{botId}` — Test individual task (taskIndex in body)
+- `POST /bot/logs/{botId}` — Get execution logs
+- `POST /bot/model` — Deploy from bot model (modelId in body)
+
+### Bot Models (shared, system user)
+
+- `POST /model/{operation}` — List/read shared bot models (userId='baita')
+- `POST /model/{operation}/{modelId}` — Read/update/delete specific model
 
 ### Tasks
 
-- `POST /user/{userId}/task/execute` — Execute task (also accepts direct Lambda invoke from bots)
+- `POST /task/{operation}` — Execute task (also accepts direct Lambda invoke from bots)
 
 ### Connections (all POST, operation-based routing)
 
-- `POST /user/{userId}/connection/create` — Create connection
-- `POST /user/{userId}/connection/health/{connectionId}` — Test connection health
-- `POST /user/{userId}/connection/details/{connectionId}` — Get connection details + linked bots
+- `POST /connection/create` — Create connection
+- `POST /connection/health/{connectionId}` — Test connection health
+- `POST /connection/details/{connectionId}` — Get connection details + linked bots
 
-### Resources (unchanged)
+### Resources (generic CRUD)
 
-- `POST /user/{userId}/resource/{resourceName}/{operation}` — Generic CRUD
-- `POST /user/{userId}/resource/{resourceName}/{operation}/{resourceId}` — CRUD with ID
+- `POST /resource/{resourceName}/{operation}` — Generic CRUD
+- `POST /resource/{resourceName}/{operation}/{resourceId}` — CRUD with ID
   - Operations: `list`, `read`, `delete`, `create`, `update`, `upload`, `remove`
 
 ### OAuth Connectors
@@ -424,11 +443,14 @@ cd tests/e2e && npm test
 | Bot Lifecycle       | POST /bot/create + logs + delete | Yes    | Lambda + S3 + API Gateway + Scheduler     |
 | Bot Deploy          | POST /bot/deploy/{id}            | Yes    | Code generation + Lambda deploy           |
 | Bot Test            | POST /bot/test/{id}              | Yes    | Task execution via executor               |
+| Connector Services  | POST /task/execute               | Yes    | Baita, Google, NewsAPI, OpenAI, Pipedrive |
+| Connection Health   | POST /connection/health/{id}     | Yes    | OAuth token refresh + API probe           |
+| Connection Details  | POST /connection/details/{id}    | Yes    | Linked bots lookup                        |
+| User Deletion       | DELETE /user                     | Yes    | Full cleanup (DDB, Auth0, SQS, bots)      |
 | Auth Rejection      | GET without token                | Yes    | Security — 401 returned                   |
 | CORS on Errors      | GET with Origin header           | Yes    | CORS headers on 4XX                       |
 | Error Handling      | Invalid operations               | Yes    | Structured error response                 |
 | File Upload         | POST /resource/\*/upload         | Future | S3 presigned URL flow                     |
-| OAuth Connectors    | GET /connectors/\*               | Future | Requires interactive OAuth                |
 | Push Notifications  | —                                | N/A    | Frontend-only feature                     |
 
 ### Adding New Tests

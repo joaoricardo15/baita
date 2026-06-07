@@ -8,8 +8,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "jest --watchAll",
-    "test:run": "jest"
+    "test": "jest --watchAll"
   },
   "dependencies": {
     "zod": "^3"

@@ -17,12 +17,10 @@ import { expect, test } from '@playwright/test'
 import { API_URL, authHeaders, loadAuthData, logResult } from './helpers'
 
 let token: string
-let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
 })
 
 test.describe.configure({ mode: 'serial' })
@@ -32,7 +30,7 @@ test.describe('Notes Lifecycle', () => {
 
   test.afterAll(async ({ request }) => {
     await request
-      .post(`${API_URL}/user/${userId}/resource/note/delete/${noteId}`, {
+      .post(`${API_URL}/resource/note/delete/${noteId}`, {
         headers: authHeaders(token),
         data: {},
       })
@@ -40,10 +38,10 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('list notes returns array', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/note/list`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/note/list`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(Array.isArray(body.data)).toBe(true)
@@ -52,7 +50,7 @@ test.describe('Notes Lifecycle', () => {
 
   test('create a new note', async ({ request }) => {
     const res = await request.post(
-      `${API_URL}/user/${userId}/resource/note/create/${noteId}`,
+      `${API_URL}/resource/note/create/${noteId}`,
       {
         headers: authHeaders(token),
         data: {
@@ -70,10 +68,10 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('read the created note', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/note/read/${noteId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/note/read/${noteId}`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(body.data.noteId).toBe(noteId)
@@ -86,7 +84,7 @@ test.describe('Notes Lifecycle', () => {
 
   test('update note content', async ({ request }) => {
     const res = await request.post(
-      `${API_URL}/user/${userId}/resource/note/update/${noteId}`,
+      `${API_URL}/resource/note/update/${noteId}`,
       {
         headers: authHeaders(token),
         data: {
@@ -101,7 +99,7 @@ test.describe('Notes Lifecycle', () => {
     expect(body.success).toBe(true)
 
     const readRes = await request.post(
-      `${API_URL}/user/${userId}/resource/note/read/${noteId}`,
+      `${API_URL}/resource/note/read/${noteId}`,
       { headers: authHeaders(token), data: {} }
     )
     const readBody = await readRes.json()
@@ -114,7 +112,7 @@ test.describe('Notes Lifecycle', () => {
 
   test('delete the note', async ({ request }) => {
     const res = await request.post(
-      `${API_URL}/user/${userId}/resource/note/delete/${noteId}`,
+      `${API_URL}/resource/note/delete/${noteId}`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
@@ -123,10 +121,10 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('verify note is gone', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/note/read/${noteId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/note/read/${noteId}`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     expect(body.data).toBeFalsy()
     logResult('Note verified deleted', { noteId })

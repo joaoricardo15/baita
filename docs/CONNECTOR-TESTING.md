@@ -7,7 +7,7 @@ How to test any connector service via the standalone task execution endpoint. Th
 Every connector service can be tested independently using:
 
 ```
-POST /user/{userId}/task/execute
+POST /task/execute
 ```
 
 This endpoint accepts a single task object, resolves its input data, executes the service, and returns the result — no bot creation or deployment needed.
@@ -520,13 +520,12 @@ import { loadAuthData, logResult } from '../helpers'
 import { executeTask, findConnection } from './_helpers'
 
 const APP_ID = 'your-connector-app-id'
-let token: string, userId: string, connectionId: string
+let token: string, connectionId: string
 
 test.beforeAll(async ({ request }) => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
-  const conn = await findConnection(request, userId, token, APP_ID)
+  const conn = await findConnection(request, token, APP_ID)
   connectionId = conn?.connectionId || ''
 })
 
@@ -537,7 +536,7 @@ test.describe('MyConnector — Operation Name', () => {
     const task = {
       /* build task payload */
     }
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     expect(body.success).toBe(true)
     expect(body.data.status).toBe('success')

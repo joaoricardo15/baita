@@ -19,15 +19,12 @@ import { buildPipedriveTask, executeTask, findConnection } from './_helpers'
 const PIPEDRIVE_APP_ID = '19c1921c-9a6b-4def-91c8-8bcba8239bf5'
 
 let token: string
-let userId: string
 let pipedriveConnectionId: string
 
 test.beforeAll(async ({ request }) => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
-
-  const conn = await findConnection(request, userId, token, PIPEDRIVE_APP_ID)
+  const conn = await findConnection(request, token, PIPEDRIVE_APP_ID)
   if (!conn) {
     logResult(
       'Pipedrive connection not found — skipping all Pipedrive tests',
@@ -48,7 +45,7 @@ test.describe('Pipedrive Connector — Search', () => {
       outputPath: 'data.items.0.item',
     })
 
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
 
     if (body.data.status === 'fail') {
@@ -77,7 +74,7 @@ test.describe('Pipedrive Connector — Search', () => {
       outputPath: 'data.items.0.item',
     })
 
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
 
     if (body.data.status === 'fail') {

@@ -20,7 +20,7 @@ const BotModel: FC<{
   const onDeployBotModel = () => {
     showLoading(true)
     deployBotModel
-      .mutateAsync({ modelId: botModel.modelId, model: botModel })
+      .mutateAsync({ model: botModel })
       .then(() => {
         showLoading(false)
         showSnack(labels.testSuccess, 'success')

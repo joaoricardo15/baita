@@ -10,18 +10,17 @@ import { AuthContext } from '@/providers/auth'
 export function useContent() {
   const { user } = useContext(AuthContext)
   return useQuery({
-    queryKey: ['content', user?.userId],
-    queryFn: () => queries.fetchContent(user!.userId),
+    queryKey: ['content'],
+    queryFn: () => queries.fetchContent(),
     enabled: !!user,
   })
 }
 
 export function usePopContent() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
 
   return (onLow?: () => void) => {
-    queryClient.setQueryData<IContent[]>(['content', user?.userId], (prev) => {
+    queryClient.setQueryData<IContent[]>(['content'], (prev) => {
       if (!prev || prev.length === 0) return prev
       const updated = prev.slice(0, -1)
       if (updated.length <= 3 && onLow) onLow()
@@ -32,12 +31,11 @@ export function usePopContent() {
 
 export function useRefreshContent() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
 
   return useMutation({
-    mutationFn: () => queries.fetchContent(user!.userId),
+    mutationFn: () => queries.fetchContent(),
     onSuccess: (newContent) => {
-      queryClient.setQueryData<IContent[]>(['content', user?.userId], (prev) =>
+      queryClient.setQueryData<IContent[]>(['content'], (prev) =>
         !prev ? newContent : [...newContent, ...prev]
       )
     },
@@ -45,7 +43,6 @@ export function useRefreshContent() {
 }
 
 export function useReactToContent() {
-  const { user } = useContext(AuthContext)
   return useMutation({
     mutationFn: ({
       content,
@@ -53,6 +50,6 @@ export function useReactToContent() {
     }: {
       content: IContent
       reaction: string
-    }) => mutations.reactToContent(user!.userId, content, reaction),
+    }) => mutations.reactToContent(content, reaction),
   })
 }

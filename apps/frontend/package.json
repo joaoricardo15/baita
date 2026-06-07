@@ -12,7 +12,6 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:run": "vitest run",
     "lint": "eslint src --fix",
     "format": "prettier src --write",
     "spell": "cspell --config ../../cspell.json 'src/**/*.ts'",
@@ -45,7 +44,6 @@
     "react-type-animation": "^3.2.0"
   },
   "devDependencies": {
-    "@tanstack/react-query-devtools": "^5.101.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@types/react": "^18.0.26",

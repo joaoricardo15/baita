@@ -5,7 +5,7 @@ A Task is the atomic unit of execution in Baita. Each Task represents a single o
 ## Standalone Execution Endpoint
 
 ```
-POST /user/{userId}/task/execute
+POST /task/execute
 Authorization: Bearer <token>
 Content-Type: application/json
 Body: ITask
@@ -656,7 +656,7 @@ Returns `"Trigger"` for index 0, `"Task N"` for any other index.
 ### code-execute (no external dependencies)
 
 ```bash
-curl -X POST https://api.baita.help/user/{userId}/task/execute \
+curl -X POST https://api.baita.help/task/execute \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -676,7 +676,7 @@ curl -X POST https://api.baita.help/user/{userId}/task/execute \
 ### getTodo
 
 ```bash
-curl -X POST https://api.baita.help/user/{userId}/task/execute \
+curl -X POST https://api.baita.help/task/execute \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -694,7 +694,7 @@ curl -X POST https://api.baita.help/user/{userId}/task/execute \
 ### httpRequest (public API, no connection needed)
 
 ```bash
-curl -X POST https://api.baita.help/user/{userId}/task/execute \
+curl -X POST https://api.baita.help/task/execute \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{

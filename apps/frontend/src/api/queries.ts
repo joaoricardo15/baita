@@ -11,50 +11,43 @@ import {
 
 import { getApiResponse } from './client'
 
-export const fetchBots = (userId: string) =>
-  getApiResponse<IBot[]>('post', `user/${userId}/resource/bot/list`)
+export const fetchBots = () =>
+  getApiResponse<IBot[]>('post', 'resource/bot/list')
 
-export const fetchBot = (userId: string, botId: string) =>
-  getApiResponse<IBot>('post', `user/${userId}/resource/bot/read/${botId}`)
+export const fetchBot = (botId: string) =>
+  getApiResponse<IBot>('post', `resource/bot/read/${botId}`)
 
 export const fetchBotModels = () =>
-  getApiResponse<IBotModel[]>('post', 'user/baita/resource/model/list')
+  getApiResponse<IBotModel[]>('post', 'model/list')
 
-export const fetchLogs = (userId: string, botId: string) =>
-  getApiResponse<IBotLog[]>('post', `user/${userId}/bot/logs/${botId}`)
+export const fetchLogs = (botId: string) =>
+  getApiResponse<IBotLog[]>('post', `bot/logs/${botId}`)
 
-export const fetchTodo = (userId: string) =>
-  getApiResponse<ITodo>('post', `user/${userId}/resource/todo/read`)
+export const fetchTodo = () =>
+  getApiResponse<ITodo>('post', 'resource/todo/read')
 
-export const fetchContent = (userId: string) =>
-  getApiResponse<IContent[]>('get', `user/${userId}/content`)
+export const fetchContent = () => getApiResponse<IContent[]>('get', 'content')
 
-export const fetchConnections = (userId: string) =>
-  getApiResponse<IAppConnection[]>(
-    'post',
-    `user/${userId}/resource/connection/list`
-  )
+export const fetchConnections = () =>
+  getApiResponse<IAppConnection[]>('post', 'resource/connection/list')
 
-export const fetchConnectionDetails = (userId: string, connectionId: string) =>
+export const fetchConnectionDetails = (connectionId: string) =>
   getApiResponse<{
     connection: Record<string, unknown>
     linkedBots: { botId: string; name: string }[]
-  }>('post', `user/${userId}/connection/details/${connectionId}`)
+  }>('post', `connection/details/${connectionId}`)
 
-export const fetchConnectionHealth = (userId: string, connectionId: string) =>
+export const fetchConnectionHealth = (connectionId: string) =>
   getApiResponse<{ status: string; message?: string }>(
     'post',
-    `user/${userId}/connection/health/${connectionId}`
+    `connection/health/${connectionId}`
   )
 
-export const fetchNotes = (userId: string) =>
-  getApiResponse<INote[]>('post', `user/${userId}/resource/note/list`)
+export const fetchNotes = () =>
+  getApiResponse<INote[]>('post', 'resource/note/list')
 
-export const fetchPlaces = (userId: string) =>
-  getApiResponse<IPlace[]>('post', `user/${userId}/resource/place/list`)
+export const fetchPlaces = () =>
+  getApiResponse<IPlace[]>('post', 'resource/place/list')
 
-export const fetchImageUploadUrl = (userId: string, imageId: string) =>
-  getApiResponse<string>(
-    'post',
-    `user/${userId}/resource/image/upload/${imageId}`
-  )
+export const fetchImageUploadUrl = (imageId: string) =>
+  getApiResponse<string>('post', `resource/image/upload/${imageId}`)

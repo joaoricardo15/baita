@@ -10,31 +10,29 @@ import { AuthContext } from '@/providers/auth'
 export function useConnections() {
   const { user } = useContext(AuthContext)
   return useQuery({
-    queryKey: ['connections', user?.userId],
-    queryFn: () => queries.fetchConnections(user!.userId),
+    queryKey: ['connections'],
+    queryFn: () => queries.fetchConnections(),
     enabled: !!user,
   })
 }
 
 export function useConnectionHealth(connectionId: string) {
-  const { user } = useContext(AuthContext)
   return useMutation({
-    mutationFn: () => queries.fetchConnectionHealth(user!.userId, connectionId),
+    mutationFn: () => queries.fetchConnectionHealth(connectionId),
   })
 }
 
 export function useConnectionDetails(connectionId: string) {
   const { user } = useContext(AuthContext)
   return useQuery({
-    queryKey: ['connectionDetails', user?.userId, connectionId],
-    queryFn: () => queries.fetchConnectionDetails(user!.userId, connectionId),
+    queryKey: ['connectionDetails', connectionId],
+    queryFn: () => queries.fetchConnectionDetails(connectionId),
     enabled: !!user && !!connectionId,
   })
 }
 
 export function useCreateConnection() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
     mutationFn: ({
       connectorId,
@@ -42,7 +40,7 @@ export function useCreateConnection() {
     }: {
       connectorId: string
       apiKey: string
-    }) => mutations.createConnection(user!.userId, connectorId, apiKey),
+    }) => mutations.createConnection(connectorId, apiKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['connections'] })
     },
@@ -51,27 +49,21 @@ export function useCreateConnection() {
 
 export function useDeleteConnection() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
     mutationFn: (connectionId: string) =>
-      mutations.deleteConnection(user!.userId, connectionId),
+      mutations.deleteConnection(connectionId),
     onMutate: async (connectionId) => {
-      await queryClient.cancelQueries({
-        queryKey: ['connections', user?.userId],
-      })
+      await queryClient.cancelQueries({ queryKey: ['connections'] })
       const previous = queryClient.getQueryData<IAppConnection[]>([
         'connections',
-        user?.userId,
       ])
-      queryClient.setQueryData<IAppConnection[]>(
-        ['connections', user?.userId],
-        (old) =>
-          old?.filter((c) => String(c.connectionId) !== String(connectionId))
+      queryClient.setQueryData<IAppConnection[]>(['connections'], (old) =>
+        old?.filter((c) => String(c.connectionId) !== String(connectionId))
       )
       return { previous }
     },
     onError: (_, __, context) => {
-      queryClient.setQueryData(['connections', user?.userId], context?.previous)
+      queryClient.setQueryData(['connections'], context?.previous)
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['connections'] })

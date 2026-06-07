@@ -16,12 +16,10 @@ import { expect, test } from '@playwright/test'
 import { API_URL, authHeaders, loadAuthData, logResult } from './helpers'
 
 let token: string
-let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
 })
 
 test.describe.configure({ mode: 'serial' })
@@ -52,7 +50,7 @@ test.describe('Content Feed', () => {
   test.afterAll(async ({ request }) => {
     if (botId) {
       await request
-        .post(`${API_URL}/user/${userId}/bot/delete/${botId}`, {
+        .post(`${API_URL}/bot/delete/${botId}`, {
           headers: authHeaders(token),
           data: {},
         })
@@ -61,7 +59,7 @@ test.describe('Content Feed', () => {
   })
 
   test('create bot for content publishing', async ({ request }) => {
-    const res = await request.post(`${API_URL}/user/${userId}/bot/create`, {
+    const res = await request.post(`${API_URL}/bot/create`, {
       headers: authHeaders(token),
       data: {},
     })
@@ -72,57 +70,54 @@ test.describe('Content Feed', () => {
   })
 
   test('configure bot with publishToFeed task', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/bot/update/${botId}`,
-      {
-        headers: authHeaders(token),
-        data: {
-          botId,
-          name: `content-feed-e2e-${Date.now()}`,
-          active: false,
-          tasks: [
-            {
-              taskId: 1,
-              service: {
-                type: 'trigger',
-                name: 'webhook',
-                label: 'Receive Webhook',
-                config: { inputFields: [] },
-              },
-              inputData: [],
+    const res = await request.post(`${API_URL}/bot/update/${botId}`, {
+      headers: authHeaders(token),
+      data: {
+        botId,
+        name: `content-feed-e2e-${Date.now()}`,
+        active: false,
+        tasks: [
+          {
+            taskId: 1,
+            service: {
+              type: 'trigger',
+              name: 'webhook',
+              label: 'Receive Webhook',
+              config: { inputFields: [] },
             },
-            {
-              taskId: 2,
-              service: {
-                type: 'invoke',
-                name: 'method-execute',
-                label: 'Publish content to feed',
-                config: {
-                  methodName: 'publishToFeed',
-                  inputFields: [
-                    {
-                      name: 'content',
-                      label: 'content',
-                      type: 'output',
-                      required: true,
-                    },
-                  ],
-                },
+            inputData: [],
+          },
+          {
+            taskId: 2,
+            service: {
+              type: 'invoke',
+              name: 'method-execute',
+              label: 'Publish content to feed',
+              config: {
+                methodName: 'publishToFeed',
+                inputFields: [
+                  {
+                    name: 'content',
+                    label: 'content',
+                    type: 'output',
+                    required: true,
+                  },
+                ],
               },
-              inputData: [
-                {
-                  name: 'content',
-                  label: 'content',
-                  type: 'output',
-                  value: JSON.stringify(testContent),
-                  sampleValue: testContent,
-                },
-              ],
             },
-          ],
-        },
-      }
-    )
+            inputData: [
+              {
+                name: 'content',
+                label: 'content',
+                type: 'output',
+                value: JSON.stringify(testContent),
+                sampleValue: testContent,
+              },
+            ],
+          },
+        ],
+      },
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     logResult('Bot configured with publishToFeed', { tasks: 2 })
@@ -158,10 +153,10 @@ test.describe('Content Feed', () => {
       ],
     }
 
-    const res = await request.post(
-      `${API_URL}/user/${userId}/bot/test/${botId}`,
-      { headers: authHeaders(token), data: { task, taskIndex: 1 } }
-    )
+    const res = await request.post(`${API_URL}/bot/test/${botId}`, {
+      headers: authHeaders(token),
+      data: { task, taskIndex: 1 },
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     logResult('publishToFeed executed', {
@@ -184,7 +179,7 @@ test.describe('Content Feed', () => {
     for (let attempt = 1; attempt <= 5; attempt++) {
       await new Promise((r) => setTimeout(r, 2000))
 
-      const res = await request.get(`${API_URL}/user/${userId}/content`, {
+      const res = await request.get(`${API_URL}/content`, {
         headers: authHeaders(token),
       })
       expect(res.status()).toBe(200)
@@ -217,7 +212,7 @@ test.describe('Content Feed', () => {
   test('content is consumed after read (SQS deletes on delivery)', async ({
     request,
   }) => {
-    const res = await request.get(`${API_URL}/user/${userId}/content`, {
+    const res = await request.get(`${API_URL}/content`, {
       headers: authHeaders(token),
     })
     expect(res.status()).toBe(200)
@@ -236,10 +231,10 @@ test.describe('Content Feed', () => {
 
   test('cleanup: delete content bot', async ({ request }) => {
     if (botId) {
-      const res = await request.post(
-        `${API_URL}/user/${userId}/bot/delete/${botId}`,
-        { headers: authHeaders(token), data: {} }
-      )
+      const res = await request.post(`${API_URL}/bot/delete/${botId}`, {
+        headers: authHeaders(token),
+        data: {},
+      })
       expect(res.status()).toBe(200)
       botId = ''
       logResult('Content bot deleted', { cleaned: true })

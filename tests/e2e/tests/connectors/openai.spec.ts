@@ -18,15 +18,12 @@ import { buildOpenAiTask, executeTask, findConnection } from './_helpers'
 const OPENAI_APP_ID = '0f7bb503-b9b4-4fd5-80ab-9a97d52397bb'
 
 let token: string
-let userId: string
 let openaiConnectionId: string
 
 test.beforeAll(async ({ request }) => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
-
-  const conn = await findConnection(request, userId, token, OPENAI_APP_ID)
+  const conn = await findConnection(request, token, OPENAI_APP_ID)
   if (!conn) {
     logResult('OpenAI connection not found — skipping all OpenAI tests', {})
   }
@@ -50,7 +47,7 @@ test.describe('OpenAI Connector — Text Completion', () => {
       outputPath: 'choices.0.message.content',
     })
 
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
 
     if (body.data.status === 'fail') {

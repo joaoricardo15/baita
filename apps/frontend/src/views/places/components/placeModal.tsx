@@ -8,13 +8,12 @@ import {
 } from '@mui/icons-material'
 import { Dialog, DialogContent } from '@mui/material'
 import axios from 'axios'
-import { FC, useContext, useState } from 'react'
+import { FC, useState } from 'react'
 
 import { Button, Highlight, TextInput } from '@/components'
 import { IPlace } from '@baita/shared'
 import * as mutations from '@/api/mutations'
 import * as queries from '@/api/queries'
-import { AuthContext } from '@/providers/auth'
 import { FILES_BASE_URL } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'
 
@@ -23,7 +22,6 @@ const PlaceModal: FC<{
   open: boolean
   onClose: () => void
 }> = ({ place, open, onClose }) => {
-  const { user } = useContext(AuthContext)
   const [localPlace, setPlace] = useState<IPlace>(place)
 
   const onNameChange = (name: string) => {
@@ -51,10 +49,7 @@ const PlaceModal: FC<{
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         const fileId = file.name
-        const presignedUrl = await queries.fetchImageUploadUrl(
-          user!.userId,
-          fileId
-        )
+        const presignedUrl = await queries.fetchImageUploadUrl(fileId)
         await axios.put(presignedUrl, file)
 
         setPlace({
@@ -71,7 +66,7 @@ const PlaceModal: FC<{
       `${localPlace.position.lat}:${localPlace.position.lng}`
     )
 
-    await mutations.createPlace(user!.userId, placeId, {
+    await mutations.createPlace(placeId, {
       ...localPlace,
       placeId,
     })
@@ -79,7 +74,7 @@ const PlaceModal: FC<{
   }
 
   const onUpdatePlace = async () => {
-    await mutations.updatePlace(user!.userId, localPlace.placeId, {
+    await mutations.updatePlace(localPlace.placeId, {
       ...localPlace,
       userId: undefined,
       sortKey: undefined,
@@ -89,11 +84,9 @@ const PlaceModal: FC<{
 
   const onDeletePlace = async () => {
     await Promise.all(
-      localPlace.pictures.map((pictureId) =>
-        mutations.removeImage(user!.userId, pictureId)
-      )
+      localPlace.pictures.map((pictureId) => mutations.removeImage(pictureId))
     )
-    await mutations.deletePlace(user!.userId, localPlace.placeId)
+    await mutations.deletePlace(localPlace.placeId)
     onClose()
   }
 

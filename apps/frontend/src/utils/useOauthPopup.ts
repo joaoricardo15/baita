@@ -1,14 +1,12 @@
-import { useContext, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 import { IAppConnection } from '@baita/shared'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { fetchConnections } from '@/api/queries'
 import { useConnections } from '@/hooks/useConnections'
-import { AuthContext } from '@/providers/auth'
 
 export function useOauthPopup(onComplete?: (created: boolean) => void) {
-  const { user } = useContext(AuthContext)
   const { data: connections } = useConnections()
   const queryClient = useQueryClient()
   const popupRef = useRef<Window | null>(null)
@@ -31,7 +29,7 @@ export function useOauthPopup(onComplete?: (created: boolean) => void) {
     timerRef.current = window.setInterval(() => {
       if (!popupRef.current || popupRef.current.closed) {
         window.clearInterval(timerRef.current)
-        fetchConnections(user!.userId)
+        fetchConnections()
           .then((freshConnections: IAppConnection[]) => {
             const created = freshConnections.length > countBeforeRef.current
             onComplete?.(created)

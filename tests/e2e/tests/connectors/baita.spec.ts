@@ -18,12 +18,10 @@ import {
 } from './_helpers'
 
 let token: string
-let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
 })
 
 test.describe('Baita Connector — Code Execute', () => {
@@ -31,7 +29,7 @@ test.describe('Baita Connector — Code Execute', () => {
     const task = buildBaitaCodeTask(
       'output = { sum: 1 + 2, greeting: "hello" }'
     )
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     expect(body.success).toBe(true)
     expect(body.data.status).toBe('success')
@@ -44,7 +42,7 @@ test.describe('Baita Connector — Code Execute', () => {
       'output = { total: items.reduce((a, b) => a + b, 0), count: items.length }',
       { items: [10, 20, 30] }
     )
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     expect(body.success).toBe(true)
     expect(body.data.status).toBe('success')
@@ -54,7 +52,7 @@ test.describe('Baita Connector — Code Execute', () => {
 
   test('fails gracefully on syntax error', async ({ request }) => {
     const task = buildBaitaCodeTask('output = {{{ invalid syntax')
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     expect(body.success).toBe(true)
     expect(body.data.status).toBe('fail')
@@ -64,7 +62,7 @@ test.describe('Baita Connector — Code Execute', () => {
 
   test('times out on infinite loop', async ({ request }) => {
     const task = buildBaitaCodeTask('while(true) {}')
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     expect(body.success).toBe(true)
     expect(body.data.status).toBe('fail')
@@ -73,7 +71,7 @@ test.describe('Baita Connector — Code Execute', () => {
 
   test('returns undefined output when not assigned', async ({ request }) => {
     const task = buildBaitaCodeTask('const x = 42')
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     expect(body.success).toBe(true)
     expect(body.data.status).toBe('success')
@@ -85,7 +83,7 @@ test.describe('Baita Connector — Code Execute', () => {
 test.describe('Baita Connector — getTodo', () => {
   test('returns user todo list', async ({ request }) => {
     const task = buildBaitaMethodTask('getTodo')
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     expect(body.success).toBe(true)
     expect(body.data.status).toBe('success')
@@ -114,7 +112,7 @@ test.describe('Baita Connector — publishToFeed', () => {
       [{ name: 'content', label: 'content', type: 'output', required: true }],
       [{ name: 'content', label: 'content', type: 'output', value: content }]
     )
-    const body = await executeTask(request, userId, token, task)
+    const body = await executeTask(request, token, task)
 
     expect(body.success).toBe(true)
     expect(body.data.status).toBe('success')
@@ -123,7 +121,7 @@ test.describe('Baita Connector — publishToFeed', () => {
   })
 
   test('content appears in feed', async ({ request }) => {
-    const res = await request.get(`${API_URL}/user/${userId}/content`, {
+    const res = await request.get(`${API_URL}/content`, {
       headers: authHeaders(token),
     })
     const body = await res.json()

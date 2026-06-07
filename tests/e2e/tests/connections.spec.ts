@@ -15,12 +15,10 @@ import {
 } from './helpers'
 
 let token: string
-let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
 })
 
 test.describe.configure({ mode: 'serial' })
@@ -30,15 +28,15 @@ test.describe('Connections Management', () => {
 
   test.afterAll(async ({ request }) => {
     for (const id of createdConnections) {
-      await deleteConnection(request, userId, token, id).catch(() => {})
+      await deleteConnection(request, token, id).catch(() => {})
     }
   })
 
   test('list connections includes Google connection', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/list`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/connection/list`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(Array.isArray(body.data)).toBe(true)
@@ -55,10 +53,10 @@ test.describe('Connections Management', () => {
   })
 
   test('Google connection health check', async ({ request }) => {
-    const listRes = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/list`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const listRes = await request.post(`${API_URL}/resource/connection/list`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const listBody = await listRes.json()
     const connections = listBody.data
     const google = connections.find(
@@ -68,7 +66,7 @@ test.describe('Connections Management', () => {
     expect(google).toBeTruthy()
 
     const res = await request.post(
-      `${API_URL}/user/${userId}/connection/health/${google.connectionId}`,
+      `${API_URL}/connection/health/${google.connectionId}`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
@@ -88,7 +86,7 @@ test.describe('Connections Management', () => {
     createdConnections.push(connectionId)
 
     const createRes = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
+      `${API_URL}/resource/connection/create/${connectionId}`,
       {
         headers: authHeaders(token),
         data: {
@@ -103,13 +101,13 @@ test.describe('Connections Management', () => {
     expect((await createRes.json()).success).toBe(true)
 
     const readRes = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
+      `${API_URL}/resource/connection/read/${connectionId}`,
       { headers: authHeaders(token), data: {} }
     )
     expect((await readRes.json()).data.name).toBe('E2E Lifecycle')
 
     const updateRes = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/update/${connectionId}`,
+      `${API_URL}/resource/connection/update/${connectionId}`,
       {
         headers: authHeaders(token),
         data: {
@@ -124,13 +122,13 @@ test.describe('Connections Management', () => {
     expect((await updateRes.json()).success).toBe(true)
 
     const deleteRes = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
+      `${API_URL}/resource/connection/delete/${connectionId}`,
       { headers: authHeaders(token), data: {} }
     )
     expect((await deleteRes.json()).success).toBe(true)
 
     const goneRes = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
+      `${API_URL}/resource/connection/read/${connectionId}`,
       { headers: authHeaders(token), data: {} }
     )
     expect((await goneRes.json()).data).toBeFalsy()
@@ -142,7 +140,7 @@ test.describe('Connections Management', () => {
     createdConnections.push(connectionId)
 
     await request.post(
-      `${API_URL}/user/${userId}/resource/connection/create/${connectionId}`,
+      `${API_URL}/resource/connection/create/${connectionId}`,
       {
         headers: authHeaders(token),
         data: {
@@ -157,7 +155,7 @@ test.describe('Connections Management', () => {
     )
 
     const res = await request.post(
-      `${API_URL}/user/${userId}/connection/details/${connectionId}`,
+      `${API_URL}/connection/details/${connectionId}`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()

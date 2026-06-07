@@ -10,20 +10,19 @@ import { AuthContext } from '@/providers/auth'
 export function usePlaces() {
   const { user } = useContext(AuthContext)
   return useQuery({
-    queryKey: ['places', user?.userId],
-    queryFn: () => queries.fetchPlaces(user!.userId),
+    queryKey: ['places'],
+    queryFn: () => queries.fetchPlaces(),
     enabled: !!user,
   })
 }
 
 export function useSavePlace() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
     mutationFn: (place: IPlace) =>
       place.placeId
-        ? mutations.updatePlace(user!.userId, place.placeId, place)
-        : mutations.createPlace(user!.userId, Date.now().toString(), place),
+        ? mutations.updatePlace(place.placeId, place)
+        : mutations.createPlace(Date.now().toString(), place),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['places'] })
     },
@@ -32,23 +31,18 @@ export function useSavePlace() {
 
 export function useDeletePlace() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
-    mutationFn: (placeId: string) =>
-      mutations.deletePlace(user!.userId, placeId),
+    mutationFn: (placeId: string) => mutations.deletePlace(placeId),
     onMutate: async (placeId) => {
-      await queryClient.cancelQueries({ queryKey: ['places', user?.userId] })
-      const previous = queryClient.getQueryData<IPlace[]>([
-        'places',
-        user?.userId,
-      ])
-      queryClient.setQueryData<IPlace[]>(['places', user?.userId], (old) =>
+      await queryClient.cancelQueries({ queryKey: ['places'] })
+      const previous = queryClient.getQueryData<IPlace[]>(['places'])
+      queryClient.setQueryData<IPlace[]>(['places'], (old) =>
         old?.filter((p) => p.placeId !== placeId)
       )
       return { previous }
     },
     onError: (_, __, context) => {
-      queryClient.setQueryData(['places', user?.userId], context?.previous)
+      queryClient.setQueryData(['places'], context?.previous)
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['places'] })

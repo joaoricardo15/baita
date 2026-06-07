@@ -14,12 +14,10 @@ import { expect, test } from '@playwright/test'
 import { API_URL, authHeaders, loadAuthData, logResult } from './helpers'
 
 let token: string
-let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
 })
 
 test.describe.configure({ mode: 'serial' })
@@ -32,16 +30,16 @@ test.describe('To-Do Lifecycle', () => {
   ]
 
   test.afterAll(async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/read`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/todo/read`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     if (body.data?.tasks) {
       const tasks = body.data.tasks.filter(
         (t: { taskId: string }) => !taskIds.includes(t.taskId)
       )
-      await request.post(`${API_URL}/user/${userId}/resource/todo/update`, {
+      await request.post(`${API_URL}/resource/todo/update`, {
         headers: authHeaders(token),
         data: { tasks },
       })
@@ -49,10 +47,10 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('read current todo state', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/read`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/todo/read`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     expect(res.status()).toBe(200)
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -62,10 +60,10 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('create 3 new tasks', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/read`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/todo/read`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const current = await res.json()
     const existingTasks = current.data?.tasks ?? []
 
@@ -77,23 +75,20 @@ test.describe('To-Do Lifecycle', () => {
       updatedAt: Date.now(),
     }))
 
-    const updateRes = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/update`,
-      {
-        headers: authHeaders(token),
-        data: { tasks: [...existingTasks, ...newTasks] },
-      }
-    )
+    const updateRes = await request.post(`${API_URL}/resource/todo/update`, {
+      headers: authHeaders(token),
+      data: { tasks: [...existingTasks, ...newTasks] },
+    })
     expect(updateRes.status()).toBe(200)
     expect((await updateRes.json()).success).toBe(true)
     logResult('Created 3 tasks', { taskIds })
   })
 
   test('verify all 3 tasks exist', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/read`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/todo/read`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     const found = body.data?.tasks?.filter((t: { taskId: string }) =>
       taskIds.includes(t.taskId)
@@ -103,10 +98,10 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('mark 2 tasks as done', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/read`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/todo/read`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     const tasks = body.data.tasks.map((t: { taskId: string; done: boolean }) =>
       taskIds.slice(0, 2).includes(t.taskId)
@@ -114,18 +109,18 @@ test.describe('To-Do Lifecycle', () => {
         : t
     )
 
-    const updateRes = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/update`,
-      { headers: authHeaders(token), data: { tasks } }
-    )
+    const updateRes = await request.post(`${API_URL}/resource/todo/update`, {
+      headers: authHeaders(token),
+      data: { tasks },
+    })
     expect((await updateRes.json()).success).toBe(true)
   })
 
   test('verify 2 done, 1 pending', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/read`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/todo/read`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     const e2eTasks = body.data?.tasks?.filter((t: { taskId: string }) =>
       taskIds.includes(t.taskId)
@@ -138,19 +133,19 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('delete all test tasks (cleanup)', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/read`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/todo/read`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     const body = await res.json()
     const tasks = body.data.tasks.filter(
       (t: { taskId: string }) => !taskIds.includes(t.taskId)
     )
 
-    const updateRes = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/update`,
-      { headers: authHeaders(token), data: { tasks } }
-    )
+    const updateRes = await request.post(`${API_URL}/resource/todo/update`, {
+      headers: authHeaders(token),
+      data: { tasks },
+    })
     expect((await updateRes.json()).success).toBe(true)
     logResult('Cleanup', { removedTasks: taskIds.length })
   })

@@ -8,8 +8,8 @@ import { AuthContext } from '@/providers/auth'
 export function useLogs(botId: string | undefined) {
   const { user } = useContext(AuthContext)
   return useQuery({
-    queryKey: ['logs', user?.userId, botId],
-    queryFn: () => queries.fetchLogs(user!.userId, botId!),
+    queryKey: ['logs', botId],
+    queryFn: () => queries.fetchLogs(botId!),
     enabled: !!user && !!botId,
   })
 }

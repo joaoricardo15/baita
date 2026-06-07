@@ -35,7 +35,7 @@ const API_BASE = 'http://localhost:5000/prod'
 describe('Connections page', () => {
   it('renders skeleton while loading', () => {
     server.use(
-      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () => {
+      http.post(`${API_BASE}/resource/connection/list`, () => {
         return new Promise(() => {}) // never resolves — stays loading
       })
     )
@@ -57,7 +57,7 @@ describe('Connections page', () => {
 
   it('renders connection cards when connections exist', async () => {
     server.use(
-      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+      http.post(`${API_BASE}/resource/connection/list`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -102,7 +102,7 @@ describe('Connections page', () => {
 
   it('renders menu for each connection', async () => {
     server.use(
-      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+      http.post(`${API_BASE}/resource/connection/list`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -130,7 +130,7 @@ describe('Connections page', () => {
 
   it('health check updates status via menu', async () => {
     server.use(
-      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+      http.post(`${API_BASE}/resource/connection/list`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -145,7 +145,7 @@ describe('Connections page', () => {
           ],
         })
       ),
-      http.post(`${API_BASE}/user/:userId/connection/health/:id`, () =>
+      http.post(`${API_BASE}/connection/health/:id`, () =>
         HttpResponse.json({
           success: true,
           data: { status: 'healthy' },
@@ -263,7 +263,7 @@ describe('AddConnection popup close behavior', () => {
 
   it('shows success message when connection count increases after popup closes', async () => {
     server.use(
-      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+      http.post(`${API_BASE}/resource/connection/list`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -302,7 +302,7 @@ describe('AddConnection popup close behavior', () => {
 
   it('shows cancelled message when connection count stays the same after popup closes', async () => {
     server.use(
-      http.post(`${API_BASE}/user/:userId/resource/connection/list`, () =>
+      http.post(`${API_BASE}/resource/connection/list`, () =>
         HttpResponse.json({ success: true, data: [] })
       )
     )

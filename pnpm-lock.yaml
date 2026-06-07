@@ -101,6 +101,9 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
       '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
@@ -119,6 +122,9 @@ importers:
       jest:
         specifier: ^30.2.0
         version: 30.4.2(@types/node@25.9.1)(babel-plugin-macros@3.1.0)
+      js-yaml:
+        specifier: ^4.2.0
+        version: 4.2.0
       knip:
         specifier: ^6.14.2
         version: 6.14.2(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
@@ -228,9 +234,6 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0(prop-types@15.8.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
-      '@tanstack/react-query-devtools':
-        specifier: ^5.101.0
-        version: 5.101.0(@tanstack/react-query@5.101.0(react@18.3.1))(react@18.3.1)
       '@testing-library/jest-dom':
         specifier: ^5.17.0
         version: 5.17.0
@@ -5302,21 +5305,6 @@ packages:
         integrity: sha512-cQetA74EB+seWySv1TTKr828TnP0u39m6LykwDXIo84SNortpDkp30TMEjkqtYCNP9c40uT/iwl6MLiufEt0Ow==,
       }
 
-  '@tanstack/query-devtools@5.101.0':
-    resolution:
-      {
-        integrity: sha512-MVqw17k08RQtGGLEL654+dX/btbX9p/8WjkznO//zusLTMaObxi3Q+MoFwGVkC9K3tqjn8qrrNhJevXx4fJTeQ==,
-      }
-
-  '@tanstack/react-query-devtools@5.101.0':
-    resolution:
-      {
-        integrity: sha512-cpZA0+WqKXwrwMfiWZEGGF6QrIWVQFbhBtxqDF5sQsAfrFf47HIE6fiPbQU3wyAUEN2+7UNqLCQe7oG6m3f93w==,
-      }
-    peerDependencies:
-      '@tanstack/react-query': ^5.101.0
-      react: ^18 || ^19
-
   '@tanstack/react-query@5.101.0':
     resolution:
       {
@@ -5540,6 +5528,12 @@ packages:
     resolution:
       {
         integrity: sha512-XTYugzhuwqWjws0CVz8QpM36+T+Dz5mTEBKhNs/esGLnCIlGdRy+Dq78NRjd7ls7r8BC8ZRMOrKlkO1hU0JOwA==,
+      }
+
+  '@types/js-yaml@4.0.9':
+    resolution:
+      {
+        integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==,
       }
 
   '@types/json-schema@7.0.15':
@@ -9781,6 +9775,13 @@ packages:
     resolution:
       {
         integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==,
+      }
+    hasBin: true
+
+  js-yaml@4.2.0:
+    resolution:
+      {
+        integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==,
       }
     hasBin: true
 
@@ -17711,14 +17712,6 @@ snapshots:
 
   '@tanstack/query-core@5.101.0': {}
 
-  '@tanstack/query-devtools@5.101.0': {}
-
-  '@tanstack/react-query-devtools@5.101.0(@tanstack/react-query@5.101.0(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@tanstack/query-devtools': 5.101.0
-      '@tanstack/react-query': 5.101.0(react@18.3.1)
-      react: 18.3.1
-
   '@tanstack/react-query@5.101.0(react@18.3.1)':
     dependencies:
       '@tanstack/query-core': 5.101.0
@@ -17862,6 +17855,8 @@ snapshots:
     dependencies:
       expect: 30.4.1
       pretty-format: 30.4.1
+
+  '@types/js-yaml@4.0.9': {}
 
   '@types/json-schema@7.0.15': {}
 
@@ -20910,6 +20905,10 @@ snapshots:
       esprima: 4.0.1
 
   js-yaml@4.1.1:
+    dependencies:
+      argparse: 2.0.1
+
+  js-yaml@4.2.0:
     dependencies:
       argparse: 2.0.1
 

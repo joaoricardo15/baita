@@ -34,7 +34,7 @@ describe('ToDo Page', () => {
   describe('Rendering states', () => {
     it('shows skeleton while loading (data is fetching)', () => {
       server.use(
-        http.post(`${API_BASE}/user/:userId/resource/todo/read`, () => {
+        http.post(`${API_BASE}/resource/todo/read`, () => {
           return new Promise(() => {}) // never resolves — stays loading
         })
       )
@@ -45,7 +45,7 @@ describe('ToDo Page', () => {
 
     it('renders task content after loading', async () => {
       server.use(
-        http.post(`${API_BASE}/user/:userId/resource/todo/read`, () =>
+        http.post(`${API_BASE}/resource/todo/read`, () =>
           HttpResponse.json({
             success: true,
             data: {
@@ -102,7 +102,7 @@ describe('ToDo Page', () => {
     it('marks a task as complete when checkbox is clicked', async () => {
       let updateCalled = false
       server.use(
-        http.post(`${API_BASE}/user/:userId/resource/todo/read`, () =>
+        http.post(`${API_BASE}/resource/todo/read`, () =>
           HttpResponse.json({
             success: true,
             data: {
@@ -118,15 +118,12 @@ describe('ToDo Page', () => {
             },
           })
         ),
-        http.post(
-          `${API_BASE}/user/:userId/resource/todo/update`,
-          async ({ request }) => {
-            updateCalled = true
-            const body = (await request.json()) as any
-            expect(body.tasks[0].done).toBe(true)
-            return HttpResponse.json({ success: true, data: body.tasks })
-          }
-        )
+        http.post(`${API_BASE}/resource/todo/update`, async ({ request }) => {
+          updateCalled = true
+          const body = (await request.json()) as any
+          expect(body.tasks[0].done).toBe(true)
+          return HttpResponse.json({ success: true, data: body.tasks })
+        })
       )
 
       renderWithProviders(<ToDo />)
@@ -148,7 +145,7 @@ describe('ToDo Page', () => {
   describe('Error handling', () => {
     it('handles API failure without crashing', async () => {
       server.use(
-        http.post(`${API_BASE}/user/:userId/resource/todo/read`, () =>
+        http.post(`${API_BASE}/resource/todo/read`, () =>
           HttpResponse.json(
             { success: false, message: 'fail' },
             { status: 500 }

@@ -4,74 +4,71 @@ import { setupServer } from 'msw/node'
 const API_BASE = 'http://localhost:5000/prod'
 
 export const handlers = [
-  http.post(`${API_BASE}/user/:userId/resource/bot/list`, () => {
+  http.post(`${API_BASE}/resource/bot/list`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.post(`${API_BASE}/user/:userId/resource/model/list`, () => {
+  http.post(`${API_BASE}/model/list`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.post(`${API_BASE}/user/:userId/resource/todo/read`, () => {
+  http.post(`${API_BASE}/resource/todo/read`, () => {
     return HttpResponse.json({ success: true, data: { tasks: [] } })
   }),
 
-  http.post(`${API_BASE}/user/:userId/resource/todo/update`, () => {
+  http.post(`${API_BASE}/resource/todo/update`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.get(`${API_BASE}/user/:userId/content`, () => {
+  http.get(`${API_BASE}/content`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.post(`${API_BASE}/user/:userId/resource/connection/list`, () => {
+  http.post(`${API_BASE}/resource/connection/list`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.post(
-    `${API_BASE}/user/:userId/resource/connection/delete/:connectionId`,
-    () => {
-      return HttpResponse.json({ success: true, data: null })
-    }
-  ),
+  http.post(`${API_BASE}/resource/connection/delete/:connectionId`, () => {
+    return HttpResponse.json({ success: true, data: null })
+  }),
 
-  http.post(`${API_BASE}/user/:userId/connection/health/:connectionId`, () => {
+  http.post(`${API_BASE}/connection/health/:connectionId`, () => {
     return HttpResponse.json({
       success: true,
       data: { status: 'healthy' },
     })
   }),
 
-  http.post(`${API_BASE}/user/:userId/connection/details/:connectionId`, () => {
+  http.post(`${API_BASE}/connection/details/:connectionId`, () => {
     return HttpResponse.json({
       success: true,
       data: { connection: {}, linkedBots: [] },
     })
   }),
 
-  http.post(`${API_BASE}/user/:userId/resource/note/list`, () => {
+  http.post(`${API_BASE}/resource/note/list`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.post(`${API_BASE}/user/:userId/resource/place/list`, () => {
+  http.post(`${API_BASE}/resource/place/list`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.post(`${API_BASE}/user/:userId/bot/create`, () => {
+  http.post(`${API_BASE}/bot/create`, () => {
     return HttpResponse.json({
       success: true,
       data: { botId: 'new-bot-id', userId: 'test', tasks: [], active: false },
     })
   }),
 
-  http.post(`${API_BASE}/user/:userId/bot/model`, () => {
+  http.post(`${API_BASE}/bot/model`, () => {
     return HttpResponse.json({
       success: true,
       data: { botId: 'model-bot-id', userId: 'test', tasks: [], active: false },
     })
   }),
 
-  http.post(`${API_BASE}/user/:userId/resource/bot/read/:botId`, () => {
+  http.post(`${API_BASE}/resource/bot/read/:botId`, () => {
     return HttpResponse.json({
       success: true,
       data: {
@@ -84,7 +81,7 @@ export const handlers = [
     })
   }),
 
-  http.post(`${API_BASE}/user/:userId/bot/logs/:botId`, () => {
+  http.post(`${API_BASE}/bot/logs/:botId`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 ]

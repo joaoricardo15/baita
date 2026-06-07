@@ -10,12 +10,10 @@ import { expect, test } from '@playwright/test'
 import { API_URL, authHeaders, loadAuthData } from './helpers'
 
 let token: string
-let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
-  userId = data.userId
 })
 
 test.describe('Authenticated Pages', () => {
@@ -80,27 +78,27 @@ test.describe('Public Pages', () => {
 
 test.describe('Auth Security', () => {
   test('valid token returns 200 on API', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/user/${userId}/resource/todo/list`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.post(`${API_URL}/resource/todo/list`, {
+      headers: authHeaders(token),
+      data: {},
+    })
     expect(res.status()).toBe(200)
   })
 
   test('invalid token returns 401', async ({ request }) => {
-    const res = await request.get(`${API_URL}/user/test/content`, {
+    const res = await request.get(`${API_URL}/content`, {
       headers: { Authorization: 'Bearer invalid.token.here' },
     })
     expect(res.status()).toBe(401)
   })
 
   test('no token returns 401', async ({ request }) => {
-    const res = await request.get(`${API_URL}/user/${userId}/content`)
+    const res = await request.get(`${API_URL}/content`)
     expect(res.status()).toBe(401)
   })
 
   test('CORS headers present on error responses', async ({ request }) => {
-    const res = await request.get(`${API_URL}/user/${userId}/content`, {
+    const res = await request.get(`${API_URL}/content`, {
       headers: {
         Authorization: 'Bearer bad',
         Origin: 'https://www.baita.help',

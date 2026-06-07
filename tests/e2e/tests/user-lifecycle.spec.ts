@@ -6,10 +6,13 @@
  * 1. Try to log in (user may exist from a previous failed run)
  * 2. If login works → delete account via centralized DELETE /user endpoint
  * 3. Sign up fresh → guaranteed clean slate
- * 4. Provision user in backend (DynamoDB + SQS)
+ * 4. Verify Auth0 Post-Login Action provisioned the user (DynamoDB + SQS)
  * 5. Copy Google connection for journey specs that need it
  *
- * Cleanup is ALWAYS performed via the DELETE /user/{userId} endpoint which
+ * User provisioning is handled automatically by the Auth0 Post-Login Action
+ * which calls POST /user with an API key on first login (signup).
+ *
+ * Cleanup is ALWAYS performed via the DELETE /user endpoint which
  * handles: bots, SQS queues, all DynamoDB records, and Auth0 user deletion.
  */
 import { expect, test } from '@playwright/test'
@@ -64,10 +67,9 @@ test.describe('User Lifecycle Setup', () => {
             userId: tokenData.userId,
           }
         )
-        const deleteRes = await request.delete(
-          `${API_URL}/user/${tokenData.userId}`,
-          { headers: authHeaders(tokenData.accessToken) }
-        )
+        const deleteRes = await request.delete(`${API_URL}/user`, {
+          headers: authHeaders(tokenData.accessToken),
+        })
         const deleteBody = await deleteRes.json()
         logResult('Delete endpoint response', {
           success: deleteBody.success,
@@ -115,7 +117,7 @@ test.describe('User Lifecycle Setup', () => {
       logResult('Stale user detected (login fallback), cleaning up', {
         userId: tokenData!.userId,
       })
-      await request.delete(`${API_URL}/user/${tokenData!.userId}`, {
+      await request.delete(`${API_URL}/user`, {
         headers: authHeaders(tokenData!.accessToken),
       })
       await page.waitForTimeout(5000)
@@ -154,33 +156,34 @@ test.describe('User Lifecycle Setup', () => {
     })
   })
 
-  test('provision user in backend', async ({ request }) => {
-    const res = await request.post(`${API_URL}/user`, {
-      headers: authHeaders(accessToken),
-      data: {
-        user_id: `auth0|${userId}`,
-        userId,
-        email: TEST_EMAIL,
-        name: 'E2E Test User',
-        picture: '',
-      },
-    })
-    const body = await res.json()
-    expect(body.success).toBe(true)
-    logResult('User provisioned', { success: body.success, userId })
+  test('verify user provisioned by Auth0 Action', async ({ request }) => {
+    let provisioned = false
+    for (let i = 0; i < 5; i++) {
+      const res = await request.post(`${API_URL}/resource/todo/list`, {
+        headers: authHeaders(accessToken),
+        data: {},
+      })
+      if (res.status() === 200) {
+        provisioned = true
+        break
+      }
+      await new Promise((r) => setTimeout(r, 2000))
+    }
+    expect(provisioned).toBe(true)
+    logResult('User provisioned via Auth0 Action', { userId })
   })
 
   test('verify clean state', async ({ request }) => {
-    const botsRes = await request.post(
-      `${API_URL}/user/${userId}/resource/bot/list`,
-      { headers: authHeaders(accessToken), data: {} }
-    )
+    const botsRes = await request.post(`${API_URL}/resource/bot/list`, {
+      headers: authHeaders(accessToken),
+      data: {},
+    })
     expect(botsRes.status()).toBe(200)
     const botsBody = await botsRes.json()
     expect(botsBody.success).toBe(true)
     expect(botsBody.data).toHaveLength(0)
 
-    const contentRes = await request.get(`${API_URL}/user/${userId}/content`, {
+    const contentRes = await request.get(`${API_URL}/content`, {
       headers: authHeaders(accessToken),
     })
     expect(contentRes.status()).toBe(200)
@@ -196,7 +199,7 @@ test.describe('User Lifecycle Setup', () => {
     )
 
     const verifyRes = await request.post(
-      `${API_URL}/user/${userId}/resource/connection/read/${connectionId}`,
+      `${API_URL}/resource/connection/read/${connectionId}`,
       { headers: authHeaders(accessToken), data: {} }
     )
     const verifyBody = await verifyRes.json()

@@ -10,18 +10,16 @@ import { AuthContext } from '@/providers/auth'
 export function useNotes() {
   const { user } = useContext(AuthContext)
   return useQuery({
-    queryKey: ['notes', user?.userId],
-    queryFn: () => queries.fetchNotes(user!.userId),
+    queryKey: ['notes'],
+    queryFn: () => queries.fetchNotes(),
     enabled: !!user,
   })
 }
 
 export function useSaveNote() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
-    mutationFn: (note: INote) =>
-      mutations.createNote(user!.userId, note.noteId, note),
+    mutationFn: (note: INote) => mutations.createNote(note.noteId, note),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })
     },
@@ -30,22 +28,18 @@ export function useSaveNote() {
 
 export function useDeleteNote() {
   const queryClient = useQueryClient()
-  const { user } = useContext(AuthContext)
   return useMutation({
-    mutationFn: (noteId: string) => mutations.deleteNote(user!.userId, noteId),
+    mutationFn: (noteId: string) => mutations.deleteNote(noteId),
     onMutate: async (noteId) => {
-      await queryClient.cancelQueries({ queryKey: ['notes', user?.userId] })
-      const previous = queryClient.getQueryData<INote[]>([
-        'notes',
-        user?.userId,
-      ])
-      queryClient.setQueryData<INote[]>(['notes', user?.userId], (old) =>
+      await queryClient.cancelQueries({ queryKey: ['notes'] })
+      const previous = queryClient.getQueryData<INote[]>(['notes'])
+      queryClient.setQueryData<INote[]>(['notes'], (old) =>
         old?.filter((n) => n.noteId !== noteId)
       )
       return { previous }
     },
     onError: (_, __, context) => {
-      queryClient.setQueryData(['notes', user?.userId], context?.previous)
+      queryClient.setQueryData(['notes'], context?.previous)
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notes'] })

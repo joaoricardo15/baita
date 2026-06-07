@@ -3,7 +3,7 @@ import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import Task from '@/controllers/task'
 import Api, { ApiRequestStatus } from '@/utils/api'
-import { getAuthenticatedUserId } from '@/utils/authGuard'
+import { getAuthenticatedUserId } from '@/utils/auth'
 
 interface IDirectInvocation {
   direct: true

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import Resource from '@/controllers/resource'
 import Api, { ApiRequestStatus } from '@/utils/api'
-import { getAuthenticatedUserId } from '@/utils/authGuard'
+import { getAuthenticatedUserId } from '@/utils/auth'
 import { ITokenCredentials, refreshOAuth2Token } from '@/utils/tokenRefresh'
 
 const SERVICE_API_URL = process.env.SERVICE_API_URL || ''

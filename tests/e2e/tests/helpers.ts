@@ -48,14 +48,13 @@ export function authHeaders(token: string) {
 
 export async function deleteConnection(
   request: APIRequestContext,
-  userId: string,
   token: string,
   connectionId: string
 ): Promise<void> {
-  await request.post(
-    `${API_URL}/user/${userId}/resource/connection/delete/${connectionId}`,
-    { headers: authHeaders(token), data: {} }
-  )
+  await request.post(`${API_URL}/resource/connection/delete/${connectionId}`, {
+    headers: authHeaders(token),
+    data: {},
+  })
 }
 
 export async function copyGoogleConnection(
@@ -90,7 +89,7 @@ export async function copyGoogleConnection(
   const { sortKey: _, userId: __, ...sourceData } = result.Item
   const connectionId = `google-e2e-${Date.now()}`
   const createRes = await request.post(
-    `${API_URL}/user/${targetUserId}/resource/connection/create/${connectionId}`,
+    `${API_URL}/resource/connection/create/${connectionId}`,
     {
       headers: authHeaders(token),
       data: {
