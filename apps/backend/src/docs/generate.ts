@@ -64,25 +64,28 @@ interface OperationDoc {
 }
 
 const OPERATION_DOCS: Record<string, OperationDoc> = {
-  '/bot/{operation}:post': {
+  '/bot/{botId}:post': {
     summary: 'Bot operations (create, deploy, test, logs, model)',
     description:
-      'Performs a bot operation. **create** — creates a new bot. **deploy** — generates and deploys Lambda code for the bot. **test** — executes a single task step for testing. **logs** — retrieves recent CloudWatch logs. **model** — creates a bot from a shared model template.',
+      'Performs a bot operation. The `botId` path segment is the **operation name** (not a bot ID). **create** — creates a new bot. **deploy** — generates and deploys Lambda code for the bot. **test** — executes a single task step for testing. **logs** — retrieves recent CloudWatch logs. **model** — creates a bot from a shared model template.',
     parameterOverrides: {
-      operation: {
-        description: 'Operation name',
+      botId: {
+        description: 'Operation name (not a bot ID)',
         enum: ['create', 'deploy', 'test', 'logs', 'model'],
       },
     },
     responseSchema: 'Bot',
   },
-  '/bot/{operation}/{botId}:post': {
+  '/bot/{botId}/{id}:post': {
     summary: 'Bot operations with ID (update, delete)',
     description:
-      'Operations on a specific bot. **update** — updates bot name, description, image, active state, or tasks. **delete** — permanently deletes the bot and all deployed AWS resources (Lambda, API Gateway, EventBridge Scheduler).',
+      'Operations on a specific bot. The `botId` segment is the **operation name**, and `id` is the **bot ID**. **update** — updates bot name, description, image, active state, or tasks. **delete** — permanently deletes the bot and all deployed AWS resources (Lambda, API Gateway, EventBridge Scheduler).',
     parameterOverrides: {
-      operation: { description: 'Operation name', enum: ['update', 'delete'] },
-      botId: { description: 'Bot ID' },
+      botId: {
+        description: 'Operation name (not a bot ID)',
+        enum: ['update', 'delete'],
+      },
+      id: { description: 'Bot ID' },
     },
     requestSchema: 'Bot',
     responseSchema: 'Bot',
@@ -115,26 +118,29 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
       resourceId: { description: 'Resource record ID' },
     },
   },
-  '/connection/{operation}:post': {
+  '/connection/{connectionId}:post': {
     summary: 'Create a connection',
     description:
-      'Creates a new OAuth or API-key connection for a connector service. The request body should include the connector ID and credentials (API key or OAuth authorization code).',
+      'Creates a new OAuth or API-key connection for a connector service. The `connectionId` path segment is the **operation name** (not a connection ID). The request body should include the connector ID and credentials.',
     parameterOverrides: {
-      operation: { description: 'Operation name', enum: ['create'] },
+      connectionId: {
+        description: 'Operation name (not a connection ID)',
+        enum: ['create'],
+      },
     },
     requestSchema: 'Connection',
     responseSchema: 'Connection',
   },
-  '/connection/{operation}/{connectionId}:post': {
+  '/connection/{connectionId}/{id}:post': {
     summary: 'Connection operations (health, details)',
     description:
-      'Check health or retrieve details of an existing connection. **health** — validates the connection credentials are still working (makes a test API call). **details** — returns the full connection record including metadata.',
+      'Check health or retrieve details of an existing connection. The `connectionId` segment is the **operation name**, and `id` is the **connection ID**. **health** — validates the connection credentials are still working (makes a test API call). **details** — returns the full connection record including metadata.',
     parameterOverrides: {
-      operation: {
-        description: 'Operation name',
+      connectionId: {
+        description: 'Operation name (not a connection ID)',
         enum: ['health', 'details'],
       },
-      connectionId: { description: 'Connection ID' },
+      id: { description: 'Connection ID' },
     },
     responseSchema: 'Connection',
   },
