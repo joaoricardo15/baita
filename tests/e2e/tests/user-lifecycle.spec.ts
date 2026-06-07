@@ -73,7 +73,11 @@ test.describe('User Lifecycle Setup', () => {
   })
 
   test('create test user (signup)', async ({ page, request }) => {
-    await signUpUser(page, TEST_EMAIL, TEST_PASSWORD)
+    const { usedLoginFallback } = await signUpUser(
+      page,
+      TEST_EMAIL,
+      TEST_PASSWORD
+    )
 
     await page.waitForFunction(
       () =>
@@ -95,18 +99,10 @@ test.describe('User Lifecycle Setup', () => {
     expect(tokenData?.accessToken).toBeTruthy()
     expect(tokenData?.userId).toBeTruthy()
 
-    // If signUpUser fell back to login (stale user), delete via endpoint and re-signup
-    const checkRes = await request.post(
-      `${API_URL}/user/${tokenData!.userId}/resource/bot/list`,
-      { headers: authHeaders(tokenData!.accessToken), data: {} }
-    )
-    const checkBody = await checkRes.json()
-    const isStaleUser = checkBody.success && checkBody.data?.length > 0
-
-    if (isStaleUser) {
-      logResult('Stale user detected via fallback login, cleaning up', {
+    // If signUpUser fell back to login, user already existed — always clean up
+    if (usedLoginFallback) {
+      logResult('Stale user detected (login fallback), cleaning up', {
         userId: tokenData!.userId,
-        bots: checkBody.data.length,
       })
       await request.delete(`${API_URL}/user/${tokenData!.userId}`, {
         headers: authHeaders(tokenData!.accessToken),

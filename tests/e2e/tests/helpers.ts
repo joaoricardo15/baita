@@ -150,7 +150,7 @@ export async function signUpUser(
   page: Page,
   email: string,
   password: string
-): Promise<void> {
+): Promise<{ usedLoginFallback: boolean }> {
   await navigateToAuth0(page)
 
   const signUpLink = page.locator(
@@ -200,6 +200,7 @@ export async function signUpUser(
 
   await page.waitForURL(/localhost:3000|www\.baita\.help/, { timeout: 20000 })
   await page.waitForLoadState('domcontentloaded')
+  return { usedLoginFallback: hasError }
 }
 
 export async function loginUser(
