@@ -176,7 +176,7 @@ functions:
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
-  # Task execution (standalone + direct invoke from deployed bots)
+  # Task operations (standalone + direct invoke from deployed bots)
   endpoint-task:
     handler: src/endpoints/task/execute/index.handler
     timeout: 60
