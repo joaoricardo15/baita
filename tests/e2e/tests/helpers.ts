@@ -1,6 +1,13 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { fromIni } from '@aws-sdk/credential-providers'
-import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
+import {
+  BatchWriteCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  QueryCommand,
+  ScanCommand,
+} from '@aws-sdk/lib-dynamodb'
+import { execSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import { APIRequestContext, Page } from '@playwright/test'
@@ -240,4 +247,134 @@ export async function loginUser(
 
 export function logResult(label: string, data: unknown): void {
   console.log(`[E2E] ${label}:`, JSON.stringify(data, null, 2))
+}
+
+const AUTH0_DOMAIN = 'dev-yc4pbydg.us.auth0.com'
+const TABLE_NAME = 'baita-help-prod'
+
+/**
+ * Programmatic cleanup of stale E2E test user — no browser needed.
+ * Uses DynamoDB scan to find any user with the test email, then:
+ * 1. Finds and deletes all bot AWS resources (Lambda, API Gateway, Scheduler, S3)
+ * 2. Deletes all DynamoDB records for the user
+ * 3. Deletes the Auth0 account via M2M token
+ *
+ * Requires env vars: AUTH0_M2M_CLIENT_ID, AUTH0_M2M_CLIENT_SECRET
+ * (set in CI workflow, or read from SSM locally).
+ */
+export async function cleanupStaleUser(): Promise<void> {
+  const clientId = process.env.AUTH0_M2M_CLIENT_ID
+  const clientSecret = process.env.AUTH0_M2M_CLIENT_SECRET
+
+  if (!clientId || !clientSecret) {
+    logResult('Skipping programmatic cleanup (no M2M credentials)', {})
+    return
+  }
+
+  const client = new DynamoDBClient({
+    region: 'us-east-1',
+    ...(process.env.AWS_ACCESS_KEY_ID
+      ? {}
+      : { credentials: fromIni({ profile: 'baita' }) }),
+  })
+  const ddb = DynamoDBDocumentClient.from(client)
+
+  const scan = await ddb.send(
+    new ScanCommand({
+      TableName: TABLE_NAME,
+      FilterExpression: 'sortKey = :sk AND email = :email',
+      ExpressionAttributeValues: { ':sk': '#USER', ':email': TEST_EMAIL },
+    })
+  )
+
+  const staleUsers = scan.Items || []
+  if (staleUsers.length === 0) {
+    logResult('No stale E2E user found in DynamoDB', {})
+    return
+  }
+
+  for (const user of staleUsers) {
+    const staleUserId = user.userId as string
+    logResult('Found stale user, cleaning up', { userId: staleUserId })
+
+    const { Items } = await ddb.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'userId = :uid',
+        ExpressionAttributeValues: { ':uid': staleUserId },
+      })
+    )
+
+    if (Items && Items.length > 0) {
+      // Clean up bot AWS resources before deleting DynamoDB records
+      const botItems = Items.filter(
+        (item) => (item.sortKey as string).startsWith('#BOT#') && item.apiId
+      )
+      for (const bot of botItems) {
+        const botId = (bot.sortKey as string).replace('#BOT#', '')
+        const apiId = bot.apiId as string
+        const botPrefix = `baita-help-prod-${botId}`
+        logResult('Deleting orphaned bot AWS resources', { botId, apiId })
+        const awsFlags = process.env.AWS_ACCESS_KEY_ID
+          ? '--region us-east-1'
+          : '--profile baita --region us-east-1'
+        const run = (cmd: string) => {
+          try {
+            execSync(cmd, { stdio: 'ignore' })
+          } catch {
+            // Resource may not exist — ignore
+          }
+        }
+        run(`aws apigatewayv2 delete-api --api-id ${apiId} ${awsFlags}`)
+        run(`aws scheduler delete-schedule --name ${botPrefix} ${awsFlags}`)
+        run(
+          `aws lambda delete-function --function-name ${botPrefix} ${awsFlags}`
+        )
+        run(`aws s3 rm s3://baita-help-prod-bots/${botPrefix}.zip ${awsFlags}`)
+        logResult('Bot AWS resources deleted', { botPrefix })
+      }
+
+      // Delete all DynamoDB records
+      for (let i = 0; i < Items.length; i += 25) {
+        const chunk = Items.slice(i, i + 25)
+        await ddb.send(
+          new BatchWriteCommand({
+            RequestItems: {
+              [TABLE_NAME]: chunk.map((item) => ({
+                DeleteRequest: {
+                  Key: { userId: item.userId, sortKey: item.sortKey },
+                },
+              })),
+            },
+          })
+        )
+      }
+      logResult('DynamoDB records deleted', { count: Items.length })
+    }
+
+    // Delete Auth0 user
+    const tokenRes = await fetch(`https://${AUTH0_DOMAIN}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+        audience: `https://${AUTH0_DOMAIN}/api/v2/`,
+      }),
+    })
+    const tokenData = await tokenRes.json()
+
+    if (tokenData.access_token) {
+      const auth0UserId = `auth0|${staleUserId}`
+      const deleteRes = await fetch(
+        `https://${AUTH0_DOMAIN}/api/v2/users/${encodeURIComponent(auth0UserId)}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${tokenData.access_token}` },
+        }
+      )
+      logResult('Auth0 user deleted', { status: deleteRes.status })
+    }
+  }
 }

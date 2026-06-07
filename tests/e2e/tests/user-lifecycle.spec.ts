@@ -19,6 +19,7 @@ import path from 'path'
 import {
   API_URL,
   authHeaders,
+  cleanupStaleUser,
   copyGoogleConnection,
   loginUser,
   logResult,
@@ -38,6 +39,10 @@ test.describe('User Lifecycle Setup', () => {
   let userId: string
 
   test('clean up stale user from previous run', async ({ page, request }) => {
+    // First: programmatic cleanup via Auth0 M2M + DynamoDB (reliable, no browser)
+    await cleanupStaleUser()
+
+    // Fallback: browser-based cleanup in case programmatic missed it
     try {
       await loginUser(page, TEST_EMAIL, TEST_PASSWORD)
 
@@ -53,9 +58,12 @@ test.describe('User Lifecycle Setup', () => {
       })
 
       if (tokenData?.accessToken && tokenData?.userId) {
-        logResult('Stale user found, deleting via DELETE /user endpoint', {
-          userId: tokenData.userId,
-        })
+        logResult(
+          'Stale user found via browser, deleting via DELETE /user endpoint',
+          {
+            userId: tokenData.userId,
+          }
+        )
         const deleteRes = await request.delete(
           `${API_URL}/user/${tokenData.userId}`,
           { headers: authHeaders(tokenData.accessToken) }
@@ -68,7 +76,10 @@ test.describe('User Lifecycle Setup', () => {
         await page.waitForTimeout(5000)
       }
     } catch {
-      logResult('No stale user (login failed — expected on clean run)', {})
+      logResult(
+        'No stale user via browser (expected after programmatic cleanup)',
+        {}
+      )
     }
   })
 

@@ -1,7 +1,3 @@
-import { writeFileSync } from 'fs'
-import { resolve } from 'path'
-import { zodToJsonSchema } from 'zod-to-json-schema'
-
 import {
   AppConnectionSchema,
   AppSchema,
@@ -12,6 +8,9 @@ import {
   UserSchema,
   VariableSchema,
 } from '@baita/shared'
+import { writeFileSync } from 'fs'
+import { resolve } from 'path'
+import { zodToJsonSchema } from 'zod-to-json-schema'
 
 function toJsonSchema(schema: unknown, name: string) {
   const result = zodToJsonSchema(
@@ -445,4 +444,4 @@ const spec = {
 
 const outPath = resolve(__dirname, 'openapi.json')
 writeFileSync(outPath, JSON.stringify(spec, null, 2) + '\n')
-console.log(`Generated ${outPath}`)
+console.warn(`Generated ${outPath}`)

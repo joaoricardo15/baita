@@ -1,8 +1,8 @@
 import {
   DataType,
+  getConnectorById,
   ITaskExecutionInput,
   MethodName,
-  getConnectorById,
   validateContent,
 } from '@baita/shared'
 import Axios from 'axios'
@@ -80,7 +80,7 @@ async function publishToFeed(
   validateContent(contentList as any)
 
   const user = new User()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const { published, total } = await user.publishContent(
     userId,
     contentList as any
