@@ -70,16 +70,17 @@ Every endpoint uses `getAuthenticatedUserId(event)` from `src/utils/authGuard.ts
 
 Operations: `list`, `read`, `create`, `update`, `delete`, `upload`, `remove`
 
-### Bot Endpoints (specialized)
+### Bot Endpoints (operation-based routing, all POST)
 
-| Endpoint                             | Purpose                    |
-| ------------------------------------ | -------------------------- |
-| `POST /bot`                          | Create bot                 |
-| `PUT /bot/{botId}`                   | Update bot                 |
-| `DELETE /bot/{botId}/api/{apiId}`    | Delete bot + Lambda + S3   |
-| `POST /bot/{botId}/deploy`           | Deploy (code gen + Lambda) |
-| `POST /bot/{botId}/test/{taskIndex}` | Test step                  |
-| `GET /bot/{botId}/logs`              | CloudWatch logs            |
+| Endpoint                                 | Purpose                       |
+| ---------------------------------------- | ----------------------------- |
+| `POST /user/{userId}/bot/create`         | Create bot                    |
+| `POST /user/{userId}/bot/update/{botId}` | Update bot                    |
+| `POST /user/{userId}/bot/delete/{botId}` | Delete bot + Lambda + S3      |
+| `POST /user/{userId}/bot/deploy/{botId}` | Deploy (code gen + Lambda)    |
+| `POST /user/{userId}/bot/test/{botId}`   | Test step (taskIndex in body) |
+| `POST /user/{userId}/bot/logs/{botId}`   | CloudWatch logs               |
+| `POST /user/{userId}/bot/model`          | Deploy from bot model         |
 
 ## Frontend
 

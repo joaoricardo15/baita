@@ -18,7 +18,7 @@ A Baita bot is a serverless automation workflow. Each bot:
 ### Step 1: Create Empty Bot
 
 ```
-POST /user/{userId}/bots
+POST /user/{userId}/bot/create
 ```
 
 No body needed. Returns a new `IBot` object with:
@@ -32,8 +32,8 @@ No body needed. Returns a new `IBot` object with:
 ### Step 2: Configure Bot (Update)
 
 ```
-PUT /user/{userId}/bots/{botId}
-Body: { name, image, description, active, tasks }
+POST /user/{userId}/bot/update/{botId}
+Body: { botId, name, image, description, active, tasks }
 ```
 
 This saves the bot configuration without deploying it. Use this for intermediate saves.
@@ -41,7 +41,7 @@ This saves the bot configuration without deploying it. Use this for intermediate
 ### Step 3: Deploy Bot
 
 ```
-POST /user/{userId}/bots/{botId}/deploy
+POST /user/{userId}/bot/deploy/{botId}
 Body: { name, active, tasks }
 ```
 
@@ -50,8 +50,8 @@ This generates the Lambda code from the task definitions, packages it, and deplo
 ### Step 4: Test Individual Tasks
 
 ```
-POST /user/{userId}/bots/{botId}/test/{taskIndex}
-Body: { task } (the task object at that index)
+POST /user/{userId}/bot/test/{botId}
+Body: { ...task, taskIndex } (the task object + its 0-based index)
 ```
 
 Tests a single task in isolation. Task 0 uses triggerSamples; tasks 1+ invoke the actual service Lambda.
@@ -1072,10 +1072,10 @@ All API responses follow:
 
 ## Deployment Flow Summary
 
-1. **Create** → `POST /user/{userId}/bots` (empty bot)
-2. **Configure** → `PUT /user/{userId}/bots/{botId}` (add tasks, name, etc.)
-3. **Test** → `POST /user/{userId}/bots/{botId}/test/{taskIndex}` (test each task)
-4. **Deploy** → `POST /user/{userId}/bots/{botId}/deploy` (activate)
+1. **Create** → `POST /user/{userId}/bot/create` (empty bot)
+2. **Configure** → `POST /user/{userId}/bot/update/{botId}` (add tasks, name, etc.)
+3. **Test** → `POST /user/{userId}/bot/test/{botId}` (test each task, taskIndex in body)
+4. **Deploy** → `POST /user/{userId}/bot/deploy/{botId}` (activate)
 5. **Trigger** → POST to `triggerUrl` (for webhook bots) or wait for schedule
 
 ---

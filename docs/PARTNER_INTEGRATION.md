@@ -8,26 +8,26 @@ This document explains how to add new partner integrations to Baita — external
 ┌─────────────────────────────────────────────────────────────┐
 │ Connector Manifest (packages/shared/src/connectors/)        │
 │ - Declares: auth type, endpoints, operations, fields        │
-│ - Single source of truth per partner                         │
+│ - Single source of truth per partner                        │
 └─────────────┬───────────────────────────────────────────────┘
               │ used by
-    ┌─────────┴──────────────────────────────┐
+    ┌─────────┴───────────────────────────────┐
     │                                         │
     ▼                                         ▼
 ┌──────────────────┐              ┌──────────────────────────┐
-│ Frontend UI      │              │ Backend OAuth Handler     │
-│ - Service picker │              │ - GET /connectors/oauth   │
-│ - Connection     │              │ - Exchanges auth code     │
-│   management     │              │ - Stores credentials      │
+│ Frontend UI      │              │ Backend OAuth Handler    │
+│ - Service picker │              │ - GET /connectors/oauth  │
+│ - Connection     │              │ - Exchanges auth code    │
+│   management     │              │ - Stores credentials     │
 └──────────────────┘              └──────────────────────────┘
                                               │
                                               ▼
                                   ┌──────────────────────────┐
-                                  │ Task Execution            │
-                                  │ - Reads connection creds  │
-                                  │ - Refreshes token         │
-                                  │ - Makes API call          │
-                                  │ - Persists new token      │
+                                  │ Task Execution           │
+                                  │ - Reads connection creds │
+                                  │ - Refreshes token        │
+                                  │ - Makes API call         │
+                                  │ - Persists new token     │
                                   └──────────────────────────┘
 ```
 

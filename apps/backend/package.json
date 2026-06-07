@@ -6,7 +6,7 @@
     "start": "AWS_PROFILE=baita serverless offline --httpPort 5000 --stage prod",
     "deploy": "AWS_PROFILE=baita serverless deploy --stage prod",
     "test:run": "jest",
-    "docs": "aws s3 cp src/docs/openapi.json s3://baita-help-prod-docs/openapi.json --profile baita --region us-east-1",
+    "docs": "tsx src/docs/generate.ts && aws s3 cp src/docs/openapi.json s3://baita-help-prod-docs/openapi.json --region us-east-1",
     "test": "jest --watchAll",
     "lint": "eslint 'src/**/*.ts' --fix",
     "format": "prettier './**/*.{js,ts,json,yml}' --write",
@@ -53,6 +53,8 @@
     "serverless-esbuild": "^1.56.1",
     "serverless-offline": "^13.10.0",
     "ts-jest": "^29.4.6",
-    "typescript": "^5.9.3"
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.3",
+    "zod-to-json-schema": "^3.25.2"
   }
 }

@@ -103,10 +103,10 @@ Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main
 
 ```
 frontend (type-check → lint → spell → build → test → deploy) ─┐
-backend  (type-check → lint → type-check → test → deploy)     ─┤→ e2e
+backend  (type-check → lint → type-check → test → deploy → docs) ─┤→ e2e
 ```
 
-Both jobs run in parallel. Each includes `packages/shared/` type-check as its first quality step. Frontend deploys pre-built artifacts directly to Amplify via manual deployment API (no remote rebuild). Backend deploys via Serverless Framework.
+Both jobs run in parallel. Each includes `packages/shared/` type-check as its first quality step. Frontend deploys pre-built artifacts directly to Amplify via manual deployment API (no remote rebuild). Backend deploys via Serverless Framework, then generates and deploys OpenAPI documentation.
 
 ## E2E Testing
 

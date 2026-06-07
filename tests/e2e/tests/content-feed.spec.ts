@@ -28,7 +28,6 @@ test.describe.configure({ mode: 'serial' })
 
 test.describe('Content Feed', () => {
   let botId: string
-  let apiId: string
 
   const testContent = [
     {
@@ -51,77 +50,79 @@ test.describe('Content Feed', () => {
   ]
 
   test.afterAll(async ({ request }) => {
-    if (botId && apiId) {
+    if (botId) {
       await request
-        .delete(`${API_URL}/user/${userId}/bot/${botId}/api/${apiId}`, {
+        .post(`${API_URL}/user/${userId}/bot/delete/${botId}`, {
           headers: authHeaders(token),
+          data: {},
         })
         .catch(() => {})
     }
   })
 
   test('create bot for content publishing', async ({ request }) => {
-    const res = await request.post(`${API_URL}/user/${userId}/bot`, {
+    const res = await request.post(`${API_URL}/user/${userId}/bot/create`, {
       headers: authHeaders(token),
       data: {},
     })
     const body = await res.json()
     expect(body.success).toBe(true)
     botId = body.data.botId
-    apiId = body.data.apiId
-    logResult('Content bot created', { botId, apiId })
+    logResult('Content bot created', { botId })
   })
 
   test('configure bot with publishToFeed task', async ({ request }) => {
-    const res = await request.put(`${API_URL}/user/${userId}/bot/${botId}`, {
-      headers: authHeaders(token),
-      data: {
-        botId,
-        apiId,
-        name: `content-feed-e2e-${Date.now()}`,
-        active: false,
-        tasks: [
-          {
-            taskId: 1,
-            service: {
-              type: 'trigger',
-              name: 'webhook',
-              label: 'Receive Webhook',
-              config: { inputFields: [] },
-            },
-            inputData: [],
-          },
-          {
-            taskId: 2,
-            service: {
-              type: 'invoke',
-              name: 'method-execute',
-              label: 'Publish content to feed',
-              config: {
-                methodName: 'publishToFeed',
-                inputFields: [
-                  {
-                    name: 'content',
-                    label: 'content',
-                    type: 'output',
-                    required: true,
-                  },
-                ],
+    const res = await request.post(
+      `${API_URL}/user/${userId}/bot/update/${botId}`,
+      {
+        headers: authHeaders(token),
+        data: {
+          botId,
+          name: `content-feed-e2e-${Date.now()}`,
+          active: false,
+          tasks: [
+            {
+              taskId: 1,
+              service: {
+                type: 'trigger',
+                name: 'webhook',
+                label: 'Receive Webhook',
+                config: { inputFields: [] },
               },
+              inputData: [],
             },
-            inputData: [
-              {
-                name: 'content',
-                label: 'content',
-                type: 'output',
-                value: JSON.stringify(testContent),
-                sampleValue: testContent,
+            {
+              taskId: 2,
+              service: {
+                type: 'invoke',
+                name: 'method-execute',
+                label: 'Publish content to feed',
+                config: {
+                  methodName: 'publishToFeed',
+                  inputFields: [
+                    {
+                      name: 'content',
+                      label: 'content',
+                      type: 'output',
+                      required: true,
+                    },
+                  ],
+                },
               },
-            ],
-          },
-        ],
-      },
-    })
+              inputData: [
+                {
+                  name: 'content',
+                  label: 'content',
+                  type: 'output',
+                  value: JSON.stringify(testContent),
+                  sampleValue: testContent,
+                },
+              ],
+            },
+          ],
+        },
+      }
+    )
     const body = await res.json()
     expect(body.success).toBe(true)
     logResult('Bot configured with publishToFeed', { tasks: 2 })
@@ -158,8 +159,8 @@ test.describe('Content Feed', () => {
     }
 
     const res = await request.post(
-      `${API_URL}/user/${userId}/bot/${botId}/test/1`,
-      { headers: authHeaders(token), data: task }
+      `${API_URL}/user/${userId}/bot/test/${botId}`,
+      { headers: authHeaders(token), data: { ...task, taskIndex: 1 } }
     )
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -234,14 +235,13 @@ test.describe('Content Feed', () => {
   })
 
   test('cleanup: delete content bot', async ({ request }) => {
-    if (botId && apiId) {
-      const res = await request.delete(
-        `${API_URL}/user/${userId}/bot/${botId}/api/${apiId}`,
-        { headers: authHeaders(token) }
+    if (botId) {
+      const res = await request.post(
+        `${API_URL}/user/${userId}/bot/delete/${botId}`,
+        { headers: authHeaders(token), data: {} }
       )
       expect(res.status()).toBe(200)
       botId = ''
-      apiId = ''
       logResult('Content bot deleted', { cleaned: true })
     }
   })

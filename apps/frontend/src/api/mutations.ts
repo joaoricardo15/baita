@@ -12,22 +12,22 @@ import {
 import { getApiResponse } from './client'
 
 export const createBot = (userId: string) =>
-  getApiResponse<IBot>('post', `user/${userId}/bot`)
+  getApiResponse<IBot>('post', `user/${userId}/bot/create`)
 
 export const updateBot = (userId: string, botId: string, bot: Partial<IBot>) =>
-  getApiResponse<IBot>('put', `user/${userId}/bot/${botId}`, bot)
+  getApiResponse<IBot>('post', `user/${userId}/bot/update/${botId}`, bot)
 
-export const deleteBot = (userId: string, botId: string, apiId: string) =>
-  getApiResponse<void>('delete', `user/${userId}/bot/${botId}/api/${apiId}`)
+export const deleteBot = (userId: string, botId: string) =>
+  getApiResponse<void>('post', `user/${userId}/bot/delete/${botId}`)
 
 export const deployBot = (userId: string, botId: string, bot: Partial<IBot>) =>
-  getApiResponse<IBot>('post', `user/${userId}/bot/${botId}/deploy`, bot)
+  getApiResponse<IBot>('post', `user/${userId}/bot/deploy/${botId}`, bot)
 
 export const deployBotModel = (
   userId: string,
-  modelId: string,
+  _modelId: string,
   model: IBotModel
-) => getApiResponse<IBot>('post', `user/${userId}/bot/${modelId}/bud`, model)
+) => getApiResponse<IBot>('post', `user/${userId}/bot/model`, model)
 
 export const testBotTask = (
   userId: string,
@@ -37,8 +37,8 @@ export const testBotTask = (
 ) =>
   getApiResponse<ITaskExecutionResult>(
     'post',
-    `user/${userId}/bot/${botId}/test/${taskIndex}`,
-    task
+    `user/${userId}/bot/test/${botId}`,
+    { task, taskIndex }
   )
 
 export const updateTodo = (userId: string, tasks: ITodoTask[]) =>

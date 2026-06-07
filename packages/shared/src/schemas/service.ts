@@ -1,11 +1,33 @@
+/**
+ * Service — Execution strategy for a task step
+ *
+ * DDD Role: Value Object (embedded in Task, no standalone identity)
+ *
+ * A Service defines WHAT a task does: which executor handles it, what inputs
+ * are required, and how outputs are extracted. It is the "strategy" pattern —
+ * the same Service definition can be reused across many Tasks with different
+ * input values.
+ *
+ * Relationships:
+ * - Embedded in Task (task.service)
+ * - ServiceName maps to executor dispatch in backend (executor.ts)
+ * - ServiceConfig.inputFields defines the schema; Task.inputData provides values
+ * - Connectors define services via operations[] or explicit services[] arrays
+ *
+ * Key design decision: IVariable is used for BOTH field definitions
+ * (service.config.inputFields) and field values (task.inputData). This trades
+ * type precision for implementation simplicity across connectors and UI.
+ */
 import { z } from 'zod'
 
+/** Whether a service is a trigger (starts execution) or an invoke (performs action) */
 export enum ServiceType {
   invoke = 'invoke',
   trigger = 'trigger',
 }
 export const ServiceTypeSchema = z.nativeEnum(ServiceType)
 
+/** Maps to executor dispatch in backend — determines which code path runs */
 export enum ServiceName {
   code = 'code-execute',
   http = 'http-request',
@@ -17,6 +39,7 @@ export enum ServiceName {
 }
 export const ServiceNameSchema = z.nativeEnum(ServiceName)
 
+/** Built-in method names for the method-execute service */
 export enum MethodName {
   getTodo = 'getTodo',
   publishToFeed = 'publishToFeed',
@@ -26,6 +49,17 @@ export enum MethodName {
 }
 export const MethodNameSchema = z.nativeEnum(MethodName)
 
+/**
+ * Variable type determines how the value is resolved at runtime:
+ * - code: JavaScript expression (code editor)
+ * - user: Auto-filled from user context (timezone, push token)
+ * - text: Free-form user input
+ * - output: Reference to a previous task's output (via outputIndex + outputPath)
+ * - options: Dropdown selection from predefined list
+ * - boolean: Toggle
+ * - constant: Fixed value (not user-editable, set by connector)
+ * - environment: Server-side env var (never exposed to frontend)
+ */
 export enum VariableType {
   code = 'code',
   user = 'user',
@@ -87,6 +121,16 @@ export const TransformSchema = z.object({
 })
 export type ITransform = z.infer<typeof TransformSchema>
 
+/**
+ * Variable — Dual-purpose field schema
+ *
+ * Used in TWO contexts (same schema, different semantics):
+ * 1. As field DEFINITION in service.config.inputFields (describes available inputs)
+ * 2. As field VALUE in task.inputData (stores user-provided data)
+ *
+ * When type=output, references another task's output via outputIndex + outputPath.
+ * Optional transform applies data operations (first, filter, pluck, etc.)
+ */
 export const VariableSchema = z.object({
   type: VariableTypeSchema,
   name: z.string(),
@@ -106,6 +150,7 @@ export const VariableSchema = z.object({
 })
 export type IVariable = z.infer<typeof VariableSchema>
 
+/** Defines input schema + output extraction for a service */
 export const ServiceConfigSchema = z.object({
   methodName: MethodNameSchema.optional(),
   customFields: z.boolean().optional(),
@@ -124,6 +169,7 @@ export const ServiceSchema = z.object({
 })
 export type IService = z.infer<typeof ServiceSchema>
 
+/** Pairs a Service with its parent App (used by frontend service picker) */
 export interface IServiceApp {
   service: IService
   app: import('./app').IApp

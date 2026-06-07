@@ -155,41 +155,56 @@ functions:
     handler: src/authorizer/index.handler
     timeout: 10
 
-  # Background task handlers (invoked by deployed bot Lambdas)
-  task-code-execute:
-    handler: src/tasks/code-execute/index.handler
-  task-method-execute:
-    handler: src/tasks/method-execute/index.handler
-  task-trigger-sample:
-    handler: src/tasks/trigger-sample/index.handler
-
-  # API endpoints (all use shared CORS + authorizer from custom section)
-  endpoint-user-create:
-    handler: src/endpoints/user/create/index.handler
+  # User operations (create, delete, content)
+  endpoint-user:
+    handler: src/endpoints/user/index.handler
+    timeout: 60
     events:
       - http:
           path: user
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-  endpoint-user-delete:
-    handler: src/endpoints/user/delete/index.handler
-    timeout: 60
-    events:
       - http:
           path: user/{userId}
           method: delete
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-  endpoint-content-get:
-    handler: src/endpoints/content/index.handler
-    events:
       - http:
           path: user/{userId}/content
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-  endpoint-resource-operation:
+
+  # Task execution (standalone + direct invoke from deployed bots)
+  endpoint-task:
+    handler: src/endpoints/task/execute/index.handler
+    timeout: 60
+    events:
+      - http:
+          path: user/{userId}/task/{operation}
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # Bot operations (create, update, delete, deploy, test, logs, model)
+  endpoint-bot:
+    handler: src/endpoints/bot/index.handler
+    timeout: 60
+    events:
+      - http:
+          path: user/{userId}/bot/{operation}
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: user/{userId}/bot/{operation}/{botId}
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # Generic resource CRUD
+  endpoint-resource:
     handler: src/endpoints/resource/index.handler
     events:
       - http:
@@ -202,60 +217,19 @@ functions:
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-  endpoint-bot-create:
-    handler: src/endpoints/bot/create/index.handler
+
+  # Connection operations (create, health, details)
+  endpoint-connection:
+    handler: src/endpoints/connection/index.handler
     events:
       - http:
-          path: user/{userId}/bot
+          path: user/{userId}/connection/{operation}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
-  endpoint-bot-bud:
-    handler: src/endpoints/bot/bud/index.handler
-    events:
       - http:
-          path: user/{userId}/bot/{botId}/bud
+          path: user/{userId}/connection/{operation}/{connectionId}
           method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-  endpoint-bot-update:
-    handler: src/endpoints/bot/update/index.handler
-    events:
-      - http:
-          path: user/{userId}/bot/{botId}
-          method: put
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-  endpoint-bot-delete:
-    handler: src/endpoints/bot/delete/index.handler
-    events:
-      - http:
-          path: user/{userId}/bot/{botId}/api/{apiId}
-          method: delete
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-  endpoint-bot-deploy:
-    handler: src/endpoints/bot/deploy/index.handler
-    events:
-      - http:
-          path: user/{userId}/bot/{botId}/deploy
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-  endpoint-bot-test:
-    handler: src/endpoints/bot/test/index.handler
-    events:
-      - http:
-          path: user/{userId}/bot/{botId}/test/{taskIndex}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-  endpoint-bot-logs:
-    handler: src/endpoints/bot/logs/index.handler
-    events:
-      - http:
-          path: user/{userId}/bot/{botId}/logs
-          method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
@@ -266,36 +240,6 @@ functions:
       - http:
           path: connectors/oauth
           method: get
-
-  # Connection health check
-  connection-health:
-    handler: src/endpoints/connection/health/index.handler
-    events:
-      - http:
-          path: user/{userId}/connection/{connectionId}/health
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-
-  # Connection create (API key)
-  connection-create:
-    handler: src/endpoints/connection/create/index.handler
-    events:
-      - http:
-          path: user/{userId}/connection/create
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-
-  # Connection details (linked bots)
-  connection-details:
-    handler: src/endpoints/connection/details/index.handler
-    events:
-      - http:
-          path: user/{userId}/connection/{connectionId}/details
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
 
 resources:
   Resources:

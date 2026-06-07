@@ -68,7 +68,7 @@ test.describe('Connections Management', () => {
     expect(google).toBeTruthy()
 
     const res = await request.post(
-      `${API_URL}/user/${userId}/connection/${google.connectionId}/health`,
+      `${API_URL}/user/${userId}/connection/health/${google.connectionId}`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
@@ -157,7 +157,7 @@ test.describe('Connections Management', () => {
     )
 
     const res = await request.post(
-      `${API_URL}/user/${userId}/connection/${connectionId}/details`,
+      `${API_URL}/user/${userId}/connection/details/${connectionId}`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()

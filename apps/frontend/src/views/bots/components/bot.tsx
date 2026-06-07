@@ -40,7 +40,7 @@ const Bot: FC<{
   const onDeleteBot = () => {
     showLoading(true)
     deleteBot
-      .mutateAsync({ botId: bot.botId, apiId: bot.apiId })
+      .mutateAsync({ botId: bot.botId })
       .finally(() => showLoading(false))
   }
 

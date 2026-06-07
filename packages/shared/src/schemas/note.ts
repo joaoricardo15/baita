@@ -1,3 +1,13 @@
+/**
+ * Note — Quick-capture text notes
+ *
+ * DDD Role: Standalone Entity (managed via generic Resource CRUD)
+ *
+ * Simple text notes stored per-user. Managed through the generic resource
+ * endpoint (POST /resource/note/{operation}/{id?}).
+ *
+ * Storage: DynamoDB with sortKey `#NOTE#{noteId}`
+ */
 import { z } from 'zod'
 
 export const NoteSchema = z.object({

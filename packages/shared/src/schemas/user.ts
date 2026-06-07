@@ -1,3 +1,19 @@
+/**
+ * User — Platform account and user-facing data
+ *
+ * DDD Role: Root scoping entity
+ *
+ * The User is the top-level ownership scope. Every Bot, Connection, Note,
+ * Place, and Todo belongs to exactly one User (scoped by userId in DynamoDB).
+ *
+ * This file also contains user-domain value objects:
+ * - Content: feed items published by bots to the user's SQS queue
+ * - Todo/TodoTask: task management items
+ *
+ * Relationships:
+ * - User.userId is the partition key for all DynamoDB records
+ * - Bots, Connections, Resources all reference User via userId
+ */
 import { z } from 'zod'
 
 export const UserSchema = z.object({

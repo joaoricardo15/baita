@@ -21,7 +21,7 @@ export const fetchBotModels = () =>
   getApiResponse<IBotModel[]>('post', 'user/baita/resource/model/list')
 
 export const fetchLogs = (userId: string, botId: string) =>
-  getApiResponse<IBotLog[]>('get', `user/${userId}/bot/${botId}/logs`)
+  getApiResponse<IBotLog[]>('post', `user/${userId}/bot/logs/${botId}`)
 
 export const fetchTodo = (userId: string) =>
   getApiResponse<ITodo>('post', `user/${userId}/resource/todo/read`)
@@ -39,12 +39,12 @@ export const fetchConnectionDetails = (userId: string, connectionId: string) =>
   getApiResponse<{
     connection: Record<string, unknown>
     linkedBots: { botId: string; name: string }[]
-  }>('post', `user/${userId}/connection/${connectionId}/details`)
+  }>('post', `user/${userId}/connection/details/${connectionId}`)
 
 export const fetchConnectionHealth = (userId: string, connectionId: string) =>
   getApiResponse<{ status: string; message?: string }>(
     'post',
-    `user/${userId}/connection/${connectionId}/health`
+    `user/${userId}/connection/health/${connectionId}`
   )
 
 export const fetchNotes = (userId: string) =>

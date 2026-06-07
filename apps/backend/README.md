@@ -41,7 +41,7 @@ npm run lint       # ESLint with auto-fix
 npm run format     # Prettier formatting
 npm run spell      # CSpell spell check
 npm run knip       # Dead code detection
-npm run docs       # Generate OpenAPI schema
+npm run docs       # Generate OpenAPI spec from Zod schemas and deploy to S3
 ```
 
 ## Project Structure
@@ -53,7 +53,7 @@ src/
 ├── controllers/    # Business logic classes (User, Bot, Resource)
 ├── endpoints/      # REST API Lambda handlers (one folder per endpoint)
 ├── models/         # TypeScript interfaces + JSON schemas + validation
-├── tasks/          # Background Lambda task handlers (code-execute, method-execute)
+├── tasks/          # Task execution logic (executor dispatches to code/methods)
 └── utils/          # Helpers (API response, bot data, code generation)
 ```
 
@@ -108,13 +108,13 @@ All endpoints return:
 
 ### Bots
 
-- `POST /user/{userId}/bots` — Create bot
-- `PUT /user/{userId}/bots/{botId}` — Update bot
-- `DELETE /user/{userId}/bots/{botId}/api/{apiId}` — Delete bot
-- `POST /user/{userId}/bots/{botId}/deploy` — Deploy bot
-- `POST /user/{userId}/bots/{botId}/test/{taskIndex}` — Test individual task
-- `GET /user/{userId}/bots/{botId}/logs` — Get execution logs
-- `POST /user/{userId}/bots/{botId}/bud` — Bot assistant operation
+- `POST /user/{userId}/bot/create` — Create bot
+- `POST /user/{userId}/bot/update/{botId}` — Update bot
+- `POST /user/{userId}/bot/delete/{botId}` — Delete bot
+- `POST /user/{userId}/bot/deploy/{botId}` — Deploy bot
+- `POST /user/{userId}/bot/test/{botId}` — Test individual task (taskIndex in body)
+- `POST /user/{userId}/bot/logs/{botId}` — Get execution logs
+- `POST /user/{userId}/bot/model` — Deploy from bot model template
 
 ### Content & Resources
 

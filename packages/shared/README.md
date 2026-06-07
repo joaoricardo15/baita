@@ -14,24 +14,32 @@ Referenced as a workspace dependency (no manual install needed):
 
 All schemas are defined with [Zod](https://zod.dev) — providing both TypeScript types (inferred) and runtime validation from one definition.
 
-| File                 | Models                            | Purpose                                       |
-| -------------------- | --------------------------------- | --------------------------------------------- |
-| `schemas/user.ts`    | `IUser`, `ITodo`, `IContent`      | User profile, todo tasks, content feed        |
-| `schemas/bot.ts`     | `IBot`, `ITask`, `ITaskCondition` | Bot workflow definition + validation          |
-| `schemas/service.ts` | `IService`, `IVariable`, enums    | Service/variable types for task configuration |
-| `schemas/app.ts`     | `IApp`, `IAppConnection`          | OAuth app definitions                         |
-| `schemas/api.ts`     | `ApiResponseSchema`               | Standard API response envelope                |
+| File                    | Models                                      | Purpose                                       |
+| ----------------------- | ------------------------------------------- | --------------------------------------------- |
+| `schemas/user.ts`       | `IUser`, `ITodo`, `IContent`                | User profile, todo tasks, content feed        |
+| `schemas/bot.ts`        | `IBot`, `IBotModel`, `IBotLog`              | Bot workflow definition + validation          |
+| `schemas/task.ts`       | `ITask`, `ITaskCondition`, `IStepExecution` | Task execution + conditions                   |
+| `schemas/service.ts`    | `IService`, `IVariable`, enums              | Service/variable types for task configuration |
+| `schemas/app.ts`        | `IApp`, `IAppConfig`                        | App value objects (embedded in Task)          |
+| `schemas/connection.ts` | `IAppConnection`, `ICredential`             | OAuth connection entity (standalone)          |
+| `schemas/connector.ts`  | `IConnectorManifest`, `IConnectorOperation` | Connector static definitions                  |
+| `schemas/note.ts`       | `INote`                                     | Note entity                                   |
+| `schemas/place.ts`      | `IPlace`                                    | Place entity                                  |
+| `schemas/api.ts`        | `ApiResponseSchema`                         | Standard API response envelope                |
 
 ## Connectors
 
-OAuth connector manifests define how Baita integrates with third-party services:
+Connector manifests define how Baita integrates with third-party services. Schemas live in `schemas/connector.ts`; instances live in `connectors/`:
 
 | File                      | Connector | Capabilities                      |
 | ------------------------- | --------- | --------------------------------- |
+| `connectors/baita.ts`     | Baita     | Webhook, schedule, code, push     |
 | `connectors/google.ts`    | Google    | OAuth2, Calendar, Gmail, Drive    |
 | `connectors/pipedrive.ts` | Pipedrive | OAuth2, CRM data, deals, contacts |
+| `connectors/openai.ts`    | OpenAI    | Chat completions, text generation |
+| `connectors/newsapi.ts`   | NewsAPI   | News headlines, search            |
 
-Each connector exports its OAuth2 config, available scopes, and input/output variable definitions.
+Each connector exports a manifest with auth config, available operations, and service definitions. The `connectorToAppService()` adapter in `connectors/registry.ts` converts manifests to App + Service[] at runtime.
 
 ## Bot Validation & Integrity
 
@@ -65,7 +73,14 @@ Both apps import via workspace reference:
 
 ```typescript
 // Types
-import { IBot, ITask, IUser, IApp, IAppConnection } from '@baita/shared'
+import {
+  IBot,
+  ITask,
+  IUser,
+  IApp,
+  IAppConnection,
+  IConnectorManifest,
+} from '@baita/shared'
 
 // Validation
 import { validateBot, BotSchema, TaskSchema } from '@baita/shared'
@@ -74,7 +89,11 @@ import { validateBot, BotSchema, TaskSchema } from '@baita/shared'
 import { VariableType, DataType, TaskExecutionStatus } from '@baita/shared'
 
 // Connectors
-import { googleConnector, pipedriveConnector } from '@baita/shared'
+import {
+  googleConnector,
+  pipedriveConnector,
+  connectorToAppService,
+} from '@baita/shared'
 ```
 
 ## Commands

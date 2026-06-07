@@ -42,7 +42,7 @@ export default defineConfig({
         storageState: 'playwright/.auth/user.json',
       },
       testMatch: [
-        '**/google-gmail.spec.ts',
+        '**/connectors/*.spec.ts',
         '**/todo-journey.spec.ts',
         '**/bot-journey.spec.ts',
         '**/connections.spec.ts',

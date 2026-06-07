@@ -51,10 +51,16 @@ Before reporting a task as done, self-check:
 src/
 ├── authorizer/     # Lambda authorizer (Auth0 JWT verification)
 ├── connectors/     # OAuth callback handlers (Google, Pipedrive)
-├── controllers/    # Business logic classes (User, Bot, Resource)
-├── endpoints/      # REST API Lambda handlers (one folder per endpoint)
+├── controllers/    # Business logic classes (User, Bot, Task, Resource)
+├── endpoints/      # REST API Lambda handlers (one consolidated handler per domain)
+│   ├── bot/        # All bot operations (create, update, delete, deploy, test, logs, model)
+│   ├── connection/ # All connection operations (create, health, details)
+│   ├── resource/   # Generic resource CRUD (list, read, create, update, delete, upload, remove)
+│   ├── task/       # Task execution (execute — supports HTTP + direct Lambda invoke)
+│   └── user/       # User operations (create, delete, content)
 ├── lib/            # Module-level AWS SDK clients (DynamoDB singleton)
-├── tasks/          # Background Lambda task handlers (code-execute, method-execute)
+├── tasks/          # Task execution logic
+│   └── executor/   # Service-specific executors (code.ts, methods.ts)
 ├── utils/          # Helpers (api response, bot data manipulation, code generation, auth guard)
 │   └── tests/      # Unit tests
 └── docs/           # OpenAPI generated docs
@@ -67,7 +73,7 @@ npm start          # Local dev server on localhost:5000 (serverless-offline, use
 npm test           # Jest in watch mode
 npm run test:run   # Jest single run (CI-friendly)
 npm run deploy     # Deploy to production (serverless deploy --stage prod)
-npm run docs       # Generate OpenAPI schema and upload to S3
+npm run docs       # Generate OpenAPI spec from Zod schemas and deploy to S3
 npm run lint       # ESLint with auto-fix
 npm run format     # Prettier formatting
 npm run spell      # CSpell spell check on source files
@@ -88,7 +94,7 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 
 Part of the monorepo unified workflow (`.github/workflows/ci.yml`) on push to `main`:
 
-Single "Backend" job: Type-check shared → Lint → Type-check → Test → Deploy (`serverless deploy --stage prod --conceal`)
+Single "Backend" job: Type-check shared → Lint → Type-check → Test → Deploy (`serverless deploy --stage prod --conceal`) → Generate & deploy OpenAPI docs (`npm run docs`)
 
 Runs in parallel with the Frontend job. E2E tests run after both complete.
 
@@ -222,12 +228,19 @@ userId      | #CONNECTION#{connectionId}      | OAuth connection
 ### Bot Execution Architecture
 
 1. User creates/edits bot via frontend (visual workflow builder)
-2. On deploy: backend generates Lambda code from bot task definitions
+2. On deploy: backend generates Lambda code from bot task definitions (`src/utils/code.ts`)
 3. Generated code packaged as ZIP, uploaded to S3, deployed as standalone Lambda
 4. Bot triggered via HTTP (API Gateway) or schedule (EventBridge Scheduler)
 5. Each task executes sequentially, outputs chained via `task${n}_outputData` variables
-6. Results published to user's SQS queue for content feed
-7. Execution logs captured in CloudWatch, queryable via logs endpoint
+6. Task execution: bot Lambda invokes `endpoint-task` via direct Lambda-to-Lambda call (not HTTP)
+7. The task endpoint dispatcher (`src/tasks/executor.ts`) routes to the correct executor:
+   - `code-execute` → VM sandbox execution (`src/tasks/executor/code.ts`)
+   - `method-execute` → Built-in methods like HTTP, OAuth2, notifications (`src/tasks/executor/methods.ts`)
+   - `trigger-sample` → Stores test data for the trigger step
+8. Results published to user's SQS queue for content feed
+9. Execution logs captured in CloudWatch, queryable via logs endpoint
+
+**IAM note**: Bot Lambda role (`botsRole`) only has `lambda:InvokeFunction` + CloudWatch. It cannot access DynamoDB/SQS/SSM directly — all data operations go through `endpoint-task` which has full permissions.
 
 ### Content Feed Lifecycle
 
@@ -264,7 +277,7 @@ The content feed uses SQS as a transient message queue + DynamoDB for deduplicat
 - Interfaces: Prefixed with `I` (e.g., `IUser`, `IBot`, `ITask`, `IVariable`)
 - Enums: PascalCase values (e.g., `TaskExecutionStatus.success`)
 - Controllers: PascalCase class names matching the domain (e.g., `Bot`, `User`, `Resource`)
-- Endpoints: lowercase folders organized by domain (`bot/create/`, `bot/deploy/`)
+- Endpoints: lowercase folders organized by domain (`bot/`, `connection/`, `task/`, `user/`, `resource/`)
 - Environment variables: UPPER_SNAKE_CASE
 
 ### TypeScript
@@ -305,34 +318,43 @@ The content feed uses SQS as a transient message queue + DynamoDB for deduplicat
 
 ## API Endpoints
 
+All authenticated endpoints follow operation-based routing: `POST /user/{userId}/{domain}/{operation}/{id?}`
+
 ### User
 
 - `POST /user` — Create user account
+- `DELETE /user/{userId}` — Delete user account
+- `GET /user/{userId}/content` — Get content feed (from SQS)
 
-### Bots
+### Bots (all POST, operation-based routing)
 
-- `POST /user/{userId}/bot` — Create bot
-- `PUT /user/{userId}/bot/{botId}` — Update bot
-- `DELETE /user/{userId}/bot/{botId}/api/{apiId}` — Delete bot
-- `POST /user/{userId}/bot/{botId}/deploy` — Deploy/publish bot
-- `POST /user/{userId}/bot/{botId}/test/{taskIndex}` — Test individual task
-- `GET /user/{userId}/bot/{botId}/logs` — Get execution logs
-- `POST /user/{userId}/bot/{botId}/bud` — Bot assistant operation
+- `POST /user/{userId}/bot/create` — Create bot
+- `POST /user/{userId}/bot/update/{botId}` — Update bot
+- `POST /user/{userId}/bot/delete/{botId}` — Delete bot (reads apiId from DDB record)
+- `POST /user/{userId}/bot/deploy/{botId}` — Deploy/deactivate bot
+- `POST /user/{userId}/bot/test/{botId}` — Test individual task (taskIndex in body)
+- `POST /user/{userId}/bot/logs/{botId}` — Get execution logs
+- `POST /user/{userId}/bot/model` — Deploy from bot model (modelId in body)
 
-### Content & Resources
+### Tasks
 
-- `GET /user/{userId}/content` — Get user content feed (from SQS)
+- `POST /user/{userId}/task/execute` — Execute task (also accepts direct Lambda invoke from bots)
+
+### Connections (all POST, operation-based routing)
+
+- `POST /user/{userId}/connection/create` — Create connection
+- `POST /user/{userId}/connection/health/{connectionId}` — Test connection health
+- `POST /user/{userId}/connection/details/{connectionId}` — Get connection details + linked bots
+
+### Resources (unchanged)
+
 - `POST /user/{userId}/resource/{resourceName}/{operation}` — Generic CRUD
+- `POST /user/{userId}/resource/{resourceName}/{operation}/{resourceId}` — CRUD with ID
   - Operations: `list`, `read`, `delete`, `create`, `update`, `upload`, `remove`
 
 ### OAuth Connectors
 
-- `GET /connectors/oauth` — Generic OAuth callback (handles all providers)
-
-### Connections
-
-- `POST /user/{userId}/connection/{connectionId}/health` — Test connection health (token validity)
-- `POST /user/{userId}/connection/{connectionId}/details` — Get connection details + linked bots
+- `GET /connectors/oauth` — Generic OAuth callback (public, no auth)
 
 ## Feature Development Methodology
 
@@ -392,22 +414,22 @@ cd tests/e2e && npm test
 
 ### Test Coverage
 
-| Page/Feature        | Endpoint                       | Tested | Notes                                     |
-| ------------------- | ------------------------------ | ------ | ----------------------------------------- |
-| Home (Content Feed) | GET /content                   | Yes    | Auth + SQS access                         |
-| Todo                | POST /resource/todo/list       | Yes    | DynamoDB query                            |
-| Bots List           | POST /resource/bot/list        | Yes    | DynamoDB query                            |
-| Connections         | POST /resource/connection/list | Yes    | DynamoDB query                            |
-| Resource CRUD       | POST /resource/smoke-note/\*   | Yes    | Full create/read/update/list/delete cycle |
-| Bot Lifecycle       | POST /bots + logs + delete     | Yes    | Lambda + S3 + API Gateway + Scheduler     |
-| Auth Rejection      | GET without token              | Yes    | Security — 401 returned                   |
-| CORS on Errors      | GET with Origin header         | Yes    | CORS headers on 4XX                       |
-| Error Handling      | Invalid operations             | Yes    | Structured error response                 |
-| Bot Deploy          | POST /bot/{id}/deploy          | Future | Requires code generation                  |
-| Bot Test            | POST /bot/{id}/test/{idx}      | Future | Requires active deployed bot              |
-| File Upload         | POST /resource/\*/upload       | Future | S3 presigned URL flow                     |
-| OAuth Connectors    | GET /connectors/\*             | Future | Requires interactive OAuth                |
-| Push Notifications  | —                              | N/A    | Frontend-only feature                     |
+| Page/Feature        | Endpoint                         | Tested | Notes                                     |
+| ------------------- | -------------------------------- | ------ | ----------------------------------------- |
+| Home (Content Feed) | GET /content                     | Yes    | Auth + SQS access                         |
+| Todo                | POST /resource/todo/list         | Yes    | DynamoDB query                            |
+| Bots List           | POST /resource/bot/list          | Yes    | DynamoDB query                            |
+| Connections         | POST /resource/connection/list   | Yes    | DynamoDB query                            |
+| Resource CRUD       | POST /resource/smoke-note/\*     | Yes    | Full create/read/update/list/delete cycle |
+| Bot Lifecycle       | POST /bot/create + logs + delete | Yes    | Lambda + S3 + API Gateway + Scheduler     |
+| Bot Deploy          | POST /bot/deploy/{id}            | Yes    | Code generation + Lambda deploy           |
+| Bot Test            | POST /bot/test/{id}              | Yes    | Task execution via executor               |
+| Auth Rejection      | GET without token                | Yes    | Security — 401 returned                   |
+| CORS on Errors      | GET with Origin header           | Yes    | CORS headers on 4XX                       |
+| Error Handling      | Invalid operations               | Yes    | Structured error response                 |
+| File Upload         | POST /resource/\*/upload         | Future | S3 presigned URL flow                     |
+| OAuth Connectors    | GET /connectors/\*               | Future | Requires interactive OAuth                |
+| Push Notifications  | —                                | N/A    | Frontend-only feature                     |
 
 ### Adding New Tests
 

@@ -118,10 +118,8 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 - **Unit (Backend):** `apps/backend/src/controllers/tests/bot.test.ts` — Create, deploy, delete, logs, connections
 - **Unit (Backend):** `apps/backend/src/utils/tests/code.test.ts` — Code generation, conditions, retry logic
 - **Unit (Backend):** `apps/backend/src/utils/tests/bot.test.ts` — Data path resolution, variable mapping
-- **Unit (Backend):** `apps/backend/src/tasks/method-execute/tests/index.test.ts` — Runtime method dispatch
-- **Unit (Backend):** `apps/backend/src/tasks/code-execute/tests/index.test.ts` — Sandbox execution, isolation
-- **Unit (Backend):** `apps/backend/src/endpoints/bot/deploy/tests/index.test.ts` — Deploy validation + handler
-- **Unit (Backend):** `apps/backend/src/endpoints/bot/create/tests/index.test.ts` — Creation handler
+- **Unit (Backend):** `apps/backend/src/tasks/executor/methods.ts` — Runtime method dispatch (publishToFeed, HTTP, OAuth2, notifications)
+- **Unit (Backend):** `apps/backend/src/tasks/executor/code.ts` — VM sandbox execution, isolation
 - **Unit (Shared):** `packages/shared/src/tests/bot.test.ts` — validateBot, step references, config hashing
 - **E2E:** `tests/e2e/tests/bot-journey.spec.ts` — Full lifecycle: create → configure → test task → deploy → trigger → verify logs → deactivate → delete
 
@@ -197,8 +195,6 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 ### Test Coverage
 
 - **Unit (Frontend):** `apps/frontend/src/views/connections/tests/index.test.tsx` — Rendering, loading, health check, delete
-- **Unit (Backend):** `apps/backend/src/endpoints/connection/health/tests/index.test.ts` — Health check with refresh
-- **Unit (Backend):** `apps/backend/src/endpoints/connection/details/tests/index.test.ts` — Details with linked bots
 - **Unit (Backend):** `apps/backend/src/utils/tests/tokenRefresh.test.ts` — Token refresh utility
 - **Unit (Backend):** `apps/backend/src/connectors/oauth/tests/index.test.ts` — OAuth callback handler
 - **E2E:** `tests/e2e/tests/connections.spec.ts` — Connection CRUD lifecycle, health check, details, linked bots
@@ -224,7 +220,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 ### Test Coverage
 
 - **Unit (Frontend):** `apps/frontend/src/utils/push.test.ts` — Platform detection, subscribe/unsubscribe, PWA detection
-- **Unit (Backend):** `apps/backend/src/tasks/method-execute/tests/index.test.ts` — sendNotification method dispatch
+- **Unit (Backend):** `apps/backend/src/tasks/executor/methods.ts` — sendNotification method implementation
 
 ---
 
@@ -269,23 +265,38 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 ---
 
-## Journey 11: Gmail Integration
+## Journey 11: Connector Service Testing
 
-**Who:** Authenticated user with Google connection  
-**Goal:** Use Gmail API in bot automations (read emails, send emails)
+**Who:** Authenticated user using any connected service  
+**Goal:** Execute individual connector services via the standalone task endpoint
 
 ### Use Cases
 
-| #    | Use Case         | User Action                            | Expected Outcome                             |
-| ---- | ---------------- | -------------------------------------- | -------------------------------------------- |
-| 11.1 | Connect Google   | OAuth flow → grant Gmail scopes        | Connection stored with refresh token         |
-| 11.2 | List emails      | Add Gmail task to bot → Test           | Email messages returned from API             |
-| 11.3 | Token refresh    | Bot uses connection after hours        | Refresh token exchanges for new access token |
-| 11.4 | Scope validation | Test Gmail task without required scope | Clear error about missing permission         |
+| #     | Use Case               | User Action                                     | Expected Outcome                            |
+| ----- | ---------------------- | ----------------------------------------------- | ------------------------------------------- |
+| 11.1  | Run JavaScript         | Execute custom code via Baita code-execute      | Output returned from sandboxed VM           |
+| 11.2  | Custom fields          | Pass variables into code sandbox                | Code accesses custom field values           |
+| 11.3  | Code error handling    | Execute code with syntax errors                 | Graceful failure with error message         |
+| 11.4  | Code timeout           | Execute infinite loop                           | Timeout after 5s, fail status               |
+| 11.5  | Get todo list          | Call getTodo method                             | Returns user's current todo items           |
+| 11.6  | Publish to feed        | Call publishToFeed with content                 | Content published and retrievable from feed |
+| 11.7  | List Gmail messages    | Call Google list-messages with OAuth connection | Array of message objects returned           |
+| 11.8  | Get Gmail message      | Call Google get-message by ID                   | Full message with snippet and payload       |
+| 11.9  | Get top headlines      | Call NewsAPI top-headlines with country filter  | Array of article objects                    |
+| 11.10 | Search all news        | Call NewsAPI everything with keyword            | Array of matching articles                  |
+| 11.11 | Output mapping         | Call service with outputMapping configured      | Response fields renamed per mapping         |
+| 11.12 | OpenAI text completion | Call chat/completions with gpt-4o-mini          | String response from model                  |
+| 11.13 | Pipedrive search       | Search for person/deal by term                  | Search results or empty (valid structure)   |
+| 11.14 | Missing connection     | Test service that needs connection, without it  | Graceful skip (not crash)                   |
 
 ### Test Coverage
 
-- **E2E:** `tests/e2e/tests/google-gmail.spec.ts` — Verify connection, create bot with Gmail task, test API call, verify output
+- **E2E:** `tests/e2e/tests/connectors/baita.spec.ts` — Code execution, custom fields, error handling, timeout, getTodo, publishToFeed
+- **E2E:** `tests/e2e/tests/connectors/google.spec.ts` — Gmail list-messages, get-message (skips if token expired)
+- **E2E:** `tests/e2e/tests/connectors/newsapi.spec.ts` — Top headlines, everything search, outputMapping verification
+- **E2E:** `tests/e2e/tests/connectors/openai.spec.ts` — Text completion (skips if no connection)
+- **E2E:** `tests/e2e/tests/connectors/pipedrive.spec.ts` — Search person, search deal (skips if no connection)
+- **Reference:** `docs/CONNECTOR-TESTING.md` — Full payload examples and auth patterns for all connectors
 
 ---
 
@@ -303,7 +314,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 | 8. Push Notifications  | ✅        | ✅        | —             | —          |
 | 9. Profile & Stats     | —         | —         | —             | ✅ (smoke) |
 | 10. Account Management | —         | ✅        | —             | ✅         |
-| 11. Gmail Integration  | —         | —         | —             | ✅         |
+| 11. Connector Services | —         | —         | —             | ✅         |
 
 ---
 
@@ -313,7 +324,7 @@ Tests use Playwright project dependencies to enforce execution order:
 
 ```
 setup (user-lifecycle.spec.ts)
-  └→ journeys (google-gmail, todo-journey, bot-journey, connections, pages-security, notes-journey, content-feed)
+  └→ journeys (connectors/*, todo-journey, bot-journey, connections, pages-security, notes-journey, content-feed)
        └→ teardown (user-teardown.spec.ts)
 ```
 

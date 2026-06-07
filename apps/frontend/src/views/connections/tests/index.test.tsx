@@ -145,7 +145,7 @@ describe('Connections page', () => {
           ],
         })
       ),
-      http.post(`${API_BASE}/user/:userId/connection/:id/health`, () =>
+      http.post(`${API_BASE}/user/:userId/connection/health/:id`, () =>
         HttpResponse.json({
           success: true,
           data: { status: 'healthy' },

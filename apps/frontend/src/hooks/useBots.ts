@@ -67,8 +67,8 @@ export function useDeleteBot() {
   const queryClient = useQueryClient()
   const { user } = useContext(AuthContext)
   return useMutation({
-    mutationFn: ({ botId, apiId }: { botId: string; apiId: string }) =>
-      mutations.deleteBot(user!.userId, botId, apiId),
+    mutationFn: ({ botId }: { botId: string }) =>
+      mutations.deleteBot(user!.userId, botId),
     onMutate: async ({ botId }) => {
       await queryClient.cancelQueries({ queryKey: ['bots', user?.userId] })
       const previous = queryClient.getQueryData<IBot[]>(['bots', user?.userId])

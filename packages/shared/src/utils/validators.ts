@@ -1,18 +1,18 @@
 import type { IContent, ITodoTask, IUser } from '../schemas/user'
 import type { DataType } from '../schemas/service'
+import type { IBotLog } from '../schemas/bot'
 import type {
-  IBotLog,
   ITask,
   ITaskExecutionInput,
   ITaskExecutionResult,
-} from '../schemas/bot'
+} from '../schemas/task'
 
+import { BotLogSchema } from '../schemas/bot'
 import {
-  BotLogSchema,
   TaskExecutionInputSchema,
   TaskExecutionResultSchema,
   TaskSchema,
-} from '../schemas/bot'
+} from '../schemas/task'
 import { ContentSchema, TodoTaskSchema, UserSchema } from '../schemas/user'
 import { validate } from './validate'
 

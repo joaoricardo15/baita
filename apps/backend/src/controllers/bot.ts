@@ -9,13 +9,12 @@ import {
   ITask,
   ITaskExecutionResult,
   ServiceName,
-  TaskExecutionStatus,
   validateTaskExecutionResult,
 } from '@baita/shared'
 import { v4 as uuidv4 } from 'uuid'
 
+import Task from '@/controllers/task'
 import { ddb } from '@/lib/dynamodb'
-import { getDataFromService } from '@/utils/bot'
 import { getBotSampleCode, getCodeFile, getCompleteBotCode } from '@/utils/code'
 import {
   DISABLED_SCHEDULE_EXPRESSION,
@@ -450,49 +449,14 @@ class Bot {
     try {
       let sample: ITaskExecutionResult
 
-      const inputData = getDataFromService(
-        task.service?.config.inputFields || [],
-        task.inputData,
-        true
-      )
-
       if (Number(taskIndex) === 0) {
         const resource = new Resource(userId, 'bot')
         const botData = await resource.read(botId)
         if (!botData?.triggerSamples) return
         sample = botData.triggerSamples.reverse()[0]
       } else {
-        const testLambdaResult = await this.lambda.invoke({
-          FunctionName: `${SERVICE_PREFIX}-task-${task.service?.name}`,
-          Payload: JSON.stringify({
-            botId,
-            userId,
-            connectionId: task.connectionId,
-            appConfig: task.app?.config || {},
-            serviceConfig: task.service?.config,
-            inputData,
-          }) as unknown as Uint8Array,
-        })
-
-        const testLambdaPayload = JSON.parse(
-          new TextDecoder().decode(testLambdaResult.Payload),
-          (_, value) => {
-            return !isNaN(value) && value > Number.MAX_SAFE_INTEGER
-              ? value.toString()
-              : value
-          }
-        )
-
-        sample = {
-          inputData,
-          outputData: testLambdaPayload.success
-            ? testLambdaPayload.data
-            : testLambdaPayload.message || null,
-          status: testLambdaPayload.success
-            ? TaskExecutionStatus.success
-            : TaskExecutionStatus.fail,
-          timestamp: Date.now(),
-        }
+        const taskController = new Task()
+        sample = await taskController.execute(userId, task)
       }
 
       validateTaskExecutionResult(sample)
