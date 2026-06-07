@@ -26,7 +26,8 @@ export const handler = async (
 
   try {
     const userId = getAuthenticatedUserId(event)
-    const { operation, botId } = event.pathParameters || {}
+    const operation = event.pathParameters?.botId
+    const botId = event.pathParameters?.id
 
     if (!operation || !OPERATIONS.includes(operation)) {
       throw new Error(`Invalid operation: ${operation}`)
