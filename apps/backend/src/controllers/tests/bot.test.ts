@@ -23,7 +23,8 @@ import {
 import { DeleteObjectCommand, PutObjectCommand, S3 } from '@aws-sdk/client-s3'
 import {
   CreateScheduleCommand,
-  DeleteScheduleCommand,
+  CreateScheduleGroupCommand,
+  DeleteScheduleGroupCommand,
   Scheduler,
   UpdateScheduleCommand,
 } from '@aws-sdk/client-scheduler'
@@ -75,6 +76,7 @@ describe('Bot', () => {
         ApiId: 'api-123',
         ApiEndpoint: 'https://api-123.execute-api.us-east-1.amazonaws.com',
       })
+      schedulerMock.on(CreateScheduleGroupCommand).resolves({})
       schedulerMock.on(CreateScheduleCommand).resolves({})
       ddbMock.on(PutCommand).resolves({})
     })
@@ -101,7 +103,7 @@ describe('Bot', () => {
       expect(s3Calls).toHaveLength(1)
       expect(s3Calls[0].args[0].input).toEqual({
         Bucket: 'test-bots-bucket',
-        Key: 'baita-help-prod-mock-uuid-1234.zip',
+        Key: 'mock-uuid-1234.zip',
         Body: Buffer.from('zip-content'),
       })
     })
@@ -113,7 +115,7 @@ describe('Bot', () => {
       const lambdaCalls = lambdaMock.commandCalls(CreateFunctionCommand)
       expect(lambdaCalls).toHaveLength(1)
       expect(lambdaCalls[0].args[0].input.FunctionName).toBe(
-        'baita-help-prod-mock-uuid-1234'
+        'baita-help-prod-bot-mock-uuid-1234'
       )
       expect(lambdaCalls[0].args[0].input.Runtime).toBe('nodejs20.x')
       expect(lambdaCalls[0].args[0].input.Role).toBe(
@@ -183,7 +185,7 @@ describe('Bot', () => {
     beforeEach(() => {
       ddbMock.on(DeleteCommand).resolves({})
       apiGwMock.on(DeleteApiCommand).resolves({})
-      schedulerMock.on(DeleteScheduleCommand).resolves({})
+      schedulerMock.on(DeleteScheduleGroupCommand).resolves({})
       lambdaMock.on(DeleteFunctionCommand).resolves({})
       cwlMock.on(DeleteLogGroupCommand).resolves({})
       s3Mock.on(DeleteObjectCommand).resolves({})
@@ -197,6 +199,9 @@ describe('Bot', () => {
       expect(apiGwMock.commandCalls(DeleteApiCommand)).toHaveLength(1)
       expect(lambdaMock.commandCalls(DeleteFunctionCommand)).toHaveLength(1)
       expect(s3Mock.commandCalls(DeleteObjectCommand)).toHaveLength(1)
+      expect(
+        schedulerMock.commandCalls(DeleteScheduleGroupCommand)
+      ).toHaveLength(1)
     })
 
     it('deletes DynamoDB entry with correct key', async () => {
@@ -218,8 +223,10 @@ describe('Bot', () => {
       expect(apiCalls[0].args[0].input.ApiId).toBe('api-xyz')
     })
 
-    it('continues if scheduler delete fails', async () => {
-      schedulerMock.on(DeleteScheduleCommand).rejects(new Error('Not found'))
+    it('continues if schedule group delete fails', async () => {
+      schedulerMock
+        .on(DeleteScheduleGroupCommand)
+        .rejects(new Error('Not found'))
 
       const bot = new Bot()
       await expect(

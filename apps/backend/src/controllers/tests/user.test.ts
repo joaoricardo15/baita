@@ -74,7 +74,7 @@ describe('User', () => {
       const createQueueCalls = sqsMock.commandCalls(CreateQueueCommand)
       expect(createQueueCalls).toHaveLength(1)
       expect(createQueueCalls[0].args[0].input.QueueName).toBe(
-        'baita-help-prod-auth0|user1'
+        'baita-help-prod-user-auth0|user1'
       )
     })
 

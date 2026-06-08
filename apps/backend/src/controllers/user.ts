@@ -30,10 +30,11 @@ class User {
       })
 
       await this.sqs.createQueue({
-        QueueName: `${SERVICE_PREFIX}-${user.userId}`,
+        QueueName: `${SERVICE_PREFIX}-user-${user.userId}`,
         Attributes: {
           MessageRetentionPeriod: SQS_RETENTION_SECONDS.toString(),
         },
+        tags: { 'user-id': user.userId, 'managed-by': 'baita' },
       })
 
       return user
@@ -68,7 +69,7 @@ class User {
 
     try {
       const mainQueue = await this.sqs.getQueueUrl({
-        QueueName: `${SERVICE_PREFIX}-${userId}`,
+        QueueName: `${SERVICE_PREFIX}-user-${userId}`,
       })
       await this.sqs.deleteQueue({ QueueUrl: mainQueue.QueueUrl! })
     } catch (err) {
@@ -159,7 +160,7 @@ class User {
   async getContent(userId: string) {
     try {
       const queueUrlResult = await this.sqs.getQueueUrl({
-        QueueName: `${SERVICE_PREFIX}-${userId}`,
+        QueueName: `${SERVICE_PREFIX}-user-${userId}`,
       })
 
       const messagesResult = await this.sqs.receiveMessage({
@@ -199,7 +200,7 @@ class User {
   ): Promise<{ published: number; total: number }> {
     try {
       const queueResult = await this.sqs.getQueueUrl({
-        QueueName: `${SERVICE_PREFIX}-${userId}`,
+        QueueName: `${SERVICE_PREFIX}-user-${userId}`,
       })
 
       const { Items: alreadySeen } = await ddb.query({

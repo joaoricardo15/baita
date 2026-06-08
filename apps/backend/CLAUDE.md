@@ -142,7 +142,7 @@ A persistent test user exists in production DynamoDB for local endpoint testing:
 
 - **userId**: `test-user-local`
 - **email**: `test@baita.help`
-- **SQS queue**: `baita-help-prod-test-user-local`
+- **SQS queue**: `baita-help-prod-user-test-user-local`
 
 Use this for manual API testing (requires a valid JWT token from Auth0):
 
@@ -472,10 +472,10 @@ When adding a new endpoint or feature:
 
 Every user has **two coupled AWS resources** that MUST be created and destroyed together:
 
-| Resource                | Name Pattern               | Created By     | Destroyed By   |
-| ----------------------- | -------------------------- | -------------- | -------------- |
-| DynamoDB `#USER` record | `userId` + `#USER`         | `createUser()` | `deleteUser()` |
-| SQS queue               | `baita-help-prod-{userId}` | `createUser()` | `deleteUser()` |
+| Resource                | Name Pattern                    | Created By     | Destroyed By   |
+| ----------------------- | ------------------------------- | -------------- | -------------- |
+| DynamoDB `#USER` record | `userId` + `#USER`              | `createUser()` | `deleteUser()` |
+| SQS queue               | `baita-help-prod-user-{userId}` | `createUser()` | `deleteUser()` |
 
 ### Rules (NEVER violate)
 
@@ -491,7 +491,7 @@ Cross-reference DynamoDB users against SQS queues to detect drift:
 
 ```bash
 # List all SQS queues
-aws sqs list-queues --profile baita --region us-east-1 --queue-name-prefix baita-help-prod- --output json | jq -r '.QueueUrls[]'
+aws sqs list-queues --profile baita --region us-east-1 --queue-name-prefix baita-help-prod-user- --output json | jq -r '.QueueUrls[]'
 
 # List all DynamoDB users
 aws dynamodb scan --profile baita --region us-east-1 --table-name baita-help-prod \

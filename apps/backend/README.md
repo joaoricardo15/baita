@@ -197,7 +197,7 @@ Part of the monorepo unified workflow (`.github/workflows/ci.yml`) on push to `m
 - **Profile**: `baita`
 - **DynamoDB Table**: `baita-help-prod` (on-demand billing, single-table design)
 - **S3 Buckets**: `baita-help-prod-bots`, `baita-help-prod-files`, `baita-help-prod-docs`
-- **SQS Queues**: `baita-help-prod-{userId}` (per-user content feed)
+- **SQS Queues**: `baita-help-prod-user-{userId}` (per-user content feed)
 - **Custom Domain**: `api.baita.help` (Route53 + API Gateway)
 - **Lambda Runtime**: Node.js 20.x
 

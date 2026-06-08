@@ -110,9 +110,13 @@ provider:
           scheduler:CreateSchedule,
           scheduler:UpdateSchedule,
           scheduler:DeleteSchedule,
+          scheduler:CreateScheduleGroup,
+          scheduler:DeleteScheduleGroup,
         ]
       Resource:
         - arn:aws:scheduler:us-east-1:*:schedule/default/${self:provider.environment.SERVICE_PREFIX}-*
+        - arn:aws:scheduler:us-east-1:*:schedule/${self:provider.environment.SERVICE_PREFIX}-*/*
+        - arn:aws:scheduler:us-east-1:*:schedule-group/${self:provider.environment.SERVICE_PREFIX}-*
     - Effect: Allow
       Action: [apigateway:POST, apigateway:DELETE, apigateway:GET]
       Resource:
@@ -125,6 +129,9 @@ provider:
     - Effect: Allow
       Action: [ssm:GetParameter, ssm:GetParameters]
       Resource: arn:aws:ssm:us-east-1:*:parameter/baita/prod/*
+    - Effect: Allow
+      Action: [tag:GetResources]
+      Resource: '*'
   environment:
     SERVICE_PREFIX: ${self:service}-prod
     SERVICE_API_URL: https://api.baita.help

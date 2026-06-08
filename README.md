@@ -175,7 +175,7 @@ Results published to user's SQS queue → content feed
 - **Amplify App**: `d1yzzk62iq66zd`
 - **DynamoDB Table**: `baita-help-prod` (on-demand billing)
 - **S3 Buckets**: `baita-help-prod-bots`, `baita-help-prod-files`, `baita-help-prod-docs`
-- **SQS Queues**: `baita-help-prod-{userId}` (per-user content feed)
+- **SQS Queues**: `baita-help-prod-user-{userId}` (per-user content feed)
 - **Custom Domain**: `api.baita.help` (Route53 + API Gateway)
 
 ## Contributing

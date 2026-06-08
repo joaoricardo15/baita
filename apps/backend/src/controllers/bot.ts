@@ -46,7 +46,7 @@ class Bot {
 
   async getBotLogs(botId: string, searchTerms: string | string[] | undefined) {
     try {
-      const botPrefix = `${SERVICE_PREFIX}-${botId}`
+      const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
 
       let queryString =
         'fields @message | sort @timestamp desc | filter @message like "\tINFO\t"'
@@ -97,14 +97,15 @@ class Bot {
   async createBot(userId: string) {
     try {
       const botId = uuidv4()
-      const botPrefix = `${SERVICE_PREFIX}-${botId}`
+      const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
+      const tags = { 'bot-id': botId, 'user-id': userId, 'managed-by': 'baita' }
 
       const sampleCode = getBotSampleCode(userId, botId)
       const codeFile = await getCodeFile(sampleCode)
 
       await this.s3.putObject({
         Bucket: BOTS_BUCKET,
-        Key: `${botPrefix}.zip`,
+        Key: `${botId}.zip`,
         Body: codeFile,
       })
 
@@ -114,9 +115,10 @@ class Bot {
         Runtime: 'nodejs20.x',
         Timeout: 300,
         Role: BOTS_PERMISSION,
+        Tags: tags,
         Code: {
           S3Bucket: BOTS_BUCKET,
-          S3Key: `${botPrefix}.zip`,
+          S3Key: `${botId}.zip`,
         },
       })
 
@@ -128,6 +130,7 @@ class Bot {
         CredentialsArn: BOTS_PERMISSION,
         RouteKey: `ANY ${botUrl}`,
         Target: lambdaResult.FunctionArn,
+        Tags: tags,
         CorsConfiguration: {
           AllowHeaders: ['*'],
           AllowOrigins: ['*'],
@@ -135,8 +138,14 @@ class Bot {
         },
       })
 
+      await this.scheduler.createScheduleGroup({
+        Name: botPrefix,
+        Tags: Object.entries(tags).map(([Key, Value]) => ({ Key, Value })),
+      })
+
       await this.scheduler.createSchedule({
         Name: botPrefix,
+        GroupName: botPrefix,
         State: 'DISABLED',
         ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
         FlexibleTimeWindow: {
@@ -183,14 +192,15 @@ class Bot {
   async deployBotModel(userId: string, model: IBotModel) {
     try {
       const botId = uuidv4()
-      const botPrefix = `${SERVICE_PREFIX}-${botId}`
+      const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
+      const tags = { 'bot-id': botId, 'user-id': userId, 'managed-by': 'baita' }
 
       const sampleCode = getCompleteBotCode(userId, botId, model.tasks)
       const codeFile = await getCodeFile(sampleCode)
 
       await this.s3.putObject({
         Bucket: BOTS_BUCKET,
-        Key: `${botPrefix}.zip`,
+        Key: `${botId}.zip`,
         Body: codeFile,
       })
 
@@ -200,9 +210,10 @@ class Bot {
         Runtime: 'nodejs20.x',
         Timeout: 300,
         Role: BOTS_PERMISSION,
+        Tags: tags,
         Code: {
           S3Bucket: BOTS_BUCKET,
-          S3Key: `${botPrefix}.zip`,
+          S3Key: `${botId}.zip`,
         },
       })
 
@@ -214,6 +225,7 @@ class Bot {
         CredentialsArn: BOTS_PERMISSION,
         RouteKey: `ANY ${botUrl}`,
         Target: lambdaResult.FunctionArn,
+        Tags: tags,
         CorsConfiguration: {
           AllowHeaders: ['*'],
           AllowOrigins: ['*'],
@@ -221,22 +233,15 @@ class Bot {
         },
       })
 
-      await this.scheduler.createSchedule({
+      await this.scheduler.createScheduleGroup({
         Name: botPrefix,
-        State: 'DISABLED',
-        ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
-        FlexibleTimeWindow: {
-          Mode: 'OFF',
-        },
-        Target: {
-          Arn: lambdaResult.FunctionArn || '',
-          RoleArn: BOTS_PERMISSION,
-        },
+        Tags: Object.entries(tags).map(([Key, Value]) => ({ Key, Value })),
       })
 
       if (model.tasks[0].service?.name === ServiceName.schedule) {
-        await this.scheduler.updateSchedule({
+        await this.scheduler.createSchedule({
           Name: botPrefix,
+          GroupName: botPrefix,
           State: 'ENABLED',
           ScheduleExpression: model.tasks[0].inputData.find(
             (input) => input.name === 'expression'
@@ -253,8 +258,9 @@ class Bot {
           },
         })
       } else {
-        await this.scheduler.updateSchedule({
+        await this.scheduler.createSchedule({
           Name: botPrefix,
+          GroupName: botPrefix,
           State: 'DISABLED',
           ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
           FlexibleTimeWindow: {
@@ -298,32 +304,27 @@ class Bot {
 
   async deleteBot(userId: string, botId: string, apiId: string) {
     try {
-      const botPrefix = `${SERVICE_PREFIX}-${botId}`
+      const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
 
       await ddb.delete({
         TableName: CORE_TABLE,
         Key: { userId, sortKey: `#BOT#${botId}` },
       })
 
-      await this.apigateway.deleteApi({ ApiId: apiId })
-
-      await this.scheduler
-        .deleteSchedule({ Name: botPrefix })
-        .catch((err: unknown) => console.error(err))
-
-      await this.lambda.deleteFunction({ FunctionName: botPrefix })
-
-      try {
-        await this.cloudWatchLogs.deleteLogGroup({
+      const results = await Promise.allSettled([
+        this.apigateway.deleteApi({ ApiId: apiId }),
+        this.scheduler.deleteScheduleGroup({ Name: botPrefix }),
+        this.lambda.deleteFunction({ FunctionName: botPrefix }),
+        this.cloudWatchLogs.deleteLogGroup({
           logGroupName: `/aws/lambda/${botPrefix}`,
-        })
-      } catch (err: unknown) {
-        console.error(err)
-      }
+        }),
+        this.s3.deleteObject({ Bucket: BOTS_BUCKET, Key: `${botId}.zip` }),
+      ])
 
-      await this.s3.deleteObject({
-        Bucket: BOTS_BUCKET,
-        Key: `${botPrefix}.zip`,
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.error(`deleteBot step ${i} failed for ${botId}:`, r.reason)
+        }
       })
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
@@ -372,7 +373,7 @@ class Bot {
     tasks: ITask[]
   ) {
     try {
-      const botPrefix = `${SERVICE_PREFIX}-${botId}`
+      const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
 
       const botCode = !active
         ? getBotSampleCode(userId, botId)
@@ -381,19 +382,20 @@ class Bot {
 
       await this.s3.putObject({
         Bucket: BOTS_BUCKET,
-        Key: `${botPrefix}.zip`,
+        Key: `${botId}.zip`,
         Body: codeFile,
       })
 
       const lambdaResult = await this.lambda.updateFunctionCode({
         FunctionName: botPrefix,
         S3Bucket: BOTS_BUCKET,
-        S3Key: `${botPrefix}.zip`,
+        S3Key: `${botId}.zip`,
       })
 
       if (active && tasks[0].service?.name === ServiceName.schedule) {
         await this.scheduler.updateSchedule({
           Name: botPrefix,
+          GroupName: botPrefix,
           State: 'ENABLED',
           ScheduleExpression: tasks[0].inputData.find(
             (input) => input.name === 'expression'
@@ -412,6 +414,7 @@ class Bot {
       } else {
         await this.scheduler.updateSchedule({
           Name: botPrefix,
+          GroupName: botPrefix,
           State: 'DISABLED',
           ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
           FlexibleTimeWindow: {
