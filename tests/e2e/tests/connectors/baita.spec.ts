@@ -102,9 +102,10 @@ test.describe('Baita Connector — publishToFeed', () => {
       contentId,
       header: 'E2E Test Article',
       body: 'This is a test article published by connector E2E tests.',
-      source: '###E2E-Test',
+      source: 'E2E-Test',
       date: new Date().toISOString(),
       url: 'https://baita.help/test',
+      author: { name: 'E2E Bot' },
     }
 
     const task = buildBaitaMethodTask(
