@@ -30,14 +30,14 @@ test.describe('Notes Lifecycle', () => {
 
   test.afterAll(async ({ request }) => {
     await request
-      .delete(`${API_URL}/data/notes/${noteId}`, {
+      .delete(`${API_URL}/data/note/${noteId}`, {
         headers: authHeaders(token),
       })
       .catch(() => {})
   })
 
   test('list notes returns array', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/notes`, {
+    const res = await request.get(`${API_URL}/data/note`, {
       headers: authHeaders(token),
     })
     const body = await res.json()
@@ -47,7 +47,7 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('create a new note', async ({ request }) => {
-    const res = await request.post(`${API_URL}/data/notes/${noteId}`, {
+    const res = await request.post(`${API_URL}/data/note/${noteId}`, {
       headers: authHeaders(token),
       data: {
         noteId,
@@ -63,7 +63,7 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('read the created note', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/notes/${noteId}`, {
+    const res = await request.get(`${API_URL}/data/note/${noteId}`, {
       headers: authHeaders(token),
     })
     const body = await res.json()
@@ -77,7 +77,7 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('update note content', async ({ request }) => {
-    const res = await request.patch(`${API_URL}/data/notes/${noteId}`, {
+    const res = await request.patch(`${API_URL}/data/note/${noteId}`, {
       headers: authHeaders(token),
       data: {
         noteId,
@@ -89,7 +89,7 @@ test.describe('Notes Lifecycle', () => {
     const body = await res.json()
     expect(body.success).toBe(true)
 
-    const readRes = await request.get(`${API_URL}/data/notes/${noteId}`, {
+    const readRes = await request.get(`${API_URL}/data/note/${noteId}`, {
       headers: authHeaders(token),
     })
     const readBody = await readRes.json()
@@ -101,7 +101,7 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('delete the note', async ({ request }) => {
-    const res = await request.delete(`${API_URL}/data/notes/${noteId}`, {
+    const res = await request.delete(`${API_URL}/data/note/${noteId}`, {
       headers: authHeaders(token),
     })
     const body = await res.json()
@@ -110,7 +110,7 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('verify note is gone', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/notes/${noteId}`, {
+    const res = await request.get(`${API_URL}/data/note/${noteId}`, {
       headers: authHeaders(token),
     })
     const body = await res.json()

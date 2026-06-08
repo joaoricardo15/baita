@@ -208,8 +208,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
       'Returns all records of the given type for the authenticated user.',
     parameterOverrides: {
       type: {
-        description: 'Data type',
-        enum: ['notes', 'places', 'todos', 'content'],
+        description: 'Data type (e.g. note, place, todo, content, connection)',
       },
     },
   },
@@ -218,8 +217,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description: 'Creates a new record of the given type.',
     parameterOverrides: {
       type: {
-        description: 'Data type',
-        enum: ['notes', 'places', 'todos', 'content'],
+        description: 'Data type (e.g. note, place, todo, content, connection)',
       },
     },
   },
@@ -228,8 +226,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description: 'Returns a specific record by type and ID.',
     parameterOverrides: {
       type: {
-        description: 'Data type',
-        enum: ['notes', 'places', 'todos', 'content'],
+        description: 'Data type (e.g. note, place, todo, content, connection)',
       },
       id: { description: 'Record ID' },
     },
@@ -239,8 +236,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description: 'Updates a specific record.',
     parameterOverrides: {
       type: {
-        description: 'Data type',
-        enum: ['notes', 'places', 'todos', 'content'],
+        description: 'Data type (e.g. note, place, todo, content, connection)',
       },
       id: { description: 'Record ID' },
     },
@@ -250,8 +246,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description: 'Removes a specific record.',
     parameterOverrides: {
       type: {
-        description: 'Data type',
-        enum: ['notes', 'places', 'todos', 'content'],
+        description: 'Data type (e.g. note, place, todo, content, connection)',
       },
       id: { description: 'Record ID' },
     },
@@ -261,7 +256,6 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description:
       'Returns a presigned S3 URL for file upload (PUT method, 15 min expiry).',
     parameterOverrides: {
-      type: { description: 'Data type', enum: ['places', 'image'] },
       id: { description: 'Record ID' },
     },
   },
@@ -269,7 +263,6 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     summary: 'Remove uploaded file',
     description: 'Deletes an uploaded file from S3.',
     parameterOverrides: {
-      type: { description: 'Data type', enum: ['places', 'image'] },
       id: { description: 'Record ID' },
       fileId: { description: 'File ID (S3 key)' },
     },

@@ -12,11 +12,11 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.get(`${API_BASE}/data/todos`, () => {
+  http.get(`${API_BASE}/data/todo`, () => {
     return HttpResponse.json({ success: true, data: { tasks: [] } })
   }),
 
-  http.patch(`${API_BASE}/data/todos`, () => {
+  http.patch(`${API_BASE}/data/todo`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
@@ -46,11 +46,11 @@ export const handlers = [
     })
   }),
 
-  http.get(`${API_BASE}/data/notes`, () => {
+  http.get(`${API_BASE}/data/note`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.get(`${API_BASE}/data/places`, () => {
+  http.get(`${API_BASE}/data/place`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 

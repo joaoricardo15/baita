@@ -34,7 +34,7 @@ describe('ToDo Page', () => {
   describe('Rendering states', () => {
     it('shows skeleton while loading (data is fetching)', () => {
       server.use(
-        http.get(`${API_BASE}/data/todos`, () => {
+        http.get(`${API_BASE}/data/todo`, () => {
           return new Promise(() => {}) // never resolves — stays loading
         })
       )
@@ -45,7 +45,7 @@ describe('ToDo Page', () => {
 
     it('renders task content after loading', async () => {
       server.use(
-        http.get(`${API_BASE}/data/todos`, () =>
+        http.get(`${API_BASE}/data/todo`, () =>
           HttpResponse.json({
             success: true,
             data: {
@@ -102,7 +102,7 @@ describe('ToDo Page', () => {
     it('marks a task as complete when checkbox is clicked', async () => {
       let updateCalled = false
       server.use(
-        http.get(`${API_BASE}/data/todos`, () =>
+        http.get(`${API_BASE}/data/todo`, () =>
           HttpResponse.json({
             success: true,
             data: {
@@ -118,7 +118,7 @@ describe('ToDo Page', () => {
             },
           })
         ),
-        http.patch(`${API_BASE}/data/todos`, async ({ request }) => {
+        http.patch(`${API_BASE}/data/todo`, async ({ request }) => {
           updateCalled = true
           const body = (await request.json()) as any
           expect(body.tasks[0].done).toBe(true)
@@ -145,7 +145,7 @@ describe('ToDo Page', () => {
   describe('Error handling', () => {
     it('handles API failure without crashing', async () => {
       server.use(
-        http.get(`${API_BASE}/data/todos`, () =>
+        http.get(`${API_BASE}/data/todo`, () =>
           HttpResponse.json(
             { success: false, message: 'fail' },
             { status: 500 }

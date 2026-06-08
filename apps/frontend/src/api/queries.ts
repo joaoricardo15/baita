@@ -21,7 +21,7 @@ export const fetchBotModels = () => getApiResponse<IBotModel[]>('get', 'models')
 export const fetchLogs = (botId: string) =>
   getApiResponse<IBotLog[]>('get', `bots/${botId}/logs`)
 
-export const fetchTodo = () => getApiResponse<ITodo>('get', 'data/todos')
+export const fetchTodo = () => getApiResponse<ITodo>('get', 'data/todo')
 
 export const fetchContent = () => getApiResponse<IContent[]>('get', 'content')
 
@@ -34,9 +34,9 @@ export const fetchConnectionHealth = (connectionId: string) =>
     `connections/${connectionId}/health`
   )
 
-export const fetchNotes = () => getApiResponse<INote[]>('get', 'data/notes')
+export const fetchNotes = () => getApiResponse<INote[]>('get', 'data/note')
 
-export const fetchPlaces = () => getApiResponse<IPlace[]>('get', 'data/places')
+export const fetchPlaces = () => getApiResponse<IPlace[]>('get', 'data/place')
 
 export const fetchImageUploadUrl = (imageId: string) =>
   getApiResponse<string>('post', `data/image/${imageId}/upload`)

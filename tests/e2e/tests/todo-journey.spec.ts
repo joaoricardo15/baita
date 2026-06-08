@@ -30,7 +30,7 @@ test.describe('To-Do Lifecycle', () => {
   ]
 
   test.afterAll(async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/todos`, {
+    const res = await request.get(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
     })
     const body = await res.json()
@@ -38,7 +38,7 @@ test.describe('To-Do Lifecycle', () => {
       const tasks = body.data.tasks.filter(
         (t: { taskId: string }) => !taskIds.includes(t.taskId)
       )
-      await request.patch(`${API_URL}/data/todos`, {
+      await request.patch(`${API_URL}/data/todo`, {
         headers: authHeaders(token),
         data: { tasks },
       })
@@ -46,7 +46,7 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('read current todo state', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/todos`, {
+    const res = await request.get(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
     })
     expect(res.status()).toBe(200)
@@ -58,7 +58,7 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('create 3 new tasks', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/todos`, {
+    const res = await request.get(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
     })
     const current = await res.json()
@@ -72,7 +72,7 @@ test.describe('To-Do Lifecycle', () => {
       updatedAt: Date.now(),
     }))
 
-    const updateRes = await request.patch(`${API_URL}/data/todos`, {
+    const updateRes = await request.patch(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
       data: { tasks: [...existingTasks, ...newTasks] },
     })
@@ -82,7 +82,7 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('verify all 3 tasks exist', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/todos`, {
+    const res = await request.get(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
     })
     const body = await res.json()
@@ -94,7 +94,7 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('mark 2 tasks as done', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/todos`, {
+    const res = await request.get(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
     })
     const body = await res.json()
@@ -104,7 +104,7 @@ test.describe('To-Do Lifecycle', () => {
         : t
     )
 
-    const updateRes = await request.patch(`${API_URL}/data/todos`, {
+    const updateRes = await request.patch(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
       data: { tasks },
     })
@@ -112,7 +112,7 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('verify 2 done, 1 pending', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/todos`, {
+    const res = await request.get(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
     })
     const body = await res.json()
@@ -127,7 +127,7 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('delete all test tasks (cleanup)', async ({ request }) => {
-    const res = await request.get(`${API_URL}/data/todos`, {
+    const res = await request.get(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
     })
     const body = await res.json()
@@ -135,7 +135,7 @@ test.describe('To-Do Lifecycle', () => {
       (t: { taskId: string }) => !taskIds.includes(t.taskId)
     )
 
-    const updateRes = await request.patch(`${API_URL}/data/todos`, {
+    const updateRes = await request.patch(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
       data: { tasks },
     })

@@ -53,13 +53,13 @@ test.describe('User Teardown', () => {
     const connectionsBody = await connectionsRes.json()
     expect(connectionsBody.data || []).toHaveLength(0)
 
-    const notesRes = await request.get(`${API_URL}/data/notes`, {
+    const notesRes = await request.get(`${API_URL}/data/note`, {
       headers: authHeaders(token),
     })
     const notesBody = await notesRes.json()
     expect(notesBody.data || []).toHaveLength(0)
 
-    const todosRes = await request.get(`${API_URL}/data/todos`, {
+    const todosRes = await request.get(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
     })
     const todosBody = await todosRes.json()

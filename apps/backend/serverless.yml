@@ -130,6 +130,7 @@ provider:
       Resource:
         - arn:aws:apigateway:us-east-1::/apis
         - arn:aws:apigateway:us-east-1::/apis/*
+        - arn:aws:apigateway:us-east-1::/tags/*
     - Effect: Allow
       Action: [iam:PassRole]
       Resource:

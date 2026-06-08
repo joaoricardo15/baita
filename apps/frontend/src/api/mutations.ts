@@ -32,7 +32,7 @@ export const testBotTask = (botId: string, task: ITask, taskIndex: number) =>
   })
 
 export const updateTodo = (tasks: ITodoTask[]) =>
-  getApiResponse<ITodoTask[]>('patch', 'data/todos', {
+  getApiResponse<ITodoTask[]>('patch', 'data/todo', {
     tasks,
   })
 
@@ -52,19 +52,19 @@ export const deleteConnection = (connectionId: string) =>
   getApiResponse<void>('delete', `connections/${connectionId}`)
 
 export const createNote = (noteId: string, note: INote) =>
-  getApiResponse<INote>('post', `data/notes/${noteId}`, note)
+  getApiResponse<INote>('post', `data/note/${noteId}`, note)
 
 export const deleteNote = (noteId: string) =>
-  getApiResponse<INote>('delete', `data/notes/${noteId}`)
+  getApiResponse<INote>('delete', `data/note/${noteId}`)
 
 export const createPlace = (placeId: string, place: IPlace) =>
-  getApiResponse<IPlace>('post', `data/places/${placeId}`, place)
+  getApiResponse<IPlace>('post', `data/place/${placeId}`, place)
 
 export const updatePlace = (placeId: string, place: IPlace) =>
-  getApiResponse<IPlace>('patch', `data/places/${placeId}`, place)
+  getApiResponse<IPlace>('patch', `data/place/${placeId}`, place)
 
 export const deletePlace = (placeId: string) =>
-  getApiResponse<IPlace>('delete', `data/places/${placeId}`)
+  getApiResponse<IPlace>('delete', `data/place/${placeId}`)
 
 export const removeImage = (imageId: string) =>
   getApiResponse<void>(
