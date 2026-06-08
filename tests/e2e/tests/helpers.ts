@@ -101,7 +101,7 @@ export async function copyAdminConnections(
     const { sortKey: _, userId: __, ...sourceData } = item
     const connectionId = `e2e-${appName.toLowerCase()}-${Date.now()}`
 
-    const createRes = await request.post(
+    const createRes = await request.put(
       `${API_URL}/data/connection/${connectionId}`,
       {
         headers: authHeaders(token),

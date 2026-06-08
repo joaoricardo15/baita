@@ -47,7 +47,7 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('create a new note', async ({ request }) => {
-    const res = await request.post(`${API_URL}/data/note/${noteId}`, {
+    const res = await request.put(`${API_URL}/data/note/${noteId}`, {
       headers: authHeaders(token),
       data: {
         noteId,

@@ -1,9 +1,6 @@
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
-import Data, {
-  dataValidationProneOperations,
-  dataValidations,
-} from '@/controllers/data'
+import Data, { dataValidations } from '@/controllers/data'
 import Api, { ApiRequestStatus } from '@/utils/api'
 import { getAuthenticatedUserId } from '@/utils/auth'
 
@@ -24,50 +21,37 @@ export const handler = async (
       throw new Error('Missing data type')
     }
 
-    const resource = new Data(userId, type)
+    const store = new Data(userId, type)
     const body = JSON.parse(event.body || '{}')
 
     let data
-    let operation: string
 
     if (path.endsWith('/upload')) {
-      operation = 'upload'
       if (!id) throw new Error('Missing record id')
-      data = await resource.upload(id)
+      data = await store.upload(id)
     } else if (path.endsWith('/files/{fileId}') && method === 'DELETE') {
-      operation = 'remove'
       if (!fileId) throw new Error('Missing fileId')
-      await resource.remove(fileId)
+      await store.remove(fileId)
     } else if (id) {
       switch (method) {
         case 'GET':
-          operation = 'read'
-          data = await resource.read(id)
+          data = await store.read(id)
           break
-        case 'POST':
-          operation = 'create'
-          if (
-            dataValidationProneOperations.includes(operation) &&
-            Object.keys(dataValidations).includes(type)
-          ) {
+        case 'PUT':
+          if (Object.keys(dataValidations).includes(type)) {
             dataValidations[type](body)
           }
-          await resource.create(id, body)
+          await store.create(id, body)
           data = body
           break
         case 'PATCH':
-          operation = 'update'
-          if (
-            dataValidationProneOperations.includes(operation) &&
-            Object.keys(dataValidations).includes(type)
-          ) {
+          if (Object.keys(dataValidations).includes(type)) {
             dataValidations[type](body)
           }
-          data = await resource.update(id, body)
+          data = await store.update(id, body)
           break
         case 'DELETE':
-          operation = 'delete'
-          await resource.delete(id)
+          await store.delete(id)
           break
         default:
           throw new Error(`Unsupported method: ${method}`)
@@ -75,33 +59,15 @@ export const handler = async (
     } else {
       switch (method) {
         case 'GET':
-          operation = 'list'
-          data = await resource.list()
+          data = await store.list()
           break
-        case 'POST': {
-          operation = 'create'
-          const resourceId = body.id || body[`${type}Id`] || ''
-          if (
-            dataValidationProneOperations.includes(operation) &&
-            Object.keys(dataValidations).includes(type)
-          ) {
+        case 'PUT':
+          if (Object.keys(dataValidations).includes(type)) {
             dataValidations[type](body)
           }
-          await resource.create(resourceId, body)
+          await store.create('', body)
           data = body
           break
-        }
-        case 'PATCH': {
-          operation = 'update'
-          if (
-            dataValidationProneOperations.includes(operation) &&
-            Object.keys(dataValidations).includes(type)
-          ) {
-            dataValidations[type](body)
-          }
-          data = await resource.update('', body)
-          break
-        }
         default:
           throw new Error(`Unsupported method: ${method}`)
       }

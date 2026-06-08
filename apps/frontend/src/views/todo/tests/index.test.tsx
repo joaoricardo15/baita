@@ -118,7 +118,7 @@ describe('ToDo Page', () => {
             },
           })
         ),
-        http.patch(`${API_BASE}/data/todo`, async ({ request }) => {
+        http.put(`${API_BASE}/data/todo`, async ({ request }) => {
           updateCalled = true
           const body = (await request.json()) as any
           expect(body.tasks[0].done).toBe(true)

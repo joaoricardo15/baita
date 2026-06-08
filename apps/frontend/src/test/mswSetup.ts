@@ -16,7 +16,7 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: { tasks: [] } })
   }),
 
-  http.patch(`${API_BASE}/data/todo`, () => {
+  http.put(`${API_BASE}/data/todo`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 

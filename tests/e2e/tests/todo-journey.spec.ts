@@ -38,7 +38,7 @@ test.describe('To-Do Lifecycle', () => {
       const tasks = body.data.tasks.filter(
         (t: { taskId: string }) => !taskIds.includes(t.taskId)
       )
-      await request.patch(`${API_URL}/data/todo`, {
+      await request.put(`${API_URL}/data/todo`, {
         headers: authHeaders(token),
         data: { tasks },
       })
@@ -72,7 +72,7 @@ test.describe('To-Do Lifecycle', () => {
       updatedAt: Date.now(),
     }))
 
-    const updateRes = await request.patch(`${API_URL}/data/todo`, {
+    const updateRes = await request.put(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
       data: { tasks: [...existingTasks, ...newTasks] },
     })
@@ -104,7 +104,7 @@ test.describe('To-Do Lifecycle', () => {
         : t
     )
 
-    const updateRes = await request.patch(`${API_URL}/data/todo`, {
+    const updateRes = await request.put(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
       data: { tasks },
     })
@@ -135,7 +135,7 @@ test.describe('To-Do Lifecycle', () => {
       (t: { taskId: string }) => !taskIds.includes(t.taskId)
     )
 
-    const updateRes = await request.patch(`${API_URL}/data/todo`, {
+    const updateRes = await request.put(`${API_URL}/data/todo`, {
       headers: authHeaders(token),
       data: { tasks },
     })

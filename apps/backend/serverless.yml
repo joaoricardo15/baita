@@ -242,18 +242,13 @@ functions:
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: models
-          method: post
+          path: models/{modelId}
+          method: put
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
           path: models/{modelId}
           method: get
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-      - http:
-          path: models/{modelId}
-          method: patch
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
@@ -318,7 +313,12 @@ functions:
           authorizer: ${self:custom.authorizer}
       - http:
           path: data/{type}
-          method: post
+          method: put
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: data/{type}/{id}
+          method: put
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
