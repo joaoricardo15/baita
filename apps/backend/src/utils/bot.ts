@@ -40,7 +40,10 @@ export function getDataFromMapping(
 
   for (let i = 0; i < outputKeys.length; i++) {
     const outputKey = outputKeys[i]
-    const outputValue = getDataFromPath(data, outputMapping[outputKey])
+    const mappingValue = outputMapping[outputKey]
+    const outputValue = mappingValue.startsWith('###')
+      ? mappingValue.slice(3)
+      : getDataFromPath(data, mappingValue)
     if (outputValue !== undefined) {
       mappedData = setObjectDataFromPath(
         mappedData,

@@ -32,6 +32,7 @@ export async function executeTask(
   const res = await request.post(`${API_URL}/task/execute`, {
     headers: authHeaders(token),
     data: task,
+    timeout: 55000,
   })
   return res.json()
 }
