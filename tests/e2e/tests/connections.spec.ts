@@ -137,7 +137,7 @@ test.describe('Connections Management', () => {
     const connectionId = `e2e-details-${Date.now()}`
     createdConnections.push(connectionId)
 
-    await request.post(`${API_URL}/connections/${connectionId}`, {
+    await request.put(`${API_URL}/data/connection/${connectionId}`, {
       headers: authHeaders(token),
       data: {
         appId: 'test-app',
