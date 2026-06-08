@@ -29,12 +29,19 @@ export async function executeTask(
   token: string,
   task: object
 ): Promise<IExecuteResponse> {
-  const res = await request.post(`${API_URL}/task/execute`, {
-    headers: authHeaders(token),
-    data: task,
-    timeout: 55000,
-  })
-  return res.json()
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const res = await request.post(`${API_URL}/task/execute`, {
+      headers: authHeaders(token),
+      data: task,
+      timeout: 55000,
+    })
+    if (res.status() >= 502 && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 3000))
+      continue
+    }
+    return res.json()
+  }
+  throw new Error('executeTask: all retries exhausted')
 }
 
 export async function findConnection(

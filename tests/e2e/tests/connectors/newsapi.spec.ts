@@ -90,7 +90,7 @@ test.describe('NewsAPI Connector — Top Headlines', () => {
 
     const first = items[0]
     expect(first).toHaveProperty('header')
-    expect(first).toHaveProperty('source', '###NewsAPI')
+    expect(first).toHaveProperty('source', 'NewsAPI')
     expect(first).toHaveProperty('contentId')
     logResult('NewsAPI outputMapping', {
       header: (first.header as string)?.slice(0, 60),

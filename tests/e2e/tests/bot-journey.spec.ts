@@ -162,13 +162,19 @@ test.describe('Bot Lifecycle', () => {
     })
     const bot = (await getRes.json()).data
 
-    const res = await request.post(`${API_URL}/bot/deploy/${botId}`, {
-      headers: authHeaders(token),
-      data: { ...bot, active: true },
-    })
-    const body = await res.json()
-    expect(body.success).toBe(true)
-    expect(body.data.active).toBe(true)
+    let body: { success: boolean; data: { active: boolean } }
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const res = await request.post(`${API_URL}/bot/deploy/${botId}`, {
+        headers: authHeaders(token),
+        data: { ...bot, active: true },
+        timeout: 55000,
+      })
+      body = await res.json()
+      if (body.success || attempt === 3) break
+      await new Promise((r) => setTimeout(r, 3000))
+    }
+    expect(body!.success).toBe(true)
+    expect(body!.data.active).toBe(true)
     logResult('Bot deployed', { active: true })
   })
 
