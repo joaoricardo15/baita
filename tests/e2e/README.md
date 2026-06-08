@@ -140,3 +140,44 @@ These must be added as GitHub Secrets for CI. If not configured, the browser fal
 - **Shared helpers**: `tests/helpers.ts` — token loading, auth headers, API URL, connection utilities
 - **Config**: `playwright.config.ts` — three projects (setup → journeys → teardown) with dependency chaining
 - **CI**: GitHub Actions, AWS credentials for DynamoDB access
+
+## OAuth2 Connection Maintenance
+
+Connector tests (Google, Pipedrive, OpenAI, and any future connectors) depend on real OAuth connections copied from an admin user. These connections **must work** — tests fail hard if any connection is broken, never skip silently.
+
+### How it works
+
+1. Setup queries **all** admin user connections from DynamoDB (`#CONNECTION#*` records)
+2. Each connection is copied to the E2E test user via the Resource API
+3. A health check (`POST /connection/health/{id}`) validates each connection immediately after copy
+4. If any connection is unhealthy, **the setup test fails** — blocking all downstream journey tests
+5. Individual connector tests assert success — no graceful skips, no silent failures
+
+### When connections break
+
+- **Scopes added** to the connector config (e.g. adding `gmail.readonly`) — existing token doesn't have the new scope
+- **Token revoked** — admin changed password, revoked app access, or provider invalidated the token
+- **API disabled** — the provider's API was turned off in the developer console
+- **Credentials rotated** — SSM parameters (`google-client-id`, `pipedrive-client-id`) updated without re-authorizing
+- **API key expired** — OpenAI key rotated or exhausted its quota
+
+### How to fix (30 seconds per connector)
+
+1. Log into https://baita.help as the admin user
+2. Go to Connections → disconnect the broken connector
+3. Reconnect it (triggers OAuth flow with all current scopes)
+4. Verify: `cd tests/e2e && npm run test:prod` — all connector tests must pass
+
+### How you know it's broken
+
+- Setup test fails: `"{AppName} connection unhealthy after copy..."`
+- Connector test fails: `"Gmail API failed: {error}. Admin must reconnect..."`
+- CI pipeline goes red with an actionable error message pointing to the fix
+
+### Adding a new OAuth2 connector to E2E
+
+1. Connect the service as the admin user at https://baita.help
+2. Add the app ID → name mapping in `tests/helpers.ts` (`APP_NAMES` constant)
+3. Create `tests/connectors/{name}.spec.ts` using `findConnection()` + `buildXxxTask()` pattern
+4. Add a task builder in `tests/connectors/_helpers.ts`
+5. The connection will be automatically copied and health-checked — no setup changes needed

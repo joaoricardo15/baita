@@ -7,7 +7,7 @@
  * 2. If login works → delete account via centralized DELETE /user endpoint
  * 3. Sign up fresh → guaranteed clean slate
  * 4. Verify Auth0 Post-Login Action provisioned the user (DynamoDB + SQS)
- * 5. Copy Google connection for journey specs that need it
+ * 5. Copy admin OAuth connections for journey specs that need them
  *
  * User provisioning is handled automatically by the Auth0 Post-Login Action
  * which calls POST /user with an API key on first login (signup).
@@ -23,7 +23,7 @@ import {
   API_URL,
   authHeaders,
   cleanupStaleUser,
-  copyGoogleConnection,
+  copyAdminConnections,
   loginUser,
   logResult,
   signUpUser,
@@ -191,23 +191,31 @@ test.describe('User Lifecycle Setup', () => {
     logResult('Clean state verified', { bots: 0, contentEndpoint: 'ok' })
   })
 
-  test('copy Google connection to test user', async ({ request }) => {
-    const { connectionId } = await copyGoogleConnection(
-      request,
-      userId,
-      accessToken
-    )
+  test('copy admin connections to test user', async ({ request }) => {
+    const connections = await copyAdminConnections(request, userId, accessToken)
 
-    const verifyRes = await request.post(
-      `${API_URL}/resource/connection/read/${connectionId}`,
-      { headers: authHeaders(accessToken), data: {} }
-    )
-    const verifyBody = await verifyRes.json()
-    expect(verifyBody.success).toBe(true)
-    expect(verifyBody.data.email).toContain('joaoricardocardoso15')
-    logResult('Google connection copied', {
-      connectionId,
-      email: verifyBody.data.email,
+    expect(connections.length).toBeGreaterThan(0)
+
+    for (const conn of connections) {
+      const healthRes = await request.post(
+        `${API_URL}/connection/health/${conn.connectionId}`,
+        { headers: authHeaders(accessToken), data: {} }
+      )
+      const healthBody = await healthRes.json()
+      expect(
+        healthBody.success && healthBody.data?.status !== 'expired',
+        `${conn.appName} connection unhealthy after copy. ` +
+          `Admin must re-authorize: https://baita.help → Connections → ${conn.appName}. ` +
+          `Error: ${JSON.stringify(healthBody.data || healthBody.message)}`
+      ).toBeTruthy()
+      logResult(`${conn.appName} connection healthy`, {
+        connectionId: conn.connectionId,
+      })
+    }
+
+    logResult('Admin connections copied', {
+      count: connections.length,
+      apps: connections.map((c) => c.appName),
     })
   })
 })

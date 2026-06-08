@@ -1,6 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { fromIni } from '@aws-sdk/credential-providers'
-import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb'
 import fs from 'fs'
 import path from 'path'
 import { APIRequestContext, Page } from '@playwright/test'
@@ -11,8 +11,14 @@ export const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
 export const TEST_EMAIL = 'e2e-test@baita.help'
 export const TEST_PASSWORD = 'BaitaE2e!2024'
 
-export const GOOGLE_CONNECTION_SOURCE_USER = '110944657139284874166'
+export const ADMIN_SOURCE_USER = '110944657139284874166'
 export const GOOGLE_APP_ID = '5c16e311-a65a-449c-ad82-1f23a41cf89c'
+
+const APP_NAMES: Record<string, string> = {
+  '5c16e311-a65a-449c-ad82-1f23a41cf89c': 'Google',
+  '19c1921c-9a6b-4def-91c8-8bcba8239bf5': 'Pipedrive',
+  '0f7bb503-b9b4-4fd5-80ab-9a97d52397bb': 'OpenAI',
+}
 
 export interface IAuthData {
   accessToken: string
@@ -50,11 +56,17 @@ export async function deleteConnection(
   })
 }
 
-export async function copyGoogleConnection(
+export interface ICopiedConnection {
+  connectionId: string
+  appId: string
+  appName: string
+}
+
+export async function copyAdminConnections(
   request: APIRequestContext,
   targetUserId: string,
   token: string
-): Promise<{ connectionId: string }> {
+): Promise<ICopiedConnection[]> {
   const client = new DynamoDBClient({
     region: 'us-east-1',
     ...(process.env.AWS_ACCESS_KEY_ID
@@ -64,40 +76,55 @@ export async function copyGoogleConnection(
   const docClient = DynamoDBDocumentClient.from(client)
 
   const result = await docClient.send(
-    new GetCommand({
+    new QueryCommand({
       TableName: 'baita-help-prod',
-      Key: {
-        userId: GOOGLE_CONNECTION_SOURCE_USER,
-        sortKey: `#CONNECTION#${GOOGLE_CONNECTION_SOURCE_USER}`,
+      KeyConditionExpression: 'userId = :uid AND begins_with(sortKey, :sk)',
+      ExpressionAttributeValues: {
+        ':uid': ADMIN_SOURCE_USER,
+        ':sk': '#CONNECTION#',
       },
     })
   )
 
-  if (!result.Item) {
+  const items = result.Items || []
+  if (items.length === 0) {
     throw new Error(
-      'Source Google connection not found in DynamoDB. Ensure admin user has Google connected.'
+      'No connections found for admin user in DynamoDB. ' +
+        'Ensure admin has OAuth connectors set up at https://baita.help.'
     )
   }
 
-  const { sortKey: _, userId: __, ...sourceData } = result.Item
-  const connectionId = `google-e2e-${Date.now()}`
-  const createRes = await request.post(
-    `${API_URL}/resource/connection/create/${connectionId}`,
-    {
-      headers: authHeaders(token),
-      data: {
-        ...sourceData,
-        connectionId,
-        userId: targetUserId,
-      },
+  const copied: ICopiedConnection[] = []
+
+  for (const item of items) {
+    const appId: string = item.appId || ''
+    const appName: string = APP_NAMES[appId] || appId
+    const { sortKey: _, userId: __, ...sourceData } = item
+    const connectionId = `e2e-${appName.toLowerCase()}-${Date.now()}`
+
+    const createRes = await request.post(
+      `${API_URL}/resource/connection/create/${connectionId}`,
+      {
+        headers: authHeaders(token),
+        data: {
+          ...sourceData,
+          connectionId,
+          userId: targetUserId,
+        },
+      }
+    )
+    const createBody = await createRes.json()
+    if (!createBody.success) {
+      console.warn(
+        `[E2E] Failed to copy ${appName} connection: ${createBody.message}`
+      )
+      continue
     }
-  )
-  const createBody = await createRes.json()
-  if (!createBody.success) {
-    throw new Error(`Failed to copy Google connection: ${createBody.message}`)
+
+    copied.push({ connectionId, appId, appName })
   }
 
-  return { connectionId }
+  return copied
 }
 
 async function navigateToAuth0(page: Page): Promise<void> {

@@ -6,7 +6,7 @@
  * - get-message: Get specific email by ID
  *
  * Requires: Google OAuth2 connection (copied from admin in setup).
- * Skips gracefully if the connection's refresh token is expired.
+ * Fails hard if connection is broken — never skips silently.
  */
 import { expect, test } from '@playwright/test'
 
@@ -20,18 +20,17 @@ test.beforeAll(async ({ request }) => {
   const data = loadAuthData()
   token = data.accessToken
   const conn = await findConnection(request, token, GOOGLE_APP_ID)
-  if (!conn) {
-    logResult('Google connection not found — skipping all Google tests', {})
-  }
-  googleConnectionId = conn?.connectionId || ''
+  expect(
+    conn,
+    'Google connection not found — setup must copy admin connections before connector tests run'
+  ).toBeTruthy()
+  googleConnectionId = conn!.connectionId
 })
 
 test.describe('Google Connector — Gmail', () => {
   let firstMessageId: string
 
   test('list-messages: lists Gmail messages', async ({ request }) => {
-    test.skip(!googleConnectionId, 'No Google connection available')
-
     const task = buildGoogleTask(googleConnectionId, {
       label: 'List emails',
       path: 'gmail/v1/users/me/messages',
@@ -52,17 +51,11 @@ test.describe('Google Connector — Gmail', () => {
 
     const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
-
-    if (body.data.status === 'fail') {
-      logResult(
-        'Gmail list failed (token likely expired)',
-        body.data.outputData
-      )
-      test.skip()
-      return
-    }
-
-    expect(body.data.status).toBe('success')
+    expect(
+      body.data.status,
+      `Gmail API failed: ${String(body.data.outputData)}. ` +
+        'Admin must reconnect Google at https://baita.help → Connections.'
+    ).toBe('success')
     expect(Array.isArray(body.data.outputData)).toBe(true)
 
     const messages = body.data.outputData as { id: string; threadId: string }[]
@@ -78,8 +71,10 @@ test.describe('Google Connector — Gmail', () => {
   })
 
   test('get-message: gets specific email by ID', async ({ request }) => {
-    test.skip(!googleConnectionId, 'No Google connection available')
-    test.skip(!firstMessageId, 'No message ID from previous test')
+    expect(
+      firstMessageId,
+      'No message ID — list-messages must pass first'
+    ).toBeTruthy()
 
     const task = buildGoogleTask(googleConnectionId, {
       label: 'Get email',
@@ -89,14 +84,12 @@ test.describe('Google Connector — Gmail', () => {
 
     const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
+    expect(
+      body.data.status,
+      `Gmail API failed: ${String(body.data.outputData)}. ` +
+        'Admin must reconnect Google at https://baita.help → Connections.'
+    ).toBe('success')
 
-    if (body.data.status === 'fail') {
-      logResult('Gmail get failed (token likely expired)', body.data.outputData)
-      test.skip()
-      return
-    }
-
-    expect(body.data.status).toBe('success')
     const message = body.data.outputData as Record<string, unknown>
     expect(message).toHaveProperty('id')
     expect(message).toHaveProperty('snippet')

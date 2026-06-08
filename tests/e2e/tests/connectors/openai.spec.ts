@@ -4,11 +4,8 @@
  * Tests OpenAI services via standalone task execution:
  * - text-completion: Generate text using GPT models
  *
- * Auth: User API key stored in a connection (userApiKey type).
- * Skips entirely if no OpenAI connection found for the test user.
- *
- * To enable: create a connection with appId '0f7bb503-b9b4-4fd5-80ab-9a97d52397bb'
- * and credentials: { apiKey: 'sk-...' }
+ * Auth: User API key stored in a connection (userApiKey type, copied from admin).
+ * Fails hard if connection is broken — never skips silently.
  */
 import { expect, test } from '@playwright/test'
 
@@ -24,16 +21,15 @@ test.beforeAll(async ({ request }) => {
   const data = loadAuthData()
   token = data.accessToken
   const conn = await findConnection(request, token, OPENAI_APP_ID)
-  if (!conn) {
-    logResult('OpenAI connection not found — skipping all OpenAI tests', {})
-  }
-  openaiConnectionId = conn?.connectionId || ''
+  expect(
+    conn,
+    'OpenAI connection not found — setup must copy admin connections before connector tests run'
+  ).toBeTruthy()
+  openaiConnectionId = conn!.connectionId
 })
 
 test.describe('OpenAI Connector — Text Completion', () => {
   test('generates text from a simple prompt', async ({ request }) => {
-    test.skip(!openaiConnectionId, 'No OpenAI connection available')
-
     const task = buildOpenAiTask(openaiConnectionId, {
       label: 'Get Text Completion',
       path: 'chat/completions',
@@ -49,14 +45,11 @@ test.describe('OpenAI Connector — Text Completion', () => {
 
     const body = await executeTask(request, token, task)
     expect(body.success).toBe(true)
-
-    if (body.data.status === 'fail') {
-      logResult('OpenAI task failed', body.data.outputData)
-      test.skip()
-      return
-    }
-
-    expect(body.data.status).toBe('success')
+    expect(
+      body.data.status,
+      `OpenAI API failed: ${String(body.data.outputData)}. ` +
+        'Admin must update OpenAI API key at https://baita.help → Connections.'
+    ).toBe('success')
     expect(body.data.outputData).toBeTruthy()
     expect(typeof body.data.outputData).toBe('string')
     logResult('OpenAI text-completion', {
