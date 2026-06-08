@@ -323,7 +323,7 @@ User provisioning is called exclusively by the Auth0 Post-Login Action on first 
 
 - **No Lambda authorizer** — validated by `X-Api-Key` header in the handler itself
 - **API key stored in SSM**: `/baita/prod/auth0-create-user-api-key`
-- **Handler**: `src/endpoints/user/create.ts` (separate Lambda from user-facing operations)
+- **Handler**: `src/endpoints/user/index.ts` (same Lambda as DELETE /user and GET /content, routes by HTTP method)
 - **Must NEVER be called by E2E tests, frontend, or any source other than Auth0**
 - Auth0 Action secrets: `BAITA_API_URL`, `BAITA_CREATE_USER_API_KEY`
 

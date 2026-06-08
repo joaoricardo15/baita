@@ -156,20 +156,14 @@ functions:
     handler: src/authorizer/index.handler
     timeout: 10
 
-  # User provisioning (called by Auth0 Post-Login Action only — API key auth)
-  endpoint-user-create:
-    handler: src/endpoints/user/create.handler
+  # User operations (create via API key, delete + content via JWT)
+  endpoint-user:
+    handler: src/endpoints/user/index.handler
     timeout: 60
     events:
       - http:
           path: user
           method: post
-
-  # User-facing operations (JWT auth)
-  endpoint-user:
-    handler: src/endpoints/user/index.handler
-    timeout: 60
-    events:
       - http:
           path: user
           method: delete
@@ -178,6 +172,21 @@ functions:
       - http:
           path: content
           method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # Generic resource CRUD
+  endpoint-resource:
+    handler: src/endpoints/resource/index.handler
+    events:
+      - http:
+          path: resource/{resourceName}/{operation}
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: resource/{resourceName}/{operation}/{resourceId}
+          method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
@@ -204,21 +213,6 @@ functions:
           authorizer: ${self:custom.authorizer}
       - http:
           path: bot/{operation}/{botId}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-
-  # Generic resource CRUD
-  endpoint-resource:
-    handler: src/endpoints/resource/index.handler
-    events:
-      - http:
-          path: resource/{resourceName}/{operation}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-      - http:
-          path: resource/{resourceName}/{operation}/{resourceId}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}

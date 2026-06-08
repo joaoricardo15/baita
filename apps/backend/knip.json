@@ -1,10 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": [
-    "src/endpoints/**/index.ts",
-    "src/endpoints/user/create.ts",
-    "src/connectors/*/index.ts"
-  ],
+  "entry": ["src/endpoints/**/index.ts", "src/connectors/*/index.ts"],
   "project": ["src/**/*.ts"],
   "ignore": ["src/**/*.test.ts", "src/utils/tests/helpers/**"],
   "ignoreDependencies": ["aws-sdk-client-mock-jest"],
