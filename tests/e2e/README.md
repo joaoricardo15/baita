@@ -94,7 +94,7 @@ The CI workflow (`e2e` job) runs after both frontend and backend deploy:
 If tests fail repeatedly and leave orphaned users, run the cleanup script:
 
 ```bash
-# First get the M2M credentials
+# First get the M2M credentials (needed by the cleanup script for Auth0 Management API)
 export AUTH0_M2M_CLIENT_ID=$(aws ssm get-parameter --name /baita/prod/auth0-m2m-client-id --with-decryption --profile baita --region us-east-1 --query Parameter.Value --output text)
 export AUTH0_M2M_CLIENT_SECRET=$(aws ssm get-parameter --name /baita/prod/auth0-m2m-client-secret --with-decryption --profile baita --region us-east-1 --query Parameter.Value --output text)
 
@@ -102,7 +102,23 @@ export AUTH0_M2M_CLIENT_SECRET=$(aws ssm get-parameter --name /baita/prod/auth0-
 cd tests/e2e && npx tsx scripts/cleanup-stale-users.ts
 ```
 
-This finds all Auth0 users matching `*e2e*@baita.help` and deletes them from Auth0 + DynamoDB + SQS.
+This finds all Auth0 users matching `*e2e*@baita.help` and deletes them from Auth0 + DynamoDB.
+
+### Automated Cleanup (in test flow)
+
+The test setup (`user-lifecycle.spec.ts`) uses two cleanup mechanisms:
+
+1. **Programmatic (ROPG)** — `cleanupStaleUser()` uses Auth0 Resource Owner Password Grant to get a JWT for the test user, then calls `DELETE /user` endpoint which handles all resource cleanup (bots, SQS, DynamoDB, Auth0).
+2. **Browser-based fallback** — Logs in via Playwright, extracts token, calls `DELETE /user`.
+
+Both use the proper `DELETE /user` endpoint — never direct AWS resource deletion.
+
+**Required env vars for programmatic cleanup:**
+
+- `AUTH0_E2E_CLIENT_ID` — Auth0 "Regular Web Application" with Password grant enabled
+- `AUTH0_E2E_CLIENT_SECRET` — Its client secret
+
+These must be added as GitHub Secrets for CI. If not configured, the browser fallback handles cleanup.
 
 ## Adding New Tests
 

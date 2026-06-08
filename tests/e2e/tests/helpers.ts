@@ -1,13 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { fromIni } from '@aws-sdk/credential-providers'
-import {
-  BatchWriteCommand,
-  DynamoDBDocumentClient,
-  GetCommand,
-  QueryCommand,
-  ScanCommand,
-} from '@aws-sdk/lib-dynamodb'
-import { execSync } from 'child_process'
+import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
 import fs from 'fs'
 import path from 'path'
 import { APIRequestContext, Page } from '@playwright/test'
@@ -249,152 +242,91 @@ export function logResult(label: string, data: unknown): void {
 }
 
 const AUTH0_DOMAIN = 'dev-yc4pbydg.us.auth0.com'
-const TABLE_NAME = 'baita-help-prod'
+const AUTH0_AUDIENCE = 'https://dev-yc4pbydg.us.auth0.com/api/v2/'
 
 /**
  * Programmatic cleanup of stale E2E test user — no browser needed.
- * Uses DynamoDB scan to find any user with the test email, then:
- * 1. Finds and deletes all bot AWS resources (Lambda, API Gateway, Scheduler, S3)
- * 2. Deletes all DynamoDB records for the user
- * 3. Deletes the Auth0 account via M2M token
+ * Uses Auth0 Resource Owner Password Grant to obtain a JWT for the test user,
+ * then calls DELETE /user which handles ALL resource cleanup:
+ * bots (Lambda, API Gateway, Scheduler, S3), SQS queue, DynamoDB records, Auth0 user.
  *
- * Requires env vars: AUTH0_M2M_CLIENT_ID, AUTH0_M2M_CLIENT_SECRET
- * (set in CI workflow, or read from SSM locally).
+ * Requires env vars: AUTH0_E2E_CLIENT_ID, AUTH0_E2E_CLIENT_SECRET
+ * (Auth0 "Regular Web Application" with Password grant enabled)
+ *
+ * If ROPG credentials are not available or login fails (user doesn't exist),
+ * the browser-based cleanup in user-lifecycle.spec.ts handles it as fallback.
  */
 export async function cleanupStaleUser(): Promise<void> {
-  const clientId = process.env.AUTH0_M2M_CLIENT_ID
-  const clientSecret = process.env.AUTH0_M2M_CLIENT_SECRET
+  const clientId = process.env.AUTH0_E2E_CLIENT_ID
+  const clientSecret = process.env.AUTH0_E2E_CLIENT_SECRET
 
   if (!clientId || !clientSecret) {
-    logResult('Skipping programmatic cleanup (no M2M credentials)', {})
-    return
-  }
-
-  const client = new DynamoDBClient({
-    region: 'us-east-1',
-    ...(process.env.AWS_ACCESS_KEY_ID
-      ? {}
-      : { credentials: fromIni({ profile: 'baita' }) }),
-  })
-  const ddb = DynamoDBDocumentClient.from(client)
-
-  const scan = await ddb.send(
-    new ScanCommand({
-      TableName: TABLE_NAME,
-      FilterExpression: 'sortKey = :sk AND email = :email',
-      ExpressionAttributeValues: { ':sk': '#USER', ':email': TEST_EMAIL },
-    })
-  )
-
-  const staleUsers = scan.Items || []
-  if (staleUsers.length === 0) {
-    logResult('No stale E2E user found in DynamoDB', {})
-    return
-  }
-
-  for (const user of staleUsers) {
-    const staleUserId = user.userId as string
-    logResult('Found stale user, cleaning up', { userId: staleUserId })
-
-    const { Items } = await ddb.send(
-      new QueryCommand({
-        TableName: TABLE_NAME,
-        KeyConditionExpression: 'userId = :uid',
-        ExpressionAttributeValues: { ':uid': staleUserId },
-      })
+    logResult(
+      'Skipping programmatic cleanup (no AUTH0_E2E_CLIENT_ID/SECRET)',
+      {}
     )
+    return
+  }
 
-    if (Items && Items.length > 0) {
-      // Clean up bot AWS resources before deleting DynamoDB records
-      const botItems = Items.filter(
-        (item) => (item.sortKey as string).startsWith('#BOT#') && item.apiId
-      )
-      for (const bot of botItems) {
-        const botId = (bot.sortKey as string).replace('#BOT#', '')
-        const apiId = bot.apiId as string
-        const botPrefix = `baita-help-prod-${botId}`
-        logResult('Deleting orphaned bot AWS resources', { botId, apiId })
-        const awsFlags = process.env.AWS_ACCESS_KEY_ID
-          ? '--region us-east-1'
-          : '--profile baita --region us-east-1'
-        const run = (cmd: string) => {
-          try {
-            execSync(cmd, { stdio: 'ignore' })
-          } catch {
-            // Resource may not exist — ignore
-          }
-        }
-        run(`aws apigatewayv2 delete-api --api-id ${apiId} ${awsFlags}`)
-        run(`aws scheduler delete-schedule --name ${botPrefix} ${awsFlags}`)
-        run(
-          `aws lambda delete-function --function-name ${botPrefix} ${awsFlags}`
-        )
-        run(`aws s3 rm s3://baita-help-prod-bots/${botPrefix}.zip ${awsFlags}`)
-        logResult('Bot AWS resources deleted', { botPrefix })
+  logResult('Attempting ROPG login for stale user cleanup', {
+    email: TEST_EMAIL,
+  })
+
+  const tokenRes = await fetch(`https://${AUTH0_DOMAIN}/oauth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grant_type: 'password',
+      username: TEST_EMAIL,
+      password: TEST_PASSWORD,
+      client_id: clientId,
+      client_secret: clientSecret,
+      audience: AUTH0_AUDIENCE,
+      scope: 'openid',
+    }),
+  })
+
+  if (!tokenRes.ok) {
+    const error = await tokenRes.json().catch(() => ({}))
+    logResult(
+      'ROPG login failed (user may not exist) — browser cleanup will handle it',
+      {
+        status: tokenRes.status,
+        error:
+          (error as Record<string, unknown>).error_description ||
+          (error as Record<string, unknown>).error,
       }
+    )
+    return
+  }
 
-      // Delete all DynamoDB records
-      for (let i = 0; i < Items.length; i += 25) {
-        const chunk = Items.slice(i, i + 25)
-        await ddb.send(
-          new BatchWriteCommand({
-            RequestItems: {
-              [TABLE_NAME]: chunk.map((item) => ({
-                DeleteRequest: {
-                  Key: { userId: item.userId, sortKey: item.sortKey },
-                },
-              })),
-            },
-          })
-        )
-      }
-      logResult('DynamoDB records deleted', { count: Items.length })
-    }
+  const tokenData = (await tokenRes.json()) as { access_token?: string }
+  if (!tokenData.access_token) {
+    logResult(
+      'ROPG returned no access_token — browser cleanup will handle it',
+      {}
+    )
+    return
+  }
 
-    // Delete SQS queue
-    const awsFlags = process.env.AWS_ACCESS_KEY_ID
-      ? '--region us-east-1'
-      : '--profile baita --region us-east-1'
-    try {
-      const queueUrl = execSync(
-        `aws sqs get-queue-url --queue-name baita-help-prod-${staleUserId} ${awsFlags} --output text --query QueueUrl`,
-        { encoding: 'utf8' }
-      ).trim()
-      if (queueUrl) {
-        execSync(`aws sqs delete-queue --queue-url ${queueUrl} ${awsFlags}`, {
-          stdio: 'ignore',
-        })
-        logResult('SQS queue deleted', {
-          queueName: `baita-help-prod-${staleUserId}`,
-        })
-      }
-    } catch {
-      logResult('No SQS queue found (already deleted)', { userId: staleUserId })
-    }
+  logResult('ROPG login successful, calling DELETE /user endpoint', {})
 
-    // Delete Auth0 user
-    const tokenRes = await fetch(`https://${AUTH0_DOMAIN}/oauth/token`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        grant_type: 'client_credentials',
-        client_id: clientId,
-        client_secret: clientSecret,
-        audience: `https://${AUTH0_DOMAIN}/api/v2/`,
-      }),
-    })
-    const tokenData = await tokenRes.json()
+  const deleteRes = await fetch(`${API_URL}/user`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${tokenData.access_token}`,
+      'Content-Type': 'application/json',
+    },
+  })
 
-    if (tokenData.access_token) {
-      const auth0UserId = `auth0|${staleUserId}`
-      const deleteRes = await fetch(
-        `https://${AUTH0_DOMAIN}/api/v2/users/${encodeURIComponent(auth0UserId)}`,
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${tokenData.access_token}` },
-        }
-      )
-      logResult('Auth0 user deleted', { status: deleteRes.status })
-    }
+  const deleteBody = await deleteRes.json().catch(() => ({}))
+  logResult('DELETE /user response', {
+    status: deleteRes.status,
+    success: (deleteBody as Record<string, unknown>).success,
+    message: (deleteBody as Record<string, unknown>).message,
+  })
+
+  if (deleteRes.ok) {
+    logResult('Stale user deleted via endpoint (all resources cleaned)', {})
   }
 }

@@ -130,8 +130,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-east-1
-          AUTH0_M2M_CLIENT_ID: ${{ secrets.AUTH0_M2M_CLIENT_ID }}
-          AUTH0_M2M_CLIENT_SECRET: ${{ secrets.AUTH0_M2M_CLIENT_SECRET }}
+          AUTH0_E2E_CLIENT_ID: ${{ secrets.AUTH0_E2E_CLIENT_ID }}
+          AUTH0_E2E_CLIENT_SECRET: ${{ secrets.AUTH0_E2E_CLIENT_SECRET }}
         run: cd tests/e2e && npx playwright test
       - uses: actions/upload-artifact@v4
         if: failure()
