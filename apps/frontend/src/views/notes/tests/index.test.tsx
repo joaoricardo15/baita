@@ -79,7 +79,7 @@ describe('Notes Page', () => {
   describe('Rendering states', () => {
     it('shows empty state when API returns no notes', async () => {
       server.use(
-        http.post(`${API_BASE}/resource/note/list`, () => {
+        http.get(`${API_BASE}/data/notes`, () => {
           return HttpResponse.json({
             success: true,
             data: [],
@@ -99,7 +99,7 @@ describe('Notes Page', () => {
 
     it('shows note cards after data loads', async () => {
       server.use(
-        http.post(`${API_BASE}/resource/note/list`, () => {
+        http.get(`${API_BASE}/data/notes`, () => {
           return HttpResponse.json({
             success: true,
             data: [
@@ -130,7 +130,7 @@ describe('Notes Page', () => {
 
     it('shows add note button', async () => {
       server.use(
-        http.post(`${API_BASE}/resource/note/list`, () => {
+        http.get(`${API_BASE}/data/notes`, () => {
           return HttpResponse.json({
             success: true,
             data: [],
@@ -149,7 +149,7 @@ describe('Notes Page', () => {
   describe('User interactions', () => {
     it('opens dialog when add note is clicked', async () => {
       server.use(
-        http.post(`${API_BASE}/resource/note/list`, () => {
+        http.get(`${API_BASE}/data/notes`, () => {
           return HttpResponse.json({
             success: true,
             data: [],
@@ -174,7 +174,7 @@ describe('Notes Page', () => {
 
     it('stays in loading state on API failure', async () => {
       server.use(
-        http.post(`${API_BASE}/resource/note/list`, () => {
+        http.get(`${API_BASE}/data/notes`, () => {
           return HttpResponse.json({
             success: false,
             message: 'Server error',

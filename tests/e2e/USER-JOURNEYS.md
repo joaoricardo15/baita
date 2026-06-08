@@ -56,7 +56,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 - **Unit (Frontend):** `apps/frontend/src/views/todo/tests/index.test.tsx` — Rendering, loading, interactions
 - **Unit (Frontend):** `apps/frontend/src/providers/user.test.tsx` — retrieveTodoTasks, updateTodoTasks, setTodoTasks
-- **Unit (Backend):** `apps/backend/src/controllers/tests/resource.test.ts` — CRUD operations
+- **Unit (Backend):** `apps/backend/src/controllers/tests/data.test.ts` — CRUD operations
 - **E2E:** `tests/e2e/tests/todo-journey.spec.ts` — Full lifecycle (create → complete → verify → cleanup)
 
 ---
@@ -143,7 +143,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 ### Test Coverage
 
 - **Unit (Frontend):** `apps/frontend/src/views/notes/tests/index.test.tsx` — Rendering, editing, interactions
-- **Unit (Backend):** `apps/backend/src/controllers/tests/resource.test.ts` — Generic CRUD (covers notes)
+- **Unit (Backend):** `apps/backend/src/controllers/tests/data.test.ts` — Generic CRUD (covers notes)
 - **E2E:** `tests/e2e/tests/notes-journey.spec.ts` — Full lifecycle (create → read → update → delete → verify)
 - **E2E:** `tests/e2e/tests/pages-security.spec.ts` — Notes page renders without errors
 
@@ -166,7 +166,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 ### Test Coverage
 
-- **Unit (Backend):** `apps/backend/src/controllers/tests/resource.test.ts` — Generic CRUD + upload/remove
+- **Unit (Backend):** `apps/backend/src/controllers/tests/data.test.ts` — Generic CRUD + upload/remove
 - **E2E:** `tests/e2e/tests/pages-security.spec.ts` — Places page renders without errors (smoke)
 
 ---
@@ -196,7 +196,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 - **Unit (Frontend):** `apps/frontend/src/views/connections/tests/index.test.tsx` — Rendering, loading, health check, delete
 - **Unit (Backend):** `apps/backend/src/utils/tests/tokenRefresh.test.ts` — Token refresh utility
-- **Unit (Backend):** `apps/backend/src/connectors/oauth/tests/index.test.ts` — OAuth callback handler
+- **Unit (Backend):** `apps/backend/src/endpoints/oauth/tests/index.test.ts` — OAuth callback handler
 - **E2E:** `tests/e2e/tests/connections.spec.ts` — Connection CRUD lifecycle, health check, details, linked bots
 
 ---

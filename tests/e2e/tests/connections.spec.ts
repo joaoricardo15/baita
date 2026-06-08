@@ -33,9 +33,8 @@ test.describe('Connections Management', () => {
   })
 
   test('list connections includes Google connection', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/connection/list`, {
+    const res = await request.get(`${API_URL}/connections`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -53,9 +52,8 @@ test.describe('Connections Management', () => {
   })
 
   test('Google connection health check', async ({ request }) => {
-    const listRes = await request.post(`${API_URL}/resource/connection/list`, {
+    const listRes = await request.get(`${API_URL}/connections`, {
       headers: authHeaders(token),
-      data: {},
     })
     const listBody = await listRes.json()
     const connections = listBody.data
@@ -66,7 +64,7 @@ test.describe('Connections Management', () => {
     expect(google).toBeTruthy()
 
     const res = await request.post(
-      `${API_URL}/connection/health/${google.connectionId}`,
+      `${API_URL}/connections/${google.connectionId}/health`,
       { headers: authHeaders(token), data: {} }
     )
     const body = await res.json()
@@ -86,7 +84,7 @@ test.describe('Connections Management', () => {
     createdConnections.push(connectionId)
 
     const createRes = await request.post(
-      `${API_URL}/resource/connection/create/${connectionId}`,
+      `${API_URL}/connections/${connectionId}`,
       {
         headers: authHeaders(token),
         data: {
@@ -100,14 +98,14 @@ test.describe('Connections Management', () => {
     )
     expect((await createRes.json()).success).toBe(true)
 
-    const readRes = await request.post(
-      `${API_URL}/resource/connection/read/${connectionId}`,
-      { headers: authHeaders(token), data: {} }
+    const readRes = await request.get(
+      `${API_URL}/connections/${connectionId}`,
+      { headers: authHeaders(token) }
     )
     expect((await readRes.json()).data.name).toBe('E2E Lifecycle')
 
     const updateRes = await request.post(
-      `${API_URL}/resource/connection/update/${connectionId}`,
+      `${API_URL}/connections/${connectionId}`,
       {
         headers: authHeaders(token),
         data: {
@@ -121,15 +119,15 @@ test.describe('Connections Management', () => {
     )
     expect((await updateRes.json()).success).toBe(true)
 
-    const deleteRes = await request.post(
-      `${API_URL}/resource/connection/delete/${connectionId}`,
-      { headers: authHeaders(token), data: {} }
+    const deleteRes = await request.delete(
+      `${API_URL}/connections/${connectionId}`,
+      { headers: authHeaders(token) }
     )
     expect((await deleteRes.json()).success).toBe(true)
 
-    const goneRes = await request.post(
-      `${API_URL}/resource/connection/read/${connectionId}`,
-      { headers: authHeaders(token), data: {} }
+    const goneRes = await request.get(
+      `${API_URL}/connections/${connectionId}`,
+      { headers: authHeaders(token) }
     )
     expect((await goneRes.json()).data).toBeFalsy()
     logResult('Connection lifecycle', { result: 'pass' })
@@ -139,25 +137,21 @@ test.describe('Connections Management', () => {
     const connectionId = `e2e-details-${Date.now()}`
     createdConnections.push(connectionId)
 
-    await request.post(
-      `${API_URL}/resource/connection/create/${connectionId}`,
-      {
-        headers: authHeaders(token),
-        data: {
-          appId: 'test-app',
-          connectionId,
-          name: 'Details Test',
-          email: 'details@e2e.test',
-          credentials: { access_token: 'token' },
-          createdAt: Date.now(),
-        },
-      }
-    )
+    await request.post(`${API_URL}/connections/${connectionId}`, {
+      headers: authHeaders(token),
+      data: {
+        appId: 'test-app',
+        connectionId,
+        name: 'Details Test',
+        email: 'details@e2e.test',
+        credentials: { access_token: 'token' },
+        createdAt: Date.now(),
+      },
+    })
 
-    const res = await request.post(
-      `${API_URL}/connection/details/${connectionId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.get(`${API_URL}/connections/${connectionId}`, {
+      headers: authHeaders(token),
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(body.data.connection).toBeDefined()

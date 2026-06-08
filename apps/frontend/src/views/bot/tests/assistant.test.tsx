@@ -128,7 +128,7 @@ describe('BotAssistant (task-level)', () => {
 
     let capturedBody: any = null
     server.use(
-      http.post(`${API_BASE}/bot/update/:botId`, async ({ request }) => {
+      http.patch(`${API_BASE}/bots/:botId`, async ({ request }) => {
         capturedBody = await request.json()
         return HttpResponse.json({
           success: true,

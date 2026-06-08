@@ -30,10 +30,10 @@ jest.mock('axios', () => ({
   get: (...args: any[]) => mockAxiosGet(...args),
 }))
 
-const mockResourceCreate = jest.fn()
-jest.mock('@/controllers/resource', () => {
+const mockDataCreate = jest.fn()
+jest.mock('@/controllers/data', () => {
   return jest.fn().mockImplementation(() => ({
-    create: mockResourceCreate,
+    create: mockDataCreate,
   }))
 })
 
@@ -44,7 +44,7 @@ jest.mock('@/controllers/bot', () => {
   }))
 })
 
-const { handler } = require('../index')
+const { handler } = require('../../../endpoints/oauth/callback')
 
 const createMockContext = (): Context => ({
   callbackWaitsForEmptyEventLoop: false,
@@ -72,7 +72,7 @@ const invokeHandler = (
       queryStringParameters,
       headers: {},
       httpMethod: 'GET',
-      path: '/connectors/oauth',
+      path: '/oauth/callback',
       requestContext: { requestTimeEpoch: Date.now() },
     }
     handler(event, createMockContext(), callback)
@@ -125,7 +125,7 @@ describe('OAuth Connector Handler', () => {
           data: { id: 12345, email: 'user@company.com', name: 'Test User' },
         },
       })
-      mockResourceCreate.mockResolvedValue({})
+      mockDataCreate.mockResolvedValue({})
       mockAddConnection.mockResolvedValue({})
     })
 
@@ -150,7 +150,7 @@ describe('OAuth Connector Handler', () => {
       expect(postBody).toContain('code=pipedrive-auth-code')
       expect(postBody).toContain('grant_type=authorization_code')
       expect(postBody).toContain(
-        'redirect_uri=https%3A%2F%2Fapi.baita.help%2Fconnectors%2Foauth'
+        'redirect_uri=https%3A%2F%2Fapi.baita.help%2Foauth%2Fcallback'
       )
       expect(postBody).not.toContain('client_id')
       expect(postBody).not.toContain('client_secret')
@@ -180,7 +180,7 @@ describe('OAuth Connector Handler', () => {
     test('creates connection with correct data', async () => {
       await invokeHandler({ code: 'auth-code', state: pipedriveState })
 
-      expect(mockResourceCreate).toHaveBeenCalledWith(
+      expect(mockDataCreate).toHaveBeenCalledWith(
         '12345',
         expect.objectContaining({
           userId: 'user-id-456',
@@ -220,7 +220,7 @@ describe('OAuth Connector Handler', () => {
       mockAxiosGet.mockResolvedValue({
         data: { sub: 'google-user-123', email: 'user@gmail.com' },
       })
-      mockResourceCreate.mockResolvedValue({})
+      mockDataCreate.mockResolvedValue({})
       mockAddConnection.mockResolvedValue({})
     })
 
@@ -264,7 +264,7 @@ describe('OAuth Connector Handler', () => {
       const result = await invokeHandler({ code: 'bad-code', state })
 
       expect(result.statusCode).toBe(200)
-      expect(mockResourceCreate).not.toHaveBeenCalled()
+      expect(mockDataCreate).not.toHaveBeenCalled()
     })
   })
 })

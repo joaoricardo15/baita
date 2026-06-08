@@ -50,16 +50,15 @@ test.describe('Content Feed', () => {
   test.afterAll(async ({ request }) => {
     if (botId) {
       await request
-        .post(`${API_URL}/bot/delete/${botId}`, {
+        .delete(`${API_URL}/bots/${botId}`, {
           headers: authHeaders(token),
-          data: {},
         })
         .catch(() => {})
     }
   })
 
   test('create bot for content publishing', async ({ request }) => {
-    const res = await request.post(`${API_URL}/bot/create`, {
+    const res = await request.post(`${API_URL}/bots`, {
       headers: authHeaders(token),
       data: {},
     })
@@ -70,7 +69,7 @@ test.describe('Content Feed', () => {
   })
 
   test('configure bot with publishToFeed task', async ({ request }) => {
-    const res = await request.post(`${API_URL}/bot/update/${botId}`, {
+    const res = await request.patch(`${API_URL}/bots/${botId}`, {
       headers: authHeaders(token),
       data: {
         botId,
@@ -153,7 +152,7 @@ test.describe('Content Feed', () => {
       ],
     }
 
-    const res = await request.post(`${API_URL}/bot/test/${botId}`, {
+    const res = await request.post(`${API_URL}/bots/${botId}/test`, {
       headers: authHeaders(token),
       data: { task, taskIndex: 1 },
     })
@@ -231,9 +230,8 @@ test.describe('Content Feed', () => {
 
   test('cleanup: delete content bot', async ({ request }) => {
     if (botId) {
-      const res = await request.post(`${API_URL}/bot/delete/${botId}`, {
+      const res = await request.delete(`${API_URL}/bots/${botId}`, {
         headers: authHeaders(token),
-        data: {},
       })
       expect(res.status()).toBe(200)
       botId = ''

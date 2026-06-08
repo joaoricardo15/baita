@@ -50,9 +50,8 @@ export async function deleteConnection(
   token: string,
   connectionId: string
 ): Promise<void> {
-  await request.post(`${API_URL}/resource/connection/delete/${connectionId}`, {
+  await request.delete(`${API_URL}/connections/${connectionId}`, {
     headers: authHeaders(token),
-    data: {},
   })
 }
 
@@ -103,7 +102,7 @@ export async function copyAdminConnections(
     const connectionId = `e2e-${appName.toLowerCase()}-${Date.now()}`
 
     const createRes = await request.post(
-      `${API_URL}/resource/connection/create/${connectionId}`,
+      `${API_URL}/connections/${connectionId}`,
       {
         headers: authHeaders(token),
         data: {

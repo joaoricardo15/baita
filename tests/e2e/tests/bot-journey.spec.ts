@@ -32,16 +32,15 @@ test.describe('Bot Lifecycle', () => {
   test.afterAll(async ({ request }) => {
     if (botId) {
       await request
-        .post(`${API_URL}/bot/delete/${botId}`, {
+        .delete(`${API_URL}/bots/${botId}`, {
           headers: authHeaders(token),
-          data: {},
         })
         .catch(() => {})
     }
   })
 
   test('create a new bot', async ({ request }) => {
-    const res = await request.post(`${API_URL}/bot/create`, {
+    const res = await request.post(`${API_URL}/bots`, {
       headers: authHeaders(token),
       data: {},
     })
@@ -59,7 +58,7 @@ test.describe('Bot Lifecycle', () => {
   test('configure bot with webhook trigger and code task', async ({
     request,
   }) => {
-    const res = await request.post(`${API_URL}/bot/update/${botId}`, {
+    const res = await request.patch(`${API_URL}/bots/${botId}`, {
       headers: authHeaders(token),
       data: {
         botId,
@@ -138,17 +137,16 @@ test.describe('Bot Lifecycle', () => {
       ],
     }
 
-    const res = await request.post(`${API_URL}/bot/test/${botId}`, {
+    const res = await request.post(`${API_URL}/bots/${botId}/test`, {
       headers: authHeaders(token),
       data: { task, taskIndex: 1 },
     })
     const body = await res.json()
     expect(body.success).toBe(true)
 
-    const readRes = await request.post(
-      `${API_URL}/resource/bot/read/${botId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const readRes = await request.get(`${API_URL}/bots/${botId}`, {
+      headers: authHeaders(token),
+    })
     const botData = (await readRes.json()).data
     expect(botData.tasks[1].sampleResult).toBeTruthy()
     expect(botData.tasks[1].sampleResult.outputData).toBeTruthy()
@@ -156,15 +154,14 @@ test.describe('Bot Lifecycle', () => {
   })
 
   test('deploy bot', async ({ request }) => {
-    const getRes = await request.post(`${API_URL}/resource/bot/read/${botId}`, {
+    const getRes = await request.get(`${API_URL}/bots/${botId}`, {
       headers: authHeaders(token),
-      data: {},
     })
     const bot = (await getRes.json()).data
 
     let body: { success: boolean; data: { active: boolean } }
     for (let attempt = 1; attempt <= 2; attempt++) {
-      const res = await request.post(`${API_URL}/bot/deploy/${botId}`, {
+      const res = await request.post(`${API_URL}/bots/${botId}/deploy`, {
         headers: authHeaders(token),
         data: { ...bot, active: true },
         timeout: 35000,
@@ -196,9 +193,8 @@ test.describe('Bot Lifecycle', () => {
   test('verify execution appears in logs', async ({ request }) => {
     await new Promise((r) => setTimeout(r, 3000))
 
-    const res = await request.post(`${API_URL}/bot/logs/${botId}`, {
+    const res = await request.get(`${API_URL}/bots/${botId}/logs`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -209,13 +205,12 @@ test.describe('Bot Lifecycle', () => {
   test('deactivate bot', async ({ request }) => {
     await new Promise((r) => setTimeout(r, 2000))
 
-    const getRes = await request.post(`${API_URL}/resource/bot/read/${botId}`, {
+    const getRes = await request.get(`${API_URL}/bots/${botId}`, {
       headers: authHeaders(token),
-      data: {},
     })
     const bot = (await getRes.json()).data
 
-    const res = await request.post(`${API_URL}/bot/deploy/${botId}`, {
+    const res = await request.post(`${API_URL}/bots/${botId}/deploy`, {
       headers: authHeaders(token),
       data: { ...bot, active: false },
     })
@@ -225,16 +220,14 @@ test.describe('Bot Lifecycle', () => {
   })
 
   test('delete bot and verify cleanup', async ({ request }) => {
-    const res = await request.post(`${API_URL}/bot/delete/${botId}`, {
+    const res = await request.delete(`${API_URL}/bots/${botId}`, {
       headers: authHeaders(token),
-      data: {},
     })
     expect(res.status()).toBe(200)
 
-    const verifyRes = await request.post(
-      `${API_URL}/resource/bot/read/${botId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const verifyRes = await request.get(`${API_URL}/bots/${botId}`, {
+      headers: authHeaders(token),
+    })
     const body = await verifyRes.json()
     expect(body.data).toBeFalsy()
 

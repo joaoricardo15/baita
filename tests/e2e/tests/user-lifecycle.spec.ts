@@ -159,9 +159,8 @@ test.describe('User Lifecycle Setup', () => {
   test('verify user provisioned by Auth0 Action', async ({ request }) => {
     let provisioned = false
     for (let i = 0; i < 5; i++) {
-      const res = await request.post(`${API_URL}/resource/todo/list`, {
+      const res = await request.get(`${API_URL}/data/todos`, {
         headers: authHeaders(accessToken),
-        data: {},
       })
       if (res.status() === 200) {
         provisioned = true
@@ -174,9 +173,8 @@ test.describe('User Lifecycle Setup', () => {
   })
 
   test('verify clean state', async ({ request }) => {
-    const botsRes = await request.post(`${API_URL}/resource/bot/list`, {
+    const botsRes = await request.get(`${API_URL}/bots`, {
       headers: authHeaders(accessToken),
-      data: {},
     })
     expect(botsRes.status()).toBe(200)
     const botsBody = await botsRes.json()
@@ -198,7 +196,7 @@ test.describe('User Lifecycle Setup', () => {
 
     for (const conn of connections) {
       const healthRes = await request.post(
-        `${API_URL}/connection/health/${conn.connectionId}`,
+        `${API_URL}/connections/${conn.connectionId}/health`,
         { headers: authHeaders(accessToken), data: {} }
       )
       const healthBody = await healthRes.json()

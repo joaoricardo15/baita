@@ -83,7 +83,7 @@ describe('Places Page', () => {
 
   it('shows skeleton while loading', () => {
     server.use(
-      http.post(`${API_BASE}/resource/place/list`, () => {
+      http.get(`${API_BASE}/data/places`, () => {
         return new Promise(() => {})
       })
     )
@@ -97,7 +97,7 @@ describe('Places Page', () => {
 
   it('shows empty state when no places exist', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/place/list`, () => {
+      http.get(`${API_BASE}/data/places`, () => {
         return HttpResponse.json({ success: true, data: [] })
       })
     )
@@ -111,7 +111,7 @@ describe('Places Page', () => {
 
   it('shows map after data loads', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/place/list`, () => {
+      http.get(`${API_BASE}/data/places`, () => {
         return HttpResponse.json({
           success: true,
           data: [
@@ -136,7 +136,7 @@ describe('Places Page', () => {
 
   it('handles API failure without crashing', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/place/list`, () => {
+      http.get(`${API_BASE}/data/places`, () => {
         return HttpResponse.json({ success: false, message: 'Server error' })
       })
     )

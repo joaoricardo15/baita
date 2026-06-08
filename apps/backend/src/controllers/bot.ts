@@ -22,7 +22,7 @@ import {
   LOG_QUERY_LIMIT,
 } from '@/utils/constants'
 
-import Resource from './resource'
+import Data from './data'
 
 const CORE_TABLE = process.env.CORE_TABLE || ''
 const BOTS_BUCKET = process.env.BOTS_BUCKET || ''
@@ -453,7 +453,7 @@ class Bot {
       let sample: ITaskExecutionResult
 
       if (Number(taskIndex) === 0) {
-        const resource = new Resource(userId, 'bot')
+        const resource = new Data(userId, 'bot')
         const botData = await resource.read(botId)
         if (!botData?.triggerSamples) return
         sample = botData.triggerSamples.reverse()[0]

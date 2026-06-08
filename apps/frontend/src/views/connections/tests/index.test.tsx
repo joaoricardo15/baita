@@ -35,7 +35,7 @@ const API_BASE = 'http://localhost:5000/prod'
 describe('Connections page', () => {
   it('renders skeleton while loading', () => {
     server.use(
-      http.post(`${API_BASE}/resource/connection/list`, () => {
+      http.get(`${API_BASE}/connections`, () => {
         return new Promise(() => {}) // never resolves — stays loading
       })
     )
@@ -57,7 +57,7 @@ describe('Connections page', () => {
 
   it('renders connection cards when connections exist', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/connection/list`, () =>
+      http.get(`${API_BASE}/connections`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -102,7 +102,7 @@ describe('Connections page', () => {
 
   it('renders menu for each connection', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/connection/list`, () =>
+      http.get(`${API_BASE}/connections`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -130,7 +130,7 @@ describe('Connections page', () => {
 
   it('health check updates status via menu', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/connection/list`, () =>
+      http.get(`${API_BASE}/connections`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -145,7 +145,7 @@ describe('Connections page', () => {
           ],
         })
       ),
-      http.post(`${API_BASE}/connection/health/:id`, () =>
+      http.post(`${API_BASE}/connections/:id/health`, () =>
         HttpResponse.json({
           success: true,
           data: { status: 'healthy' },
@@ -200,7 +200,7 @@ describe('AddConnection OAuth URL construction', () => {
     const oauthUrl = openSpy.mock.calls[0][0] as string
 
     expect(oauthUrl).toContain(
-      'redirect_uri=https%3A%2F%2Fapi.baita.help%2Fconnectors%2Foauth'
+      'redirect_uri=https%3A%2F%2Fapi.baita.help%2Foauth%2Fcallback'
     )
     expect(oauthUrl).not.toContain('localhost')
     expect(oauthUrl).toContain('response_type=code')
@@ -263,7 +263,7 @@ describe('AddConnection popup close behavior', () => {
 
   it('shows success message when connection count increases after popup closes', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/connection/list`, () =>
+      http.get(`${API_BASE}/connections`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -302,7 +302,7 @@ describe('AddConnection popup close behavior', () => {
 
   it('shows cancelled message when connection count stays the same after popup closes', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/connection/list`, () =>
+      http.get(`${API_BASE}/connections`, () =>
         HttpResponse.json({ success: true, data: [] })
       )
     )

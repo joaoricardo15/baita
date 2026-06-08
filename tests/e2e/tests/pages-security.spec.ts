@@ -78,9 +78,8 @@ test.describe('Public Pages', () => {
 
 test.describe('Auth Security', () => {
   test('valid token returns 200 on API', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/todo/list`, {
+    const res = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     expect(res.status()).toBe(200)
   })

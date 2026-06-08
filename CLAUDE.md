@@ -75,13 +75,13 @@ The bot schema includes validation and integrity helpers that protect against co
 
 ### Runtime Data Patterns (Not Visible in Static Code)
 
-The generic Resource controller (`src/controllers/resource.ts`) constructs DynamoDB sortKeys dynamically as `#{resourceName}#{resourceId}`. This means some data records **cannot be found by grepping the codebase** — they are written at runtime via `POST /resource/{name}/create/{id}`. Key examples:
+The generic Data controller (`src/controllers/data.ts`) constructs DynamoDB sortKeys dynamically as `#{type}#{id}`. This means some data records **cannot be found by grepping the codebase** — they are written at runtime via `POST /data/{type}`. Key examples:
 
-- `#CONTENT#{contentId}` — Written by the frontend when user reacts to feed content (swipe). Used by `publishContent()` for deduplication. The dedup query in `controllers/user.ts` references `#CONTENT` but the write happens through the generic Resource CRUD path.
+- `#CONTENT#{contentId}` — Written by the frontend when user reacts to feed content (swipe). Used by `publishContent()` for deduplication. The dedup query in `controllers/user.ts` references `#CONTENT` but the write happens through the generic Data CRUD path.
 - `#CONNECTION#{connectionId}` — OAuth connections
-- Any custom resource the user creates
+- Any custom data type the user creates
 
-**When debugging data flow**: always consider that DynamoDB records with any `#RESOURCENAME#` pattern may be written through the generic resource endpoint, not through a dedicated code path.
+**When debugging data flow**: always consider that DynamoDB records with any `#TYPE#` pattern may be written through the generic data endpoint, not through a dedicated code path.
 
 ### Connector Icons
 
@@ -230,7 +230,7 @@ User accounts have coupled AWS resources (DynamoDB + SQS queue) that MUST stay i
 **Critical rules:**
 
 - **Never delete DynamoDB user records directly** — use `DELETE /user` endpoint
-- **Never delete bots directly from DynamoDB** — use `POST /bot/delete/{botId}` (cleans up Lambda + API Gateway + S3 + Scheduler)
+- **Never delete bots directly from DynamoDB** — use `DELETE /bots/{botId}` (cleans up Lambda + API Gateway + S3 + Scheduler)
 - **Any code that creates/deletes users or bots MUST go through the controller methods** — they handle all coupled resource cleanup
 
 ## Self-Verification with Playwright MCP
@@ -269,7 +269,7 @@ cd tests/e2e && npm run test:prod  # Against production (same as CI)
 - Three-phase execution: setup → journeys → teardown (Playwright project dependencies)
 - Setup (`user-lifecycle.spec.ts`): Clean slate (delete stale user), sign up fresh, provision resources, copy Google connection
 - Journeys: `google-gmail`, `todo-journey`, `bot-journey`, `connections`, `pages-security`, `notes-journey`, `content-feed`
-- Teardown (`user-teardown.spec.ts`): Delete account, verify all resource types return 401
+- Teardown (`user-teardown.spec.ts`): Delete account, verify all data types return 401
 - Clean-state principle: nothing exists before tests, everything deleted after
 - Local: both servers auto-start (serverless offline + Vite)
 - CI: hits production after deploy (`API_URL=https://api.baita.help`)

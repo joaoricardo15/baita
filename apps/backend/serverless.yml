@@ -171,100 +171,197 @@ functions:
     handler: src/authorizer/index.handler
     timeout: 10
 
-  # User operations (create via API key, delete + content via JWT)
+  # ─── User ──────────────────────────────────────────────────
   endpoint-user:
     handler: src/endpoints/user/index.handler
     events:
+      # POST: Auth0 Post-Login Action only (API key auth, no CORS, excluded from OpenAPI docs)
       - http:
           path: user
           method: post
+      # DELETE: Authenticated user account deletion (JWT auth, CORS, documented)
       - http:
           path: user
           method: delete
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+
+  # ─── Bots ──────────────────────────────────────────────────
+  endpoint-bots:
+    handler: src/endpoints/bots/index.handler
+    events:
+      - http:
+          path: bots
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: bots
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: bots/{botId}
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: bots/{botId}
+          method: patch
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: bots/{botId}
+          method: delete
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: bots/{botId}/deploy
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: bots/{botId}/test
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: bots/{botId}/logs
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # ─── Bot Models (shared templates) ─────────────────────────
+  endpoint-models:
+    handler: src/endpoints/models/index.handler
+    events:
+      - http:
+          path: models
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: models
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: models/{modelId}
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: models/{modelId}
+          method: patch
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: models/{modelId}
+          method: delete
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: models/{modelId}/deploy
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # ─── Connections ───────────────────────────────────────────
+  endpoint-connections:
+    handler: src/endpoints/connections/index.handler
+    events:
+      - http:
+          path: connections
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: connections
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: connections/{connectionId}
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: connections/{connectionId}
+          method: delete
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: connections/{connectionId}/health
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # ─── Content Feed ──────────────────────────────────────────
+  endpoint-content:
+    handler: src/endpoints/content/index.handler
+    events:
       - http:
           path: content
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
-  # Generic resource CRUD
-  endpoint-resource:
-    handler: src/endpoints/resource/index.handler
+  # ─── Generic Data CRUD (dynamic resource types) ────────────
+  endpoint-data:
+    handler: src/endpoints/data/index.handler
     events:
       - http:
-          path: resource/{resourceName}/{operation}
+          path: data/{type}
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: data/{type}
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: resource/{resourceName}/{operation}/{resourceId}
+          path: data/{type}/{id}
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: data/{type}/{id}
+          method: patch
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: data/{type}/{id}
+          method: delete
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: data/{type}/{id}/upload
+          method: post
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: data/{type}/{id}/files/{fileId}
+          method: delete
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+
+  # ─── Tasks ─────────────────────────────────────────────────
+  endpoint-tasks:
+    handler: src/endpoints/tasks/index.handler
+    events:
+      - http:
+          path: tasks/execute
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
-  # Task operations (standalone + direct invoke from deployed bots)
-  endpoint-task:
-    handler: src/endpoints/task/execute/index.handler
+  # ─── OAuth Callback ────────────────────────────────────────
+  oauth-callback:
+    handler: src/endpoints/oauth/callback.handler
     events:
       - http:
-          path: task/{operation}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-
-  # Bot operations (create, update, delete, deploy, test, logs, model)
-  endpoint-bot:
-    handler: src/endpoints/bot/index.handler
-    events:
-      - http:
-          path: bot/{operation}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-      - http:
-          path: bot/{operation}/{botId}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-
-  # Shared bot models (reads from system user 'baita')
-  endpoint-model:
-    handler: src/endpoints/model/index.handler
-    events:
-      - http:
-          path: model/{operation}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-      - http:
-          path: model/{operation}/{modelId}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-
-  # Connection operations (create, health, details)
-  endpoint-connection:
-    handler: src/endpoints/connection/index.handler
-    events:
-      - http:
-          path: connection/{operation}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-      - http:
-          path: connection/{operation}/{connectionId}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-
-  # OAuth connector (generic handler for all partners)
-  connector-oauth:
-    handler: src/connectors/oauth/index.handler
-    events:
-      - http:
-          path: connectors/oauth
+          path: oauth/callback
           method: get
 
 resources:

@@ -3,10 +3,10 @@ import axios from 'axios'
 import qs from 'qs'
 
 import Bot from '@/controllers/bot'
-import Resource from '@/controllers/resource'
+import Data from '@/controllers/data'
 import Api, { ApiRequestStatus } from '@/utils/api'
 
-import { getConnectorById } from './registry'
+import { getConnectorById } from '../../connectors/oauth/registry'
 
 const SERVICE_API_URL = process.env.SERVICE_API_URL || ''
 
@@ -46,7 +46,7 @@ export const handler = async (
       code,
       clientId,
       clientSecret,
-      redirectUri: `${SERVICE_API_URL}/connectors/oauth`,
+      redirectUri: `${SERVICE_API_URL}/oauth/callback`,
       tokenAuthMethod: auth.tokenAuthMethod || 'body',
     })
 
@@ -68,7 +68,7 @@ export const handler = async (
       createdAt: Date.now(),
     }
 
-    const resource = new Resource(userId, 'connection')
+    const resource = new Data(userId, 'connection')
     await resource.create(connectionId, newConnection)
 
     if (botId) {

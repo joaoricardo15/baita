@@ -30,16 +30,15 @@ test.describe('To-Do Lifecycle', () => {
   ]
 
   test.afterAll(async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/todo/read`, {
+    const res = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     if (body.data?.tasks) {
       const tasks = body.data.tasks.filter(
         (t: { taskId: string }) => !taskIds.includes(t.taskId)
       )
-      await request.post(`${API_URL}/resource/todo/update`, {
+      await request.patch(`${API_URL}/data/todos`, {
         headers: authHeaders(token),
         data: { tasks },
       })
@@ -47,9 +46,8 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('read current todo state', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/todo/read`, {
+    const res = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     expect(res.status()).toBe(200)
     const body = await res.json()
@@ -60,9 +58,8 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('create 3 new tasks', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/todo/read`, {
+    const res = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     const current = await res.json()
     const existingTasks = current.data?.tasks ?? []
@@ -75,7 +72,7 @@ test.describe('To-Do Lifecycle', () => {
       updatedAt: Date.now(),
     }))
 
-    const updateRes = await request.post(`${API_URL}/resource/todo/update`, {
+    const updateRes = await request.patch(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
       data: { tasks: [...existingTasks, ...newTasks] },
     })
@@ -85,9 +82,8 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('verify all 3 tasks exist', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/todo/read`, {
+    const res = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     const found = body.data?.tasks?.filter((t: { taskId: string }) =>
@@ -98,9 +94,8 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('mark 2 tasks as done', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/todo/read`, {
+    const res = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     const tasks = body.data.tasks.map((t: { taskId: string; done: boolean }) =>
@@ -109,7 +104,7 @@ test.describe('To-Do Lifecycle', () => {
         : t
     )
 
-    const updateRes = await request.post(`${API_URL}/resource/todo/update`, {
+    const updateRes = await request.patch(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
       data: { tasks },
     })
@@ -117,9 +112,8 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('verify 2 done, 1 pending', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/todo/read`, {
+    const res = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     const e2eTasks = body.data?.tasks?.filter((t: { taskId: string }) =>
@@ -133,16 +127,15 @@ test.describe('To-Do Lifecycle', () => {
   })
 
   test('delete all test tasks (cleanup)', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/todo/read`, {
+    const res = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     const tasks = body.data.tasks.filter(
       (t: { taskId: string }) => !taskIds.includes(t.taskId)
     )
 
-    const updateRes = await request.post(`${API_URL}/resource/todo/update`, {
+    const updateRes = await request.patch(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
       data: { tasks },
     })

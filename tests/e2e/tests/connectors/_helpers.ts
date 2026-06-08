@@ -2,7 +2,7 @@
  * Connector E2E Test Helpers
  *
  * Shared utilities for testing connector services via the standalone
- * POST /task/execute endpoint.
+ * POST /tasks/execute endpoint.
  *
  * Each helper builds a valid ITask payload matching the exact shape
  * that connectorToAppService() + the frontend would produce.
@@ -30,7 +30,7 @@ export async function executeTask(
   task: object
 ): Promise<IExecuteResponse> {
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const res = await request.post(`${API_URL}/task/execute`, {
+    const res = await request.post(`${API_URL}/tasks/execute`, {
       headers: authHeaders(token),
       data: task,
       timeout: 35000,
@@ -49,9 +49,8 @@ export async function findConnection(
   token: string,
   appId: string
 ): Promise<{ connectionId: string } | null> {
-  const res = await request.post(`${API_URL}/resource/connection/list`, {
+  const res = await request.get(`${API_URL}/connections`, {
     headers: authHeaders(token),
-    data: {},
   })
   const body = await res.json()
   if (!body.success || !Array.isArray(body.data)) return null

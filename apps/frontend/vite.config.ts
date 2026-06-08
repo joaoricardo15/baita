@@ -18,38 +18,32 @@ function mockApiPlugin(): Plugin {
         const url = req.url || ''
         const method = req.method || 'GET'
 
-        if (url.match(/\/user\/[^/]+\/bots\/new$/) && method === 'GET') {
+        if (url.match(/\/bots\/[^/]+$/) && method === 'GET') {
           const bots = load('bots.json')
           res.setHeader('Content-Type', 'application/json')
           res.end(JSON.stringify(bots.data[0]))
-        } else if (url.match(/\/user\/[^/]+\/bots$/) && method === 'GET') {
+        } else if (url.match(/\/bots$/) && method === 'GET') {
           res.setHeader('Content-Type', 'application/json')
           res.end(fs.readFileSync(path.join(mocksDir, 'bots.json'), 'utf-8'))
-        } else if (url.match(/\/user\/[^/]+\/bots$/) && method === 'POST') {
+        } else if (url.match(/\/bots$/) && method === 'POST') {
           res.statusCode = 200
           res.end()
-        } else if (url.match(/\/user\/[^/]+\/models$/) && method === 'GET') {
+        } else if (url.match(/\/models$/) && method === 'GET') {
           res.setHeader('Content-Type', 'application/json')
           res.end(fs.readFileSync(path.join(mocksDir, 'models.json'), 'utf-8'))
-        } else if (
-          url.match(/\/user\/[^/]+\/models\/[^/]+$/) &&
-          method === 'DELETE'
-        ) {
+        } else if (url.match(/\/models\/[^/]+$/) && method === 'DELETE') {
           res.statusCode = 200
           res.end()
-        } else if (url.match(/\/user\/[^/]+\/content$/) && method === 'GET') {
+        } else if (url.match(/\/content$/) && method === 'GET') {
           res.setHeader('Content-Type', 'application/json')
           res.end(fs.readFileSync(path.join(mocksDir, 'content.json'), 'utf-8'))
-        } else if (url.match(/\/user\/[^/]+\/todo$/) && method === 'GET') {
+        } else if (url.match(/\/data\/todos$/) && method === 'GET') {
           res.setHeader('Content-Type', 'application/json')
           res.end(fs.readFileSync(path.join(mocksDir, 'todo.json'), 'utf-8'))
-        } else if (url.match(/\/user\/[^/]+\/todo$/) && method === 'PUT') {
+        } else if (url.match(/\/data\/todos$/) && method === 'PATCH') {
           res.statusCode = 200
           res.end()
-        } else if (
-          url.match(/\/user\/[^/]+\/connections$/) &&
-          method === 'GET'
-        ) {
+        } else if (url.match(/\/connections$/) && method === 'GET') {
           res.setHeader('Content-Type', 'application/json')
           res.end(
             fs.readFileSync(path.join(mocksDir, 'connections.json'), 'utf-8')

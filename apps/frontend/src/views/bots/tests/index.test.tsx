@@ -41,7 +41,7 @@ describe('Bots Page', () => {
 
   it('shows skeleton while fetching', () => {
     server.use(
-      http.post(`${API_BASE}/resource/bot/list`, () => {
+      http.get(`${API_BASE}/bots`, () => {
         return new Promise(() => {}) // never resolves — stays loading
       })
     )
@@ -54,7 +54,7 @@ describe('Bots Page', () => {
 
   it('shows bots list after loading', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/bot/list`, () =>
+      http.get(`${API_BASE}/bots`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -75,7 +75,7 @@ describe('Bots Page', () => {
           ],
         })
       ),
-      http.post(`${API_BASE}/model/list`, () =>
+      http.get(`${API_BASE}/models`, () =>
         HttpResponse.json({ success: true, data: [] })
       )
     )
@@ -98,13 +98,13 @@ describe('Bots Page', () => {
 
   it('handles API failure gracefully without crashing', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/bot/list`, () =>
+      http.get(`${API_BASE}/bots`, () =>
         HttpResponse.json(
           { success: false, message: 'Network Error' },
           { status: 500 }
         )
       ),
-      http.post(`${API_BASE}/model/list`, () =>
+      http.get(`${API_BASE}/models`, () =>
         HttpResponse.json(
           { success: false, message: 'Network Error' },
           { status: 500 }
@@ -121,7 +121,7 @@ describe('Bots Page', () => {
 
   it('separates model bots from custom bots', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/bot/list`, () =>
+      http.get(`${API_BASE}/bots`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -143,7 +143,7 @@ describe('Bots Page', () => {
           ],
         })
       ),
-      http.post(`${API_BASE}/model/list`, () =>
+      http.get(`${API_BASE}/models`, () =>
         HttpResponse.json({ success: true, data: [] })
       )
     )
@@ -158,10 +158,10 @@ describe('Bots Page', () => {
 
   it('shows bot models that are not yet deployed', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/bot/list`, () =>
+      http.get(`${API_BASE}/bots`, () =>
         HttpResponse.json({ success: true, data: [] })
       ),
-      http.post(`${API_BASE}/model/list`, () =>
+      http.get(`${API_BASE}/models`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -185,7 +185,7 @@ describe('Bots Page', () => {
 
   it('hides bot models that are already deployed by user', async () => {
     server.use(
-      http.post(`${API_BASE}/resource/bot/list`, () =>
+      http.get(`${API_BASE}/bots`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -200,7 +200,7 @@ describe('Bots Page', () => {
           ],
         })
       ),
-      http.post(`${API_BASE}/model/list`, () =>
+      http.get(`${API_BASE}/models`, () =>
         HttpResponse.json({
           success: true,
           data: [

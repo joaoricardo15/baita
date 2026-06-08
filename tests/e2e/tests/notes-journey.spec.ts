@@ -30,17 +30,15 @@ test.describe('Notes Lifecycle', () => {
 
   test.afterAll(async ({ request }) => {
     await request
-      .post(`${API_URL}/resource/note/delete/${noteId}`, {
+      .delete(`${API_URL}/data/notes/${noteId}`, {
         headers: authHeaders(token),
-        data: {},
       })
       .catch(() => {})
   })
 
   test('list notes returns array', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/note/list`, {
+    const res = await request.get(`${API_URL}/data/notes`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -49,28 +47,24 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('create a new note', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/resource/note/create/${noteId}`,
-      {
-        headers: authHeaders(token),
-        data: {
-          noteId,
-          title: 'E2E Test Note',
-          content: 'This note was created by the E2E test suite.',
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        },
-      }
-    )
+    const res = await request.post(`${API_URL}/data/notes/${noteId}`, {
+      headers: authHeaders(token),
+      data: {
+        noteId,
+        title: 'E2E Test Note',
+        content: 'This note was created by the E2E test suite.',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     logResult('Note created', { noteId })
   })
 
   test('read the created note', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/note/read/${noteId}`, {
+    const res = await request.get(`${API_URL}/data/notes/${noteId}`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     expect(body.success).toBe(true)
@@ -83,25 +77,21 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('update note content', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/resource/note/update/${noteId}`,
-      {
-        headers: authHeaders(token),
-        data: {
-          noteId,
-          title: 'E2E Test Note (Updated)',
-          content: 'This note was updated by the E2E test suite.',
-          updatedAt: Date.now(),
-        },
-      }
-    )
+    const res = await request.patch(`${API_URL}/data/notes/${noteId}`, {
+      headers: authHeaders(token),
+      data: {
+        noteId,
+        title: 'E2E Test Note (Updated)',
+        content: 'This note was updated by the E2E test suite.',
+        updatedAt: Date.now(),
+      },
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
 
-    const readRes = await request.post(
-      `${API_URL}/resource/note/read/${noteId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const readRes = await request.get(`${API_URL}/data/notes/${noteId}`, {
+      headers: authHeaders(token),
+    })
     const readBody = await readRes.json()
     expect(readBody.data.title).toBe('E2E Test Note (Updated)')
     expect(readBody.data.content).toBe(
@@ -111,19 +101,17 @@ test.describe('Notes Lifecycle', () => {
   })
 
   test('delete the note', async ({ request }) => {
-    const res = await request.post(
-      `${API_URL}/resource/note/delete/${noteId}`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const res = await request.delete(`${API_URL}/data/notes/${noteId}`, {
+      headers: authHeaders(token),
+    })
     const body = await res.json()
     expect(body.success).toBe(true)
     logResult('Note deleted', { noteId })
   })
 
   test('verify note is gone', async ({ request }) => {
-    const res = await request.post(`${API_URL}/resource/note/read/${noteId}`, {
+    const res = await request.get(`${API_URL}/data/notes/${noteId}`, {
       headers: authHeaders(token),
-      data: {},
     })
     const body = await res.json()
     expect(body.data).toBeFalsy()

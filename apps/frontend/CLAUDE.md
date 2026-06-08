@@ -328,7 +328,7 @@ When the user provides an instruction or rule that is clearly valuable and appli
 | `/bots`             | Bots        | BotContext        | `getBots()` + `getBotModels()`         | `src/views/bots/tests/index.test.tsx`        |
 | `/bots/:botId`      | Bot         | BotContext        | `getBot(botId)`                        | —                                            |
 | `/bots/:botId/logs` | Logs        | BotContext        | `getBot(botId)` + `getLogs(botId)`     | —                                            |
-| `/connections`      | Connections | UserContext       | `getAppConnections()` (pre-fetched)    | `src/views/connections/tests/index.test.tsx` |
+| `/connections`      | Connections | UserContext       | `getConnections()` (pre-fetched)       | `src/views/connections/tests/index.test.tsx` |
 | `/` / `/todo`       | ToDo        | UserContext       | `retrieveTodoTasks()`                  | `src/views/todo/tests/index.test.tsx`        |
 | `/feed`             | Feed        | UserContext       | `retrieveContent()`                    | —                                            |
 | `/notes`            | Notes       | Direct ApiRequest | `getNotes()`                           | —                                            |
@@ -337,7 +337,7 @@ When the user provides an instruction or rule that is clearly valuable and appli
 
 **Provider-level data fetching (on auth):**
 
-- UserProvider (`src/providers/user.tsx`): `getContent()`, `getTodo()`, `getAppConnections()` — fires when user authenticates
+- UserProvider (`src/providers/user.tsx`): `getContent()`, `getTodo()`, `getConnections()` — fires when user authenticates
 - AppsProvider (`src/providers/apps.tsx`): `getApps()` — reads local static data, safe
 
 ### Silent Failure Prevention

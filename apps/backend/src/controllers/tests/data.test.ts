@@ -19,7 +19,7 @@ jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn().mockResolvedValue('https://signed-url.example.com'),
 }))
 
-import Resource from '../resource'
+import Data from '../data'
 
 const TEST_USER = 'user-123'
 const TEST_RESOURCE = 'note'
@@ -33,17 +33,17 @@ beforeEach(() => {
 describe('Resource', () => {
   describe('sortKey', () => {
     it('generates sort key without resourceId', () => {
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       expect(resource.sortKey()).toBe('#NOTE')
     })
 
     it('generates sort key with resourceId', () => {
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       expect(resource.sortKey('abc-123')).toBe('#NOTE#abc-123')
     })
 
     it('uppercases the resource name', () => {
-      const resource = new Resource(TEST_USER, 'todo')
+      const resource = new Data(TEST_USER, 'todo')
       expect(resource.sortKey()).toBe('#TODO')
     })
   })
@@ -57,7 +57,7 @@ describe('Resource', () => {
         ],
       })
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       const result = await resource.list()
 
       expect(result).toHaveLength(2)
@@ -67,7 +67,7 @@ describe('Resource', () => {
     it('returns empty array when no items found', async () => {
       ddbMock.on(QueryCommand).resolves({ Items: [] })
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       const result = await resource.list()
 
       expect(result).toHaveLength(0)
@@ -76,7 +76,7 @@ describe('Resource', () => {
     it('throws on DynamoDB error', async () => {
       ddbMock.on(QueryCommand).rejects(new Error('DynamoDB error'))
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       await expect(resource.list()).rejects.toThrow('DynamoDB error')
     })
   })
@@ -87,7 +87,7 @@ describe('Resource', () => {
         Item: { userId: TEST_USER, sortKey: '#NOTE#abc', title: 'My Note' },
       })
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       const result = await resource.read('abc')
 
       expect(result).toEqual({
@@ -100,7 +100,7 @@ describe('Resource', () => {
     it('returns undefined when item not found', async () => {
       ddbMock.on(GetCommand).resolves({})
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       const result = await resource.read('nonexistent')
 
       expect(result).toBeUndefined()
@@ -111,7 +111,7 @@ describe('Resource', () => {
     it('puts item with correct sortKey', async () => {
       ddbMock.on(PutCommand).resolves({})
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       await resource.create('note-1', { title: 'New Note', body: 'Content' })
 
       const calls = ddbMock.commandCalls(PutCommand)
@@ -132,7 +132,7 @@ describe('Resource', () => {
     it('generates dynamic UpdateExpression from resource keys', async () => {
       ddbMock.on(UpdateCommand).resolves({})
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       await resource.update('note-1', { title: 'Updated', body: 'New body' })
 
       const calls = ddbMock.commandCalls(UpdateCommand)
@@ -160,7 +160,7 @@ describe('Resource', () => {
     it('deletes item with correct key', async () => {
       ddbMock.on(DeleteCommand).resolves({})
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       await resource.delete('note-1')
 
       const calls = ddbMock.commandCalls(DeleteCommand)
@@ -174,7 +174,7 @@ describe('Resource', () => {
 
   describe('upload', () => {
     it('returns signed URL for file upload', async () => {
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       const url = await resource.upload('image-123.png')
 
       expect(url).toBe('https://signed-url.example.com')
@@ -185,7 +185,7 @@ describe('Resource', () => {
     it('sends DeleteObject command to S3', async () => {
       s3Mock.on(DeleteObjectCommand).resolves({})
 
-      const resource = new Resource(TEST_USER, TEST_RESOURCE)
+      const resource = new Data(TEST_USER, TEST_RESOURCE)
       await resource.remove('image-123.png')
 
       const calls = s3Mock.commandCalls(DeleteObjectCommand)

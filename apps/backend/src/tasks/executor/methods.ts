@@ -8,7 +8,7 @@ import {
 import Axios from 'axios'
 import webpush from 'web-push'
 
-import Resource from '@/controllers/resource'
+import Data from '@/controllers/data'
 import User from '@/controllers/user'
 import { getDataFromPath, getMappedData } from '@/utils/bot'
 
@@ -53,7 +53,7 @@ async function getTodo(
   taskInput: ITaskExecutionInput<DataType>
 ): Promise<DataType | undefined> {
   const { userId } = taskInput
-  const resource = new Resource(userId, 'todo')
+  const resource = new Data(userId, 'todo')
   return resource.read()
 }
 
@@ -166,7 +166,7 @@ async function httpRequest(
   const headers = { ...inputHeaders }
 
   if (connectionId && userId) {
-    const resource = new Resource(userId, 'connection')
+    const resource = new Data(userId, 'connection')
     const connection = await resource.read(connectionId as string)
     if (connection?.credentials?.apiKey && connection.connectorId) {
       const connector = getConnectorById(connection.connectorId as string)
@@ -217,7 +217,7 @@ async function oauth2Request(
     throw new Error('App auth configuration missing')
   }
 
-  const resource = new Resource(userId, 'connection')
+  const resource = new Data(userId, 'connection')
   const credentialsResponse = await resource.read(connectionId as string)
 
   if (!credentialsResponse?.credentials?.refresh_token) {

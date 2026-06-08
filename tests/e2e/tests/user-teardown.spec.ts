@@ -41,37 +41,32 @@ test.describe('User Teardown', () => {
   test('verify all resources are gone after deletion', async ({ request }) => {
     await new Promise((r) => setTimeout(r, 3000))
 
-    const botsRes = await request.post(`${API_URL}/resource/bot/list`, {
+    const botsRes = await request.get(`${API_URL}/bots`, {
       headers: authHeaders(token),
-      data: {},
     })
     const botsBody = await botsRes.json()
     expect(botsBody.data || []).toHaveLength(0)
 
-    const connectionsRes = await request.post(
-      `${API_URL}/resource/connection/list`,
-      { headers: authHeaders(token), data: {} }
-    )
+    const connectionsRes = await request.get(`${API_URL}/connections`, {
+      headers: authHeaders(token),
+    })
     const connectionsBody = await connectionsRes.json()
     expect(connectionsBody.data || []).toHaveLength(0)
 
-    const notesRes = await request.post(`${API_URL}/resource/note/list`, {
+    const notesRes = await request.get(`${API_URL}/data/notes`, {
       headers: authHeaders(token),
-      data: {},
     })
     const notesBody = await notesRes.json()
     expect(notesBody.data || []).toHaveLength(0)
 
-    const todosRes = await request.post(`${API_URL}/resource/todo/list`, {
+    const todosRes = await request.get(`${API_URL}/data/todos`, {
       headers: authHeaders(token),
-      data: {},
     })
     const todosBody = await todosRes.json()
     expect(todosBody.data || []).toHaveLength(0)
 
-    const contentRes = await request.post(`${API_URL}/resource/content/list`, {
+    const contentRes = await request.get(`${API_URL}/data/content`, {
       headers: authHeaders(token),
-      data: {},
     })
     const contentBody = await contentRes.json()
     expect(contentBody.data || []).toHaveLength(0)

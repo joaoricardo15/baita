@@ -19,6 +19,8 @@ export const handler = async (
     const method = event.httpMethod
 
     switch (method) {
+      // Auth0 Post-Login Action only — API key auth, no CORS, not in OpenAPI docs.
+      // Called when a new user signs in for the first time.
       case 'POST': {
         const providedKey =
           event.headers['x-api-key'] || event.headers['X-Api-Key']
@@ -39,17 +41,11 @@ export const handler = async (
         break
       }
 
+      // Authenticated user account deletion — JWT auth, CORS enabled.
       case 'DELETE': {
         const userId = getAuthenticatedUserId(event)
         await user.deleteUser(userId)
         api.httpResponse(callback, ApiRequestStatus.success)
-        break
-      }
-
-      case 'GET': {
-        const userId = getAuthenticatedUserId(event)
-        const data = await user.getContent(userId)
-        api.httpResponse(callback, ApiRequestStatus.success, undefined, data)
         break
       }
 

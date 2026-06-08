@@ -11,7 +11,7 @@ export function buildOAuthUrl(
   const { auth } = connector
   const params = new URLSearchParams({
     client_id: auth.clientId,
-    redirect_uri: `${PRODUCTION_API_URL}/connectors/oauth`,
+    redirect_uri: `${PRODUCTION_API_URL}/oauth/callback`,
     response_type: 'code',
     scope: auth.scopes.join(' '),
     access_type: 'offline',

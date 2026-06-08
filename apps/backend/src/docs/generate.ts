@@ -64,132 +64,224 @@ interface OperationDoc {
 }
 
 const OPERATION_DOCS: Record<string, OperationDoc> = {
-  '/bot/{operation}:post': {
-    summary: 'Bot collection operations (no ID required)',
-    description:
-      'Collection-level bot operations that do not target a specific bot. **create** — creates a new bot and returns the generated ID. **model** — creates a bot from a shared model template (modelId in body).',
-    parameterOverrides: {
-      operation: {
-        description: 'Collection operation',
-        enum: ['create', 'model'],
-      },
-    },
+  '/bots:get': {
+    summary: 'List bots',
+    description: 'Returns all bots owned by the authenticated user.',
     responseSchema: 'Bot',
   },
-  '/bot/{operation}/{botId}:post': {
-    summary: 'Bot item operations (specific bot by ID)',
+  '/bots:post': {
+    summary: 'Create bot',
     description:
-      'Item-level operations on a specific bot identified by `botId`. **update** — updates bot name, description, image, active state, or tasks. **delete** — permanently deletes the bot and all deployed AWS resources. **deploy** — generates Lambda code and deploys. **test** — executes a single task step for testing. **logs** — retrieves recent execution logs from CloudWatch.',
-    parameterOverrides: {
-      operation: {
-        description: 'Item operation',
-        enum: ['update', 'delete', 'deploy', 'test', 'logs'],
-      },
-      botId: { description: 'Bot ID (UUID)' },
-    },
+      'Creates a new empty bot and returns it with a generated ID and trigger URL.',
+    responseSchema: 'Bot',
+  },
+  '/bots/{botId}:get': {
+    summary: 'Get bot',
+    description: 'Returns a specific bot by ID.',
+    parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
+    responseSchema: 'Bot',
+  },
+  '/bots/{botId}:patch': {
+    summary: 'Update bot',
+    description:
+      'Updates bot properties: name, description, image, active state, or tasks.',
+    parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
     requestSchema: 'Bot',
     responseSchema: 'Bot',
   },
-  '/resource/{resourceName}/{operation}:post': {
-    summary: 'Resource collection operations (no ID required)',
+  '/bots/{botId}:delete': {
+    summary: 'Delete bot',
     description:
-      'Collection-level CRUD for user resources. **list** — returns all records of the given type.',
-    parameterOverrides: {
-      resourceName: {
-        description: 'Resource type',
-        enum: ['todo', 'connection', 'model', 'note', 'content'],
-      },
-      operation: { description: 'Collection operation', enum: ['list'] },
-    },
+      'Permanently deletes the bot and all deployed AWS resources (Lambda, API Gateway, Scheduler, S3, CloudWatch logs).',
+    parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
   },
-  '/resource/{resourceName}/{operation}/{resourceId}:post': {
-    summary: 'Resource item operations (specific record by ID)',
+  '/bots/{botId}/deploy:post': {
+    summary: 'Deploy bot',
     description:
-      'Item-level operations on a specific resource record. **read** — returns the record. **create** — creates a new record with the given ID. **update** — replaces the record with the request body. **delete** — removes the record. **upload** — returns a presigned S3 URL for file upload. **remove** — deletes an uploaded file from S3.',
-    parameterOverrides: {
-      resourceName: {
-        description: 'Resource type',
-        enum: ['todo', 'connection', 'model', 'note', 'content'],
-      },
-      operation: {
-        description: 'Item operation',
-        enum: ['create', 'read', 'update', 'delete', 'upload', 'remove'],
-      },
-      resourceId: { description: 'Resource record ID' },
-    },
+      'Generates Lambda code from the bot task definitions, packages it, and deploys it as a standalone Lambda function with API Gateway trigger and optional EventBridge schedule.',
+    parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
+    requestSchema: 'Bot',
+    responseSchema: 'Bot',
   },
-  '/connection/{operation}:post': {
-    summary: 'Connection collection operations (no ID required)',
+  '/bots/{botId}/test:post': {
+    summary: 'Test bot task',
     description:
-      'Collection-level connection operations. **create** — creates a new OAuth or API-key connection. The request body must include `connectorId` and `apiKey`.',
-    parameterOverrides: {
-      operation: {
-        description: 'Collection operation',
-        enum: ['create'],
-      },
-    },
+      'Executes a single task step within the bot for testing. Returns the execution result including output data.',
+    parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
+    responseSchema: 'TaskExecutionResult',
+  },
+  '/bots/{botId}/logs:get': {
+    summary: 'Get bot logs',
+    description:
+      'Retrieves recent execution logs from CloudWatch for the deployed bot Lambda.',
+    parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
+  },
+  '/models:get': {
+    summary: 'List bot models',
+    description:
+      'Returns all shared bot templates. Models are system-level and can be used as starting points for new bots.',
+    responseSchema: 'Bot',
+  },
+  '/models:post': {
+    summary: 'Create bot model',
+    description: 'Creates a new shared bot template.',
+    requestSchema: 'Bot',
+    responseSchema: 'Bot',
+  },
+  '/models/{modelId}:get': {
+    summary: 'Get bot model',
+    description: 'Returns a specific shared bot model.',
+    parameterOverrides: { modelId: { description: 'Model ID' } },
+    responseSchema: 'Bot',
+  },
+  '/models/{modelId}:patch': {
+    summary: 'Update bot model',
+    description: 'Updates a shared bot model definition.',
+    parameterOverrides: { modelId: { description: 'Model ID' } },
+    requestSchema: 'Bot',
+    responseSchema: 'Bot',
+  },
+  '/models/{modelId}:delete': {
+    summary: 'Delete bot model',
+    description: 'Removes a shared bot model.',
+    parameterOverrides: { modelId: { description: 'Model ID' } },
+  },
+  '/models/{modelId}/deploy:post': {
+    summary: 'Deploy model as bot',
+    description:
+      "Creates a new bot for the authenticated user from a shared model template, copying the model's tasks into the new bot.",
+    parameterOverrides: { modelId: { description: 'Model ID' } },
+    responseSchema: 'Bot',
+  },
+  '/connections:get': {
+    summary: 'List connections',
+    description:
+      'Returns all OAuth and API-key connections owned by the authenticated user.',
+    responseSchema: 'Connection',
+  },
+  '/connections:post': {
+    summary: 'Create connection',
+    description:
+      'Creates a new API-key connection. OAuth connections are created via the system OAuth callback. Body must include `connectorId` and `apiKey`.',
     requestSchema: 'Connection',
     responseSchema: 'Connection',
   },
-  '/connection/{operation}/{connectionId}:post': {
-    summary: 'Connection item operations (specific connection by ID)',
+  '/connections/{connectionId}:get': {
+    summary: 'Get connection details',
     description:
-      'Item-level operations on a specific connection identified by `connectionId`. **health** — validates the connection credentials are still working (makes a test API call to the provider). **details** — returns the full connection record including linked bots.',
+      'Returns the full connection record (credentials excluded) including a list of bots that reference this connection.',
     parameterOverrides: {
-      operation: {
-        description: 'Item operation',
-        enum: ['health', 'details'],
-      },
       connectionId: { description: 'Connection ID (UUID)' },
     },
     responseSchema: 'Connection',
   },
-  '/task/{operation}:post': {
-    summary: 'Execute a task',
-    description:
-      'Executes a single automation task (HTTP request, code execution, push notification, etc.). Used for testing individual steps before adding them to a bot workflow. The request body is a full task definition including service, app, and input variables.',
+  '/connections/{connectionId}:delete': {
+    summary: 'Delete connection',
+    description: 'Removes the connection credentials.',
     parameterOverrides: {
-      operation: { description: 'Execution mode', enum: ['execute'] },
+      connectionId: { description: 'Connection ID (UUID)' },
     },
-    requestSchema: 'Task',
-    responseSchema: 'TaskExecutionResult',
   },
-  '/model/{operation}:post': {
-    summary: 'Shared bot models (list, create)',
+  '/connections/{connectionId}/health:post': {
+    summary: 'Check connection health',
     description:
-      'Operations on shared bot templates. Models are system-level (not user-scoped) and can be used as starting points for new bots. **list** — returns all available models. **create** — creates a new shared model.',
+      'Validates the connection credentials are still working by making a test API call to the provider. Automatically refreshes expired OAuth2 tokens.',
     parameterOverrides: {
-      operation: { description: 'CRUD operation', enum: ['list', 'create'] },
+      connectionId: { description: 'Connection ID (UUID)' },
     },
-    responseSchema: 'Bot',
-  },
-  '/model/{operation}/{modelId}:post': {
-    summary: 'Shared bot model with ID (read, update, delete)',
-    description:
-      'Operations on a specific shared bot model. **read** — returns the model. **update** — replaces the model definition. **delete** — removes the model.',
-    parameterOverrides: {
-      operation: {
-        description: 'CRUD operation',
-        enum: ['read', 'update', 'delete'],
-      },
-      modelId: { description: 'Model ID' },
-    },
-    requestSchema: 'Bot',
-    responseSchema: 'Bot',
-  },
-  '/user:delete': {
-    summary: 'Delete account',
-    description:
-      'Permanently deletes the authenticated user account, all bots (including deployed AWS Lambda/API Gateway/Scheduler resources), all stored resources, and the SQS message queue. This action is irreversible.',
   },
   '/content:get': {
     summary: 'Get content feed',
     description:
       "Reads content items from the user's SQS queue. Items are consumed on read (one-time delivery) and will not appear again. Previously seen content is automatically deduplicated at publish time.",
   },
+  '/tasks/execute:post': {
+    summary: 'Execute a task',
+    description:
+      'Executes a single automation task (HTTP request, code execution, push notification, etc.). Used for testing individual steps before adding them to a bot workflow.',
+    requestSchema: 'Task',
+    responseSchema: 'TaskExecutionResult',
+  },
+  '/data/{type}:get': {
+    summary: 'List data records',
+    description:
+      'Returns all records of the given type for the authenticated user.',
+    parameterOverrides: {
+      type: {
+        description: 'Data type',
+        enum: ['notes', 'places', 'todos', 'content'],
+      },
+    },
+  },
+  '/data/{type}:post': {
+    summary: 'Create data record',
+    description: 'Creates a new record of the given type.',
+    parameterOverrides: {
+      type: {
+        description: 'Data type',
+        enum: ['notes', 'places', 'todos', 'content'],
+      },
+    },
+  },
+  '/data/{type}/{id}:get': {
+    summary: 'Get data record',
+    description: 'Returns a specific record by type and ID.',
+    parameterOverrides: {
+      type: {
+        description: 'Data type',
+        enum: ['notes', 'places', 'todos', 'content'],
+      },
+      id: { description: 'Record ID' },
+    },
+  },
+  '/data/{type}/{id}:patch': {
+    summary: 'Update data record',
+    description: 'Updates a specific record.',
+    parameterOverrides: {
+      type: {
+        description: 'Data type',
+        enum: ['notes', 'places', 'todos', 'content'],
+      },
+      id: { description: 'Record ID' },
+    },
+  },
+  '/data/{type}/{id}:delete': {
+    summary: 'Delete data record',
+    description: 'Removes a specific record.',
+    parameterOverrides: {
+      type: {
+        description: 'Data type',
+        enum: ['notes', 'places', 'todos', 'content'],
+      },
+      id: { description: 'Record ID' },
+    },
+  },
+  '/data/{type}/{id}/upload:post': {
+    summary: 'Get upload URL',
+    description:
+      'Returns a presigned S3 URL for file upload (PUT method, 15 min expiry).',
+    parameterOverrides: {
+      type: { description: 'Data type', enum: ['places', 'image'] },
+      id: { description: 'Record ID' },
+    },
+  },
+  '/data/{type}/{id}/files/{fileId}:delete': {
+    summary: 'Remove uploaded file',
+    description: 'Deletes an uploaded file from S3.',
+    parameterOverrides: {
+      type: { description: 'Data type', enum: ['places', 'image'] },
+      id: { description: 'Record ID' },
+      fileId: { description: 'File ID (S3 key)' },
+    },
+  },
+  '/user:delete': {
+    summary: 'Delete account',
+    description:
+      'Permanently deletes the authenticated user account, all bots (including deployed AWS resources), all stored data, and the SQS message queue. This action is irreversible.',
+  },
 }
 
-const SYSTEM_ROUTES = new Set(['user:post', 'connectors/oauth:get'])
+const SYSTEM_ROUTES = new Set(['user:post', 'oauth/callback:get'])
 
 function extractRoutes(): { path: string; method: string; hasAuth: boolean }[] {
   const raw = readFileSync(
@@ -286,7 +378,7 @@ function generatePaths() {
       })
     }
 
-    if (method === 'post') {
+    if (method === 'post' || method === 'patch') {
       entry.requestBody = {
         content: {
           'application/json': {
@@ -332,8 +424,8 @@ const spec = {
   info: {
     title: 'Baita Help API',
     description:
-      'Personal automation platform API. All endpoints require authentication via Auth0 JWT Bearer token. The userId is automatically extracted from your token — no need to include it in request URLs. Use the "Authorize" button to log in with your Auth0 account.',
-    version: '3.0.0',
+      'Personal automation platform API. All endpoints require authentication via Auth0 JWT Bearer token. The userId is automatically extracted from your token — no need to include it in request URLs.',
+    version: '4.0.0',
     contact: { url: 'https://github.com/joaoricardo15/baita' },
   },
   servers: [
@@ -342,25 +434,31 @@ const spec = {
   ],
   tags: [
     {
-      name: 'Bot',
+      name: 'Bots',
       description: 'Create, deploy, test, and manage automation bots',
     },
     {
-      name: 'Resource',
-      description:
-        'Generic CRUD for user data (todos, notes, connections, content)',
+      name: 'Models',
+      description: 'Shared bot templates (system-level)',
     },
     {
-      name: 'Connection',
+      name: 'Connections',
       description: 'OAuth and API-key connections to external services',
     },
     {
-      name: 'Task',
+      name: 'Content',
+      description: 'Content feed (SQS-based message queue)',
+    },
+    {
+      name: 'Tasks',
       description: 'Execute individual automation steps for testing',
     },
-    { name: 'Model', description: 'Shared bot templates (system-level)' },
+    {
+      name: 'Data',
+      description:
+        'Generic CRUD for user data (notes, places, todos, content reactions)',
+    },
     { name: 'User', description: 'Account management' },
-    { name: 'Content', description: 'Content feed (SQS-based message queue)' },
   ],
   security: [{ bearerAuth: [] }],
   components: {

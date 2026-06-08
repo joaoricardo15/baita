@@ -50,14 +50,16 @@ Before reporting a task as done, self-check:
 ```
 src/
 ├── authorizer/     # Lambda authorizer (Auth0 JWT verification)
-├── connectors/     # OAuth callback handlers (Google, Pipedrive)
-├── controllers/    # Business logic classes (User, Bot, Task, Resource)
-├── endpoints/      # REST API Lambda handlers (one consolidated handler per domain)
-│   ├── bot/        # All bot operations (create, update, delete, deploy, test, logs, model)
-│   ├── connection/ # All connection operations (create, health, details)
-│   ├── resource/   # Generic resource CRUD (list, read, create, update, delete, upload, remove)
-│   ├── task/       # Task execution (execute — supports HTTP + direct Lambda invoke)
-│   └── user/       # User operations (create, delete, content)
+├── controllers/    # Business logic classes (User, Bot, Task, Data)
+├── endpoints/      # RESTful API Lambda handlers (one consolidated handler per domain)
+│   ├── bots/        # Bot CRUD + deploy/test/logs
+│   ├── connections/ # Connection CRUD + health
+│   ├── content/     # Content feed (GET only)
+│   ├── data/        # Generic data CRUD (replaces old resource/)
+│   ├── models/      # Bot model CRUD + deploy
+│   ├── oauth/       # OAuth callback (provider redirect handler)
+│   ├── tasks/       # Task execution
+│   └── user/        # User profile (POST create + DELETE)
 ├── lib/            # Module-level AWS SDK clients (DynamoDB singleton)
 ├── tasks/          # Task execution logic
 │   └── executor/   # Service-specific executors (code.ts, methods.ts)
@@ -151,10 +153,10 @@ Use this for manual API testing (requires a valid JWT token from Auth0):
 curl http://localhost:5000/dev/content -H "Authorization: Bearer <token>"
 
 # List bots
-curl -X POST http://localhost:5000/dev/resource/bot/list -H "Authorization: Bearer <token>" -d '{}'
+curl http://localhost:5000/dev/bots -H "Authorization: Bearer <token>"
 
 # List todos
-curl -X POST http://localhost:5000/dev/resource/todo/list -H "Authorization: Bearer <token>" -d '{}'
+curl http://localhost:5000/dev/data/todo -H "Authorization: Bearer <token>"
 ```
 
 ## Architecture
@@ -221,7 +223,7 @@ PK (userId) | SK (sortKey)                    | Description
 ----------- | ------------------------------- | -----------
 userId      | #USER                           | User profile
 userId      | #BOT#{botId}                    | Bot definition
-userId      | #{resourceName}#{resourceId}    | Generic resource
+userId      | #{type}#{id}                    | Generic data record
 userId      | #CONTENT#{contentId}            | Content item
 userId      | #CONNECTION#{connectionId}      | OAuth connection
 ```
@@ -253,10 +255,10 @@ The content feed uses SQS as a transient message queue + DynamoDB for deduplicat
    - Sends new items to the user's SQS queue
    - **Note**: Returns success even when 0 items are published (all filtered as duplicates)
 2. **Consume**: Frontend calls `GET /content` → `getContent()` reads up to 10 messages from SQS and **deletes them immediately** (one-time consumption)
-3. **Deduplicate**: When user swipes/reacts to content in the feed, the frontend calls `POST /resource/content/create/{contentId}` which writes a `#CONTENT#{contentId}` record to DynamoDB via the **generic Resource controller** (runtime operation — not visible as a static code reference to `#CONTENT`)
+3. **Deduplicate**: When user swipes/reacts to content in the feed, the frontend calls `POST /data/content` which writes a `#CONTENT#{contentId}` record to DynamoDB via the **generic Data controller** (runtime operation — not visible as a static code reference to `#CONTENT`)
 4. **Retention**: SQS messages expire after 2 days if not consumed
 
-**Important for debugging**: Because `#CONTENT` records are written by the generic Resource controller at runtime (via `POST /resource/content/create`), you cannot find explicit `#CONTENT` write references by grepping the codebase. The Resource controller dynamically constructs sortKeys as `#{resourceName}#{resourceId}` — for content, this becomes `#CONTENT#{contentId}`. Always consider this runtime behavior when tracing data flow.
+**Important for debugging**: Because `#CONTENT` records are written by the generic Data controller at runtime (via `POST /data/content`), you cannot find explicit `#CONTENT` write references by grepping the codebase. The Data controller dynamically constructs sortKeys as `#{type}#{id}` — for content, this becomes `#CONTENT#{contentId}`. Always consider this runtime behavior when tracing data flow.
 
 ### Code Execution Safety
 
@@ -277,8 +279,8 @@ The content feed uses SQS as a transient message queue + DynamoDB for deduplicat
 
 - Interfaces: Prefixed with `I` (e.g., `IUser`, `IBot`, `ITask`, `IVariable`)
 - Enums: PascalCase values (e.g., `TaskExecutionStatus.success`)
-- Controllers: PascalCase class names matching the domain (e.g., `Bot`, `User`, `Resource`)
-- Endpoints: lowercase folders organized by domain (`bot/`, `connection/`, `task/`, `user/`, `resource/`)
+- Controllers: PascalCase class names matching the domain (e.g., `Bot`, `User`, `Data`)
+- Endpoints: lowercase folders organized by domain (`bots/`, `connections/`, `content/`, `data/`, `models/`, `oauth/`, `tasks/`, `user/`)
 - Environment variables: UPPER_SNAKE_CASE
 
 ### TypeScript
@@ -323,13 +325,13 @@ User provisioning is called exclusively by the Auth0 Post-Login Action on first 
 
 - **No Lambda authorizer** — validated by `X-Api-Key` header in the handler itself
 - **API key stored in SSM**: `/baita/prod/auth0-create-user-api-key`
-- **Handler**: `src/endpoints/user/index.ts` (same Lambda as DELETE /user and GET /content, routes by HTTP method)
+- **Handler**: `src/endpoints/user/index.ts` (same Lambda as DELETE /user, routes by HTTP method)
 - **Must NEVER be called by E2E tests, frontend, or any source other than Auth0**
 - Auth0 Action secrets: `BAITA_API_URL`, `BAITA_CREATE_USER_API_KEY`
 
 ## API Endpoints
 
-All authenticated endpoints extract userId from the JWT token (via Lambda authorizer). No userId in URL paths.
+All authenticated endpoints extract userId from the JWT token (via Lambda authorizer). No userId in URL paths. RESTful design: proper HTTP verbs, plural nouns, actions as sub-paths.
 
 ### User (System Endpoints)
 
@@ -340,40 +342,51 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 
 - `GET /content` — Get content feed (from SQS)
 
-### Bots (all POST, operation-based routing)
+### Bots
 
-- `POST /bot/create` — Create bot
-- `POST /bot/update/{botId}` — Update bot
-- `POST /bot/delete/{botId}` — Delete bot (reads apiId from DDB record)
-- `POST /bot/deploy/{botId}` — Deploy/deactivate bot
-- `POST /bot/test/{botId}` — Test individual task (taskIndex in body)
-- `POST /bot/logs/{botId}` — Get execution logs
-- `POST /bot/model` — Deploy from bot model (modelId in body)
+- `GET /bots` — List bots
+- `POST /bots` — Create bot
+- `GET /bots/{botId}` — Get bot
+- `PATCH /bots/{botId}` — Update bot
+- `DELETE /bots/{botId}` — Delete bot (cleans up Lambda + API Gateway + S3 + Scheduler)
+- `POST /bots/{botId}/deploy` — Deploy/deactivate bot
+- `POST /bots/{botId}/test` — Test individual task (taskIndex in body)
+- `GET /bots/{botId}/logs` — Get execution logs
 
-### Bot Models (shared, system user)
+### Models (shared, system user)
 
-- `POST /model/{operation}` — List/read shared bot models (userId='baita')
-- `POST /model/{operation}/{modelId}` — Read/update/delete specific model
+- `GET /models` — List shared bot models (userId='baita')
+- `POST /models` — Create model
+- `GET /models/{modelId}` — Get specific model
+- `PATCH /models/{modelId}` — Update model
+- `DELETE /models/{modelId}` — Delete model
+- `POST /models/{modelId}/deploy` — Deploy as bot from model
 
 ### Tasks
 
-- `POST /task/{operation}` — Execute task (also accepts direct Lambda invoke from bots)
+- `POST /tasks/execute` — Execute task (also accepts direct Lambda invoke from bots)
 
-### Connections (all POST, operation-based routing)
+### Connections
 
-- `POST /connection/create` — Create connection
-- `POST /connection/health/{connectionId}` — Test connection health
-- `POST /connection/details/{connectionId}` — Get connection details + linked bots
+- `GET /connections` — List connections
+- `POST /connections` — Create connection (API key type)
+- `GET /connections/{connectionId}` — Get connection details + linked bots
+- `DELETE /connections/{connectionId}` — Delete connection
+- `POST /connections/{connectionId}/health` — Check connection health
 
-### Resources (generic CRUD)
+### Data (generic CRUD)
 
-- `POST /resource/{resourceName}/{operation}` — Generic CRUD
-- `POST /resource/{resourceName}/{operation}/{resourceId}` — CRUD with ID
-  - Operations: `list`, `read`, `delete`, `create`, `update`, `upload`, `remove`
+- `GET /data/{type}` — List records
+- `POST /data/{type}` — Create record
+- `GET /data/{type}/{id}` — Read record
+- `PATCH /data/{type}/{id}` — Update record
+- `DELETE /data/{type}/{id}` — Delete record
+- `POST /data/{type}/{id}/upload` — Get S3 presigned URL
+- `DELETE /data/{type}/{id}/files/{fileId}` — Remove file
 
-### OAuth Connectors
+### OAuth
 
-- `GET /connectors/oauth` — Generic OAuth callback (public, no auth)
+- `GET /oauth/callback` — Generic OAuth provider callback (public, no auth)
 
 ## Feature Development Methodology
 
@@ -433,25 +446,25 @@ cd tests/e2e && npm test
 
 ### Test Coverage
 
-| Page/Feature        | Endpoint                         | Tested | Notes                                     |
-| ------------------- | -------------------------------- | ------ | ----------------------------------------- |
-| Home (Content Feed) | GET /content                     | Yes    | Auth + SQS access                         |
-| Todo                | POST /resource/todo/list         | Yes    | DynamoDB query                            |
-| Bots List           | POST /resource/bot/list          | Yes    | DynamoDB query                            |
-| Connections         | POST /resource/connection/list   | Yes    | DynamoDB query                            |
-| Resource CRUD       | POST /resource/smoke-note/\*     | Yes    | Full create/read/update/list/delete cycle |
-| Bot Lifecycle       | POST /bot/create + logs + delete | Yes    | Lambda + S3 + API Gateway + Scheduler     |
-| Bot Deploy          | POST /bot/deploy/{id}            | Yes    | Code generation + Lambda deploy           |
-| Bot Test            | POST /bot/test/{id}              | Yes    | Task execution via executor               |
-| Connector Services  | POST /task/execute               | Yes    | Baita, Google, NewsAPI, OpenAI, Pipedrive |
-| Connection Health   | POST /connection/health/{id}     | Yes    | OAuth token refresh + API probe           |
-| Connection Details  | POST /connection/details/{id}    | Yes    | Linked bots lookup                        |
-| User Deletion       | DELETE /user                     | Yes    | Full cleanup (DDB, Auth0, SQS, bots)      |
-| Auth Rejection      | GET without token                | Yes    | Security — 401 returned                   |
-| CORS on Errors      | GET with Origin header           | Yes    | CORS headers on 4XX                       |
-| Error Handling      | Invalid operations               | Yes    | Structured error response                 |
-| File Upload         | POST /resource/\*/upload         | Future | S3 presigned URL flow                     |
-| Push Notifications  | —                                | N/A    | Frontend-only feature                     |
+| Page/Feature        | Endpoint                                  | Tested | Notes                                     |
+| ------------------- | ----------------------------------------- | ------ | ----------------------------------------- |
+| Home (Content Feed) | GET /content                              | Yes    | Auth + SQS access                         |
+| Todo                | GET /data/todo                            | Yes    | DynamoDB query                            |
+| Bots List           | GET /bots                                 | Yes    | DynamoDB query                            |
+| Connections         | GET /connections                          | Yes    | DynamoDB query                            |
+| Data CRUD           | GET/POST/PATCH/DELETE /data/smoke-note/\* | Yes    | Full create/read/update/list/delete cycle |
+| Bot Lifecycle       | POST /bots + GET logs + DELETE            | Yes    | Lambda + S3 + API Gateway + Scheduler     |
+| Bot Deploy          | POST /bots/{botId}/deploy                 | Yes    | Code generation + Lambda deploy           |
+| Bot Test            | POST /bots/{botId}/test                   | Yes    | Task execution via executor               |
+| Connector Services  | POST /tasks/execute                       | Yes    | Baita, Google, NewsAPI, OpenAI, Pipedrive |
+| Connection Health   | POST /connections/{connectionId}/health   | Yes    | OAuth token refresh + API probe           |
+| Connection Details  | GET /connections/{connectionId}           | Yes    | Linked bots lookup                        |
+| User Deletion       | DELETE /user                              | Yes    | Full cleanup (DDB, Auth0, SQS, bots)      |
+| Auth Rejection      | GET without token                         | Yes    | Security — 401 returned                   |
+| CORS on Errors      | GET with Origin header                    | Yes    | CORS headers on 4XX                       |
+| Error Handling      | Invalid operations                        | Yes    | Structured error response                 |
+| File Upload         | POST /data/\*/upload                      | Future | S3 presigned URL flow                     |
+| Push Notifications  | —                                         | N/A    | Frontend-only feature                     |
 
 ### Adding New Tests
 

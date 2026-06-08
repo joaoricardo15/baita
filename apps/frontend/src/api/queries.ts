@@ -11,37 +11,32 @@ import {
 
 import { getApiResponse } from './client'
 
-export const fetchBots = () =>
-  getApiResponse<IBot[]>('post', 'resource/bot/list')
+export const fetchBots = () => getApiResponse<IBot[]>('get', 'bots')
 
 export const fetchBot = (botId: string) =>
-  getApiResponse<IBot>('post', `resource/bot/read/${botId}`)
+  getApiResponse<IBot>('get', `bots/${botId}`)
 
-export const fetchBotModels = () =>
-  getApiResponse<IBotModel[]>('post', 'model/list')
+export const fetchBotModels = () => getApiResponse<IBotModel[]>('get', 'models')
 
 export const fetchLogs = (botId: string) =>
-  getApiResponse<IBotLog[]>('post', `bot/logs/${botId}`)
+  getApiResponse<IBotLog[]>('get', `bots/${botId}/logs`)
 
-export const fetchTodo = () =>
-  getApiResponse<ITodo>('post', 'resource/todo/read')
+export const fetchTodo = () => getApiResponse<ITodo>('get', 'data/todos')
 
 export const fetchContent = () => getApiResponse<IContent[]>('get', 'content')
 
 export const fetchConnections = () =>
-  getApiResponse<IAppConnection[]>('post', 'resource/connection/list')
+  getApiResponse<IAppConnection[]>('get', 'connections')
 
 export const fetchConnectionHealth = (connectionId: string) =>
   getApiResponse<{ status: string; message?: string }>(
     'post',
-    `connection/health/${connectionId}`
+    `connections/${connectionId}/health`
   )
 
-export const fetchNotes = () =>
-  getApiResponse<INote[]>('post', 'resource/note/list')
+export const fetchNotes = () => getApiResponse<INote[]>('get', 'data/notes')
 
-export const fetchPlaces = () =>
-  getApiResponse<IPlace[]>('post', 'resource/place/list')
+export const fetchPlaces = () => getApiResponse<IPlace[]>('get', 'data/places')
 
 export const fetchImageUploadUrl = (imageId: string) =>
-  getApiResponse<string>('post', `resource/image/upload/${imageId}`)
+  getApiResponse<string>('post', `data/image/${imageId}/upload`)

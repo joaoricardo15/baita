@@ -17,33 +17,24 @@ const CORE_TABLE = process.env.CORE_TABLE || ''
 const FILES_BUCKET = process.env.FILES_BUCKET || ''
 const s3 = new S3Client({})
 
-export const resourceOperations = [
-  'list',
-  'read',
-  'delete',
-  'create',
-  'update',
-  'upload',
-  'remove',
-]
-export const resourceValidationProneOperations = ['create', 'update']
+export const dataValidationProneOperations = ['create', 'update']
 
-export const resourceValidations: Record<string, (data: unknown) => void> = {
+export const dataValidations: Record<string, (data: unknown) => void> = {
   todo: (data: unknown) => validateTodoTasks((data as ITodo).tasks),
   model: (data: unknown) => validateTasks((data as IBotModel).tasks),
 }
 
-class Resource {
+class Data {
   userId: string
-  resourceName: string
+  typeName: string
 
-  constructor(userId: string, resourceName: string) {
+  constructor(userId: string, typeName: string) {
     this.userId = userId
-    this.resourceName = resourceName.toUpperCase()
+    this.typeName = typeName.toUpperCase()
   }
 
-  sortKey(resourceId?: string): string {
-    return '#' + this.resourceName + (!resourceId ? '' : '#' + resourceId)
+  sortKey(id?: string): string {
+    return '#' + this.typeName + (!id ? '' : '#' + id)
   }
 
   async list() {
@@ -64,13 +55,13 @@ class Resource {
     }
   }
 
-  async read(resourceId?: string) {
+  async read(id?: string) {
     try {
       const result = await ddb.get({
         TableName: CORE_TABLE,
         Key: {
           userId: this.userId,
-          sortKey: this.sortKey(resourceId),
+          sortKey: this.sortKey(id),
         },
       })
 
@@ -80,13 +71,13 @@ class Resource {
     }
   }
 
-  async delete(resourceId: string) {
+  async delete(id: string) {
     try {
       await ddb.delete({
         TableName: CORE_TABLE,
         Key: {
           userId: this.userId,
-          sortKey: this.sortKey(resourceId),
+          sortKey: this.sortKey(id),
         },
       })
     } catch (err: unknown) {
@@ -94,14 +85,14 @@ class Resource {
     }
   }
 
-  async create(resourceId: string, resource: Record<string, unknown>) {
+  async create(id: string, record: Record<string, unknown>) {
     try {
       await ddb.put({
         TableName: CORE_TABLE,
         Item: {
           userId: this.userId,
-          sortKey: this.sortKey(resourceId),
-          ...resource,
+          sortKey: this.sortKey(id),
+          ...record,
         },
       })
     } catch (err: unknown) {
@@ -109,28 +100,28 @@ class Resource {
     }
   }
 
-  async update(resourceId: string, resource: Record<string, unknown>) {
+  async update(id: string, record: Record<string, unknown>) {
     try {
-      const resourceKeys = Object.keys(resource)
+      const keys = Object.keys(record)
 
       await ddb.update({
         TableName: CORE_TABLE,
         Key: {
           userId: this.userId,
-          sortKey: this.sortKey(resourceId),
+          sortKey: this.sortKey(id),
         },
-        UpdateExpression: `SET ${resourceKeys.map((_k, index) => `#field${index} = :value${index}`).join(', ')}`,
-        ExpressionAttributeNames: resourceKeys.reduce(
+        UpdateExpression: `SET ${keys.map((_k, index) => `#field${index} = :value${index}`).join(', ')}`,
+        ExpressionAttributeNames: keys.reduce(
           (accumulator, k, index) => ({
             ...accumulator,
             [`#field${index}`]: k,
           }),
           {}
         ),
-        ExpressionAttributeValues: resourceKeys.reduce(
+        ExpressionAttributeValues: keys.reduce(
           (accumulator, k, index) => ({
             ...accumulator,
-            [`:value${index}`]: resource[k],
+            [`:value${index}`]: record[k],
           }),
           {}
         ),
@@ -140,13 +131,13 @@ class Resource {
     }
   }
 
-  async upload(resourceId: string) {
+  async upload(id: string) {
     try {
       const uploadUrl = await getSignedUrl(
         s3,
         new PutObjectCommand({
           Bucket: FILES_BUCKET,
-          Key: resourceId,
+          Key: id,
         })
       )
 
@@ -156,12 +147,12 @@ class Resource {
     }
   }
 
-  async remove(resourceId: string) {
+  async remove(id: string) {
     try {
       await s3.send(
         new DeleteObjectCommand({
           Bucket: FILES_BUCKET,
-          Key: resourceId,
+          Key: id,
         })
       )
     } catch (err: unknown) {
@@ -170,4 +161,4 @@ class Resource {
   }
 }
 
-export default Resource
+export default Data

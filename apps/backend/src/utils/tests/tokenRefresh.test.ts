@@ -66,7 +66,7 @@ describe('refreshOAuth2Token', () => {
     const result = await refreshOAuth2Token(
       mockConnector,
       { access_token: 'old-token', refresh_token: 'old-refresh' },
-      'https://api.test.com/connectors/oauth'
+      'https://api.test.com/oauth/callback'
     )
 
     expect(result.access_token).toBe('new-access-token')
@@ -90,7 +90,7 @@ describe('refreshOAuth2Token', () => {
     const result = await refreshOAuth2Token(
       mockBasicConnector,
       { access_token: 'old', refresh_token: 'refresh' },
-      'https://api.test.com/connectors/oauth'
+      'https://api.test.com/oauth/callback'
     )
 
     expect(result.access_token).toBe('new-token')
@@ -110,7 +110,7 @@ describe('refreshOAuth2Token', () => {
       refreshOAuth2Token(
         mockConnector,
         { access_token: 'token' },
-        'https://api.test.com/connectors/oauth'
+        'https://api.test.com/oauth/callback'
       )
     ).rejects.toThrow('No refresh token available')
   })
@@ -125,7 +125,7 @@ describe('refreshOAuth2Token', () => {
       refreshOAuth2Token(
         apiKeyConnector,
         { access_token: 'token', refresh_token: 'refresh' },
-        'https://api.test.com/connectors/oauth'
+        'https://api.test.com/oauth/callback'
       )
     ).rejects.toThrow('Connector does not use OAuth2')
   })
@@ -142,7 +142,7 @@ describe('refreshOAuth2Token', () => {
         refresh_token: 'keep-this',
         api_domain: 'https://company.pipedrive.com',
       },
-      'https://api.test.com/connectors/oauth'
+      'https://api.test.com/oauth/callback'
     )
 
     expect(result.access_token).toBe('new-token')
@@ -157,7 +157,7 @@ describe('refreshOAuth2Token', () => {
       refreshOAuth2Token(
         mockConnector,
         { access_token: 'token', refresh_token: 'refresh' },
-        'https://api.test.com/connectors/oauth'
+        'https://api.test.com/oauth/callback'
       )
     ).rejects.toThrow('Missing OAuth credentials')
   })

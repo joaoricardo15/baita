@@ -63,7 +63,7 @@ export default defineConfig({
           {
             command: 'npm start',
             cwd: '../../apps/backend',
-            url: 'http://localhost:5000/prod/connectors/oauth',
+            url: 'http://localhost:5000/prod/oauth/callback',
             reuseExistingServer: true,
             timeout: 60000,
           },

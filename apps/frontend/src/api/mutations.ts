@@ -11,68 +11,71 @@ import {
 
 import { getApiResponse } from './client'
 
-export const createBot = () => getApiResponse<IBot>('post', 'bot/create')
+export const createBot = () => getApiResponse<IBot>('post', 'bots')
 
 export const updateBot = (botId: string, bot: Partial<IBot>) =>
-  getApiResponse<IBot>('post', `bot/update/${botId}`, bot)
+  getApiResponse<IBot>('patch', `bots/${botId}`, bot)
 
 export const deleteBot = (botId: string) =>
-  getApiResponse<void>('post', `bot/delete/${botId}`)
+  getApiResponse<void>('delete', `bots/${botId}`)
 
 export const deployBot = (botId: string, bot: Partial<IBot>) =>
-  getApiResponse<IBot>('post', `bot/deploy/${botId}`, bot)
+  getApiResponse<IBot>('post', `bots/${botId}/deploy`, bot)
 
 export const deployBotModel = (model: IBotModel) =>
-  getApiResponse<IBot>('post', 'bot/model', model)
+  getApiResponse<IBot>('post', `models/${model.modelId}/deploy`, model)
 
 export const testBotTask = (botId: string, task: ITask, taskIndex: number) =>
-  getApiResponse<ITaskExecutionResult>('post', `bot/test/${botId}`, {
+  getApiResponse<ITaskExecutionResult>('post', `bots/${botId}/test`, {
     task,
     taskIndex,
   })
 
 export const updateTodo = (tasks: ITodoTask[]) =>
-  getApiResponse<ITodoTask[]>('post', 'resource/todo/update', {
+  getApiResponse<ITodoTask[]>('patch', 'data/todos', {
     tasks,
   })
 
 export const reactToContent = (content: IContent, reaction: string) =>
-  getApiResponse<void>('post', `resource/content/create/${content.contentId}`, {
+  getApiResponse<void>('post', `data/content/${content.contentId}`, {
     ...content,
     reaction,
   })
 
 export const createConnection = (connectorId: string, apiKey: string) =>
-  getApiResponse<void>('post', 'connection/create', {
+  getApiResponse<void>('post', 'connections', {
     connectorId,
     apiKey,
   })
 
 export const deleteConnection = (connectionId: string) =>
-  getApiResponse<void>('post', `resource/connection/delete/${connectionId}`)
+  getApiResponse<void>('delete', `connections/${connectionId}`)
 
 export const createNote = (noteId: string, note: INote) =>
-  getApiResponse<INote>('post', `resource/note/create/${noteId}`, note)
+  getApiResponse<INote>('post', `data/notes/${noteId}`, note)
 
 export const deleteNote = (noteId: string) =>
-  getApiResponse<INote>('post', `resource/note/delete/${noteId}`)
+  getApiResponse<INote>('delete', `data/notes/${noteId}`)
 
 export const createPlace = (placeId: string, place: IPlace) =>
-  getApiResponse<IPlace>('post', `resource/place/create/${placeId}`, place)
+  getApiResponse<IPlace>('post', `data/places/${placeId}`, place)
 
 export const updatePlace = (placeId: string, place: IPlace) =>
-  getApiResponse<IPlace>('post', `resource/place/update/${placeId}`, place)
+  getApiResponse<IPlace>('patch', `data/places/${placeId}`, place)
 
 export const deletePlace = (placeId: string) =>
-  getApiResponse<IPlace>('post', `resource/place/delete/${placeId}`)
+  getApiResponse<IPlace>('delete', `data/places/${placeId}`)
 
 export const removeImage = (imageId: string) =>
-  getApiResponse<void>('post', encodeURI(`resource/image/remove/${imageId}`))
+  getApiResponse<void>(
+    'delete',
+    `data/image/files/${encodeURIComponent(imageId)}`
+  )
 
 export const publishBotModel = (model: IBotModel) =>
-  getApiResponse<IBotModel>('post', `model/create/${model.modelId}`, model)
+  getApiResponse<IBotModel>('post', 'models', model)
 
 export const deleteBotModel = (modelId: string) =>
-  getApiResponse<void>('post', `model/delete/${modelId}`)
+  getApiResponse<void>('delete', `models/${modelId}`)
 
 export const deleteUser = () => getApiResponse<void>('delete', 'user')
