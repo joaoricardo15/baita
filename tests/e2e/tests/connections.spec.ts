@@ -83,8 +83,8 @@ test.describe('Connections Management', () => {
     const connectionId = `e2e-lifecycle-${Date.now()}`
     createdConnections.push(connectionId)
 
-    const createRes = await request.post(
-      `${API_URL}/connections/${connectionId}`,
+    const createRes = await request.put(
+      `${API_URL}/data/connection/${connectionId}`,
       {
         headers: authHeaders(token),
         data: {
@@ -102,10 +102,10 @@ test.describe('Connections Management', () => {
       `${API_URL}/connections/${connectionId}`,
       { headers: authHeaders(token) }
     )
-    expect((await readRes.json()).data.name).toBe('E2E Lifecycle')
+    expect((await readRes.json()).data.connection.name).toBe('E2E Lifecycle')
 
-    const updateRes = await request.post(
-      `${API_URL}/connections/${connectionId}`,
+    const updateRes = await request.put(
+      `${API_URL}/data/connection/${connectionId}`,
       {
         headers: authHeaders(token),
         data: {
