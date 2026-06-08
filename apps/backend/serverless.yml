@@ -207,12 +207,7 @@ functions:
     timeout: 60
     events:
       - http:
-          path: bot/{operation}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-      - http:
-          path: bot/{operation}/{botId}
+          path: bot-temp
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
@@ -237,12 +232,7 @@ functions:
     handler: src/endpoints/connection/index.handler
     events:
       - http:
-          path: connection/{operation}
-          method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
-      - http:
-          path: connection/{operation}/{connectionId}
+          path: connection-temp
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
