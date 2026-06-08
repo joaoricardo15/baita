@@ -58,9 +58,11 @@ export const handler = async (
       }
     } else {
       switch (method) {
-        case 'GET':
-          data = await store.list()
+        case 'GET': {
+          const singleton = await store.read()
+          data = singleton ?? (await store.list())
           break
+        }
         case 'PUT':
           if (Object.keys(dataValidations).includes(type)) {
             dataValidations[type](body)
