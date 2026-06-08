@@ -163,15 +163,15 @@ test.describe('Bot Lifecycle', () => {
     const bot = (await getRes.json()).data
 
     let body: { success: boolean; data: { active: boolean } }
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
       const res = await request.post(`${API_URL}/bot/deploy/${botId}`, {
         headers: authHeaders(token),
         data: { ...bot, active: true },
-        timeout: 55000,
+        timeout: 35000,
       })
       body = await res.json()
-      if (body.success || attempt === 3) break
-      await new Promise((r) => setTimeout(r, 3000))
+      if (body.success || attempt === 2) break
+      await new Promise((r) => setTimeout(r, 2000))
     }
     expect(body!.success).toBe(true)
     expect(body!.data.active).toBe(true)
@@ -179,9 +179,16 @@ test.describe('Bot Lifecycle', () => {
   })
 
   test('trigger bot via webhook', async ({ request }) => {
-    const res = await request.post(triggerUrl, {
+    await new Promise((r) => setTimeout(r, 2000))
+    let res = await request.post(triggerUrl, {
       data: { source: 'e2e-test', timestamp: Date.now() },
     })
+    if (res.status() === 404) {
+      await new Promise((r) => setTimeout(r, 5000))
+      res = await request.post(triggerUrl, {
+        data: { source: 'e2e-test', timestamp: Date.now() },
+      })
+    }
     expect(res.status()).toBe(200)
     logResult('Webhook triggered', { status: res.status() })
   })

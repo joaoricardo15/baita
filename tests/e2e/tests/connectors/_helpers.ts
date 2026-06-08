@@ -29,14 +29,14 @@ export async function executeTask(
   token: string,
   task: object
 ): Promise<IExecuteResponse> {
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 2; attempt++) {
     const res = await request.post(`${API_URL}/task/execute`, {
       headers: authHeaders(token),
       data: task,
-      timeout: 55000,
+      timeout: 35000,
     })
-    if (res.status() >= 502 && attempt < 3) {
-      await new Promise((r) => setTimeout(r, 3000))
+    if (res.status() >= 502 && attempt < 2) {
+      await new Promise((r) => setTimeout(r, 2000))
       continue
     }
     return res.json()

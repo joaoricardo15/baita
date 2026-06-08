@@ -6,8 +6,14 @@ import {
 } from '@baita/shared'
 
 import { executeTask } from '@/tasks/executor'
-import Api from '@/utils/api'
 import { getDataFromService } from '@/utils/bot'
+
+function parseTaskError(err: unknown): string {
+  if (!err) return ''
+  if (typeof err === 'string') return err
+  if (err instanceof Error) return err.message
+  return String(err)
+}
 
 class Task {
   async execute(
@@ -40,12 +46,9 @@ class Task {
         timestamp: Date.now(),
       }
     } catch (err: unknown) {
-      const api = new Api({}, {
-        getRemainingTimeInMillis: () => 30000,
-      } as never)
       return {
         inputData,
-        outputData: api.parseError(err),
+        outputData: parseTaskError(err),
         status: TaskExecutionStatus.fail,
         timestamp: Date.now(),
       }
