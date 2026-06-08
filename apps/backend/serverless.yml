@@ -67,7 +67,6 @@ provider:
       Resource:
         - arn:aws:s3:::${self:provider.environment.BOTS_BUCKET}/*
         - arn:aws:s3:::${self:provider.environment.FILES_BUCKET}/*
-        - arn:aws:s3:::${self:provider.environment.DOCS_BUCKET}/*
     - Effect: Allow
       Action:
         [
@@ -81,6 +80,7 @@ provider:
           sqs:GetQueueAttributes,
           sqs:SetQueueAttributes,
           sqs:DeleteQueue,
+          sqs:TagQueue,
         ]
       Resource:
         - arn:aws:sqs:us-east-1:*:${self:provider.environment.SERVICE_PREFIX}-*
@@ -91,6 +91,7 @@ provider:
           lambda:UpdateFunctionCode,
           lambda:DeleteFunction,
           lambda:InvokeFunction,
+          lambda:TagResource,
         ]
       Resource:
         - arn:aws:lambda:us-east-1:*:function:${self:provider.environment.SERVICE_PREFIX}-*
@@ -112,13 +113,20 @@ provider:
           scheduler:DeleteSchedule,
           scheduler:CreateScheduleGroup,
           scheduler:DeleteScheduleGroup,
+          scheduler:TagResource,
         ]
       Resource:
         - arn:aws:scheduler:us-east-1:*:schedule/default/${self:provider.environment.SERVICE_PREFIX}-*
         - arn:aws:scheduler:us-east-1:*:schedule/${self:provider.environment.SERVICE_PREFIX}-*/*
         - arn:aws:scheduler:us-east-1:*:schedule-group/${self:provider.environment.SERVICE_PREFIX}-*
     - Effect: Allow
-      Action: [apigateway:POST, apigateway:DELETE, apigateway:GET]
+      Action:
+        [
+          apigateway:POST,
+          apigateway:DELETE,
+          apigateway:GET,
+          apigateway:TagResource,
+        ]
       Resource:
         - arn:aws:apigateway:us-east-1::/apis
         - arn:aws:apigateway:us-east-1::/apis/*
@@ -166,7 +174,6 @@ functions:
   # User operations (create via API key, delete + content via JWT)
   endpoint-user:
     handler: src/endpoints/user/index.handler
-    timeout: 60
     events:
       - http:
           path: user
@@ -200,7 +207,6 @@ functions:
   # Task operations (standalone + direct invoke from deployed bots)
   endpoint-task:
     handler: src/endpoints/task/execute/index.handler
-    timeout: 60
     events:
       - http:
           path: task/{operation}
@@ -211,7 +217,6 @@ functions:
   # Bot operations (create, update, delete, deploy, test, logs, model)
   endpoint-bot:
     handler: src/endpoints/bot/index.handler
-    timeout: 60
     events:
       - http:
           path: bot/{operation}
@@ -308,6 +313,8 @@ resources:
       DeletionPolicy: Retain
       Properties:
         BucketName: ${self:provider.environment.BOTS_BUCKET}
+    # Public GET gated by Referer header (bucket policy below).
+    # ACL-based public access blocked; policy-based access allowed.
     filesBucket:
       Type: AWS::S3::Bucket
       DeletionPolicy: Retain
@@ -395,14 +402,18 @@ resources:
               Version: '2012-10-17'
               Statement:
                 - Effect: Allow
+                  Action: [lambda:InvokeFunction]
+                  Resource:
+                    - arn:aws:lambda:us-east-1:*:function:${self:provider.environment.SERVICE_PREFIX}-*
+                - Effect: Allow
                   Action:
                     [
-                      lambda:InvokeFunction,
                       logs:CreateLogStream,
                       logs:CreateLogGroup,
                       logs:PutLogEvents,
                     ]
-                  Resource: '*'
+                  Resource:
+                    - arn:aws:logs:us-east-1:*:log-group:/aws/lambda/${self:provider.environment.SERVICE_PREFIX}-*:*
 
     # API Gateway docs route (serves OpenAPI spec at root /)
     docsRootMethod:
@@ -425,34 +436,3 @@ resources:
           - StatusCode: '200'
             ResponseParameters:
               method.response.header.Content-Type: true
-
-    # CloudWatch Alarms
-    DynamoDBThrottleAlarm:
-      Type: AWS::CloudWatch::Alarm
-      Properties:
-        AlarmName: ${self:provider.environment.SERVICE_PREFIX}-dynamodb-throttle
-        MetricName: ThrottledRequests
-        Namespace: AWS/DynamoDB
-        Dimensions:
-          - Name: TableName
-            Value: ${self:provider.environment.CORE_TABLE}
-        Statistic: Sum
-        Period: 60
-        EvaluationPeriods: 1
-        Threshold: 1
-        ComparisonOperator: GreaterThanOrEqualToThreshold
-    Api5xxAlarm:
-      Type: AWS::CloudWatch::Alarm
-      Properties:
-        AlarmName: ${self:provider.environment.SERVICE_PREFIX}-api-5xx
-        MetricName: 5XXError
-        Namespace: AWS/ApiGateway
-        Dimensions:
-          - Name: ApiName
-            Value: ${self:provider.environment.SERVICE_PREFIX}
-        Statistic: Sum
-        Period: 300
-        EvaluationPeriods: 1
-        Threshold: 3
-        ComparisonOperator: GreaterThanThreshold
-        TreatMissingData: notBreaching
