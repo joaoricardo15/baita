@@ -64,83 +64,83 @@ interface OperationDoc {
 }
 
 const OPERATION_DOCS: Record<string, OperationDoc> = {
-  '/bot/{botId}:post': {
-    summary: 'Bot operations (create, deploy, test, logs, model)',
+  '/bot/{operation}:post': {
+    summary: 'Bot collection operations (no ID required)',
     description:
-      'Performs a bot operation. The `botId` path segment is the **operation name** (not a bot ID). **create** — creates a new bot. **deploy** — generates and deploys Lambda code for the bot. **test** — executes a single task step for testing. **logs** — retrieves recent CloudWatch logs. **model** — creates a bot from a shared model template.',
+      'Collection-level bot operations that do not target a specific bot. **create** — creates a new bot and returns the generated ID. **model** — creates a bot from a shared model template (modelId in body).',
     parameterOverrides: {
-      botId: {
-        description: 'Operation name (not a bot ID)',
-        enum: ['create', 'deploy', 'test', 'logs', 'model'],
+      operation: {
+        description: 'Collection operation',
+        enum: ['create', 'model'],
       },
     },
     responseSchema: 'Bot',
   },
-  '/bot/{botId}/{id}:post': {
-    summary: 'Bot operations with ID (update, delete)',
+  '/bot/{operation}/{botId}:post': {
+    summary: 'Bot item operations (specific bot by ID)',
     description:
-      'Operations on a specific bot. The `botId` segment is the **operation name**, and `id` is the **bot ID**. **update** — updates bot name, description, image, active state, or tasks. **delete** — permanently deletes the bot and all deployed AWS resources (Lambda, API Gateway, EventBridge Scheduler).',
+      'Item-level operations on a specific bot identified by `botId`. **update** — updates bot name, description, image, active state, or tasks. **delete** — permanently deletes the bot and all deployed AWS resources. **deploy** — generates Lambda code and deploys. **test** — executes a single task step for testing. **logs** — retrieves recent execution logs from CloudWatch.',
     parameterOverrides: {
-      botId: {
-        description: 'Operation name (not a bot ID)',
-        enum: ['update', 'delete'],
+      operation: {
+        description: 'Item operation',
+        enum: ['update', 'delete', 'deploy', 'test', 'logs'],
       },
-      id: { description: 'Bot ID' },
+      botId: { description: 'Bot ID (UUID)' },
     },
     requestSchema: 'Bot',
     responseSchema: 'Bot',
   },
   '/resource/{resourceName}/{operation}:post': {
-    summary: 'Resource CRUD (list, create)',
+    summary: 'Resource collection operations (no ID required)',
     description:
-      'Generic CRUD for user resources. Supports multiple resource types and operations. **list** — returns all records of the given type. **create** — creates a new record (body is the resource data).',
+      'Collection-level CRUD for user resources. **list** — returns all records of the given type.',
     parameterOverrides: {
       resourceName: {
         description: 'Resource type',
         enum: ['todo', 'connection', 'model', 'note', 'content'],
       },
-      operation: { description: 'CRUD operation', enum: ['list', 'create'] },
+      operation: { description: 'Collection operation', enum: ['list'] },
     },
   },
   '/resource/{resourceName}/{operation}/{resourceId}:post': {
-    summary: 'Resource CRUD with ID (read, update, delete, upload, remove)',
+    summary: 'Resource item operations (specific record by ID)',
     description:
-      'Operations on a specific resource record. **read** — returns the record. **update** — replaces the record with the request body. **delete** — removes the record. **upload** — returns a presigned S3 URL for file upload. **remove** — deletes an uploaded file from S3.',
+      'Item-level operations on a specific resource record. **read** — returns the record. **create** — creates a new record with the given ID. **update** — replaces the record with the request body. **delete** — removes the record. **upload** — returns a presigned S3 URL for file upload. **remove** — deletes an uploaded file from S3.',
     parameterOverrides: {
       resourceName: {
         description: 'Resource type',
         enum: ['todo', 'connection', 'model', 'note', 'content'],
       },
       operation: {
-        description: 'CRUD operation',
-        enum: ['read', 'update', 'delete', 'upload', 'remove'],
+        description: 'Item operation',
+        enum: ['create', 'read', 'update', 'delete', 'upload', 'remove'],
       },
       resourceId: { description: 'Resource record ID' },
     },
   },
-  '/connection/{connectionId}:post': {
-    summary: 'Create a connection',
+  '/connection/{operation}:post': {
+    summary: 'Connection collection operations (no ID required)',
     description:
-      'Creates a new OAuth or API-key connection for a connector service. The `connectionId` path segment is the **operation name** (not a connection ID). The request body should include the connector ID and credentials.',
+      'Collection-level connection operations. **create** — creates a new OAuth or API-key connection. The request body must include `connectorId` and `apiKey`.',
     parameterOverrides: {
-      connectionId: {
-        description: 'Operation name (not a connection ID)',
+      operation: {
+        description: 'Collection operation',
         enum: ['create'],
       },
     },
     requestSchema: 'Connection',
     responseSchema: 'Connection',
   },
-  '/connection/{connectionId}/{id}:post': {
-    summary: 'Connection operations (health, details)',
+  '/connection/{operation}/{connectionId}:post': {
+    summary: 'Connection item operations (specific connection by ID)',
     description:
-      'Check health or retrieve details of an existing connection. The `connectionId` segment is the **operation name**, and `id` is the **connection ID**. **health** — validates the connection credentials are still working (makes a test API call). **details** — returns the full connection record including metadata.',
+      'Item-level operations on a specific connection identified by `connectionId`. **health** — validates the connection credentials are still working (makes a test API call to the provider). **details** — returns the full connection record including linked bots.',
     parameterOverrides: {
-      connectionId: {
-        description: 'Operation name (not a connection ID)',
+      operation: {
+        description: 'Item operation',
         enum: ['health', 'details'],
       },
-      id: { description: 'Connection ID' },
+      connectionId: { description: 'Connection ID (UUID)' },
     },
     responseSchema: 'Connection',
   },
