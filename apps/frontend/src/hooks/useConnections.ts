@@ -22,15 +22,6 @@ export function useConnectionHealth(connectionId: string) {
   })
 }
 
-export function useConnectionDetails(connectionId: string) {
-  const { user } = useContext(AuthContext)
-  return useQuery({
-    queryKey: ['connectionDetails', connectionId],
-    queryFn: () => queries.fetchConnectionDetails(connectionId),
-    enabled: !!user && !!connectionId,
-  })
-}
-
 export function useCreateConnection() {
   const queryClient = useQueryClient()
   return useMutation({

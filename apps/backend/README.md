@@ -50,9 +50,10 @@ npm run docs       # Generate OpenAPI spec from Zod schemas and deploy to S3
 src/
 ├── authorizer/     # Lambda authorizer (Auth0 JWT verification)
 ├── connectors/     # OAuth callback handlers (unified endpoint)
-├── controllers/    # Business logic classes (User, Bot, Resource)
+├── controllers/    # Business logic classes (User, Bot, Task, Resource)
+├── docs/           # OpenAPI spec generation
 ├── endpoints/      # REST API Lambda handlers (one folder per endpoint)
-├── models/         # TypeScript interfaces + JSON schemas + validation
+├── lib/            # Module-level AWS SDK clients (DynamoDB singleton)
 ├── tasks/          # Task execution logic (executor dispatches to code/methods)
 └── utils/          # Helpers (API response, bot data, code generation)
 ```
@@ -119,9 +120,10 @@ All endpoints return:
 ### Bot Models (shared templates)
 
 - `POST /model/list` — List available bot models
+- `POST /model/read/{modelId}` — Get a bot model
 - `POST /model/create` — Create a bot model
 - `POST /model/delete/{modelId}` — Delete a bot model
-- `POST /model/bud/{modelId}` — Deploy bot from model template
+- `POST /bot/model` — Deploy bot from model template (modelId in body)
 
 ### Tasks
 
@@ -192,7 +194,7 @@ Part of the monorepo unified workflow (`.github/workflows/ci.yml`) on push to `m
 ## AWS Resources
 
 - **Region**: `us-east-1`
-- \*\*Profile`: `baita`
+- **Profile**: `baita`
 - **DynamoDB Table**: `baita-help-prod` (on-demand billing, single-table design)
 - **S3 Buckets**: `baita-help-prod-bots`, `baita-help-prod-files`, `baita-help-prod-docs`
 - **SQS Queues**: `baita-help-prod-{userId}` (per-user content feed)

@@ -35,6 +35,7 @@ beforeEach(() => {
   sqsMock.reset()
 })
 
+// Journey: Account Management + Content Feed — user provisioning, content consumption, publishing
 describe('User', () => {
   describe('createUser', () => {
     it('stores user in DynamoDB with #USER sortKey', async () => {

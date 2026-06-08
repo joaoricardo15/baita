@@ -109,16 +109,6 @@ export function getOutputVariableString(index: number, path: string): string {
     .join('')}`
 }
 
-export function getOutputVariableStringById(
-  taskId: number,
-  path: string,
-  tasks: { taskId: number }[]
-): string {
-  const index = tasks.findIndex((t) => t.taskId === taskId)
-  if (index === -1) return `undefined`
-  return getOutputVariableString(index, path)
-}
-
 const escapeString = (s: string): string =>
   s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 

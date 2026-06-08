@@ -31,12 +31,6 @@ export const fetchContent = () => getApiResponse<IContent[]>('get', 'content')
 export const fetchConnections = () =>
   getApiResponse<IAppConnection[]>('post', 'resource/connection/list')
 
-export const fetchConnectionDetails = (connectionId: string) =>
-  getApiResponse<{
-    connection: Record<string, unknown>
-    linkedBots: { botId: string; name: string }[]
-  }>('post', `connection/details/${connectionId}`)
-
 export const fetchConnectionHealth = (connectionId: string) =>
   getApiResponse<{ status: string; message?: string }>(
     'post',

@@ -26,6 +26,7 @@ const mockEvent: APIGatewayTokenAuthorizerEvent = {
     'arn:aws:execute-api:us-east-1:123456789:api-id/prod/POST/user/123/bots',
 }
 
+// Journey: Authentication — JWT verification protecting all authenticated endpoints
 describe('Authorizer', () => {
   beforeEach(() => {
     mockDecode.mockReturnValue({

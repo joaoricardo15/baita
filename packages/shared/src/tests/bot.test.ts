@@ -183,7 +183,6 @@ describe('validateBot', () => {
 
   it('warns when sample config hash is stale', () => {
     const task = makeActionTask(2000)
-    const hash = computeStepConfigHash(task)
     const staleTask: ITask = {
       ...task,
       sampleConfigHash: 'old-hash-that-no-longer-matches',

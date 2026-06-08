@@ -1,17 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    "src/authorizer/index.ts",
-    "src/tasks/*/index.ts",
     "src/endpoints/**/index.ts",
+    "src/endpoints/user/create.ts",
     "src/connectors/*/index.ts"
   ],
   "project": ["src/**/*.ts"],
-  "ignore": ["src/**/*.test.ts", "src/utils/tests/helpers/**", "tests/**"],
-  "ignoreDependencies": [
-    "ts-jest",
-    "@eslint/js",
-    "eslint-config-prettier",
-    "aws-sdk-client-mock-jest"
-  ]
+  "ignore": ["src/**/*.test.ts", "src/utils/tests/helpers/**"],
+  "ignoreDependencies": ["aws-sdk-client-mock-jest"],
+  "ignoreBinaries": ["eslint", "cspell"]
 }

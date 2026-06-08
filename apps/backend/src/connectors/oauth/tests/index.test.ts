@@ -79,6 +79,7 @@ const invokeHandler = (
   })
 }
 
+// Journey: OAuth Connections — token exchange after user authorizes at provider
 describe('OAuth Connector Handler', () => {
   beforeEach(() => {
     jest.clearAllMocks()

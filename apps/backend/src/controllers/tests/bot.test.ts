@@ -63,6 +63,7 @@ beforeEach(() => {
   cwlMock.reset()
 })
 
+// Journey: Bot Automation — create, deploy, test, log, and delete bots
 describe('Bot', () => {
   describe('createBot', () => {
     beforeEach(() => {

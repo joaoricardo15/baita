@@ -232,7 +232,7 @@ Conditions are structured as `ITaskCondition[][]` where:
 
 ### ChatGPT (OpenAI)
 
-**App ID:** `f9686ea8-ac80-4f70-b35b-hggfhjhk`
+**App ID:** `0f7bb503-b9b4-4fd5-80ab-9a97d52397bb`
 **Config:** `{ apiUrl: 'https://api.openai.com/v1' }`
 
 | Service          | Type   | ServiceName      | Label               | Description                 |
@@ -242,7 +242,7 @@ Conditions are structured as `ITaskCondition[][]` where:
 
 ### NewsAPI
 
-**App ID:** `f9686ea8-ac80-4f70-b35b-asd`
+**App ID:** `dcf88373-238e-4335-8ba1-81a81fa73874`
 **Config:** `{ apiUrl: 'https://newsapi.org/v2' }`
 
 | Service       | Type   | ServiceName      | Label             | Description              |
@@ -345,7 +345,7 @@ A bot that receives a prompt via webhook and returns a ChatGPT response.
       "taskId": 1716000000002,
       "app": {
         "name": "ChatGPT",
-        "appId": "f9686ea8-ac80-4f70-b35b-hggfhjhk",
+        "appId": "0f7bb503-b9b4-4fd5-80ab-9a97d52397bb",
         "config": {
           "apiUrl": "https://api.openai.com/v1"
         }
@@ -845,7 +845,7 @@ A bot that fetches top headlines daily and publishes them to the user's feed.
       "taskId": 1716000000031,
       "app": {
         "name": "NewsAPI",
-        "appId": "f9686ea8-ac80-4f70-b35b-asd",
+        "appId": "dcf88373-238e-4335-8ba1-81a81fa73874",
         "config": {
           "apiUrl": "https://newsapi.org/v2"
         }

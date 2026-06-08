@@ -10,9 +10,9 @@ import { Dialog, DialogContent } from '@mui/material'
 import axios from 'axios'
 import { FC, useState } from 'react'
 
-import { Button, Highlight, TextInput } from '@/components'
 import { IPlace } from '@baita/shared'
-import * as mutations from '@/api/mutations'
+import { Button, Highlight, TextInput } from '@/components'
+import { useDeletePlace, useSavePlace } from '@/hooks/usePlaces'
 import * as queries from '@/api/queries'
 import { FILES_BASE_URL } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'
@@ -23,6 +23,8 @@ const PlaceModal: FC<{
   onClose: () => void
 }> = ({ place, open, onClose }) => {
   const [localPlace, setPlace] = useState<IPlace>(place)
+  const savePlace = useSavePlace()
+  const deletePlace = useDeletePlace()
 
   const onNameChange = (name: string) => {
     setPlace({ ...localPlace, name })
@@ -61,33 +63,15 @@ const PlaceModal: FC<{
     input.click()
   }
 
-  const onAddPlace = async () => {
-    const placeId = btoa(
-      `${localPlace.position.lat}:${localPlace.position.lng}`
+  const onSavePlace = () => {
+    savePlace.mutate(
+      { ...localPlace, userId: undefined, sortKey: undefined } as IPlace,
+      { onSuccess: onClose }
     )
-
-    await mutations.createPlace(placeId, {
-      ...localPlace,
-      placeId,
-    })
-    onClose()
   }
 
-  const onUpdatePlace = async () => {
-    await mutations.updatePlace(localPlace.placeId, {
-      ...localPlace,
-      userId: undefined,
-      sortKey: undefined,
-    } as IPlace)
-    onClose()
-  }
-
-  const onDeletePlace = async () => {
-    await Promise.all(
-      localPlace.pictures.map((pictureId) => mutations.removeImage(pictureId))
-    )
-    await mutations.deletePlace(localPlace.placeId)
-    onClose()
+  const onDeletePlace = () => {
+    deletePlace.mutate(localPlace, { onSuccess: onClose })
   }
 
   return (
@@ -119,7 +103,7 @@ const PlaceModal: FC<{
                 <Button
                   className="mt-2"
                   icon={<EditLocationOutlinedIcon />}
-                  onClick={onUpdatePlace}
+                  onClick={onSavePlace}
                 >
                   {labels.updatePlace}
                 </Button>
@@ -143,7 +127,7 @@ const PlaceModal: FC<{
                 <Button
                   className="mt-2"
                   icon={<AddLocationAltOutlinedIcon />}
-                  onClick={onAddPlace}
+                  onClick={onSavePlace}
                 >
                   {labels.addNewPlace}
                 </Button>

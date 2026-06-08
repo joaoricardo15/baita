@@ -1,3 +1,4 @@
+// Journey: Bot Automation (AI Assistant) — Chrome AI detection and response parsing
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {

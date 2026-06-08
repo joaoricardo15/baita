@@ -44,7 +44,7 @@ export function getConditionsString(
     .join(' || ')
 }
 
-export function decodeCondition(condition: ITaskCondition): string {
+function decodeCondition(condition: ITaskCondition): string {
   const {
     operator,
     operand,
@@ -74,7 +74,7 @@ export function decodeCondition(condition: ITaskCondition): string {
   }
 }
 
-export function getParseEventFunctionCode(): string {
+function getParseEventFunctionCode(): string {
   return `(() => {
     if (event.body) {
       try {

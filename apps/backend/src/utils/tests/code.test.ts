@@ -1,3 +1,5 @@
+// Journey: Bot Automation — Lambda code generation for deployed bots
+// These utilities generate the actual JS code that runs in bot Lambda functions.
 import { ConditionOperator, ITask } from '@baita/shared'
 import { ServiceName, ServiceType, VariableType } from '@baita/shared'
 

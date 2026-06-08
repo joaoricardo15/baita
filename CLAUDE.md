@@ -102,8 +102,8 @@ All connector/service icons live in `apps/frontend/public/icons/` and are refere
 Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main`:
 
 ```
-frontend (type-check → lint → spell → build → test → deploy) ─┐
-backend  (type-check → lint → type-check → test → deploy → docs) ─┤→ e2e
+frontend (type-check shared → lint → spell → build → test → deploy) ─┐
+backend  (type-check shared → lint → type-check → test → deploy → docs) ─┤→ e2e
 ```
 
 Both jobs run in parallel. Each includes `packages/shared/` type-check as its first quality step. Frontend deploys pre-built artifacts directly to Amplify via manual deployment API (no remote rebuild). Backend deploys via Serverless Framework, then generates and deploys OpenAPI documentation.
@@ -154,6 +154,10 @@ Secrets stored in AWS SSM under `/baita/prod/*` and resolved at deploy time by S
 
 | SSM Parameter                           | Purpose                         |
 | --------------------------------------- | ------------------------------- |
+| `/baita/prod/auth0-domain`              | Auth0 tenant domain             |
+| `/baita/prod/auth0-m2m-client-id`       | Auth0 M2M application client ID |
+| `/baita/prod/auth0-m2m-client-secret`   | Auth0 M2M application secret    |
+| `/baita/prod/auth0-create-user-api-key` | Auth0 Post-Login Action API key |
 | `/baita/prod/pipedrive-auth-url`        | Pipedrive OAuth token URL       |
 | `/baita/prod/pipedrive-client-id`       | Pipedrive OAuth client ID       |
 | `/baita/prod/pipedrive-client-secret`   | Pipedrive OAuth client secret   |
@@ -163,7 +167,6 @@ Secrets stored in AWS SSM under `/baita/prod/*` and resolved at deploy time by S
 | `/baita/prod/news-api-key`              | NewsAPI key                     |
 | `/baita/prod/vapid-public-key`          | Web Push VAPID public key       |
 | `/baita/prod/vapid-private-key`         | Web Push VAPID private key      |
-| `/baita/prod/auth0-create-user-api-key` | Auth0 Post-Login Action API key |
 
 ```bash
 # List all parameters

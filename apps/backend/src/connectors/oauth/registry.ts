@@ -1,5 +1,1 @@
-export {
-  getAllConnectors,
-  getConnectorByAppId,
-  getConnectorById,
-} from '@baita/shared'
+export { getConnectorById } from '@baita/shared'

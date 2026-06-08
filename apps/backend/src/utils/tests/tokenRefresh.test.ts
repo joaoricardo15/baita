@@ -1,3 +1,4 @@
+// Journey: OAuth Connections — token refresh for expired OAuth2 connections
 import { IConnectorManifest } from '@baita/shared'
 import axios from 'axios'
 

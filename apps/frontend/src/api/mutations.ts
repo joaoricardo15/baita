@@ -54,9 +54,6 @@ export const deleteConnection = (connectionId: string) =>
 export const createNote = (noteId: string, note: INote) =>
   getApiResponse<INote>('post', `resource/note/create/${noteId}`, note)
 
-export const updateNote = (noteId: string, note: INote) =>
-  getApiResponse<INote>('post', `resource/note/update/${noteId}`, note)
-
 export const deleteNote = (noteId: string) =>
   getApiResponse<INote>('post', `resource/note/delete/${noteId}`)
 

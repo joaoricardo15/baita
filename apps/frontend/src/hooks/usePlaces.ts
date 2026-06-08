@@ -22,7 +22,13 @@ export function useSavePlace() {
     mutationFn: (place: IPlace) =>
       place.placeId
         ? mutations.updatePlace(place.placeId, place)
-        : mutations.createPlace(Date.now().toString(), place),
+        : mutations.createPlace(
+            btoa(`${place.position.lat}:${place.position.lng}`),
+            {
+              ...place,
+              placeId: btoa(`${place.position.lat}:${place.position.lng}`),
+            }
+          ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['places'] })
     },
@@ -32,12 +38,17 @@ export function useSavePlace() {
 export function useDeletePlace() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (placeId: string) => mutations.deletePlace(placeId),
-    onMutate: async (placeId) => {
+    mutationFn: async (place: IPlace) => {
+      await Promise.all(
+        place.pictures.map((pictureId) => mutations.removeImage(pictureId))
+      )
+      await mutations.deletePlace(place.placeId)
+    },
+    onMutate: async (place) => {
       await queryClient.cancelQueries({ queryKey: ['places'] })
       const previous = queryClient.getQueryData<IPlace[]>(['places'])
       queryClient.setQueryData<IPlace[]>(['places'], (old) =>
-        old?.filter((p) => p.placeId !== placeId)
+        old?.filter((p) => p.placeId !== place.placeId)
       )
       return { previous }
     },

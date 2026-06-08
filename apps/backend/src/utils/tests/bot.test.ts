@@ -1,3 +1,5 @@
+// Journey: Bot Automation — variable resolution and output mapping engine
+// These utilities power task-to-task data chaining in bot execution.
 import { DataType, IVariable, VariableType } from '@baita/shared'
 
 import {
@@ -282,6 +284,11 @@ describe('getValueFromInputVariable', () => {
 })
 
 describe('getValueFromServiceVariable', () => {
+  afterEach(() => {
+    delete process.env.envPropertyName
+    delete process.env.NEWS_API_KEY
+  })
+
   test('should throw error when there is no value in constant variable', () => {
     const variable = {
       name: 'constProperty',
@@ -343,6 +350,11 @@ describe('getValueFromServiceVariable', () => {
 })
 
 describe('getDataFromService', () => {
+  afterEach(() => {
+    delete process.env.envPropertyName
+    delete process.env.NEWS_API_KEY
+  })
+
   test('should throw error if there is no corresponding input variable from required service variable', () => {
     const serviceVariables = [
       {

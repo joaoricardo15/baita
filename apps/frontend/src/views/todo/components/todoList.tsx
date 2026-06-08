@@ -6,7 +6,7 @@ import { Text } from '@/components'
 import { ITodoTask, ITodoTaskGroup } from '@baita/shared'
 import ToDoTask from './todoTask'
 
-export const ToDoList: FC<{
+const ToDoList: FC<{
   tasks: ITodoTask[]
   onChange: (tasks: ITodoTask[]) => void
 }> = ({ tasks, onChange }) => {

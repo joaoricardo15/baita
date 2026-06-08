@@ -3,7 +3,7 @@ import { FC } from 'react'
 
 import { ComponentProps } from '.'
 
-export const CodeInput: FC<
+const CodeInput: FC<
   {
     value: string
     label?: string

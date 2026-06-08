@@ -29,6 +29,7 @@ beforeEach(() => {
   s3Mock.reset()
 })
 
+// Journey: To-Do, Notes, Places, Connections — generic CRUD operations for all resource types
 describe('Resource', () => {
   describe('sortKey', () => {
     it('generates sort key without resourceId', () => {

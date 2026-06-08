@@ -1,3 +1,4 @@
+// Journey: Bot Automation — prevents code injection in bot-generated Lambda code
 import { sanitizeForCodeString } from '@/utils/code'
 
 describe('sanitizeForCodeString', () => {

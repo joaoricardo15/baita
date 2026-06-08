@@ -228,14 +228,11 @@ Consistency is enforced at 3 levels:
 - `vite.config.ts` — Vite config with React plugin, PWA plugin (injectManifest), mock API server, and test config
 - `src/sw.ts` — Unified service worker (Workbox precaching + push notification handling)
 - `src/utils/push.ts` — Web Push API utility (subscribe, permission, iOS detection)
-- `src/utils/requests.ts` — Axios wrapper with auth token injection
+- `src/api/client.ts` — Axios singleton with auth token injection
 - `src/utils/config.ts` — Environment detection and API URL mapping
 - `src/utils/firebase.ts` — Firebase Analytics only (publishEvent)
 - `src/providers/auth.tsx` — Auth0 integration, token management
 - `src/providers/notification.tsx` — In-app notifications (snack, modal) + SW message listener for push
-- `src/providers/user.tsx` — Todo, content, connections state
-- `src/providers/bot.tsx` — Bot CRUD, deployment, testing logic
-- `src/defines/apps.ts` — All supported app/service definitions
 - `src/router.tsx` — All routes + LINKS constant for navigation
 
 ## Push Notifications Architecture

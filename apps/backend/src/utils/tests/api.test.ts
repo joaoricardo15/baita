@@ -1,3 +1,4 @@
+// Infrastructure: API response formatting, error parsing, and timeout safety
 import { TaskExecutionStatus } from '@baita/shared'
 
 import Api, { ApiRequestStatus } from '@/utils/api'

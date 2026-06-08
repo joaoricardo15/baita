@@ -7,6 +7,8 @@
     "deploy": "AWS_PROFILE=baita serverless deploy --stage prod",
     "docs": "tsx src/docs/generate.ts && aws s3 cp src/docs/openapi.json s3://baita-help-prod-docs/openapi.json --region us-east-1 && aws s3 cp src/docs/index.html s3://baita-help-prod-docs/index.html --content-type text/html --region us-east-1 && aws s3 cp src/docs/oauth2-redirect.html s3://baita-help-prod-docs/oauth2-redirect.html --content-type text/html --region us-east-1",
     "test": "jest --watchAll",
+    "test:run": "jest --no-coverage",
+    "type-check": "tsc --noEmit",
     "lint": "eslint 'src/**/*.ts' --fix",
     "format": "prettier './**/*.{js,ts,json,yml}' --write",
     "spell": "cspell --config ../../cspell.json 'src/**/*.ts'",

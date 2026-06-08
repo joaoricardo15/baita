@@ -39,7 +39,7 @@ const DragHandle: FC = () => {
   )
 }
 
-export const ToDoTask: FC<{
+const ToDoTask: FC<{
   task: ITodoTask
   prefixChain?: string
 }> = ({ task, prefixChain }) => {

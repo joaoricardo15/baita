@@ -10,7 +10,7 @@ Frontend application for Baita: a personal automation platform aimed at normal p
 - **Build**: Vite 8 + @vitejs/plugin-react
 - **Routing**: React Router v6
 - **State**: React Context API
-- **UI**: MUI Material v5, SCSS, Bootstrap 5 utilities
+- **UI**: MUI Material v5, SCSS, Bootstrap 5 utilities (CDN)
 - **HTTP**: Axios (wrapped in custom hook)
 - **Auth**: Auth0 (@auth0/auth0-react)
 - **Push Notifications**: Web Push API (VAPID-based, works on all platforms including iOS PWA)
@@ -66,11 +66,11 @@ npm run knip       # Dead code detection
 
 ```
 src/
+├── api/           # API client, queries, and mutations
 ├── assets/        # SCSS styles + images
 ├── components/    # Shared reusable UI components
-├── defines/       # Static app/service definitions
-├── models/        # TypeScript interfaces (re-exported from @baita/shared)
-├── providers/     # React Context providers (auth, user, bot, apps, error, notification)
+├── hooks/         # TanStack Query hooks (data fetching + mutations)
+├── providers/     # React Context providers (auth, error, notification)
 ├── utils/         # Helpers (API client, AI service, firebase, config, push, dates)
 ├── views/         # Page-level components (each feature has index.tsx + components/)
 ├── test/          # Test utilities (renderWithProviders, MSW setup)

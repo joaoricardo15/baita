@@ -111,11 +111,11 @@ cd tests/e2e && npm test
 Single unified workflow (`.github/workflows/ci.yml`) on push to `main`:
 
 ```
-shared checks → frontend-quality → frontend-deploy ─┐
-              ↘ backend-quality  → backend-deploy  ──┤→ e2e (Playwright)
+frontend (type-check shared → lint → spell → build → test → deploy to Amplify) ─┐
+backend  (type-check shared → lint → type-check → test → deploy → docs)         ─┤→ e2e (Playwright)
 ```
 
-All jobs support `workflow_dispatch` for manual trigger.
+Both jobs run in parallel. E2E tests run against production after both deploy.
 
 ## Shared Schemas (`@baita/shared`)
 

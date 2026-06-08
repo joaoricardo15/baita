@@ -1,3 +1,4 @@
+// Journey: Push Notifications — platform detection and subscription management
 import { vi } from 'vitest'
 
 import { canUsePushNotifications, isInstalledPWA, isIOSDevice } from '../push'

@@ -10,7 +10,7 @@ import { getLabels, Labels } from '@/utils/labels'
 
 import { ComponentProps } from '.'
 
-export const OptionsInput: FC<
+const OptionsInput: FC<
   {
     value: string
     onChange: (value: any) => void

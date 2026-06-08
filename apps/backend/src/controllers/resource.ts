@@ -15,6 +15,7 @@ import { ddb } from '@/lib/dynamodb'
 
 const CORE_TABLE = process.env.CORE_TABLE || ''
 const FILES_BUCKET = process.env.FILES_BUCKET || ''
+const s3 = new S3Client({})
 
 export const resourceOperations = [
   'list',
@@ -140,8 +141,6 @@ class Resource {
   }
 
   async upload(resourceId: string) {
-    const s3 = new S3Client({})
-
     try {
       const uploadUrl = await getSignedUrl(
         s3,
@@ -158,8 +157,6 @@ class Resource {
   }
 
   async remove(resourceId: string) {
-    const s3 = new S3Client({})
-
     try {
       await s3.send(
         new DeleteObjectCommand({

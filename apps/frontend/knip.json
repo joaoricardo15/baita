@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["src/sw.ts"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["src/test/**"],
+  "ignoreDependencies": ["workbox-routing", "workbox-strategies"],
+  "ignoreBinaries": ["eslint", "cspell"]
+}

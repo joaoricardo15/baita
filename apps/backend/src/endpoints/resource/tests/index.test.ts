@@ -1,3 +1,4 @@
+// Journey: To-Do, Notes, Places — generic CRUD endpoint integration test
 process.env.CORE_TABLE = 'test-table'
 process.env.FILES_BUCKET = 'test-files-bucket'
 
