@@ -1,5 +1,5 @@
 import {
-  AppConnectionSchema,
+  ConnectionSchema,
   AppSchema,
   BotSchema,
   ServiceSchema,
@@ -421,7 +421,7 @@ const schemas = {
     TaskExecutionResultSchema,
     'TaskExecutionResult'
   ),
-  Connection: toJsonSchema(AppConnectionSchema, 'Connection'),
+  Connection: toJsonSchema(ConnectionSchema, 'Connection'),
   User: toJsonSchema(UserSchema, 'User'),
 }
 

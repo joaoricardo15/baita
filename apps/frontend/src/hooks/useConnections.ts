@@ -1,4 +1,4 @@
-import { IAppConnection } from '@baita/shared'
+import { IConnection } from '@baita/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useContext } from 'react'
 
@@ -44,10 +44,8 @@ export function useDeleteConnection() {
       mutations.deleteConnection(connectionId),
     onMutate: async (connectionId) => {
       await queryClient.cancelQueries({ queryKey: ['connections'] })
-      const previous = queryClient.getQueryData<IAppConnection[]>([
-        'connections',
-      ])
-      queryClient.setQueryData<IAppConnection[]>(['connections'], (old) =>
+      const previous = queryClient.getQueryData<IConnection[]>(['connections'])
+      queryClient.setQueryData<IConnection[]>(['connections'], (old) =>
         old?.filter((c) => String(c.connectionId) !== String(connectionId))
       )
       return { previous }

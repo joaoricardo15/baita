@@ -1,4 +1,4 @@
-import { IAppConnection } from '@baita/shared'
+import { IConnection } from '@baita/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 
@@ -29,7 +29,7 @@ export function useOauthPopup(onComplete?: (created: boolean) => void) {
       if (!popupRef.current || popupRef.current.closed) {
         window.clearInterval(timerRef.current)
         fetchConnections()
-          .then((freshConnections: IAppConnection[]) => {
+          .then((freshConnections: IConnection[]) => {
             const created = freshConnections.length > countBeforeRef.current
             onComplete?.(created)
             queryClient.invalidateQueries({ queryKey: ['connections'] })

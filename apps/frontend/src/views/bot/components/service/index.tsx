@@ -1,5 +1,5 @@
 import {
-  IAppConnection,
+  IConnection,
   IServiceApp,
   ITask,
   IVariable,
@@ -69,7 +69,7 @@ const TaskService: FC<{
     }
   }
 
-  const onSelectConnection = (appConnection: IAppConnection) => {
+  const onSelectConnection = (appConnection: IConnection) => {
     if (bot && task) {
       task.connectionId = appConnection ? appConnection.connectionId : undefined
       updateBotTask(bot.botId, taskIndex, task)

@@ -1,4 +1,4 @@
-import { getConnectorByAppId, IAppConnection } from '@baita/shared'
+import { getConnectorByAppId, IConnection } from '@baita/shared'
 import { Add as AddIcon } from '@mui/icons-material'
 import {
   Dialog,
@@ -24,7 +24,7 @@ const NewConnection: FC<{
   connectionId?: string | number
   taskIndex: number
   onNewConnectionAttempt: () => void
-  onSelectConnection: (appConnection: IAppConnection) => void
+  onSelectConnection: (appConnection: IConnection) => void
 }> = ({
   botId,
   appId,

@@ -35,8 +35,3 @@ export const ConnectionSchema = z.object({
   createdAt: z.number().optional(),
 })
 export type IConnection = z.infer<typeof ConnectionSchema>
-
-/** @deprecated Use ConnectionSchema */
-export const AppConnectionSchema = ConnectionSchema
-/** @deprecated Use IConnection */
-export type IAppConnection = IConnection

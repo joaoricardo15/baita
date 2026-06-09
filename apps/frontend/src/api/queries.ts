@@ -1,5 +1,5 @@
 import {
-  IAppConnection,
+  IConnection,
   IBot,
   IBotLog,
   IBotModel,
@@ -26,7 +26,7 @@ export const fetchTodo = () => getApiResponse<ITodo>('get', 'data/todo')
 export const fetchContent = () => getApiResponse<IContent[]>('get', 'content')
 
 export const fetchConnections = () =>
-  getApiResponse<IAppConnection[]>('get', 'connections')
+  getApiResponse<IConnection[]>('get', 'connections')
 
 export const fetchConnectionHealth = (connectionId: string) =>
   getApiResponse<{ status: string; message?: string }>(

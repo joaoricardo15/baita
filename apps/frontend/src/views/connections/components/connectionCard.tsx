@@ -1,4 +1,4 @@
-import { getConnectorByAppId, IAppConnection } from '@baita/shared'
+import { getConnectorByAppId, IConnection } from '@baita/shared'
 import {
   Delete as DeleteIcon,
   FlashOnSharp as FlashOnSharpIcon,
@@ -16,7 +16,7 @@ import {
 import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
 
-const ConnectionCard: FC<{ connection: IAppConnection }> = ({ connection }) => {
+const ConnectionCard: FC<{ connection: IConnection }> = ({ connection }) => {
   const connectionId = String(connection.connectionId)
   const healthCheck = useConnectionHealth(connectionId)
   const deleteConnection = useDeleteConnection()
