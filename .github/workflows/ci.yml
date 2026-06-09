@@ -43,6 +43,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Deploy infrastructure
+        id: infra
+        run: |
+          aws cloudformation deploy \
+            --stack-name baita-frontend-prod \
+            --template-file apps/frontend/cloudformation.yml \
+            --parameter-overrides Stage=prod \
+            --no-fail-on-empty-changeset
+          APP_ID=$(aws cloudformation describe-stacks \
+            --stack-name baita-frontend-prod \
+            --query 'Stacks[0].Outputs[?OutputKey==`AmplifyAppId`].OutputValue' \
+            --output text)
+          echo "app-id=$APP_ID" >> "$GITHUB_OUTPUT"
+
       - name: Package build artifact
         run: cd apps/frontend/dist && zip -qr /tmp/deploy.zip .
 
@@ -50,19 +64,19 @@ jobs:
         id: deploy
         run: |
           DEPLOY=$(aws amplify create-deployment \
-            --app-id d1yzzk62iq66zd --branch-name main --output json)
+            --app-id ${{ steps.infra.outputs.app-id }} --branch-name main --output json)
           curl --fail -s -T /tmp/deploy.zip \
             "$(echo $DEPLOY | jq -r '.zipUploadUrl')"
           JOB=$(echo $DEPLOY | jq -r '.jobId')
           aws amplify start-deployment \
-            --app-id d1yzzk62iq66zd --branch-name main --job-id "$JOB"
+            --app-id ${{ steps.infra.outputs.app-id }} --branch-name main --job-id "$JOB"
           echo "job-id=$JOB" >> "$GITHUB_OUTPUT"
 
       - name: Wait for deployment
         timeout-minutes: 2
         run: |
           while true; do
-            STATUS=$(aws amplify get-job --app-id d1yzzk62iq66zd \
+            STATUS=$(aws amplify get-job --app-id ${{ steps.infra.outputs.app-id }} \
               --branch-name main --job-id ${{ steps.deploy.outputs.job-id }} \
               --query 'job.summary.status' --output text)
             case $STATUS in
