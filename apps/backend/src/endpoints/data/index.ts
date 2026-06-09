@@ -43,7 +43,6 @@ export const handler = async (
           data = body
           break
         case 'PATCH':
-          store.validate(body)
           data = await store.update(id, body)
           break
         case 'DELETE':
