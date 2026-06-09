@@ -5,7 +5,7 @@ import path from 'path'
 import { APIRequestContext, Page } from '@playwright/test'
 
 // ─── Configuration ─────────────────────────────────────────────────────────
-export const API_URL = process.env.API_URL || 'https://api.baita.help'
+export const API_URL = process.env.API_URL || ''
 export const TEST_EMAIL = 'e2e-test@baita.help'
 export const TEST_PASSWORD = process.env.E2E_TEST_PASSWORD || ''
 
