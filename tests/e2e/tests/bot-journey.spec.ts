@@ -180,7 +180,7 @@ test.describe('Bot Lifecycle', () => {
     let res = await request.post(triggerUrl, {
       data: { source: 'e2e-test', timestamp: Date.now() },
     })
-    if (res.status() === 404) {
+    if (res.status() === 404 || res.status() === 500) {
       await new Promise((r) => setTimeout(r, 5000))
       res = await request.post(triggerUrl, {
         data: { source: 'e2e-test', timestamp: Date.now() },

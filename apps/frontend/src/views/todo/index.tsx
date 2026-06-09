@@ -5,6 +5,7 @@ import { FC, useState } from 'react'
 import { Button, Loading, Skeleton, TextInput } from '@/components'
 import { useTodo, useUpdateTodo } from '@/hooks/useTodo'
 import { getLabels, Labels } from '@/utils/labels'
+
 import ToDoList from './components/todoList'
 
 export const ToDo: FC = () => {

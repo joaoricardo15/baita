@@ -11,12 +11,12 @@
  * - User can open dialog to add a new note
  * - API failures show error notification
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { server } from '@/test/mswSetup'

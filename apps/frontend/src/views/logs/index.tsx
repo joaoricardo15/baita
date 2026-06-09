@@ -6,6 +6,7 @@ import { Loading, Skeleton, Text } from '@/components'
 import { useBot } from '@/hooks/useBots'
 import { useLogs } from '@/hooks/useLogs'
 import { getLabels, Labels } from '@/utils/labels'
+
 import Log from './components/log'
 import TopBar from './components/topBar'
 

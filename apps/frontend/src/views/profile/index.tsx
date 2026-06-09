@@ -1,4 +1,5 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
+import { ITodoTask } from '@baita/shared'
 import {
   CheckBox as CheckBoxIcon,
   Delete as DeleteIcon,
@@ -20,13 +21,13 @@ import { TypeAnimation } from 'react-type-animation'
 
 import trophySrc from '@/assets/trophy.gif'
 import { Button, Loading, Skeleton, Text } from '@/components'
-import { ITodoTask } from '@baita/shared'
-import { useDeleteUser } from '@/hooks/useUser'
 import { useTodo } from '@/hooks/useTodo'
+import { useDeleteUser } from '@/hooks/useUser'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { getTimeDiffLabel, isToday } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
+
 import Avatar from './components/avatar'
 
 export const ProfileComponent: FC = () => {

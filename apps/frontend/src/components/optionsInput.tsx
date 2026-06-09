@@ -4,33 +4,33 @@ import {
   Chip,
   TextField,
 } from '@mui/material'
-import { FC, ReactNode, useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 
 import { getLabels, Labels } from '@/utils/labels'
 
 import { ComponentProps } from '.'
 
-const OptionsInput: FC<
-  {
-    value: string
-    onChange: (value: any) => void
-    onBlur?: () => void
-    label?: string
-    placeholder?: string
-    size?: 'small' | 'medium'
-    options?: any[]
-    chip?: boolean
-    optionLabelPath?: string | string[]
-    groupLabelPath?: string | string[]
-    renderOption?: (
-      props: React.HTMLAttributes<HTMLLIElement>,
-      option: any
-    ) => ReactNode
-    renderGroup?: (params: AutocompleteRenderGroupParams) => ReactNode
-    getOptionDisabled?: (option: any) => boolean
-    onSearchChange?: (value: string) => void
-  } & ComponentProps
-> = ({
+interface OptionsInputProps<T> extends ComponentProps {
+  value: string
+  onChange: (value: T | null) => void
+  onBlur?: () => void
+  label?: string
+  placeholder?: string
+  size?: 'small' | 'medium'
+  options?: T[]
+  chip?: boolean
+  optionLabelPath?: string | string[]
+  groupLabelPath?: string | string[]
+  renderOption?: (
+    props: React.HTMLAttributes<HTMLLIElement>,
+    option: T
+  ) => ReactNode
+  renderGroup?: (params: AutocompleteRenderGroupParams) => ReactNode
+  getOptionDisabled?: (option: T) => boolean
+  onSearchChange?: (value: string) => void
+}
+
+function OptionsInput<T>({
   value,
   onChange,
   onBlur,
@@ -47,29 +47,40 @@ const OptionsInput: FC<
   onSearchChange,
   className,
   style,
-}) => {
+}: OptionsInputProps<T>) {
   const [inputValue, setInputValue] = useState(value)
 
   useEffect(() => {
     setInputValue(value)
   }, [value])
 
-  const getPropertyByPath = (path: string | string[], obj: any): string => {
+  const getPropertyByPath = (
+    path: string | string[],
+    obj: Record<string, unknown>
+  ): string => {
     const properties = Array.isArray(path) ? path : path.split('.')
-    return properties.reduce((prev, curr) => prev?.[curr], obj) || ''
+    return (
+      (properties.reduce(
+        (prev: unknown, curr) =>
+          prev && typeof prev === 'object'
+            ? (prev as Record<string, unknown>)[curr]
+            : undefined,
+        obj as unknown
+      ) as string) || ''
+    )
   }
 
-  const getOptionLabel = (option: any): string => {
+  const getOptionLabel = (option: T | string): string => {
     if (typeof option === 'string') return option
     return optionLabelPath
-      ? getPropertyByPath(optionLabelPath, option)
+      ? getPropertyByPath(optionLabelPath, option as Record<string, unknown>)
       : String(option)
   }
 
   const getDefaultRenderOption = () => {
     if (customRenderOption) return customRenderOption
     if (chip) {
-      return (props: React.HTMLAttributes<HTMLLIElement>, option: any) => (
+      return (props: React.HTMLAttributes<HTMLLIElement>, option: T) => (
         <li {...props}>
           <Chip variant="outlined" label={getOptionLabel(option)} />
         </li>
@@ -86,12 +97,12 @@ const OptionsInput: FC<
           autoHighlight
           blurOnSelect
           freeSolo
-          options={options}
+          options={options as (T & (string | object))[]}
           inputValue={inputValue}
           noOptionsText={labels.noOptions}
           onBlur={onBlur}
           onOpen={() => setInputValue('')}
-          onChange={(_, selected) => onChange(selected)}
+          onChange={(_, selected) => onChange(selected as T | null)}
           sx={{
             '& .MuiAutocomplete-clearIndicator': {
               visibility: value ? 'visible' : 'hidden',
@@ -110,10 +121,14 @@ const OptionsInput: FC<
           onClose={() => setInputValue(value)}
           groupBy={
             groupLabelPath
-              ? (option) => getPropertyByPath(groupLabelPath, option)
+              ? (option) =>
+                  getPropertyByPath(
+                    groupLabelPath,
+                    option as Record<string, unknown>
+                  )
               : undefined
           }
-          getOptionLabel={getOptionLabel}
+          getOptionLabel={(option) => getOptionLabel(option as T | string)}
           isOptionEqualToValue={() => true}
           renderOption={getDefaultRenderOption()}
           renderGroup={customRenderGroup}

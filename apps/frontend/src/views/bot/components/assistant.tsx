@@ -1,3 +1,4 @@
+import { IBot, ITask } from '@baita/shared'
 import { AutoAwesome as AiIcon, Send as SendIcon } from '@mui/icons-material'
 import {
   Box,
@@ -14,7 +15,6 @@ import {
 } from '@mui/material'
 import { FC, useState } from 'react'
 
-import { IBot, ITask } from '@baita/shared'
 import { useUpdateBot } from '@/hooks/useBots'
 import {
   AiMessage,

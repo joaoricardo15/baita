@@ -38,10 +38,36 @@ export async function getAiService(): Promise<AiService | null> {
   return null
 }
 
+interface ChromeAiSession {
+  prompt(text: string): Promise<string>
+}
+
+interface ChromeAi {
+  canCreateGenericSession?: () => Promise<string>
+  createGenericSession?: (opts: {
+    systemPrompt: string
+  }) => Promise<ChromeAiSession>
+  languageModel?: {
+    capabilities: () => Promise<{ available?: string }>
+    create: (opts: { systemPrompt: string }) => Promise<ChromeAiSession>
+  }
+}
+
+interface ChromeLanguageModel {
+  create: (opts: {
+    systemPrompt: string
+    expectedOutputLanguages?: string[]
+  }) => Promise<ChromeAiSession>
+}
+
+const chromeWindow = window as unknown as {
+  ai?: ChromeAi
+  LanguageModel?: ChromeLanguageModel
+}
+
 async function isChromeAiAvailable(): Promise<boolean> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ai = (window as any).ai
+    const ai = chromeWindow.ai
     if (ai?.canCreateGenericSession) {
       const availability = await ai.canCreateGenericSession()
       return availability === 'readily'
@@ -50,8 +76,7 @@ async function isChromeAiAvailable(): Promise<boolean> {
       const caps = await ai.languageModel.capabilities()
       return caps?.available === 'readily'
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (typeof (window as any).LanguageModel !== 'undefined') {
+    if (typeof chromeWindow.LanguageModel !== 'undefined') {
       return true
     }
     return false
@@ -74,10 +99,8 @@ function createChromeAiService(): AiService {
         prompt
       )
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ai = (window as any).ai
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const LM = (window as any).LanguageModel
+      const ai = chromeWindow.ai
+      const LM = chromeWindow.LanguageModel
 
       if (LM?.create) {
         const session = await LM.create({
@@ -92,7 +115,7 @@ function createChromeAiService(): AiService {
         })
         return await session.prompt(prompt)
       }
-      const session = await ai.languageModel.create({
+      const session = await ai!.languageModel!.create({
         systemPrompt: SYSTEM_PROMPT,
       })
       return await session.prompt(prompt)

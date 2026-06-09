@@ -1,3 +1,4 @@
+import { IContent } from '@baita/shared'
 import {
   Chat as ChatIcon,
   Favorite as FavoriteIcon,
@@ -14,7 +15,6 @@ import {
 import { FC } from 'react'
 
 import { ComponentProps, Text } from '@/components'
-import { IContent } from '@baita/shared'
 import { getTimeDiffLabel } from '@/utils/date'
 
 const ContentCard: FC<{ content: IContent } & ComponentProps> = ({

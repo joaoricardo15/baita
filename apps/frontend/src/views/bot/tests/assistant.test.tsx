@@ -10,11 +10,11 @@
  * - Apply calls updateBot mutation with modified task
  * - Shows error after 3 failed attempts
  */
+import { IBot, ITask } from '@baita/shared'
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { beforeAll, vi } from 'vitest'
 
-import { IBot, ITask } from '@baita/shared'
 import { server } from '@/test/mswSetup'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import BotAssistant from '@/views/bot/components/assistant'

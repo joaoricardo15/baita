@@ -1,7 +1,6 @@
-import { useEffect, useRef } from 'react'
-
 import { IAppConnection } from '@baita/shared'
 import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 
 import { fetchConnections } from '@/api/queries'
 import { useConnections } from '@/hooks/useConnections'

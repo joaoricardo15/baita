@@ -14,10 +14,10 @@ const Menu: FC<
     }[]
   } & ComponentProps
 > = ({ children, links, className, style }) => {
-  const [anchorEl, setAnchorEl] = useState(null)
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null)
 
   const onMenuOpen = (event: MouseEvent) => {
-    setAnchorEl(event.target as any)
+    setAnchorEl(event.target as HTMLElement)
   }
 
   const onMenuClose = () => {

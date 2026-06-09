@@ -92,6 +92,7 @@ class Api {
     this.logObject.status = status
     this.logObject.message = error
     this.logObject.data = data
+    // eslint-disable-next-line no-console
     console.log(JSON.stringify(this.logObject))
   }
 

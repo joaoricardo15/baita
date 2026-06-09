@@ -1,6 +1,6 @@
 import tseslint from 'typescript-eslint'
 
-import baseConfig from '../../eslint.config.js'
+import baseConfig from '../../eslint.config.mjs'
 
 export default tseslint.config(
   ...baseConfig,
@@ -11,6 +11,13 @@ export default tseslint.config(
     files: ['**/*.ts'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.ts', '**/tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': 'off',
     },
   }
 )

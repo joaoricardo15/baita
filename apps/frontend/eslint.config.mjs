@@ -2,7 +2,7 @@ import reactPlugin from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 import tseslint from 'typescript-eslint'
 
-import baseConfig from '../../eslint.config.js'
+import baseConfig from '../../eslint.config.mjs'
 
 export default tseslint.config(
   ...baseConfig,

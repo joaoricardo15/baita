@@ -15,5 +15,5 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true
   },
-  "exclude": ["eslint.config.js"]
+  "exclude": ["eslint.config.mjs"]
 }

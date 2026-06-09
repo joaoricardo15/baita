@@ -314,7 +314,9 @@ const VariableInput: FC<
                 label={getLabel(variable.label)}
                 optionLabelPath="label"
                 groupLabelPath="groupName"
-                onChange={(result) => onOutputChange(variable, result)}
+                onChange={(result) =>
+                  onOutputChange(variable, result ?? undefined)
+                }
                 onBlur={onBlur}
                 options={outputFields}
                 renderOption={renderOutputOption}
@@ -399,7 +401,7 @@ const VariableInput: FC<
             variable.options?.find((o) => o.value === value)?.label ||
             ''
           }
-          onChange={(result) => onOptionChange(variable, result)}
+          onChange={(result) => onOptionChange(variable, result ?? undefined)}
           onBlur={onBlur}
           options={variable.options}
         />

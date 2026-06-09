@@ -1,9 +1,10 @@
+import { ITask, IVariable } from '@baita/shared'
 import { Divider } from '@mui/material'
 import { FC } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { ITask, IVariable } from '@baita/shared'
 import { getBotInputs, useBot, useUpdateBot } from '@/hooks/useBots'
+
 import CustomInputs from './customInputs'
 import ServiceInputs from './serviceInputs'
 

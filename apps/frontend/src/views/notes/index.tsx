@@ -1,4 +1,5 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
+import { INote } from '@baita/shared'
 import {
   Add as AddIcon,
   InterestsOutlined as InterestsOutlinedIcon,
@@ -7,7 +8,6 @@ import { Dialog, DialogContent, TextareaAutosize } from '@mui/material'
 import { FC, useState } from 'react'
 
 import { Button, EmptyState, Loading, Skeleton } from '@/components'
-import { INote } from '@baita/shared'
 import { useDeleteNote, useNotes, useSaveNote } from '@/hooks/useNotes'
 import { getLabels, Labels } from '@/utils/labels'
 

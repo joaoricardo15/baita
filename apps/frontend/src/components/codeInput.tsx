@@ -10,7 +10,7 @@ const CodeInput: FC<
     placeholder?: string
     variant?: 'standard' | 'filled' | 'outlined'
     size?: 'small' | 'medium'
-    onChange: (value: any) => void
+    onChange: (value: string) => void
     onBlur?: () => void
   } & ComponentProps
 > = ({

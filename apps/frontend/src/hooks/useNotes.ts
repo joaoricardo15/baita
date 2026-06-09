@@ -1,7 +1,6 @@
-import { useContext } from 'react'
-
 import { INote } from '@baita/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useContext } from 'react'
 
 import * as mutations from '@/api/mutations'
 import * as queries from '@/api/queries'

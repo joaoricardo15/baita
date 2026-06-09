@@ -1,12 +1,13 @@
+import { IBotModel } from '@baita/shared'
 import { Delete as DeleteIcon } from '@mui/icons-material'
 import { FC, useContext } from 'react'
 
 import { Button } from '@/components'
-import { IBotModel } from '@baita/shared'
 import { useDeleteBotModel, useDeployBotModel } from '@/hooks/useBots'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
+
 import BotCard from './botCard'
 
 const BotModel: FC<{

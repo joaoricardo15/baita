@@ -1,9 +1,9 @@
+import { getTaskLabel, validateBot } from '@baita/shared'
 import { FlashOnSharp as FlashOnSharpIcon } from '@mui/icons-material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { Button, Highlight, StatusChip, Text } from '@/components'
-import { getTaskLabel, ITask, validateBot } from '@baita/shared'
 import { useBot, useTestBotTask } from '@/hooks/useBots'
 import { NotificationContext } from '@/providers/notification'
 import { getTimeDiffLabel } from '@/utils/date'
@@ -15,7 +15,7 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
   const testBotTask = useTestBotTask()
   const { showSnack, showLoading } = useContext(NotificationContext)
 
-  const [task, setTask] = useState<ITask>()
+  const task = bot?.tasks[taskIndex]
 
   const testTask = (taskIndex: number) => {
     if (bot) {
@@ -41,12 +41,6 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
         })
     }
   }
-
-  useEffect(() => {
-    if (bot) {
-      setTask(bot.tasks[taskIndex])
-    }
-  }, [bot])
 
   return (
     <>

@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, RenderOptions } from '@testing-library/react'
-import { FC, ReactNode } from 'react'
+import { FC, ReactElement, ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
@@ -60,5 +60,5 @@ export const renderWithProviders = (
   const { renderOptions, ...wrapperOptions } = options
   const Wrapper = createWrapper(wrapperOptions)
 
-  return render(ui as any, { wrapper: Wrapper, ...renderOptions })
+  return render(ui as ReactElement, { wrapper: Wrapper, ...renderOptions })
 }

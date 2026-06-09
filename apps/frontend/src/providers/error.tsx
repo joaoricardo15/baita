@@ -10,6 +10,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 
 import { Error as ErrorComponent } from '@/components'
 import { publishEvent } from '@/utils/firebase'
+
 import { AuthContext } from './auth'
 
 export const ErrorContext = createContext<{
@@ -76,7 +77,7 @@ export default ErrorProvider
 
 export const parseError = (
   error: unknown
-): { errorMessage: string; errorFile: string; errorObject: any } => {
+): { errorMessage: string; errorFile: string; errorObject: unknown } => {
   if (error instanceof Error) {
     const { message, stack, cause } = error
     return {

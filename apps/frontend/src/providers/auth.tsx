@@ -1,7 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react'
+import { IUser } from '@baita/shared'
 import { createContext, FC, ReactNode, useEffect, useRef } from 'react'
 
-import { IUser } from '@baita/shared'
 import { setupAuthInterceptor } from '@/api/client'
 import { unsubscribeFromPush } from '@/utils/push'
 

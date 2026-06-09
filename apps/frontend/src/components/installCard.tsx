@@ -3,21 +3,30 @@ import { Card } from '@mui/material'
 import { FC, useEffect, useState } from 'react'
 
 import { getLabels, Labels } from '@/utils/labels'
+
 import { Button, Text } from '.'
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 const InstallCard: FC = () => {
-  const [installationEvent, setInstallationEvent] = useState<any>(null)
+  const [installationEvent, setInstallationEvent] =
+    useState<BeforeInstallPromptEvent | null>(null)
 
   const installApp = () => {
-    installationEvent.prompt()
-    installationEvent.userChoice.then((choiceResult: any) => {
-      if (choiceResult.outcome === 'accepted') setInstallationEvent(null)
-    })
+    installationEvent!.prompt()
+    installationEvent!.userChoice.then(
+      (choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
+        if (choiceResult.outcome === 'accepted') setInstallationEvent(null)
+      }
+    )
   }
 
   const showInstallationPanel = (event: Event) => {
     event.preventDefault()
-    setInstallationEvent(event)
+    setInstallationEvent(event as BeforeInstallPromptEvent)
   }
 
   const closePainel = () => {

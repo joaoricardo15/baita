@@ -1,7 +1,7 @@
+import { TaskExecutionStatus } from '@baita/shared'
 import { Chip } from '@mui/material'
 import { FC } from 'react'
 
-import { TaskExecutionStatus } from '@baita/shared'
 import { ComponentProps } from '.'
 
 const statusStyles: Record<TaskExecutionStatus, string> = {

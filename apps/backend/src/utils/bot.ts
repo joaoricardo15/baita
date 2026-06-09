@@ -11,8 +11,10 @@ export function getDataFromPath(
   }
 
   const paths = outputPath.split('.')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let current: any = data
+  let current: Record<string | number, unknown> = data as Record<
+    string | number,
+    unknown
+  >
 
   for (let i = 0; i < paths.length; i++) {
     const key = isNaN(Number(paths[i])) ? paths[i] : Number(paths[i])
@@ -25,7 +27,7 @@ export function getDataFromPath(
       return undefined
     }
 
-    current = current[key]
+    current = current[key] as Record<string | number, unknown>
   }
 
   return current
@@ -78,8 +80,7 @@ export function setObjectDataFromPath(
     return data
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let currentData: any = data
+  let currentData = data as Record<string, unknown>
   const paths = inputPath.split('.')
 
   for (let i = 0; i < paths.length; i++) {
@@ -96,7 +97,7 @@ export function setObjectDataFromPath(
       }
     }
 
-    currentData = currentData[key]
+    currentData = currentData[key] as Record<string, unknown>
   }
 
   return data
@@ -180,12 +181,12 @@ export function applyTransformToValue(
       return Array.isArray(data) ? data.length : 0
     case 'pluck':
       return Array.isArray(data)
-        ? data.map((item: any) => item?.[property!])
+        ? data.map((item) => (item as Record<string, unknown>)?.[property!])
         : data
     case 'filter':
       if (!Array.isArray(data)) return data
-      return data.filter((item: any) => {
-        const itemVal = item?.[property!]
+      return data.filter((item) => {
+        const itemVal = (item as Record<string, unknown>)?.[property!]
         switch (operator) {
           case 'equals':
             return String(itemVal ?? '') === value
@@ -210,9 +211,11 @@ export function applyTransformToValue(
     case 'sort': {
       if (!Array.isArray(data)) return data
       const dir = direction === 'desc' ? -1 : 1
-      return [...data].sort((a: any, b: any) =>
-        a?.[property!] > b?.[property!] ? dir : -dir
-      )
+      return [...data].sort((a, b) => {
+        const aVal = String((a as Record<string, unknown>)?.[property!] ?? '')
+        const bVal = String((b as Record<string, unknown>)?.[property!] ?? '')
+        return aVal > bVal ? dir : -dir
+      })
     }
     default:
       return data

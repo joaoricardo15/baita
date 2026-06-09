@@ -1,10 +1,10 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
+import { IContent } from '@baita/shared'
 import { FC, useContext, useEffect, useRef } from 'react'
 import { CardSwiper } from 'react-card-rotate-swiper'
 import { TwitterTweetEmbed } from 'react-twitter-embed'
 
 import { Button, EmptyState, Loading, Logo, Skeleton } from '@/components'
-import { IContent } from '@baita/shared'
 import {
   useContent,
   usePopContent,
@@ -13,6 +13,7 @@ import {
 } from '@/hooks/useContent'
 import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
+
 import ContentCard from './components/contentCard'
 
 export const Feed: FC = () => {
@@ -28,7 +29,7 @@ export const Feed: FC = () => {
       autoRetried.current = true
       refreshContent.mutate()
     }
-  }, [loading, contents])
+  }, [loading, contents, refreshContent])
 
   const fetchMore = () => {
     if (!refreshContent.isPending) {

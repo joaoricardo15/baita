@@ -10,12 +10,12 @@
  * - Page shows map with markers after data loads
  * - API failures don't crash the page
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { MemoryRouter } from 'react-router-dom'
 import { vi } from 'vitest'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { server } from '@/test/mswSetup'

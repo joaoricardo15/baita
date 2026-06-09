@@ -9,15 +9,12 @@ import {
 } from '@/utils/ai'
 
 afterEach(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (window as any).ai
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (window as any).LanguageModel
 })
 
 describe('getAiService', () => {
   it('returns AiService when Chrome AI is available', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).ai = {
       languageModel: {
         capabilities: vi.fn().mockResolvedValue({ available: 'readily' }),
@@ -35,14 +32,12 @@ describe('getAiService', () => {
   })
 
   it('returns null when languageModel is undefined', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).ai = {}
     const service = await getAiService()
     expect(service).toBeNull()
   })
 
   it('returns null when available is not readily', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).ai = {
       languageModel: {
         capabilities: vi.fn().mockResolvedValue({ available: 'no' }),
@@ -53,7 +48,6 @@ describe('getAiService', () => {
   })
 
   it('returns service when LanguageModel global exists', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any).LanguageModel = class {}
     const service = await getAiService()
     expect(service).not.toBeNull()

@@ -1,3 +1,4 @@
+import { getConnectorByAppId, IAppConnection } from '@baita/shared'
 import { Add as AddIcon } from '@mui/icons-material'
 import {
   Dialog,
@@ -6,9 +7,8 @@ import {
   DialogTitle,
   TextField,
 } from '@mui/material'
-import { FC, useContext, useState } from 'react'
-import { getConnectorByAppId, IAppConnection } from '@baita/shared'
 import { useQueryClient } from '@tanstack/react-query'
+import { FC, useContext, useState } from 'react'
 
 import { Button, OptionsInput } from '@/components'
 import { useConnections, useCreateConnection } from '@/hooks/useConnections'
@@ -98,7 +98,9 @@ const NewConnection: FC<{
             }
             options={connections.filter((x) => x.appId === appId)}
             optionLabelPath={'name'}
-            onChange={onSelectConnection}
+            onChange={(value) => {
+              if (value) onSelectConnection(value)
+            }}
           />
         )}
 

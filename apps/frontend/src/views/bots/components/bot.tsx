@@ -1,3 +1,4 @@
+import { IBot, IBotModel, ITask, IVariable, validateBot } from '@baita/shared'
 import {
   AutoFixHigh as AutoFixHighIcon,
   Delete as DeleteIcon,
@@ -11,12 +12,12 @@ import { FC, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Menu from '@/components/menu'
-import { IBot, IBotModel, validateBot } from '@baita/shared'
 import { useDeleteBot, useDeployBot, usePublishBotModel } from '@/hooks/useBots'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { LINKS } from '@/router'
 import { getLabels, Labels } from '@/utils/labels'
+
 import BotCard from './botCard'
 
 const Bot: FC<{
@@ -84,10 +85,10 @@ const Bot: FC<{
     modelId: bot.botId,
     author: user?.email || '',
     description: bot.description,
-    tasks: bot.tasks.map((task: any) => ({
+    tasks: bot.tasks.map((task: ITask) => ({
       ...task,
       sampleResult: undefined,
-      inputData: task.inputData.map((input: any) => ({
+      inputData: task.inputData.map((input: IVariable) => ({
         ...input,
         sampleValue: undefined,
         value: input.type === 'output' ? undefined : input.value,

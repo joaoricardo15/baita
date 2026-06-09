@@ -1,7 +1,3 @@
-import { FC, useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-
-import { OptionsInput } from '@/components'
 import {
   IAppConnection,
   IServiceApp,
@@ -11,9 +7,14 @@ import {
   ServiceName,
   ServiceType,
 } from '@baita/shared'
+import { FC, useContext, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+
+import { OptionsInput } from '@/components'
 import { useBot, useUpdateBot } from '@/hooks/useBots'
 import { AppsContext } from '@/providers/apps'
 import { getLabels, Labels } from '@/utils/labels'
+
 import NewConnection from './newConnection'
 import PushNotificationService from './pushNotification'
 import WebhookService from './webhook'
@@ -43,7 +44,7 @@ const TaskService: FC<{
     }
   }
 
-  const onSelectService = (appService: IServiceApp) => {
+  const onSelectService = (appService: IServiceApp | null) => {
     if (bot && task) {
       if (appService) {
         const updatedTask = {
@@ -99,7 +100,7 @@ const TaskService: FC<{
     if (bot) {
       setTask(bot.tasks[taskIndex])
     }
-  }, [bot])
+  }, [bot, taskIndex])
 
   return (
     <>

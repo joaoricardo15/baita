@@ -1,13 +1,13 @@
+import { IVariable, VariableType } from '@baita/shared'
 import {
   Check as CheckIcon,
   IosShare as IosShareIcon,
   NotificationsActive as NotificationsActiveIcon,
   PhoneIphone as PhoneIphoneIcon,
 } from '@mui/icons-material'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useCallback, useContext, useEffect, useState } from 'react'
 
 import { Button, Text } from '@/components'
-import { IVariable, VariableType } from '@baita/shared'
 import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
 import {
@@ -33,16 +33,19 @@ const PushNotificationService: FC<{
   const [state, setState] = useState<PushState>('loading')
   const { showSnack } = useContext(NotificationContext)
 
-  const storeSubscription = (subscription: PushSubscription) => {
-    const subscriptionJSON = JSON.stringify(subscription.toJSON())
-    updateBotInputField('token', {
-      name: 'token',
-      label: 'Token',
-      type: VariableType.constant,
-      value: subscriptionJSON,
-      sampleValue: subscriptionJSON,
-    })
-  }
+  const storeSubscription = useCallback(
+    (subscription: PushSubscription) => {
+      const subscriptionJSON = JSON.stringify(subscription.toJSON())
+      updateBotInputField('token', {
+        name: 'token',
+        label: 'Token',
+        type: VariableType.constant,
+        value: subscriptionJSON,
+        sampleValue: subscriptionJSON,
+      })
+    },
+    [updateBotInputField]
+  )
 
   const requestPermission = async () => {
     const regs = await navigator.serviceWorker.getRegistrations()
@@ -101,7 +104,7 @@ const PushNotificationService: FC<{
       .catch(() => {
         setState('ready-to-ask')
       })
-  }, [])
+  }, [storeSubscription])
 
   if (state === 'loading') return null
 

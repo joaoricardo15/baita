@@ -1,3 +1,4 @@
+import { validateBot } from '@baita/shared'
 import {
   History as HistoryIcon,
   PowerSettingsNewSharp as PowerSettingsNewSharpIcon,
@@ -8,7 +9,6 @@ import ReactConfetti from 'react-confetti'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { Button, TextInput } from '@/components'
-import { validateBot } from '@baita/shared'
 import { useBot, useDeployBot, useUpdateBot } from '@/hooks/useBots'
 import { NotificationContext } from '@/providers/notification'
 import { LINKS } from '@/router'

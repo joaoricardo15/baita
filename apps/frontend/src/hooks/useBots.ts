@@ -1,5 +1,3 @@
-import { useCallback, useContext, useRef } from 'react'
-
 import {
   IBot,
   IBotModel,
@@ -9,6 +7,7 @@ import {
   VariableType,
 } from '@baita/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useContext, useRef } from 'react'
 
 import * as mutations from '@/api/mutations'
 import * as queries from '@/api/queries'
@@ -191,8 +190,7 @@ export function getBotInputs(tasks: ITask[]) {
             : `task ${taskIndex}`
       const outputData = tasks[taskIndex].sampleResult?.outputData
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const getFromVariable = (name: string, value: any) => {
+      const getFromVariable = (name: string, value: string | number) => {
         inputs.push({
           name,
           value,
@@ -204,8 +202,7 @@ export function getBotInputs(tasks: ITask[]) {
         })
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const getFromArray = (name: string, array: any) => {
+      const getFromArray = (name: string, array: unknown[]) => {
         inputs.push({
           name: name,
           value: array,
@@ -222,8 +219,7 @@ export function getBotInputs(tasks: ITask[]) {
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const getFromObject = (name: string, object: any) => {
+      const getFromObject = (name: string, object: Record<string, unknown>) => {
         const array = Object.keys(object)
         inputs.push({
           name: name,
@@ -242,13 +238,13 @@ export function getBotInputs(tasks: ITask[]) {
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const getInput = (name: string, value: any) => {
+      const getInput = (name: string, value: unknown) => {
         if (!value) return
         if (typeof value === 'string' || typeof value === 'number')
           getFromVariable(name, value)
         else if (Array.isArray(value)) getFromArray(name, value)
-        else if (typeof value === 'object') getFromObject(name, value)
+        else if (typeof value === 'object')
+          getFromObject(name, value as Record<string, unknown>)
       }
 
       getInput('', outputData)

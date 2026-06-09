@@ -1,6 +1,5 @@
-import { useContext } from 'react'
-
 import { useQuery } from '@tanstack/react-query'
+import { useContext } from 'react'
 
 import * as queries from '@/api/queries'
 import { AuthContext } from '@/providers/auth'

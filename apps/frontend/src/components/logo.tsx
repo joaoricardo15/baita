@@ -1,6 +1,7 @@
 import { FC } from 'react'
 
 import logoSrc from '@/assets/logo.png'
+
 import { ComponentProps } from '.'
 
 const Logo: FC<{ size?: number } & ComponentProps> = ({

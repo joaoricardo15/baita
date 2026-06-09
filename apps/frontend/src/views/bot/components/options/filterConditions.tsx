@@ -1,8 +1,3 @@
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material'
-import { Divider } from '@mui/material'
-import { FC } from 'react'
-
-import { Button, OptionsInput, TextInput, VariableInput } from '@/components'
 import {
   ConditionOperator,
   ITask,
@@ -10,6 +5,11 @@ import {
   IVariable,
   VariableType,
 } from '@baita/shared'
+import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material'
+import { Divider } from '@mui/material'
+import { FC } from 'react'
+
+import { Button, OptionsInput, TextInput, VariableInput } from '@/components'
 import { getLabels, Labels } from '@/utils/labels'
 
 const CONDITION_OPERATOR_LABELS: Record<ConditionOperator, string> = {
@@ -35,7 +35,7 @@ const FilterConditions: FC<{
   task: ITask
   taskIndex: number
   inputs: IVariable[]
-  onTaskFieldChange: (fieldName: string, value: any) => void
+  onTaskFieldChange: (fieldName: string, value: unknown) => void
 }> = ({ task, taskIndex, inputs, onTaskFieldChange }) => {
   const addOrCondition = () => {
     if (task.conditions) {
@@ -211,13 +211,14 @@ const FilterConditions: FC<{
                       value={andCondition.operator}
                       label={labels.comparison}
                       optionLabelPath={'label'}
-                      onChange={(result) =>
-                        onOperatorChange(
-                          orConditionIndex,
-                          andConditionIndex,
-                          result
-                        )
-                      }
+                      onChange={(result) => {
+                        if (result)
+                          onOperatorChange(
+                            orConditionIndex,
+                            andConditionIndex,
+                            result
+                          )
+                      }}
                       options={Object.values(ConditionOperator).map((x) => ({
                         value: x,
                         label: CONDITION_OPERATOR_LABELS[x],

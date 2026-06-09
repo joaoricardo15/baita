@@ -1,9 +1,10 @@
+import { ITodoTask, ITodoTaskGroup } from '@baita/shared'
 import { DndContext, DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext } from '@dnd-kit/sortable'
 import { FC } from 'react'
 
 import { Text } from '@/components'
-import { ITodoTask, ITodoTaskGroup } from '@baita/shared'
+
 import ToDoTask from './todoTask'
 
 const ToDoList: FC<{

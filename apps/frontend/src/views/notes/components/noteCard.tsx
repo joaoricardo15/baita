@@ -1,3 +1,4 @@
+import { INote } from '@baita/shared'
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -9,7 +10,6 @@ import { FC } from 'react'
 
 import { Text } from '@/components'
 import Menu from '@/components/menu'
-import { INote } from '@baita/shared'
 import { getTimeDiffLabel } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 

@@ -1,3 +1,4 @@
+import { IPlace } from '@baita/shared'
 import {
   AddLocationAltOutlined as AddLocationAltOutlinedIcon,
   AddPhotoAlternateOutlined as AddPhotoAlternateOutlinedIcon,
@@ -10,10 +11,9 @@ import { Dialog, DialogContent } from '@mui/material'
 import axios from 'axios'
 import { FC, useState } from 'react'
 
-import { IPlace } from '@baita/shared'
+import * as queries from '@/api/queries'
 import { Button, Highlight, TextInput } from '@/components'
 import { useDeletePlace, useSavePlace } from '@/hooks/usePlaces'
-import * as queries from '@/api/queries'
 import { FILES_BASE_URL } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'
 

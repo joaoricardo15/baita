@@ -11,7 +11,7 @@
  * - Data fetching triggers on mount (via TanStack Query)
  * - API failures are handled gracefully
  */
-import { fireEvent, screen, waitFor } from '@testing-library/react'
+import { fireEvent, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { vi } from 'vitest'
 

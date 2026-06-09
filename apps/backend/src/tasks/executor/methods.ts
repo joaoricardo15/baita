@@ -1,6 +1,7 @@
 import {
   DataType,
   getConnectorById,
+  IContent,
   ITaskExecutionInput,
   MethodName,
   validateContent,
@@ -57,34 +58,19 @@ async function getTodo(
   return resource.read()
 }
 
-interface IContent {
-  contentId: string
-  header: string
-  body: string
-  source: string
-  date?: string
-  author?: { name: string }
-  url?: string
-  image?: string
-}
-
 async function publishToFeed(
   taskInput: ITaskExecutionInput<DataType>
 ): Promise<DataType | undefined> {
   const { userId, inputData } = taskInput
   const content = (inputData as { content: IContent | IContent[] }).content
 
-  const contentList = Array.isArray(content) ? content : [content]
+  const contentList: IContent[] = Array.isArray(content) ? content : [content]
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  validateContent(contentList as any)
+  validateContent(contentList)
 
   const user = new User()
 
-  const { published, total } = await user.publishContent(
-    userId,
-    contentList as any
-  )
+  const { published, total } = await user.publishContent(userId, contentList)
 
   if (published === 0) {
     throw new Error(`No new content to publish (${total} items already seen).`)

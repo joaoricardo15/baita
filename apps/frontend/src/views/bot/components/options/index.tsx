@@ -1,8 +1,9 @@
+import { ITask, ServiceName, ServiceType } from '@baita/shared'
 import { FC } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { ITask, ServiceName, ServiceType } from '@baita/shared'
 import { getBotInputs, useBot, useUpdateBot } from '@/hooks/useBots'
+
 import ExtraOptions from './extraOptions'
 import FilterConditions from './filterConditions'
 
@@ -15,8 +16,7 @@ const TaskOptions: FC<{
 
   const task = bot?.tasks[taskIndex]
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateTaskOptions = (fieldName: string, value: any) => {
+  const updateTaskOptions = (fieldName: string, value: unknown) => {
     if (bot && task) {
       const updatedTask = { ...task, [fieldName]: value } as ITask
       const updatedTasks = [...bot.tasks]

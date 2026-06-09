@@ -12,12 +12,17 @@ interface IDirectInvocation {
   resolvedInputData: DataType
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface IDirectResult {
+  success: boolean
+  data?: DataType
+  message?: string
+}
+
 export const handler = async (
   event: APIGatewayProxyEvent | IDirectInvocation,
   context: Context,
   callback: Callback
-): Promise<any> => {
+): Promise<IDirectResult | undefined> => {
   if ('direct' in event && event.direct) {
     const {
       userId,
@@ -33,7 +38,7 @@ export const handler = async (
       )
       return {
         success: result.status === 'success',
-        data: result.outputData,
+        data: result.outputData ?? undefined,
         message:
           result.status !== 'success'
             ? JSON.stringify(result.outputData)

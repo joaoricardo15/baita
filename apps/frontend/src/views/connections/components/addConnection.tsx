@@ -1,3 +1,4 @@
+import { getAllConnectors, IConnectorManifest } from '@baita/shared'
 import {
   Dialog,
   DialogActions,
@@ -9,9 +10,8 @@ import {
   ListSubheader,
   TextField,
 } from '@mui/material'
-import { FC, useContext, useState } from 'react'
-import { IConnectorManifest, getAllConnectors } from '@baita/shared'
 import { useQueryClient } from '@tanstack/react-query'
+import { FC, useContext, useState } from 'react'
 
 import { Button } from '@/components'
 import { useCreateConnection } from '@/hooks/useConnections'

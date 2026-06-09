@@ -1,4 +1,8 @@
-import type { DraggableSyntheticListeners } from '@dnd-kit/core'
+import { ITodoTask } from '@baita/shared'
+import type {
+  DraggableAttributes,
+  DraggableSyntheticListeners,
+} from '@dnd-kit/core'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -8,18 +12,17 @@ import {
 import { createContext, FC, useContext, useMemo, useState } from 'react'
 
 import { CheckBox, TextInput } from '@/components'
-import { ITodoTask } from '@baita/shared'
 import { useTodo, useUpdateTodo } from '@/hooks/useTodo'
 import { NotificationContext } from '@/providers/notification'
 
 interface Context {
-  attributes: Record<string, any>
+  attributes: DraggableAttributes
   listeners: DraggableSyntheticListeners
   ref(node: HTMLElement | null): void
 }
 
 const SortableItemContext = createContext<Context>({
-  attributes: {},
+  attributes: {} as DraggableAttributes,
   listeners: undefined,
   ref() {},
 })

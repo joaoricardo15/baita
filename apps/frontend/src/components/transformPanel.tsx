@@ -127,7 +127,11 @@ const TransformPanel: FC<{
               <Select
                 value={operator}
                 label={labels.operator}
-                onChange={(e) => setOperator(e.target.value as any)}
+                onChange={(e) =>
+                  setOperator(
+                    e.target.value as NonNullable<ITransform['operator']>
+                  )
+                }
               >
                 <MenuItem value="equals">{labels.equals}</MenuItem>
                 <MenuItem value="notEquals">{labels.notEquals}</MenuItem>

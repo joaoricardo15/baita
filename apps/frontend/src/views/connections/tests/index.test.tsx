@@ -15,11 +15,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { vi } from 'vitest'
 
-import { server } from '@/test/mswSetup'
-import { renderWithProviders, createWrapper } from '@/test/renderWithProviders'
 import { NotificationContext } from '@/providers/notification'
-import { Connections } from '@/views/connections/index'
+import { server } from '@/test/mswSetup'
+import { createWrapper, renderWithProviders } from '@/test/renderWithProviders'
 import AddConnection from '@/views/connections/components/addConnection'
+import { Connections } from '@/views/connections/index'
 
 vi.mock('@auth0/auth0-react', () => ({
   withAuthenticationRequired: (component: any) => component,

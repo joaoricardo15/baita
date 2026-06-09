@@ -1,4 +1,5 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
+import { IPlace } from '@baita/shared'
 import {
   Add as AddIcon,
   AddLocationAltOutlined as AddLocationAltOutlinedIcon,
@@ -7,7 +8,6 @@ import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps'
 import { FC, useState } from 'react'
 
 import { Button, EmptyState, Loading, Logo, Skeleton, Text } from '@/components'
-import { IPlace } from '@baita/shared'
 import { usePlaces } from '@/hooks/usePlaces'
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_MAP_ID } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'

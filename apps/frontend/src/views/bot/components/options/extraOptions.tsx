@@ -1,14 +1,15 @@
+import { ITask, ITaskCondition } from '@baita/shared'
 import { FC } from 'react'
 
 import { CheckBox } from '@/components'
-import { ITask, ITaskCondition } from '@baita/shared'
 import { getLabels, Labels } from '@/utils/labels'
+
 import { newEmptyCondition } from './filterConditions'
 
 const ExtraOptions: FC<{
   task: ITask
   showReturnDataOption: boolean
-  onTaskFieldChange: (fieldName: string, value: any) => void
+  onTaskFieldChange: (fieldName: string, value: unknown) => void
 }> = ({ task, showReturnDataOption, onTaskFieldChange }) => {
   const onConditionsOptionChange = (checked: boolean) => {
     const initialConditions: ITaskCondition[][] = [[newEmptyCondition]]
