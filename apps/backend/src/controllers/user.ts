@@ -8,6 +8,7 @@ import { CONTENT_BATCH_LIMIT, SQS_RETENTION_SECONDS } from '@/utils/constants'
 
 const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || ''
+const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || ''
 const AUTH0_M2M_CLIENT_ID = process.env.AUTH0_M2M_CLIENT_ID || ''
 const AUTH0_M2M_CLIENT_SECRET = process.env.AUTH0_M2M_CLIENT_SECRET || ''
 
@@ -87,7 +88,7 @@ class User {
           grant_type: 'client_credentials',
           client_id: AUTH0_M2M_CLIENT_ID,
           client_secret: AUTH0_M2M_CLIENT_SECRET,
-          audience: `https://${AUTH0_DOMAIN}/api/v2/`,
+          audience: AUTH0_AUDIENCE,
         }
       )
 
