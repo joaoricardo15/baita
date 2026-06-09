@@ -2,9 +2,9 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Baita frontend — Amplify Hosting
 
 Parameters:
-  AppName:
+  Stage:
     Type: String
-    Default: baita-frontend
+    Default: prod
   DomainName:
     Type: String
     Default: baita.help
@@ -13,7 +13,7 @@ Resources:
   AmplifyApp:
     Type: AWS::Amplify::App
     Properties:
-      Name: !Ref AppName
+      Name: !Sub baita-frontend-${Stage}
       Platform: WEB
       CustomRules:
         - Source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|webmanifest)$)([^.]+$)/>'
