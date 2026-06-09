@@ -114,10 +114,10 @@ npm run knip       # Dead code detection (unused files, exports, deps)
 ## AWS / Deployment
 
 - **AWS Profile:** Always use `--profile baita` for AWS CLI commands in this repo
-- **Amplify App ID:** `d1yzzk62iq66zd`
+- **Amplify App ID:** Dynamic — read from `baita-frontend-prod` CloudFormation stack output (not hardcoded)
 - **Region:** `us-east-1`
 - **Branch:** `main` (production)
-- **Fetch build logs:** `aws amplify list-jobs --app-id d1yzzk62iq66zd --branch-name main --profile baita --region us-east-1`
+- **Fetch build logs:** `aws amplify list-jobs --app-id $(aws cloudformation describe-stacks --stack-name baita-frontend-prod --query 'Stacks[0].Outputs[?OutputKey==\`AmplifyAppId\`].OutputValue' --output text --profile baita --region us-east-1) --branch-name main --profile baita --region us-east-1`
 - **Before pushing:** Always `git pull --rebase` to sync with remote
 
 ## Architecture Decisions

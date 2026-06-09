@@ -132,7 +132,7 @@ if (result.success) {
 }
 ```
 
-**Models**: `IUser`, `IBot`, `ITask`, `IService`, `IVariable`, `IApp`, `IAppConnection`, `IContent`, `ITodo`
+**Models**: `IUser`, `IBot`, `ITask`, `IService`, `IVariable`, `IApp`, `IConnection`, `IContent`, `ITodo`
 
 ## Bot Execution Architecture
 
@@ -171,11 +171,12 @@ Results published to user's SQS queue → content feed
 ## AWS Resources
 
 - **Region**: `us-east-1`
-- \*\*Profile`: `baita`
-- **Amplify App**: `d1yzzk62iq66zd`
-- **DynamoDB Table**: `baita-help-prod` (on-demand billing)
-- **S3 Buckets**: `baita-help-prod-bots`, `baita-help-prod-files`, `baita-help-prod-docs`
-- **SQS Queues**: `baita-help-prod-user-{userId}` (per-user content feed)
+- **Profile**: `baita`
+- **Backend stack**: `baita-backend-prod` (Serverless Framework)
+- **Frontend stack**: `baita-frontend-prod` (CloudFormation — Amplify)
+- **DynamoDB Table**: `baita-prod` (on-demand billing)
+- **S3 Buckets**: `baita-prod-bots`, `baita-prod-files`, `baita-prod-docs`
+- **SQS Queues**: `baita-prod-user-{userId}` (per-user content feed)
 - **Custom Domain**: `api.baita.help` (Route53 + API Gateway)
 
 ## Contributing

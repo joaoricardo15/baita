@@ -44,7 +44,7 @@ No bot required, no DynamoDB writes, no state. Pure execution.
    └─ Each field resolves its value from sampleValue (test) or value (production)
 
 2. Lambda Invocation
-   └─ FunctionName: baita-help-prod-task-{service.name}
+   └─ FunctionName: baita-backend-prod-task
    └─ Payload: { userId, botId, connectionId, appConfig, serviceConfig, inputData }
 
 3. Response Parsing
@@ -211,7 +211,7 @@ Publishes content items to the user's SQS feed queue, deduplicating against prev
 2. Validates content against `ContentSchema`
 3. Queries DynamoDB for `#CONTENT#{contentId}` records (previously seen items)
 4. Filters out duplicates, limits to 10 new items per batch
-5. Sends new items to user's SQS queue (`baita-help-prod-user-{userId}`)
+5. Sends new items to user's SQS queue (`baita-prod-user-{userId}`)
 6. Throws if 0 items are new (all duplicates)
 
 **Input format:**

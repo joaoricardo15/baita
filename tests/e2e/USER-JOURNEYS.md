@@ -260,7 +260,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 ### Test Coverage
 
 - **E2E:** `tests/e2e/tests/user-lifecycle.spec.ts` — Sign up/login, verify provisioning
-- **E2E:** `tests/e2e/tests/user-teardown.spec.ts` — Delete account via API, verify 401 post-delete
+- **E2E:** `tests/e2e/scripts/cleanup.ts` — Delete account via API (pure Node, no browser)
 - **Unit (Backend):** `apps/backend/src/controllers/tests/user.test.ts` — deleteUser cascade logic
 
 ---
@@ -320,17 +320,17 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 ## E2E Test Architecture
 
-Tests use Playwright project dependencies to enforce execution order:
+Tests execute in three phases via npm scripts:
 
 ```
-setup (user-lifecycle.spec.ts)
-  └→ journeys (connectors/*, todo-journey, bot-journey, connections, pages-security, notes-journey, content-feed)
-       └→ teardown (user-teardown.spec.ts)
+npm run e2e:setup   → user-lifecycle.spec.ts (Playwright — browser Auth0 signup)
+npm run e2e:test    → journeys (connectors/*, todo-journey, bot-journey, connections, pages-security, notes-journey, content-feed)
+npm run e2e:cleanup → scripts/cleanup.ts (pure Node — DELETE /user via saved token)
 ```
 
 - **Setup** creates a test user via Auth0, provisions resources, copies a Google OAuth connection
 - **Journeys** exercise individual feature flows independently (can run in any order)
-- **Teardown** deletes the test user and verifies all data is gone
+- **Cleanup** deletes the test user via HTTP call (no browser needed — maximally robust)
 
 All specs share auth state via a file-based token (`playwright/.auth/token.json`).
 

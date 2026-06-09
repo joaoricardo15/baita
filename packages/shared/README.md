@@ -21,7 +21,7 @@ All schemas are defined with [Zod](https://zod.dev) — providing both TypeScrip
 | `schemas/task.ts`       | `ITask`, `ITaskCondition`, `IStepExecution` | Task execution + conditions                   |
 | `schemas/service.ts`    | `IService`, `IVariable`, enums              | Service/variable types for task configuration |
 | `schemas/app.ts`        | `IApp`, `IAppConfig`                        | App value objects (embedded in Task)          |
-| `schemas/connection.ts` | `IAppConnection`, `ICredential`             | OAuth connection entity (standalone)          |
+| `schemas/connection.ts` | `IConnection`, `ICredential`                | OAuth connection entity (standalone)          |
 | `schemas/connector.ts`  | `IConnectorManifest`, `IConnectorOperation` | Connector static definitions                  |
 | `schemas/note.ts`       | `INote`                                     | Note entity                                   |
 | `schemas/place.ts`      | `IPlace`                                    | Place entity                                  |
@@ -78,7 +78,7 @@ import {
   ITask,
   IUser,
   IApp,
-  IAppConnection,
+  IConnection,
   IConnectorManifest,
 } from '@baita/shared'
 

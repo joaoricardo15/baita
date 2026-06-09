@@ -143,8 +143,10 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Install Playwright
         run: cd tests/e2e && npx playwright install --with-deps chromium
-      - name: Run E2E tests
-        run: cd tests/e2e && npx playwright test
+      - name: Setup E2E test user
+        run: cd tests/e2e && npm run e2e:setup
+      - name: Run E2E journey tests
+        run: cd tests/e2e && npm run e2e:test
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -153,14 +155,4 @@ jobs:
           retention-days: 7
       - name: Cleanup E2E test user
         if: always()
-        run: |
-          TOKEN_FILE="tests/e2e/playwright/.auth/token.json"
-          if [ -f "$TOKEN_FILE" ]; then
-            TOKEN=$(cat "$TOKEN_FILE" | jq -r '.accessToken // empty')
-            if [ -n "$TOKEN" ]; then
-              curl -sf -X DELETE "$API_URL/user" -H "Authorization: Bearer $TOKEN" \
-                && echo "E2E test user deleted" || echo "Delete failed (may already be gone)"
-            fi
-          else
-            echo "No token file — test user was never created"
-          fi
+        run: cd tests/e2e && npm run e2e:cleanup

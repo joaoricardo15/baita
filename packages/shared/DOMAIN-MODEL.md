@@ -84,7 +84,7 @@ The project follows a consistent pattern: each domain concept has a schema file 
 | `task.ts`       | Task, TaskCondition, TaskExecutionResult, StepExecution, RetryPolicy | Aggregate member + execution |
 | `service.ts`    | Service, ServiceConfig, Variable, Transform, DataType                | Value objects                |
 | `app.ts`        | App, AppConfig, IAppService                                          | Value objects                |
-| `connection.ts` | AppConnection, Credential                                            | Standalone entity            |
+| `connection.ts` | Connection, Credential                                               | Standalone entity            |
 | `connector.ts`  | ConnectorManifest, ConnectorOperation, ConnectorAuth                 | Static definitions           |
 | `user.ts`       | User, Content, Todo, TodoTask                                        | Root scope + user data       |
 | `note.ts`       | Note                                                                 | Simple entity                |

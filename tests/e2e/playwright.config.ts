@@ -37,7 +37,6 @@ export default defineConfig({
     },
     {
       name: 'journeys',
-      dependencies: ['setup'],
       use: {
         storageState: 'playwright/.auth/user.json',
       },
@@ -50,11 +49,6 @@ export default defineConfig({
         '**/notes-journey.spec.ts',
         '**/content-feed.spec.ts',
       ],
-    },
-    {
-      name: 'teardown',
-      dependencies: ['journeys'],
-      testMatch: '**/user-teardown.spec.ts',
     },
   ],
   ...(isLocalBackend

@@ -126,51 +126,76 @@ npm run deploy
 
 Parameters:
 
-- `/baita/prod/openai-authorization` — OpenAI API bearer token
+- `/baita/prod/auth0-m2m-client-id` — Auth0 M2M application client ID
+- `/baita/prod/auth0-m2m-client-secret` — Auth0 M2M application secret
+- `/baita/prod/auth0-create-user-api-key` — API key for Auth0 Post-Login Action user provisioning
 - `/baita/prod/pipedrive-client-id` — Pipedrive OAuth client ID
 - `/baita/prod/pipedrive-client-secret` — Pipedrive OAuth client secret
-- `/baita/prod/pipedrive-auth-url` — Pipedrive OAuth token URL
 - `/baita/prod/google-client-id` — Google OAuth client ID
 - `/baita/prod/google-client-secret` — Google OAuth client secret
-- `/baita/prod/google-auth-url` — Google OAuth token URL
 - `/baita/prod/news-api-key` — NewsAPI key
 - `/baita/prod/vapid-public-key` — Web Push VAPID public key
 - `/baita/prod/vapid-private-key` — Web Push VAPID private key
-- `/baita/prod/auth0-create-user-api-key` — API key for Auth0 Post-Login Action user provisioning
 
-### Test User (for local development)
-
-A persistent test user exists in production DynamoDB for local endpoint testing:
-
-- **userId**: `test-user-local`
-- **email**: `test@baita.help`
-- **SQS queue**: `baita-help-prod-user-test-user-local`
-
-Use this for manual API testing (requires a valid JWT token from Auth0):
-
-```bash
-# Content feed (should return empty array or queued content)
-curl http://localhost:5000/dev/content -H "Authorization: Bearer <token>"
-
-# List bots
-curl http://localhost:5000/dev/bots -H "Authorization: Bearer <token>"
-
-# List todos
-curl http://localhost:5000/dev/data/todo -H "Authorization: Bearer <token>"
-```
+Public config (Auth0 domain/audience, OAuth token URLs) is hardcoded in `serverless.yml` — not secrets.
 
 ## Architecture
 
-### Three-Layer Pattern
+### Two-Tier Pattern
 
 ```
-Endpoint (handler) → Controller (business logic) → AWS SDK (data)
+┌─────────────────────────────────────────────────────────────────┐
+│  Endpoint Layer (src/endpoints/)                                │
+│  ─ Parse request, extract userId, call controller, return HTTP  │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │
+┌────────────────────────────────▼────────────────────────────────┐
+│  Functional Layer (src/controllers/)                            │
+│  ─ Bot: code gen, deploy, logs                                  │
+│  ─ User: signup, deletion, SQS management                       │
+│  ─ Data: CRUD, validation, nested updates (single DDB gateway)  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 - **Endpoints**: Parse request, call controller, return HTTP response via `Api` class
-- **Controllers**: Contain all business logic, use shared AWS SDK clients, perform operations
+- **Controllers**: Business logic. Bot and User controllers delegate ALL data operations to Data controller.
+- **Data Controller** (`controllers/data.ts`): The **single gateway** to DynamoDB. Only file that imports `@/lib/dynamodb`. Handles validate(), list(), read(), create(), update(), delete(), updateNested(), appendToList(), deleteAllForUser().
 - **Utils**: Shared helpers for code generation, data manipulation, response formatting
-- **Lib**: Module-level AWS SDK clients (DynamoDB) — reused across warm Lambda invocations
+- **Lib**: Module-level AWS SDK clients (DynamoDB singleton) — reused across warm Lambda invocations
+
+### Single Data Gateway Principle
+
+**Only `controllers/data.ts` may import `@/lib/dynamodb`.** All other controllers delegate data operations:
+
+```typescript
+// In Bot controller — delegates to Data controller
+const data = new Data(userId, 'bot')
+await data.create(botId, botPayload)
+
+// In User controller — delegates for cleanup
+const data = new Data(userId, '')
+await data.deleteAllForUser()
+```
+
+### Entity Type Registry
+
+The registry (`packages/shared/src/registry.ts`) is the source of truth for all entity types:
+
+```typescript
+export const entityRegistry: Record<string, IEntityTypeConfig> = {
+  user: { schema: UserSchema, idField: '', singleton: true },
+  bot: { schema: BotSchema, idField: 'botId', singleton: false },
+  connection: {
+    schema: ConnectionSchema,
+    idField: 'connectionId',
+    singleton: false,
+  },
+  note: { schema: NoteSchema, idField: 'noteId', singleton: false },
+  // ... add new types here
+}
+```
+
+Adding a new entity type: add schema + registry entry → CRUD works automatically via `/data/{type}` endpoints. Zero backend code changes needed.
 
 ### Handler Pattern
 
@@ -218,15 +243,24 @@ All endpoints return a standardized response:
 
 ### DynamoDB Single-Table Design
 
+Table name: `baita-prod` (env var `CORE_TABLE` = `SERVICE_PREFIX`)
+
+All data is **user-scoped** — every record uses `userId` as the partition key. The `userId` is NOT stored inside entity schemas (it's a storage concern, not domain data). The Data controller injects it automatically.
+
 ```
 PK (userId) | SK (sortKey)                    | Description
 ----------- | ------------------------------- | -----------
-userId      | #USER                           | User profile
+userId      | #USER                           | User profile (singleton)
 userId      | #BOT#{botId}                    | Bot definition
-userId      | #{type}#{id}                    | Generic data record
+userId      | #TODO                           | Todo list (singleton)
+userId      | #{TYPE}#{id}                    | Generic data record
 userId      | #CONTENT#{contentId}            | Content item
 userId      | #CONNECTION#{connectionId}      | OAuth connection
+userId      | #NOTE#{noteId}                  | Note
+userId      | #PLACE#{placeId}                | Place
 ```
+
+Sort key format: `#TYPE` for singletons, `#TYPE#id` for collections. The Data controller constructs these dynamically from the entity type name.
 
 ### Bot Execution Architecture
 
@@ -438,9 +472,14 @@ Consistency is enforced at 3 levels:
 
 ## E2E Tests
 
-E2E tests live in `tests/e2e/` at the monorepo root. They use Playwright with a fixed test user (`e2e-test@baita.help`) — each run cleans up the previous state, signs up fresh, and deletes in teardown.
+E2E tests live in `tests/e2e/` at the monorepo root. Three-phase execution via npm scripts:
 
 ```bash
+cd tests/e2e && npm run e2e:setup    # Sign up user via Auth0, save token
+cd tests/e2e && npm run e2e:test     # Run journey specs (API + browser)
+cd tests/e2e && npm run e2e:cleanup  # Delete user (pure Node, no browser)
+
+# Or run all phases together (cleanup runs regardless of test result):
 cd tests/e2e && npm test
 ```
 
@@ -477,18 +516,19 @@ When adding a new endpoint or feature:
 
 ### Infrastructure
 
-- **Auth**: Real Auth0 signup/login via Playwright
-- **Fixed test user**: `e2e-test@baita.help` — same email every run, cleaned up before and after
-- **CI**: GitHub Actions, AWS credentials for DynamoDB access
+- **Auth**: Real Auth0 signup/login via Playwright (browser-based)
+- **Fixed test user**: `e2e-test@baita.help` — same email every run
+- **Cleanup**: Pure Node script (`scripts/cleanup.ts`) — reads token, calls DELETE /user. No browser needed.
+- **CI**: GitHub Actions — three explicit steps (`e2e:setup` → `e2e:test` → `e2e:cleanup`)
 
 ## User Lifecycle & AWS Resource Integrity
 
 Every user has **two coupled AWS resources** that MUST be created and destroyed together:
 
-| Resource                | Name Pattern                    | Created By     | Destroyed By   |
-| ----------------------- | ------------------------------- | -------------- | -------------- |
-| DynamoDB `#USER` record | `userId` + `#USER`              | `createUser()` | `deleteUser()` |
-| SQS queue               | `baita-help-prod-user-{userId}` | `createUser()` | `deleteUser()` |
+| Resource                | Name Pattern               | Created By     | Destroyed By   |
+| ----------------------- | -------------------------- | -------------- | -------------- |
+| DynamoDB `#USER` record | `userId` + `#USER`         | `createUser()` | `deleteUser()` |
+| SQS queue               | `baita-prod-user-{userId}` | `createUser()` | `deleteUser()` |
 
 ### Rules (NEVER violate)
 
@@ -504,10 +544,10 @@ Cross-reference DynamoDB users against SQS queues to detect drift:
 
 ```bash
 # List all SQS queues
-aws sqs list-queues --profile baita --region us-east-1 --queue-name-prefix baita-help-prod-user- --output json | jq -r '.QueueUrls[]'
+aws sqs list-queues --profile baita --region us-east-1 --queue-name-prefix baita-prod-user- --output json | jq -r '.QueueUrls[]'
 
 # List all DynamoDB users
-aws dynamodb scan --profile baita --region us-east-1 --table-name baita-help-prod \
+aws dynamodb scan --profile baita --region us-east-1 --table-name baita-prod \
   --filter-expression "sortKey = :sk" --expression-attribute-values '{":sk":{"S":"#USER"}}' \
   --projection-expression "userId, email" --output json | jq '.Items[] | {userId: .userId.S, email: .email.S}'
 

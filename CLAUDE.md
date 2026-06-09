@@ -102,19 +102,37 @@ All connector/service icons live in `apps/frontend/public/icons/` and are refere
 Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main`:
 
 ```
-frontend (type-check shared → lint → spell → build → test → deploy) ─┐
-backend  (type-check shared → lint → type-check → test → deploy → docs) ─┤→ e2e
+frontend (type-check shared → lint → spell → build → test → deploy infra → deploy artifact) ─┐
+backend  (type-check shared → lint → type-check → test → deploy → docs)                      ─┤→ e2e → cleanup
 ```
 
-Both jobs run in parallel. Each includes `packages/shared/` type-check as its first quality step. Frontend deploys pre-built artifacts directly to Amplify via manual deployment API (no remote rebuild). Backend deploys via Serverless Framework, then generates and deploys OpenAPI documentation.
+Both jobs run in parallel. E2E tests run after both complete. A cleanup step (`if: always()`) deletes the E2E test user even if tests fail.
+
+**Frontend deploy**: CloudFormation deploys `baita-frontend-prod` stack (Amplify app), reads App ID from stack output, then uploads pre-built artifact directly (no remote rebuild).
+
+**E2E cleanup**: Reads saved auth token and calls `DELETE /user` to remove test user. Runs unconditionally.
 
 ## E2E Testing
 
-Shared E2E tests in `tests/e2e/` use Playwright and simulate real user flows. They use a fixed test user (`e2e-test@baita.help`) — each run cleans up the previous state, signs up fresh, and deletes it in teardown.
+Shared E2E tests in `tests/e2e/` use Playwright and simulate real user flows. They use a fixed test user (`e2e-test@baita.help`) — each run signs up fresh via browser-based Auth0 login and deletes the user in cleanup.
+
+- **Auth method**: Browser-only (Playwright clicks through Auth0 login — no ROPG/API-based auth)
+- **System connections**: Connector tests copy OAuth tokens from the `baita` system user to the test user (avoids re-authenticating with providers)
+- **CI**: Hits production (`API_URL=https://api.baita.help`) after both apps deploy
+- **Three-phase execution**: `e2e:setup` → `e2e:test` → `e2e:cleanup` (all npm scripts, all TypeScript)
+- **Cleanup**: Pure Node script (no browser) — reads saved token, calls `DELETE /user`. Runs `if: always()` in CI.
 
 ```bash
-# Run E2E tests (starts Vite automatically, signs up via Auth0)
+# Run E2E tests locally (auto-starts backend + frontend, cleanup runs regardless)
 cd tests/e2e && npm test
+
+# Run against production (same as CI)
+cd tests/e2e && npm run test:prod
+
+# Run individual phases
+cd tests/e2e && npm run e2e:setup    # Sign up user, save token
+cd tests/e2e && npm run e2e:test     # Run journey specs
+cd tests/e2e && npm run e2e:cleanup  # Delete user via API
 ```
 
 ## Quick Commands
@@ -137,31 +155,77 @@ pnpm turbo run type-check
 cd tests/e2e && npm test
 ```
 
+## Data Architecture
+
+All domain data is user-scoped and stored in a single DynamoDB table (`baita-prod`). The **Entity Type Registry** (`packages/shared/src/registry.ts`) is the central source of truth for all entity types — it maps each type to its Zod schema, ID field, and singleton flag.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Entity Type Registry (packages/shared/src/registry.ts)         │
+│  ─ schema, idField, singleton per type                          │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │ imports
+┌────────────────────────────────▼────────────────────────────────┐
+│  Data Controller (apps/backend/src/controllers/data.ts)         │
+│  ─ validate(), list(), read(), create(), update(), delete()     │
+│  ─ updateNested(), appendToList(), deleteAllForUser()           │
+│  ─ ONLY file that imports @/lib/dynamodb                        │
+└────────────────────────────────┬────────────────────────────────┘
+                                 │ DynamoDB ops
+┌────────────────────────────────▼────────────────────────────────┐
+│  DynamoDB (baita-prod) — Single-table design                    │
+│  PK: userId  |  SK: #TYPE or #TYPE#id                           │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Key Principles
+
+- **Single Data Gateway**: Only `controllers/data.ts` touches DynamoDB. All other controllers delegate data operations to it.
+- **User-scoped storage**: Every record uses `userId` as partition key. The `userId` is NOT stored inside entity schemas — it's a storage concern handled by the Data controller.
+- **Schema-driven validation**: The Data controller calls `validate()` using the registry's Zod schema before writes. Adding a new entity type = add a schema + registry entry. Zero backend code changes.
+- **Self-documenting API**: OpenAPI docs use `getRegisteredTypes()` to dynamically populate the type enum — docs stay in sync automatically.
+
+### Adding a New Entity Type
+
+1. Create schema in `packages/shared/src/schemas/{type}.ts`
+2. Add entry to `entityRegistry` in `packages/shared/src/registry.ts`
+3. Export from `packages/shared/src/index.ts`
+4. Done — CRUD endpoints (`/data/{type}`) work automatically
+
 ## AWS Context
 
 - **Profile**: Always use `--profile baita --region us-east-1`
-- **Frontend (Amplify)**: App ID `d1yzzk62iq66zd`, branch `main`
-- **Backend (Serverless)**: Deployed via GitHub Actions on push to `main`
 - **Region**: `us-east-1` for everything
+- **Backend stack**: `baita-backend-prod` (Serverless Framework / CloudFormation)
+- **Frontend stack**: `baita-frontend-prod` (CloudFormation — Amplify app + branch)
+- **Resource prefix**: `baita-prod` (DynamoDB table, S3 buckets, SQS queues, Lambda roles)
+- **Amplify App ID**: Dynamic — read from `baita-frontend-prod` stack outputs in CI (not hardcoded)
 
 ## Environment Variables & Secrets
 
 Consistent pattern across the monorepo: **no secrets in source code**.
 
+### GitHub Secrets (CI/CD)
+
+| Secret                     | Purpose                          |
+| -------------------------- | -------------------------------- |
+| `AWS_ACCESS_KEY_ID`        | AWS deploy credentials           |
+| `AWS_SECRET_ACCESS_KEY`    | AWS deploy credentials           |
+| `E2E_TEST_PASSWORD`        | E2E test user Auth0 password     |
+| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JS API key (build)   |
+| `VITE_GOOGLE_MAPS_MAP_ID`  | Google Maps map style ID (build) |
+
 ### Backend (AWS Lambda + SSM Parameter Store)
 
-Secrets stored in AWS SSM under `/baita/prod/*` and resolved at deploy time by Serverless Framework:
+Genuine secrets stored in AWS SSM under `/baita/prod/*` — resolved at deploy time by Serverless Framework. Public config (Auth0 domain, OAuth token URLs) is hardcoded in `serverless.yml`.
 
 | SSM Parameter                           | Purpose                         |
 | --------------------------------------- | ------------------------------- |
-| `/baita/prod/auth0-domain`              | Auth0 tenant domain             |
 | `/baita/prod/auth0-m2m-client-id`       | Auth0 M2M application client ID |
 | `/baita/prod/auth0-m2m-client-secret`   | Auth0 M2M application secret    |
 | `/baita/prod/auth0-create-user-api-key` | Auth0 Post-Login Action API key |
-| `/baita/prod/pipedrive-auth-url`        | Pipedrive OAuth token URL       |
 | `/baita/prod/pipedrive-client-id`       | Pipedrive OAuth client ID       |
 | `/baita/prod/pipedrive-client-secret`   | Pipedrive OAuth client secret   |
-| `/baita/prod/google-auth-url`           | Google OAuth token URL          |
 | `/baita/prod/google-client-id`          | Google OAuth client ID          |
 | `/baita/prod/google-client-secret`      | Google OAuth client secret      |
 | `/baita/prod/news-api-key`              | NewsAPI key                     |
@@ -181,7 +245,7 @@ aws ssm put-parameter --profile baita --region us-east-1 \
 cd apps/backend && npm run deploy
 ```
 
-### Frontend (Vite + Amplify build-time injection)
+### Frontend (Vite + build-time injection)
 
 Frontend env vars use Vite's `import.meta.env.VITE_*` pattern — injected at **build time**, NOT runtime.
 
@@ -197,20 +261,15 @@ VITE_GOOGLE_MAPS_API_KEY=<key>
 VITE_GOOGLE_MAPS_MAP_ID=<map-id>
 ```
 
-**Production** — set in Amplify Console (or via CLI):
-
-```bash
-aws amplify update-app --app-id d1yzzk62iq66zd \
-  --environment-variables VITE_GOOGLE_MAPS_API_KEY=<key>,VITE_GOOGLE_MAPS_MAP_ID=<map-id> \
-  --profile baita --region us-east-1
-```
+**Production** — set as GitHub Secrets. They're passed to the Vite build step in `.github/workflows/ci.yml`.
 
 ### Key Principles
 
-1. **Never hardcode secrets** in source code — use SSM (backend) or env vars (frontend)
+1. **Never hardcode secrets** in source code — use SSM (backend) or GitHub Secrets (frontend build)
 2. **Frontend keys are inherently public** — security comes from provider-side restrictions (HTTP referrer, API scoping), not from hiding the key
-3. **Rotate keys immediately** if accidentally committed — rotate in SSM/GCP Console, update env vars, redeploy
+3. **Rotate keys immediately** if accidentally committed — rotate in SSM/GCP Console, update secrets, redeploy
 4. **`.env.local` is gitignored** — safe for local development secrets
+5. **Public config in code** — Auth0 domain, OAuth token URLs, audience are NOT secrets — hardcoded in `serverless.yml`
 
 ## Consistency Checks
 
@@ -266,10 +325,10 @@ cd tests/e2e && npm test        # Local (auto-starts backend + frontend)
 cd tests/e2e && npm run test:prod  # Against production (same as CI)
 ```
 
-- Three-phase execution: setup → journeys → teardown (Playwright project dependencies)
+- Three-phase execution: `e2e:setup` → `e2e:test` → `e2e:cleanup` (npm scripts)
 - Setup (`user-lifecycle.spec.ts`): Clean slate (delete stale user), sign up fresh, provision resources, copy Google connection
 - Journeys: `google-gmail`, `todo-journey`, `bot-journey`, `connections`, `pages-security`, `notes-journey`, `content-feed`
-- Teardown (`user-teardown.spec.ts`): Delete account, verify all data types return 401
+- Cleanup (`scripts/cleanup.ts`): Delete account via API (pure Node, no browser)
 - Clean-state principle: nothing exists before tests, everything deleted after
 - Local: both servers auto-start (serverless offline + Vite)
 - CI: hits production after deploy (`API_URL=https://api.baita.help`)

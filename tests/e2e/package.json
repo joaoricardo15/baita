@@ -2,8 +2,11 @@
   "name": "@baita/e2e",
   "private": true,
   "scripts": {
-    "test": "TEST_ENV=local playwright test",
-    "test:prod": "API_URL=https://api.baita.help playwright test",
+    "e2e:setup": "playwright test --project=setup",
+    "e2e:test": "playwright test --project=journeys",
+    "e2e:cleanup": "npx tsx scripts/cleanup.ts",
+    "test": "TEST_ENV=local npm run e2e:setup && npm run e2e:test ; API_URL=http://localhost:5000/prod npm run e2e:cleanup",
+    "test:prod": "API_URL=https://api.baita.help npm run e2e:setup && npm run e2e:test ; npm run e2e:cleanup",
     "test:ui": "TEST_ENV=local playwright test --ui",
     "report": "playwright show-report",
     "verify": "TEST_ENV=local PWDEBUG=1 playwright test verify.spec.ts --headed"
@@ -13,6 +16,7 @@
     "@aws-sdk/lib-dynamodb": "^3.1053.0",
     "@playwright/test": "^1.50",
     "@types/node": "^24.13.0",
+    "tsx": "^4.19",
     "typescript": "^5.9"
   }
 }
