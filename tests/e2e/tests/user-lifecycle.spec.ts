@@ -153,13 +153,19 @@ test.describe('User Lifecycle Setup', () => {
 
   test('verify user provisioned by Auth0 Action', async ({ request }) => {
     let provisioned = false
-    for (let i = 0; i < 5; i++) {
-      const res = await request.get(`${API_URL}/data/todo`, {
+    for (let i = 0; i < 10; i++) {
+      const dataRes = await request.get(`${API_URL}/data/todo`, {
         headers: authHeaders(accessToken),
       })
-      if (res.status() === 200) {
-        provisioned = true
-        break
+      const contentRes = await request.get(`${API_URL}/content`, {
+        headers: authHeaders(accessToken),
+      })
+      if (dataRes.status() === 200 && contentRes.status() === 200) {
+        const contentBody = await contentRes.json()
+        if (contentBody.success) {
+          provisioned = true
+          break
+        }
       }
       await new Promise((r) => setTimeout(r, 2000))
     }
