@@ -20,7 +20,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 
 const AUTH0_DOMAIN = 'dev-yc4pbydg.us.auth0.com'
-const TABLE_NAME = 'baita-help-prod'
+const TABLE_NAME = 'baita-prod'
 
 async function getAuth0ManagementToken(): Promise<string> {
   const clientId = process.env.AUTH0_M2M_CLIENT_ID

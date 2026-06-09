@@ -76,7 +76,7 @@ export async function copyAdminConnections(
 
   const result = await docClient.send(
     new QueryCommand({
-      TableName: 'baita-help-prod',
+      TableName: 'baita-prod',
       KeyConditionExpression: 'userId = :uid AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
         ':uid': ADMIN_SOURCE_USER,
