@@ -5,7 +5,7 @@ A Task is the atomic unit of execution in Baita. Each Task represents a single o
 ## Standalone Execution Endpoint
 
 ```
-POST /task/execute
+POST /tasks/execute
 Authorization: Bearer <token>
 Content-Type: application/json
 Body: ITask

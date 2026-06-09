@@ -105,22 +105,25 @@ The project follows a consistent pattern: each domain concept has a schema file 
 
 ### Backend Endpoints (`apps/backend/src/endpoints/`)
 
-| Folder        | Handles                            | Schema Counterpart                    |
-| ------------- | ---------------------------------- | ------------------------------------- |
-| `bot/`        | Bot CRUD + deploy + test + logs    | `schemas/bot.ts` + `schemas/task.ts`  |
-| `task/`       | Standalone task execution          | `schemas/task.ts`                     |
-| `connection/` | Connection CRUD + health + details | `schemas/connection.ts`               |
-| `user/`       | User create + delete + content     | `schemas/user.ts`                     |
-| `resource/`   | Generic CRUD for Note, Place, etc. | `schemas/note.ts`, `schemas/place.ts` |
+| Folder         | Handles                            | Schema Counterpart                    |
+| -------------- | ---------------------------------- | ------------------------------------- |
+| `bots/`        | Bot CRUD + deploy + test + logs    | `schemas/bot.ts` + `schemas/task.ts`  |
+| `tasks/`       | Standalone task execution          | `schemas/task.ts`                     |
+| `connections/` | Connection CRUD + health + details | `schemas/connection.ts`               |
+| `user/`        | User create + delete               | `schemas/user.ts`                     |
+| `data/`        | Generic CRUD for Note, Place, etc. | `schemas/note.ts`, `schemas/place.ts` |
+| `content/`     | Content feed (GET only)            | `schemas/user.ts` (ContentSchema)     |
+| `models/`      | Bot model CRUD + deploy            | `schemas/bot.ts`                      |
+| `oauth/`       | OAuth callback                     | —                                     |
 
 ### Backend Controllers (`apps/backend/src/controllers/`)
 
-| File          | Responsibility                                       |
-| ------------- | ---------------------------------------------------- |
-| `bot.ts`      | Bot lifecycle (create, update, deploy, delete, logs) |
-| `task.ts`     | Task execution orchestration                         |
-| `user.ts`     | User provisioning, deletion, content feed            |
-| `resource.ts` | Generic DynamoDB CRUD for any resource type          |
+| File      | Responsibility                                       |
+| --------- | ---------------------------------------------------- |
+| `bot.ts`  | Bot lifecycle (create, update, deploy, delete, logs) |
+| `task.ts` | Task execution orchestration                         |
+| `user.ts` | User provisioning, deletion, content feed            |
+| `data.ts` | Generic DynamoDB CRUD (single gateway to DDB)        |
 
 ---
 
