@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
-import Data, { dataValidations } from '@/controllers/data'
+import Data from '@/controllers/data'
 import Api, { ApiRequestStatus } from '@/utils/api'
 import { getAuthenticatedUserId } from '@/utils/auth'
 
@@ -38,16 +38,12 @@ export const handler = async (
           data = await store.read(id)
           break
         case 'PUT':
-          if (Object.keys(dataValidations).includes(type)) {
-            dataValidations[type](body)
-          }
+          store.validate(body)
           await store.create(id, body)
           data = body
           break
         case 'PATCH':
-          if (Object.keys(dataValidations).includes(type)) {
-            dataValidations[type](body)
-          }
+          store.validate(body)
           data = await store.update(id, body)
           break
         case 'DELETE':
@@ -64,9 +60,7 @@ export const handler = async (
           break
         }
         case 'PUT':
-          if (Object.keys(dataValidations).includes(type)) {
-            dataValidations[type](body)
-          }
+          store.validate(body)
           await store.create('', body)
           data = body
           break

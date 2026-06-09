@@ -8,6 +8,13 @@ export * from './schemas/note'
 export * from './schemas/place'
 export * from './schemas/service'
 export * from './schemas/user'
+export {
+  entityRegistry,
+  getEntityConfig,
+  getRegisteredTypes,
+  isRegisteredType,
+} from './registry'
+export type { EntityType, IEntityTypeConfig } from './registry'
 export { validate } from './utils/validate'
 export {
   validateBotLog,

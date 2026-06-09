@@ -2,7 +2,7 @@ import { validateTasks } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import Bot from '@/controllers/bot'
-import Data, { dataValidations } from '@/controllers/data'
+import Data from '@/controllers/data'
 import Api, { ApiRequestStatus } from '@/utils/api'
 import { getAuthenticatedUserId } from '@/utils/auth'
 
@@ -45,7 +45,7 @@ export const handler = async (
           break
         case 'PUT': {
           const body = JSON.parse(event.body || '{}')
-          dataValidations['model'](body)
+          resource.validate(body)
           await resource.create(modelId, body)
           data = body
           break
