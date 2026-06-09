@@ -17,6 +17,9 @@ function mockApiPlugin(): Plugin {
       server.middlewares.use((req, res, next) => {
         const url = req.url || ''
         const method = req.method || 'GET'
+        const accept = req.headers.accept || ''
+
+        if (!accept.includes('application/json')) return next()
 
         if (url.match(/\/bots\/[^/]+$/) && method === 'GET') {
           const bots = load('bots.json')
