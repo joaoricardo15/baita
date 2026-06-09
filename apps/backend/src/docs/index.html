@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Baita Help — API Documentation</title>
+    <title>Baita — API Documentation</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui.css" />
   </head>
   <body>
@@ -19,7 +19,7 @@
       }
 
       const ui = SwaggerUIBundle({
-        url: "https://baita-help-prod-docs.s3.us-east-1.amazonaws.com/openapi.json",
+        url: "./openapi.json",
         dom_id: "#swagger-ui",
         persistAuthorization: true,
         requestInterceptor: function(req) {

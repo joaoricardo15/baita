@@ -121,7 +121,7 @@ jobs:
         run: cd apps/backend && npx serverless deploy --stage prod --conceal
 
       - name: Generate and deploy OpenAPI docs
-        run: cd apps/backend && npx tsx src/docs/generate.ts && aws s3 cp src/docs/openapi.json s3://baita-prod-docs/openapi.json --region us-east-1 && aws s3 cp src/docs/index.html s3://baita-prod-docs/index.html --content-type text/html --region us-east-1
+        run: cd apps/backend && npm run docs
 
   e2e:
     name: E2E Tests

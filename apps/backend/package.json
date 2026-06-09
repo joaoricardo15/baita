@@ -5,7 +5,7 @@
   "scripts": {
     "start": "AWS_PROFILE=baita serverless offline --httpPort 5000 --stage prod",
     "deploy": "AWS_PROFILE=baita serverless deploy --stage prod",
-    "docs": "tsx src/docs/generate.ts && aws s3 cp src/docs/openapi.json s3://baita-prod-docs/openapi.json --region us-east-1 && aws s3 cp src/docs/index.html s3://baita-prod-docs/index.html --content-type text/html --region us-east-1 && aws s3 cp src/docs/oauth2-redirect.html s3://baita-prod-docs/oauth2-redirect.html --content-type text/html --region us-east-1",
+    "docs": "tsx src/docs/generate.ts && aws s3 sync src/docs/ s3://baita-prod-docs/ --region us-east-1 --exclude '*.ts'",
     "test": "jest --watchAll",
     "test:run": "jest --no-coverage",
     "type-check": "tsc --noEmit",
