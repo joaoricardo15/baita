@@ -82,7 +82,7 @@ const TaskInput: FC<{
     if (bot) {
       setTask(bot.tasks[taskIndex])
     }
-  }, [bot])
+  }, [bot, taskIndex])
 
   return (
     <>

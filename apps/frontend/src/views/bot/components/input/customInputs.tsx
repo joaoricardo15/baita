@@ -47,8 +47,8 @@ const CustomInputs: FC<{
         {labels.addVariable}
       </Button>
       {customInputFields
-        .map((variable: IVariable, fieldIndex: number) => (
-          <div key={fieldIndex} className="d-flex my-3">
+        .map((variable: IVariable) => (
+          <div key={variable.customFieldId} className="d-flex my-3">
             <Button
               iconButton
               icon={<DeleteIcon />}

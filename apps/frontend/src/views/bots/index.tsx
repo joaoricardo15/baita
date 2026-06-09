@@ -18,7 +18,6 @@ export const Bots: FC = () => {
   const createBot = useCreateBot()
 
   const onCreateBot = () => {
-    navigate(LINKS.bot('new'))
     createBot.mutateAsync().then((bot) => navigate(LINKS.bot(bot.botId)))
   }
 
@@ -58,6 +57,7 @@ export const Bots: FC = () => {
               type="text"
               color="primary"
               icon={<AddIcon />}
+              disabled={createBot.isPending}
               onClick={onCreateBot}
             >
               {labels.addBot}

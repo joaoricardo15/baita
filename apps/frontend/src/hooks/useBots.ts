@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useCallback, useContext, useRef } from 'react'
 
 import {
   IBot,
@@ -44,7 +44,8 @@ export function useCreateBot() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: () => mutations.createBot(),
-    onSuccess: () => {
+    onSuccess: (bot) => {
+      queryClient.setQueryData(['bot', bot.botId], bot)
       queryClient.invalidateQueries({ queryKey: ['bots'] })
     },
   })
@@ -52,13 +53,32 @@ export function useCreateBot() {
 
 export function useUpdateBot() {
   const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ botId, bot }: { botId: string; bot: Partial<IBot> }) =>
-      mutations.updateBot(botId, bot),
-    onSuccess: (data, { botId }) => {
-      queryClient.setQueryData(['bot', botId], data)
+  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const latestBotRef = useRef<{ botId: string; bot: Partial<IBot> }>()
+
+  const flush = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = undefined
+    }
+    if (latestBotRef.current) {
+      const { botId, bot } = latestBotRef.current
+      latestBotRef.current = undefined
+      mutations.updateBot(botId, bot)
+    }
+  }, [])
+
+  const mutate = useCallback(
+    ({ botId, bot }: { botId: string; bot: Partial<IBot> }) => {
+      queryClient.setQueryData(['bot', botId], bot)
+      latestBotRef.current = { botId, bot }
+      if (timerRef.current) clearTimeout(timerRef.current)
+      timerRef.current = setTimeout(flush, 600)
     },
-  })
+    [queryClient, flush]
+  )
+
+  return { mutate, flush }
 }
 
 export function useDeleteBot() {

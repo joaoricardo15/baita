@@ -1,5 +1,5 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
-import { FC, useContext } from 'react'
+import { FC, useContext, useEffect, useRef } from 'react'
 import { CardSwiper } from 'react-card-rotate-swiper'
 import { TwitterTweetEmbed } from 'react-twitter-embed'
 
@@ -21,10 +21,24 @@ export const Feed: FC = () => {
   const refreshContent = useRefreshContent()
   const reactToContent = useReactToContent()
   const { showSnack } = useContext(NotificationContext)
+  const autoRetried = useRef(false)
+
+  useEffect(() => {
+    if (!loading && contents?.length === 0 && !autoRetried.current) {
+      autoRetried.current = true
+      refreshContent.mutate()
+    }
+  }, [loading, contents])
+
+  const fetchMore = () => {
+    if (!refreshContent.isPending) {
+      refreshContent.mutate()
+    }
+  }
 
   const onSwipe = (direction: string, content: IContent) => {
     if (direction !== 'none') {
-      popContent()
+      popContent(fetchMore)
 
       if (direction === 'up') {
         if (content.url) {

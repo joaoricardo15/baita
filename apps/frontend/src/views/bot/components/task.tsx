@@ -65,7 +65,7 @@ const Task: FC<{
     if (bot) {
       setTask(bot.tasks[taskIndex])
     }
-  }, [bot])
+  }, [bot, taskIndex])
 
   return (
     <div
