@@ -1,18 +1,24 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { fromIni } from '@aws-sdk/credential-providers'
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb'
 import fs from 'fs'
 import path from 'path'
 import { APIRequestContext, Page } from '@playwright/test'
 
+// ─── Configuration (env vars with defaults for local dev) ──────────────────
 export const API_URL = process.env.API_URL || 'https://api.baita.help'
-export const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
 
 export const TEST_EMAIL = 'e2e-test@baita.help'
-export const TEST_PASSWORD = 'BaitaE2e!2024'
+export const TEST_PASSWORD = process.env.E2E_TEST_PASSWORD || ''
 
+const AUTH0_DOMAIN = 'auth.baita.help'
+const AUTH0_AUDIENCE = 'https://dev-yc4pbydg.us.auth0.com/api/v2/'
+const AUTH0_CLIENT_ID = process.env.AUTH0_E2E_CLIENT_ID || ''
+const AUTH0_CLIENT_SECRET = process.env.AUTH0_E2E_CLIENT_SECRET || ''
+
+// ─── Constants ─────────────────────────────────────────────────────────────
 export const SYSTEM_USER = 'baita'
 export const GOOGLE_APP_ID = '5c16e311-a65a-449c-ad82-1f23a41cf89c'
+export const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
 
 const APP_NAMES: Record<string, string> = {
   '5c16e311-a65a-449c-ad82-1f23a41cf89c': 'Google',
@@ -66,12 +72,7 @@ export async function copySystemConnections(
   targetUserId: string,
   token: string
 ): Promise<ICopiedConnection[]> {
-  const client = new DynamoDBClient({
-    region: 'us-east-1',
-    ...(process.env.AWS_ACCESS_KEY_ID
-      ? {}
-      : { credentials: fromIni({ profile: 'baita' }) }),
-  })
+  const client = new DynamoDBClient({ region: 'us-east-1' })
   const docClient = DynamoDBDocumentClient.from(client)
 
   const result = await docClient.send(
@@ -266,31 +267,22 @@ export function logResult(label: string, data: unknown): void {
   console.log(`[E2E] ${label}:`, JSON.stringify(data, null, 2))
 }
 
-const AUTH0_DOMAIN = 'dev-yc4pbydg.us.auth0.com'
-const AUTH0_AUDIENCE = 'https://dev-yc4pbydg.us.auth0.com/api/v2/'
-
 /**
  * Programmatic cleanup of stale E2E test user — no browser needed.
  * Uses Auth0 Resource Owner Password Grant to obtain a JWT for the test user,
  * then calls DELETE /user which handles ALL resource cleanup:
  * bots (Lambda, API Gateway, Scheduler, S3), SQS queue, DynamoDB records, Auth0 user.
  *
- * Requires env vars: AUTH0_E2E_CLIENT_ID, AUTH0_E2E_CLIENT_SECRET
- * (Auth0 "Regular Web Application" with Password grant enabled)
+ * Requires env vars: AUTH0_E2E_CLIENT_ID, AUTH0_E2E_CLIENT_SECRET, E2E_TEST_PASSWORD
  *
- * If ROPG credentials are not available or login fails (user doesn't exist),
+ * If credentials are not available or login fails (user doesn't exist),
  * the browser-based cleanup in user-lifecycle.spec.ts handles it as fallback.
  */
 export async function cleanupStaleUser(): Promise<void> {
-  const clientId = process.env.AUTH0_E2E_CLIENT_ID
-  const clientSecret = process.env.AUTH0_E2E_CLIENT_SECRET
-
-  if (!clientId || !clientSecret) {
-    logResult(
-      'Skipping programmatic cleanup (no AUTH0_E2E_CLIENT_ID/SECRET)',
-      {}
+  if (!AUTH0_CLIENT_ID || !AUTH0_CLIENT_SECRET || !TEST_PASSWORD) {
+    throw new Error(
+      'E2E cleanup requires env vars: AUTH0_E2E_CLIENT_ID, AUTH0_E2E_CLIENT_SECRET, E2E_TEST_PASSWORD'
     )
-    return
   }
 
   logResult('Attempting ROPG login for stale user cleanup', {
@@ -304,34 +296,32 @@ export async function cleanupStaleUser(): Promise<void> {
       grant_type: 'password',
       username: TEST_EMAIL,
       password: TEST_PASSWORD,
-      client_id: clientId,
-      client_secret: clientSecret,
+      client_id: AUTH0_CLIENT_ID,
+      client_secret: AUTH0_CLIENT_SECRET,
       audience: AUTH0_AUDIENCE,
       scope: 'openid',
     }),
   })
 
   if (!tokenRes.ok) {
-    const error = await tokenRes.json().catch(() => ({}))
-    logResult(
-      'ROPG login failed (user may not exist) — browser cleanup will handle it',
-      {
-        status: tokenRes.status,
-        error:
-          (error as Record<string, unknown>).error_description ||
-          (error as Record<string, unknown>).error,
-      }
-    )
-    return
+    const error = (await tokenRes.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >
+    const errorDesc =
+      (error.error_description as string) || (error.error as string) || ''
+
+    if (errorDesc.includes('Wrong email or password')) {
+      logResult('No stale user to clean up (user does not exist)', {})
+      return
+    }
+
+    throw new Error(`E2E cleanup ROPG login failed: ${errorDesc}`)
   }
 
   const tokenData = (await tokenRes.json()) as { access_token?: string }
   if (!tokenData.access_token) {
-    logResult(
-      'ROPG returned no access_token — browser cleanup will handle it',
-      {}
-    )
-    return
+    throw new Error('E2E cleanup: ROPG response missing access_token')
   }
 
   logResult('ROPG login successful, calling DELETE /user endpoint', {})

@@ -6,11 +6,11 @@
     "test:prod": "API_URL=https://api.baita.help playwright test",
     "test:ui": "TEST_ENV=local playwright test --ui",
     "report": "playwright show-report",
-    "verify": "TEST_ENV=local PWDEBUG=1 playwright test verify.spec.ts --headed"
+    "verify": "TEST_ENV=local PWDEBUG=1 playwright test verify.spec.ts --headed",
+    "cleanup": "node --experimental-strip-types scripts/cleanup.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.1053.0",
-    "@aws-sdk/credential-providers": "^3.1061.0",
     "@aws-sdk/lib-dynamodb": "^3.1053.0",
     "@playwright/test": "^1.50",
     "@types/node": "^24.13.0",
