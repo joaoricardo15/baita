@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from 'react'
+import { FC } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { ITask, ServiceName, ServiceType } from '@baita/shared'
@@ -13,10 +13,11 @@ const TaskOptions: FC<{
   const { data: bot } = useBot(botId)
   const updateBotMutation = useUpdateBot()
 
-  const [task, setTask] = useState<ITask>()
+  const task = bot?.tasks[taskIndex]
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateTaskOptions = (fieldName: string, value: any) => {
-    if (bot) {
+    if (bot && task) {
       const updatedTask = { ...task, [fieldName]: value } as ITask
       const updatedTasks = [...bot.tasks]
       updatedTasks[taskIndex] = updatedTask
@@ -26,12 +27,6 @@ const TaskOptions: FC<{
       })
     }
   }
-
-  useEffect(() => {
-    if (bot) {
-      setTask(bot.tasks[taskIndex])
-    }
-  }, [bot])
 
   return (
     <>

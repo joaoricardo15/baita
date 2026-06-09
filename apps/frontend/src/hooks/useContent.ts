@@ -23,7 +23,7 @@ export function usePopContent() {
     queryClient.setQueryData<IContent[]>(['content'], (prev) => {
       if (!prev || prev.length === 0) return prev
       const updated = prev.slice(0, -1)
-      if (updated.length <= 3 && onLow) onLow()
+      if (updated.length <= 5 && onLow) onLow()
       return updated
     })
   }

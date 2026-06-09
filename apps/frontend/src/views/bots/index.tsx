@@ -52,17 +52,20 @@ export const Bots: FC = () => {
               </div>
             ))}
 
-          <div className="d-flex align-items-center justify-content-center mt-5">
-            <Button
-              type="text"
-              color="primary"
-              icon={<AddIcon />}
-              disabled={createBot.isPending}
-              onClick={onCreateBot}
-            >
-              {labels.addBot}
-            </Button>
-          </div>
+          {createBot.isPending ? (
+            <Skeleton elements={1} height={100} />
+          ) : (
+            <div className="d-flex align-items-center justify-content-center mt-5">
+              <Button
+                type="text"
+                color="primary"
+                icon={<AddIcon />}
+                onClick={onCreateBot}
+              >
+                {labels.addBot}
+              </Button>
+            </div>
+          )}
         </>
       )}
     </>

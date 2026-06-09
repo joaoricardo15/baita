@@ -1,16 +1,11 @@
-import {
-  ITask,
-  removeStepReferences,
-  ServiceName,
-  ServiceType,
-} from '@baita/shared'
+import { removeStepReferences, ServiceName, ServiceType } from '@baita/shared'
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material'
 import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material'
-import { FC, useEffect, useState } from 'react'
+import { FC, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { Button, Text } from '@/components'
@@ -31,7 +26,7 @@ const Task: FC<{
   const { data: bot } = useBot(botId)
   const updateBotMutation = useUpdateBot()
 
-  const [task, setTask] = useState<ITask>()
+  const task = bot?.tasks[taskIndex]
   const [openedPanel, setOpenedPanel] = useState<string>()
 
   const onPanelChange =
@@ -60,12 +55,6 @@ const Task: FC<{
       updateBotMutation.mutate({ botId: bot.botId, bot: { ...bot, tasks } })
     }
   }
-
-  useEffect(() => {
-    if (bot) {
-      setTask(bot.tasks[taskIndex])
-    }
-  }, [bot, taskIndex])
 
   return (
     <div

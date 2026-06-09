@@ -1,5 +1,5 @@
 import { Divider } from '@mui/material'
-import { FC, useEffect, useState } from 'react'
+import { FC } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { ITask, IVariable } from '@baita/shared'
@@ -14,7 +14,7 @@ const TaskInput: FC<{
   const { data: bot } = useBot(botId)
   const updateBotMutation = useUpdateBot()
 
-  const [task, setTask] = useState<ITask>()
+  const task = bot?.tasks[taskIndex]
 
   const updateBotTask = (updatedTask: ITask) => {
     if (bot) {
@@ -29,17 +29,18 @@ const TaskInput: FC<{
 
   const updateBotInputField = (inputField: IVariable) => {
     if (bot && task) {
-      const inputDataIndex = task.inputData.findIndex(
+      const updatedInputData = [...task.inputData]
+      const inputDataIndex = updatedInputData.findIndex(
         (x) => x.name === inputField.name
       )
 
       if (inputDataIndex >= 0) {
-        task.inputData[inputDataIndex] = inputField
+        updatedInputData[inputDataIndex] = inputField
       } else {
-        task.inputData.push(inputField)
+        updatedInputData.push(inputField)
       }
 
-      updateBotTask(task)
+      updateBotTask({ ...task, inputData: updatedInputData })
     }
   }
 
@@ -48,41 +49,37 @@ const TaskInput: FC<{
     inputField: IVariable
   ) => {
     if (bot && task) {
-      const inputDataIndex = task.inputData.findIndex(
+      const updatedInputData = [...task.inputData]
+      const inputDataIndex = updatedInputData.findIndex(
         (x) => x.customFieldId === customFieldId
       )
 
       if (inputDataIndex >= 0) {
-        task.inputData[inputDataIndex] = inputField
+        updatedInputData[inputDataIndex] = inputField
       } else {
-        task.inputData.push(inputField)
+        updatedInputData.push(inputField)
       }
 
-      updateBotTask(task)
+      updateBotTask({ ...task, inputData: updatedInputData })
     }
   }
 
   const addBotInputField = (inputField: IVariable) => {
     if (bot && task) {
-      task.inputData.push(inputField)
-      updateBotTask(task)
+      updateBotTask({ ...task, inputData: [...task.inputData, inputField] })
     }
   }
 
   const deleteBotInputField = (customFieldId: number) => {
     if (bot && task) {
-      task.inputData = task.inputData.filter(
-        (x) => x.customFieldId !== customFieldId
-      )
-      updateBotTask(task)
+      updateBotTask({
+        ...task,
+        inputData: task.inputData.filter(
+          (x) => x.customFieldId !== customFieldId
+        ),
+      })
     }
   }
-
-  useEffect(() => {
-    if (bot) {
-      setTask(bot.tasks[taskIndex])
-    }
-  }, [bot, taskIndex])
 
   return (
     <>
