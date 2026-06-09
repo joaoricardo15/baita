@@ -153,4 +153,14 @@ jobs:
           retention-days: 7
       - name: Cleanup E2E test user
         if: always()
-        run: cd tests/e2e && npx playwright test user-teardown --project=teardown || true
+        run: |
+          TOKEN_FILE="tests/e2e/playwright/.auth/token.json"
+          if [ -f "$TOKEN_FILE" ]; then
+            TOKEN=$(cat "$TOKEN_FILE" | jq -r '.accessToken // empty')
+            if [ -n "$TOKEN" ]; then
+              curl -sf -X DELETE "$API_URL/user" -H "Authorization: Bearer $TOKEN" \
+                && echo "E2E test user deleted" || echo "Delete failed (may already be gone)"
+            fi
+          else
+            echo "No token file — test user was never created"
+          fi
