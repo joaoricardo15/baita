@@ -11,7 +11,7 @@ export const tokenFile = path.join(__dirname, '../playwright/.auth/token.json')
 export const TEST_EMAIL = 'e2e-test@baita.help'
 export const TEST_PASSWORD = 'BaitaE2e!2024'
 
-export const ADMIN_SOURCE_USER = '110944657139284874166'
+export const SYSTEM_USER = 'baita'
 export const GOOGLE_APP_ID = '5c16e311-a65a-449c-ad82-1f23a41cf89c'
 
 const APP_NAMES: Record<string, string> = {
@@ -61,7 +61,7 @@ export interface ICopiedConnection {
   appName: string
 }
 
-export async function copyAdminConnections(
+export async function copySystemConnections(
   request: APIRequestContext,
   targetUserId: string,
   token: string
@@ -79,7 +79,7 @@ export async function copyAdminConnections(
       TableName: 'baita-prod',
       KeyConditionExpression: 'userId = :uid AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
-        ':uid': ADMIN_SOURCE_USER,
+        ':uid': SYSTEM_USER,
         ':sk': '#CONNECTION#',
       },
     })
@@ -88,8 +88,8 @@ export async function copyAdminConnections(
   const items = result.Items || []
   if (items.length === 0) {
     throw new Error(
-      'No connections found for admin user in DynamoDB. ' +
-        'Ensure admin has OAuth connectors set up at https://baita.help.'
+      'No system connections found for baita user in DynamoDB. ' +
+        'Ensure system connections are set up under the baita user.'
     )
   }
 
@@ -108,7 +108,6 @@ export async function copyAdminConnections(
         data: {
           ...sourceData,
           connectionId,
-          userId: targetUserId,
         },
       }
     )

@@ -23,7 +23,7 @@ import {
   API_URL,
   authHeaders,
   cleanupStaleUser,
-  copyAdminConnections,
+  copySystemConnections,
   loginUser,
   logResult,
   signUpUser,
@@ -190,7 +190,11 @@ test.describe('User Lifecycle Setup', () => {
   })
 
   test('copy admin connections to test user', async ({ request }) => {
-    const connections = await copyAdminConnections(request, userId, accessToken)
+    const connections = await copySystemConnections(
+      request,
+      userId,
+      accessToken
+    )
 
     expect(connections.length).toBeGreaterThan(0)
 
