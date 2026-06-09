@@ -3,10 +3,9 @@ import { IContent, IUser } from '@baita/shared'
 import axios from 'axios'
 
 import Bot from '@/controllers/bot'
-import { ddb } from '@/lib/dynamodb'
+import Data from '@/controllers/data'
 import { CONTENT_BATCH_LIMIT, SQS_RETENTION_SECONDS } from '@/utils/constants'
 
-const CORE_TABLE = process.env.CORE_TABLE || ''
 const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || ''
 const AUTH0_M2M_CLIENT_ID = process.env.AUTH0_M2M_CLIENT_ID || ''
@@ -21,13 +20,8 @@ class User {
 
   async createUser(user: IUser) {
     try {
-      await ddb.put({
-        TableName: CORE_TABLE,
-        Item: {
-          ...user,
-          sortKey: '#USER',
-        },
-      })
+      const dataStore = new Data(user.userId, 'user')
+      await dataStore.create('', user)
 
       await this.sqs.createQueue({
         QueueName: `${SERVICE_PREFIX}-user-${user.userId}`,
@@ -45,21 +39,20 @@ class User {
 
   async deleteUser(userId: string) {
     try {
-      const { Items: bots } = await ddb.query({
-        TableName: CORE_TABLE,
-        KeyConditionExpression:
-          'userId = :userId and begins_with(sortKey, :sk)',
-        ExpressionAttributeValues: { ':userId': userId, ':sk': '#BOT#' },
-      })
+      const botStore = new Data(userId, 'bot')
+      const bots = await botStore.list()
 
       if (bots && bots.length > 0) {
         const botController = new Bot()
         for (const bot of bots) {
           try {
-            const botId = bot.sortKey.replace('#BOT#', '')
-            await botController.deleteBot(userId, botId, bot.apiId)
+            await botController.deleteBot(
+              userId,
+              bot.botId as string,
+              bot.apiId as string
+            )
           } catch (err) {
-            console.error(`Failed to delete bot ${bot.sortKey}:`, err)
+            console.error(`Failed to delete bot ${bot.botId}:`, err)
           }
         }
       }
@@ -77,46 +70,8 @@ class User {
     }
 
     try {
-      let lastEvaluatedKey: Record<string, unknown> | undefined
-      const allRecords: { userId: string; sortKey: string }[] = []
-
-      do {
-        const result = await ddb.query({
-          TableName: CORE_TABLE,
-          KeyConditionExpression: 'userId = :userId',
-          ExpressionAttributeValues: { ':userId': userId },
-          ConsistentRead: true,
-          ExclusiveStartKey: lastEvaluatedKey,
-        })
-        if (result.Items)
-          allRecords.push(
-            ...(result.Items as { userId: string; sortKey: string }[])
-          )
-        lastEvaluatedKey = result.LastEvaluatedKey as
-          | Record<string, unknown>
-          | undefined
-      } while (lastEvaluatedKey)
-
-      if (allRecords.length > 0) {
-        const chunks = this.chunkArray(allRecords, 25)
-        for (const chunk of chunks) {
-          const result = await ddb.batchWrite({
-            RequestItems: {
-              [CORE_TABLE]: chunk.map((item) => ({
-                DeleteRequest: {
-                  Key: { userId: item.userId, sortKey: item.sortKey },
-                },
-              })),
-            },
-          })
-          if (
-            result.UnprocessedItems &&
-            Object.keys(result.UnprocessedItems).length > 0
-          ) {
-            await ddb.batchWrite({ RequestItems: result.UnprocessedItems })
-          }
-        }
-      }
+      const dataStore = new Data(userId, '')
+      await dataStore.deleteAllForUser()
     } catch (err) {
       console.error('Failed to delete DynamoDB records:', err)
     }
@@ -147,14 +102,6 @@ class User {
     } catch (err) {
       console.error('Failed to delete Auth0 user:', err)
     }
-  }
-
-  private chunkArray<T>(array: T[], size: number): T[][] {
-    const chunks: T[][] = []
-    for (let i = 0; i < array.length; i += size) {
-      chunks.push(array.slice(i, i + size))
-    }
-    return chunks
   }
 
   async getContent(userId: string) {
@@ -203,22 +150,17 @@ class User {
         QueueName: `${SERVICE_PREFIX}-user-${userId}`,
       })
 
-      const { Items: alreadySeen } = await ddb.query({
-        TableName: CORE_TABLE,
-        KeyConditionExpression:
-          'userId = :userId and begins_with(sortKey, :sortKey)',
-        ExpressionAttributeValues: {
-          ':userId': userId,
-          ':sortKey': '#CONTENT',
-        },
-      })
+      const contentStore = new Data(userId, 'content')
+      const alreadySeen = await contentStore.list()
 
       const newContent = !alreadySeen
         ? content.slice(0, CONTENT_BATCH_LIMIT)
         : content
             .filter(
               ({ contentId }) =>
-                !alreadySeen.map((c) => c.contentId).includes(contentId)
+                !alreadySeen
+                  .map((c: Record<string, unknown>) => c.contentId)
+                  .includes(contentId)
             )
             .slice(0, CONTENT_BATCH_LIMIT)
 

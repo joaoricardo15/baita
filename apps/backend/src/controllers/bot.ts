@@ -14,7 +14,6 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 
 import Task from '@/controllers/task'
-import { ddb } from '@/lib/dynamodb'
 import { getBotSampleCode, getCodeFile, getCompleteBotCode } from '@/utils/code'
 import {
   DISABLED_SCHEDULE_EXPRESSION,
@@ -24,7 +23,6 @@ import {
 
 import Data from './data'
 
-const CORE_TABLE = process.env.CORE_TABLE || ''
 const BOTS_BUCKET = process.env.BOTS_BUCKET || ''
 const BOTS_PERMISSION = process.env.BOTS_PERMISSION || ''
 const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
@@ -175,13 +173,8 @@ class Bot {
         ],
       }
 
-      await ddb.put({
-        TableName: CORE_TABLE,
-        Item: {
-          ...bot,
-          sortKey: `#BOT#${bot.botId}`,
-        },
-      })
+      const dataStore = new Data(userId, 'bot')
+      await dataStore.create(botId, bot)
 
       return bot
     } catch (err: unknown) {
@@ -288,13 +281,8 @@ class Bot {
         description: model.description,
       }
 
-      await ddb.put({
-        TableName: CORE_TABLE,
-        Item: {
-          ...bot,
-          sortKey: `#BOT#${bot.botId}`,
-        },
-      })
+      const dataStore = new Data(userId, 'bot')
+      await dataStore.create(botId, bot)
 
       return bot
     } catch (err: unknown) {
@@ -306,10 +294,8 @@ class Bot {
     try {
       const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
 
-      await ddb.delete({
-        TableName: CORE_TABLE,
-        Key: { userId, sortKey: `#BOT#${botId}` },
-      })
+      const dataStore = new Data(userId, 'bot')
+      await dataStore.delete(botId)
 
       const results = await Promise.allSettled([
         this.apigateway.deleteApi({ ApiId: apiId }),
@@ -341,25 +327,16 @@ class Bot {
     tasks: ITask[]
   ) {
     try {
-      const result = await ddb.update({
-        TableName: CORE_TABLE,
-        Key: { userId, sortKey: `#BOT#${botId}` },
-        UpdateExpression:
-          'set #name = :name, image = :image, description = :description, tasks = :tasks, active = :active',
-        ExpressionAttributeNames: {
-          '#name': 'name',
-        },
-        ExpressionAttributeValues: {
-          ':name': name,
-          ':image': image || '',
-          ':description': description || '',
-          ':tasks': tasks,
-          ':active': active,
-        },
-        ReturnValues: 'ALL_NEW',
+      const dataStore = new Data(userId, 'bot')
+      const result = await dataStore.update(botId, {
+        name,
+        image: image || '',
+        description: description || '',
+        tasks,
+        active,
       })
 
-      return result.Attributes
+      return result
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }
@@ -427,22 +404,10 @@ class Bot {
         })
       }
 
-      const dbResult = await ddb.update({
-        TableName: CORE_TABLE,
-        Key: { userId, sortKey: `#BOT#${botId}` },
-        UpdateExpression: 'set #name = :name, tasks = :tasks, active = :active',
-        ExpressionAttributeNames: {
-          '#name': 'name',
-        },
-        ExpressionAttributeValues: {
-          ':name': name,
-          ':tasks': tasks,
-          ':active': active,
-        },
-        ReturnValues: 'ALL_NEW',
-      })
+      const dataStore = new Data(userId, 'bot')
+      const dbResult = await dataStore.update(botId, { name, tasks, active })
 
-      return dbResult.Attributes
+      return dbResult
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }
@@ -453,8 +418,8 @@ class Bot {
       let sample: ITaskExecutionResult
 
       if (Number(taskIndex) === 0) {
-        const resource = new Data(userId, 'bot')
-        const botData = await resource.read(botId)
+        const dataStore = new Data(userId, 'bot')
+        const botData = await dataStore.read(botId)
         if (!botData?.triggerSamples) return
         sample = botData.triggerSamples.reverse()[0]
       } else {
@@ -464,15 +429,13 @@ class Bot {
 
       validateTaskExecutionResult(sample)
 
-      await ddb.update({
-        TableName: CORE_TABLE,
-        Key: { userId, sortKey: `#BOT#${botId}` },
-        ReturnValues: 'ALL_NEW',
-        UpdateExpression: `set tasks[${taskIndex}].sampleResult = :sample`,
-        ExpressionAttributeValues: {
-          ':sample': sample,
-        },
-      })
+      const dataStore = new Data(userId, 'bot')
+      await dataStore.updateNested(
+        botId,
+        `SET tasks[${taskIndex}].sampleResult = :sample`,
+        {},
+        { ':sample': sample }
+      )
 
       return sample
     } catch (err: unknown) {
@@ -486,17 +449,8 @@ class Bot {
     sample: ITaskExecutionResult
   ) {
     try {
-      await ddb.update({
-        TableName: CORE_TABLE,
-        Key: { userId, sortKey: `#BOT#${botId}` },
-        ReturnValues: 'ALL_NEW',
-        UpdateExpression:
-          'set triggerSamples = list_append(if_not_exists(triggerSamples, :emptyList), :sampleList)',
-        ExpressionAttributeValues: {
-          ':sampleList': [sample],
-          ':emptyList': [],
-        },
-      })
+      const dataStore = new Data(userId, 'bot')
+      await dataStore.appendToList(botId, 'triggerSamples', [sample])
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }
@@ -509,15 +463,13 @@ class Bot {
     taskIndex: number
   ) {
     try {
-      await ddb.update({
-        TableName: CORE_TABLE,
-        Key: { userId, sortKey: `#BOT#${botId}` },
-        UpdateExpression: `set tasks[${taskIndex}].connectionId = :connectionId`,
-        ExpressionAttributeValues: {
-          ':connectionId': connectionId,
-        },
-        ReturnValues: 'ALL_NEW',
-      })
+      const dataStore = new Data(userId, 'bot')
+      await dataStore.updateNested(
+        botId,
+        `SET tasks[${taskIndex}].connectionId = :connectionId`,
+        {},
+        { ':connectionId': connectionId }
+      )
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }

@@ -307,11 +307,13 @@ describe('Bot', () => {
 
       const updateCalls = ddbMock.commandCalls(UpdateCommand)
       expect(updateCalls).toHaveLength(1)
-      expect(updateCalls[0].args[0].input.ExpressionAttributeValues).toEqual({
-        ':name': 'My Bot',
-        ':tasks': [{ taskId: 1, inputData: [] }],
-        ':active': true,
-      })
+      expect(updateCalls[0].args[0].input.ExpressionAttributeValues).toEqual(
+        expect.objectContaining({
+          ':value0': 'My Bot',
+          ':value1': [{ taskId: 1, inputData: [] }],
+          ':value2': true,
+        })
+      )
     })
   })
 
@@ -378,7 +380,7 @@ describe('Bot', () => {
 
       const updateCalls = ddbMock.commandCalls(UpdateCommand)
       expect(updateCalls[0].args[0].input.UpdateExpression).toBe(
-        'set tasks[2].connectionId = :connectionId'
+        'SET tasks[2].connectionId = :connectionId'
       )
       expect(updateCalls[0].args[0].input.ExpressionAttributeValues).toEqual({
         ':connectionId': 'conn-abc',
