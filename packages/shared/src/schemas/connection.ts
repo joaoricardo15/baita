@@ -25,9 +25,8 @@ export type ICredential = Record<string, unknown>
 
 // ─── App Connection ────────────────────────────────────────────────────────
 
-export const AppConnectionSchema = z.object({
+export const ConnectionSchema = z.object({
   appId: z.string(),
-  userId: z.string(),
   email: z.string(),
   name: z.string(),
   credentials: CredentialSchema,
@@ -35,4 +34,9 @@ export const AppConnectionSchema = z.object({
   connectorId: z.string().optional(),
   createdAt: z.number().optional(),
 })
-export type IAppConnection = z.infer<typeof AppConnectionSchema>
+export type IConnection = z.infer<typeof ConnectionSchema>
+
+/** @deprecated Use ConnectionSchema */
+export const AppConnectionSchema = ConnectionSchema
+/** @deprecated Use IConnection */
+export type IAppConnection = IConnection

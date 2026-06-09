@@ -40,7 +40,6 @@ const makeActionTask = (
 
 const makeBot = (tasks: ITask[]): IBot => ({
   botId: 'bot-1',
-  userId: 'user-1',
   apiId: 'api-1',
   name: 'Test Bot',
   active: false,

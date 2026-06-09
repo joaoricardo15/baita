@@ -31,7 +31,6 @@ export const BotLogSchema = z.object({
   logs: z.array(TaskLogSchema),
   usage: z.number(),
   botId: z.string(),
-  userId: z.string(),
   timestamp: z.number(),
 })
 export type IBotLog = z.infer<typeof BotLogSchema>
@@ -54,7 +53,6 @@ export type IBotModel = z.infer<typeof BotModelSchema>
 
 export const BotSchema = z.object({
   botId: z.string(),
-  userId: z.string(),
   modelId: z.string().optional(),
   apiId: z.string(),
   name: z.string(),

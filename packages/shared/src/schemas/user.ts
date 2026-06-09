@@ -17,7 +17,7 @@
 import { z } from 'zod'
 
 export const UserSchema = z.object({
-  userId: z.string(),
+  userId: z.string().optional(),
   name: z.string(),
   email: z.string(),
   picture: z.string().optional(),
@@ -59,7 +59,6 @@ export const TodoTaskSchema = z.object({
 export type ITodoTask = z.infer<typeof TodoTaskSchema>
 
 export const TodoSchema = z.object({
-  userId: z.string(),
   tasks: z.array(TodoTaskSchema),
 })
 export type ITodo = z.infer<typeof TodoSchema>

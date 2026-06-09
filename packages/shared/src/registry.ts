@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { BotSchema } from './schemas/bot'
-import { AppConnectionSchema } from './schemas/connection'
+import { ConnectionSchema } from './schemas/connection'
 import { NoteSchema } from './schemas/note'
 import { PlaceSchema } from './schemas/place'
 import { ContentSchema, TodoSchema, UserSchema } from './schemas/user'
@@ -17,7 +17,7 @@ export const entityRegistry: Record<string, IEntityTypeConfig> = {
   bot: { schema: BotSchema, idField: 'botId', singleton: false },
   model: { schema: BotSchema, idField: 'modelId', singleton: false },
   connection: {
-    schema: AppConnectionSchema,
+    schema: ConnectionSchema,
     idField: 'connectionId',
     singleton: false,
   },

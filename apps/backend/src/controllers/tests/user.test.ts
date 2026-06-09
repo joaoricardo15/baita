@@ -45,13 +45,12 @@ describe('User', () => {
       })
 
       const user = new User()
-      const result = await user.createUser({
-        userId: 'auth0|user1',
+      const result = await user.createUser('auth0|user1', {
         email: 'test@example.com',
         name: 'Test User',
       } as any)
 
-      expect(result.userId).toBe('auth0|user1')
+      expect(result.email).toBe('test@example.com')
       const putCalls = ddbMock.commandCalls(PutCommand)
       expect(putCalls).toHaveLength(1)
       expect(putCalls[0].args[0].input.Item).toEqual({
@@ -69,7 +68,7 @@ describe('User', () => {
       })
 
       const user = new User()
-      await user.createUser({ userId: 'auth0|user1' } as any)
+      await user.createUser('auth0|user1', { name: '', email: '' } as any)
 
       const createQueueCalls = sqsMock.commandCalls(CreateQueueCommand)
       expect(createQueueCalls).toHaveLength(1)
@@ -82,7 +81,7 @@ describe('User', () => {
       ddbMock.on(PutCommand).rejects(new Error('DDB failure'))
 
       const user = new User()
-      await expect(user.createUser({ userId: 'user1' } as any)).rejects.toThrow(
+      await expect(user.createUser('user1', {} as any)).rejects.toThrow(
         'DDB failure'
       )
     })

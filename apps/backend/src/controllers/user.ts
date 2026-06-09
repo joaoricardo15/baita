@@ -18,17 +18,17 @@ class User {
     this.sqs = new SQS({})
   }
 
-  async createUser(user: IUser) {
+  async createUser(userId: string, user: IUser) {
     try {
-      const dataStore = new Data(user.userId, 'user')
+      const dataStore = new Data(userId, 'user')
       await dataStore.create('', user)
 
       await this.sqs.createQueue({
-        QueueName: `${SERVICE_PREFIX}-user-${user.userId}`,
+        QueueName: `${SERVICE_PREFIX}-user-${userId}`,
         Attributes: {
           MessageRetentionPeriod: SQS_RETENTION_SECONDS.toString(),
         },
-        tags: { 'user-id': user.userId, 'managed-by': 'baita' },
+        tags: { 'user-id': userId, 'managed-by': 'baita' },
       })
 
       return user

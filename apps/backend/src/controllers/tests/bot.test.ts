@@ -86,7 +86,6 @@ describe('Bot', () => {
       const result = await bot.createBot('user-1')
 
       expect(result.botId).toBe('mock-uuid-1234')
-      expect(result.userId).toBe('user-1')
       expect(result.apiId).toBe('api-123')
       expect(result.triggerUrl).toBe(
         'https://api-123.execute-api.us-east-1.amazonaws.com/bot'

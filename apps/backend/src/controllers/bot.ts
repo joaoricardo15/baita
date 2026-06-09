@@ -157,7 +157,6 @@ class Bot {
 
       const bot: IBot = {
         botId,
-        userId,
         name: '',
         description: '',
         image: '',
@@ -268,7 +267,6 @@ class Bot {
 
       const bot: IBot = {
         botId,
-        userId,
         active: true,
         apiId: apiResult.ApiId || '',
         triggerUrl: `${apiResult.ApiEndpoint}${botUrl}`,

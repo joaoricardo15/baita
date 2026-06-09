@@ -34,9 +34,14 @@ export const handler = async (
           throw new Error('Invalid user_id format')
         }
 
-        const newUser = { userId: parts[1], ...body }
+        const userId = parts[1]
+        const newUser = {
+          name: body.name || '',
+          email: body.email || '',
+          picture: body.picture,
+        }
         validateUser(newUser)
-        const data = await user.createUser(newUser)
+        const data = await user.createUser(userId, newUser)
         api.httpResponse(callback, ApiRequestStatus.success, undefined, data)
         break
       }
