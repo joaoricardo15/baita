@@ -22,7 +22,6 @@ import path from 'path'
 import {
   API_URL,
   authHeaders,
-  cleanupStaleUser,
   copySystemConnections,
   loginUser,
   logResult,
@@ -42,10 +41,6 @@ test.describe('User Lifecycle Setup', () => {
   let userId: string
 
   test('clean up stale user from previous run', async ({ page, request }) => {
-    // First: programmatic cleanup via Auth0 ROPG + DELETE /user endpoint
-    await cleanupStaleUser()
-
-    // Fallback: browser-based cleanup in case programmatic missed it
     try {
       await loginUser(page, TEST_EMAIL, TEST_PASSWORD)
 

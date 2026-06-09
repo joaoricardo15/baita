@@ -152,14 +152,15 @@ provider:
     FILES_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-files
     BOTS_PERMISSION: arn:aws:iam::${aws:accountId}:role/${self:provider.environment.SERVICE_PREFIX}
     # Auth0 Management API (M2M)
-    AUTH0_DOMAIN: ${ssm:/baita/prod/auth0-domain}
+    AUTH0_DOMAIN: auth.baita.help
+    AUTH0_AUDIENCE: https://dev-yc4pbydg.us.auth0.com/api/v2/
     AUTH0_M2M_CLIENT_ID: ${ssm:/baita/prod/auth0-m2m-client-id}
     AUTH0_M2M_CLIENT_SECRET: ${ssm:/baita/prod/auth0-m2m-client-secret}
     # Partners (OAuth secrets resolved from SSM at deploy time)
-    PIPEDRIVE_AUTH_URL: ${ssm:/baita/prod/pipedrive-auth-url}
+    PIPEDRIVE_AUTH_URL: https://oauth.pipedrive.com/oauth/token
     PIPEDRIVE_CLIENT_ID: ${ssm:/baita/prod/pipedrive-client-id}
     PIPEDRIVE_CLIENT_SECRET: ${ssm:/baita/prod/pipedrive-client-secret}
-    GOOGLE_AUTH_URL: ${ssm:/baita/prod/google-auth-url}
+    GOOGLE_AUTH_URL: https://oauth2.googleapis.com/token
     GOOGLE_CLIENT_ID: ${ssm:/baita/prod/google-client-id}
     GOOGLE_CLIENT_SECRET: ${ssm:/baita/prod/google-client-secret}
     NEWS_API_KEY: ${ssm:/baita/prod/news-api-key}
@@ -412,7 +413,6 @@ resources:
       Properties:
         BucketName: ${self:provider.environment.BOTS_BUCKET}
     # Public GET gated by Referer header (bucket policy below).
-    # ACL-based public access blocked; policy-based access allowed.
     filesBucket:
       Type: AWS::S3::Bucket
       DeletionPolicy: Retain

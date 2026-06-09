@@ -5,8 +5,8 @@ import {
 import * as jwt from 'jsonwebtoken'
 import jwksRsa from 'jwks-rsa'
 
-const AUTH0_DOMAIN = 'auth.baita.help'
-const AUTH0_AUDIENCE = 'https://dev-yc4pbydg.us.auth0.com/api/v2/'
+const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || ''
+const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || ''
 
 const jwksClient = jwksRsa({
   cache: true,

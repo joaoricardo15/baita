@@ -4,16 +4,10 @@ import fs from 'fs'
 import path from 'path'
 import { APIRequestContext, Page } from '@playwright/test'
 
-// ─── Configuration (env vars with defaults for local dev) ──────────────────
+// ─── Configuration ─────────────────────────────────────────────────────────
 export const API_URL = process.env.API_URL || 'https://api.baita.help'
-
 export const TEST_EMAIL = 'e2e-test@baita.help'
 export const TEST_PASSWORD = process.env.E2E_TEST_PASSWORD || ''
-
-const AUTH0_DOMAIN = 'auth.baita.help'
-const AUTH0_AUDIENCE = 'https://dev-yc4pbydg.us.auth0.com/api/v2/'
-const AUTH0_CLIENT_ID = process.env.AUTH0_E2E_CLIENT_ID || ''
-const AUTH0_CLIENT_SECRET = process.env.AUTH0_E2E_CLIENT_SECRET || ''
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 export const SYSTEM_USER = 'baita'
@@ -69,7 +63,7 @@ export interface ICopiedConnection {
 
 export async function copySystemConnections(
   request: APIRequestContext,
-  targetUserId: string,
+  _targetUserId: string,
   token: string
 ): Promise<ICopiedConnection[]> {
   const client = new DynamoDBClient({ region: 'us-east-1' })
@@ -265,83 +259,4 @@ export async function loginUser(
 
 export function logResult(label: string, data: unknown): void {
   console.log(`[E2E] ${label}:`, JSON.stringify(data, null, 2))
-}
-
-/**
- * Programmatic cleanup of stale E2E test user — no browser needed.
- * Uses Auth0 Resource Owner Password Grant to obtain a JWT for the test user,
- * then calls DELETE /user which handles ALL resource cleanup:
- * bots (Lambda, API Gateway, Scheduler, S3), SQS queue, DynamoDB records, Auth0 user.
- *
- * Requires env vars: AUTH0_E2E_CLIENT_ID, AUTH0_E2E_CLIENT_SECRET, E2E_TEST_PASSWORD
- *
- * If credentials are not available or login fails (user doesn't exist),
- * the browser-based cleanup in user-lifecycle.spec.ts handles it as fallback.
- */
-export async function cleanupStaleUser(): Promise<void> {
-  if (!AUTH0_CLIENT_ID || !AUTH0_CLIENT_SECRET || !TEST_PASSWORD) {
-    throw new Error(
-      'E2E cleanup requires env vars: AUTH0_E2E_CLIENT_ID, AUTH0_E2E_CLIENT_SECRET, E2E_TEST_PASSWORD'
-    )
-  }
-
-  logResult('Attempting ROPG login for stale user cleanup', {
-    email: TEST_EMAIL,
-  })
-
-  const tokenRes = await fetch(`https://${AUTH0_DOMAIN}/oauth/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      grant_type: 'password',
-      username: TEST_EMAIL,
-      password: TEST_PASSWORD,
-      client_id: AUTH0_CLIENT_ID,
-      client_secret: AUTH0_CLIENT_SECRET,
-      audience: AUTH0_AUDIENCE,
-      scope: 'openid',
-    }),
-  })
-
-  if (!tokenRes.ok) {
-    const error = (await tokenRes.json().catch(() => ({}))) as Record<
-      string,
-      unknown
-    >
-    const errorDesc =
-      (error.error_description as string) || (error.error as string) || ''
-
-    if (errorDesc.includes('Wrong email or password')) {
-      logResult('No stale user to clean up (user does not exist)', {})
-      return
-    }
-
-    throw new Error(`E2E cleanup ROPG login failed: ${errorDesc}`)
-  }
-
-  const tokenData = (await tokenRes.json()) as { access_token?: string }
-  if (!tokenData.access_token) {
-    throw new Error('E2E cleanup: ROPG response missing access_token')
-  }
-
-  logResult('ROPG login successful, calling DELETE /user endpoint', {})
-
-  const deleteRes = await fetch(`${API_URL}/user`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      'Content-Type': 'application/json',
-    },
-  })
-
-  const deleteBody = await deleteRes.json().catch(() => ({}))
-  logResult('DELETE /user response', {
-    status: deleteRes.status,
-    success: (deleteBody as Record<string, unknown>).success,
-    message: (deleteBody as Record<string, unknown>).message,
-  })
-
-  if (deleteRes.ok) {
-    logResult('Stale user deleted via endpoint (all resources cleaned)', {})
-  }
 }
