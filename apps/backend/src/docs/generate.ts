@@ -2,6 +2,7 @@ import {
   AppSchema,
   BotSchema,
   ConnectionSchema,
+  getRegisteredTypes,
   ServiceSchema,
   TaskExecutionResultSchema,
   TaskSchema,
@@ -61,6 +62,11 @@ interface OperationDoc {
   requestSchema?: string
   responseSchema?: string
   parameterOverrides?: Record<string, { description: string; enum?: string[] }>
+}
+
+const DATA_TYPE_PARAM = {
+  description: 'Registered data entity type',
+  enum: getRegisteredTypes(),
 }
 
 const OPERATION_DOCS: Record<string, OperationDoc> = {
@@ -203,10 +209,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description:
       'For collection types (note, place, connection): returns all records of that type as an array. For singleton types (todo): returns the single record directly. The type parameter determines which DynamoDB partition prefix to query.',
     parameterOverrides: {
-      type: {
-        description:
-          'Data type name (e.g. note, place, todo, content, connection)',
-      },
+      type: DATA_TYPE_PARAM,
     },
   },
   '/data/{type}:put': {
@@ -214,9 +217,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description:
       'Creates or replaces a singleton record (no ID needed). Used for types that have exactly one record per user, like todo. The full record body replaces any existing data.',
     parameterOverrides: {
-      type: {
-        description: 'Data type name (e.g. todo)',
-      },
+      type: DATA_TYPE_PARAM,
     },
   },
   '/data/{type}/{id}:put': {
@@ -224,9 +225,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description:
       'Creates a new record or fully replaces an existing one at the given ID. The client provides the ID (idempotent operation). Send the complete record body.',
     parameterOverrides: {
-      type: {
-        description: 'Data type name (e.g. note, place, content, connection)',
-      },
+      type: DATA_TYPE_PARAM,
       id: { description: 'Record ID (client-generated)' },
     },
   },
@@ -234,9 +233,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     summary: 'Get data record',
     description: 'Returns a specific record by type and ID.',
     parameterOverrides: {
-      type: {
-        description: 'Data type name (e.g. note, place, content, connection)',
-      },
+      type: DATA_TYPE_PARAM,
       id: { description: 'Record ID' },
     },
   },
@@ -245,9 +242,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description:
       'Updates only the provided fields on an existing record. Fields not included in the request body remain unchanged.',
     parameterOverrides: {
-      type: {
-        description: 'Data type name (e.g. note, place, content, connection)',
-      },
+      type: DATA_TYPE_PARAM,
       id: { description: 'Record ID' },
     },
   },
@@ -255,9 +250,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     summary: 'Delete data record',
     description: 'Permanently removes a specific record.',
     parameterOverrides: {
-      type: {
-        description: 'Data type name (e.g. note, place, content, connection)',
-      },
+      type: DATA_TYPE_PARAM,
       id: { description: 'Record ID' },
     },
   },
@@ -266,7 +259,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description:
       'Returns a presigned S3 PUT URL (15-minute expiry) for uploading a file associated with this record. The client should PUT the file content directly to the returned URL.',
     parameterOverrides: {
-      type: { description: 'Data type name (e.g. place, image)' },
+      type: DATA_TYPE_PARAM,
       id: { description: 'Record ID' },
     },
   },
@@ -275,7 +268,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description:
       'Deletes a previously uploaded file from S3. The fileId corresponds to the S3 object key.',
     parameterOverrides: {
-      type: { description: 'Data type name' },
+      type: DATA_TYPE_PARAM,
       id: { description: 'Record ID' },
       fileId: { description: 'File identifier (S3 object key)' },
     },
