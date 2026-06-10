@@ -1,5 +1,5 @@
 process.env.CORE_TABLE = 'test-table'
-process.env.SERVICE_PREFIX = 'baita-prod'
+process.env.SERVICE_PREFIX = 'baita-backend-prod'
 
 import {
   DynamoDBDocument,

@@ -330,7 +330,7 @@ describe('getBotInnerCode', () => {
     const code = getBotInnerCode(tasks)
     expect(code).toContain('task1_inputData')
     expect(code).toContain('lambda.invoke')
-    expect(code).toContain('endpoint-task')
+    expect(code).toContain('endpoint-tasks')
   })
 
   test('includes timing instrumentation', () => {

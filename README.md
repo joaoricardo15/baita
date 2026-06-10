@@ -173,8 +173,8 @@ Results stored in DynamoDB as fresh content → content feed
 - **Profile**: `baita`
 - **Backend stack**: `baita-backend-prod` (Serverless Framework)
 - **Frontend stack**: `baita-frontend-prod` (CloudFormation — Amplify)
-- **DynamoDB Table**: `baita-prod` (on-demand billing)
-- **S3 Buckets**: `baita-prod-bots`, `baita-prod-files`, `baita-prod-docs`
+- **DynamoDB Table**: `baita-backend-prod` (on-demand billing)
+- **S3 Buckets**: `baita-backend-prod-bots`, `baita-backend-prod-files`, `baita-backend-prod-docs`
 - **Custom Domain**: `api.baita.help` (Route53 + API Gateway)
 
 ## Contributing

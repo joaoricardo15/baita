@@ -174,7 +174,7 @@ cd tests/e2e && npm test
 
 ## Data Architecture
 
-All domain data is user-scoped and stored in a single DynamoDB table (`baita-prod`). The **Entity Type Registry** (`packages/shared/src/registry.ts`) is the central source of truth for all entity types — it maps each type to its Zod schema, ID field, and singleton flag.
+All domain data is user-scoped and stored in a single DynamoDB table (`baita-backend-prod`). The **Entity Type Registry** (`packages/shared/src/registry.ts`) is the central source of truth for all entity types — it maps each type to its Zod schema, ID field, and singleton flag.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -190,7 +190,7 @@ All domain data is user-scoped and stored in a single DynamoDB table (`baita-pro
 └────────────────────────────────┬────────────────────────────────┘
                                  │ DynamoDB ops
 ┌────────────────────────────────▼────────────────────────────────┐
-│  DynamoDB (baita-prod) — Single-table design                    │
+│  DynamoDB (baita-backend-prod) — Single-table design                    │
 │  PK: userId  |  SK: #TYPE or #TYPE#id                           │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -215,7 +215,7 @@ All domain data is user-scoped and stored in a single DynamoDB table (`baita-pro
 - **Region**: `us-east-1` for everything
 - **Backend stack**: `baita-backend-prod` (Serverless Framework / CloudFormation)
 - **Frontend stack**: `baita-frontend-prod` (CloudFormation — Amplify app + branch)
-- **Resource prefix**: `baita-prod` (DynamoDB table, S3 buckets, Lambda roles)
+- **Resource prefix**: `baita-backend-prod` (DynamoDB table, S3 buckets, Lambda roles)
 - **Amplify App ID**: Dynamic — read from `baita-frontend-prod` stack outputs in CI (not hardcoded)
 
 ## Environment Variables & Secrets

@@ -243,7 +243,7 @@ All endpoints return a standardized response:
 
 ### DynamoDB Single-Table Design
 
-Table name: `baita-prod` (env var `CORE_TABLE` = `SERVICE_PREFIX`)
+Table name: `baita-backend-prod` (env var `CORE_TABLE` = `SERVICE_PREFIX`)
 
 All data is **user-scoped** — every record uses `userId` as the partition key. The `userId` is NOT stored inside entity schemas (it's a storage concern, not domain data). The Data controller injects it automatically.
 

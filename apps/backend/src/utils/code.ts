@@ -125,7 +125,7 @@ module.exports.handler = async (event, context, callback) => {
   // 3. Publish trigger sample
 
   await lambda.invoke({
-    FunctionName: '${SERVICE_PREFIX}-endpoint-task',
+    FunctionName: '${SERVICE_PREFIX}-endpoint-tasks',
     Payload: JSON.stringify({
       direct: true,
       userId,
@@ -281,7 +281,7 @@ ${
     : ''
 }
         const { Payload: task${i}_lambda_payload } = await lambda.invoke({
-          FunctionName: '${SERVICE_PREFIX}-endpoint-task',
+          FunctionName: '${SERVICE_PREFIX}-endpoint-tasks',
           Payload: JSON.stringify({
             direct: true,
             userId,

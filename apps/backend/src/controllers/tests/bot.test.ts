@@ -1,7 +1,7 @@
 process.env.CORE_TABLE = 'test-table'
 process.env.BOTS_BUCKET = 'test-bots-bucket'
 process.env.BOTS_PERMISSION = 'arn:aws:iam::123:role/test-role'
-process.env.SERVICE_PREFIX = 'baita-prod'
+process.env.SERVICE_PREFIX = 'baita-backend-prod'
 
 import {
   ApiGatewayV2,
@@ -114,7 +114,7 @@ describe('Bot', () => {
       const lambdaCalls = lambdaMock.commandCalls(CreateFunctionCommand)
       expect(lambdaCalls).toHaveLength(1)
       expect(lambdaCalls[0].args[0].input.FunctionName).toBe(
-        'baita-prod-bot-mock-uuid-1234'
+        'baita-backend-prod-bot-mock-uuid-1234'
       )
       expect(lambdaCalls[0].args[0].input.Runtime).toBe('nodejs20.x')
       expect(lambdaCalls[0].args[0].input.Role).toBe(

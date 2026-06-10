@@ -125,10 +125,11 @@ provider:
           Action: [tag:GetResources]
           Resource: '*'
   environment:
-    SERVICE_PREFIX: baita-prod
     SERVICE_API_URL: https://api.baita.help
     SERVICE_SITE_URL: https://www.baita.help
     SERVICE_LOCAL_URL: http://localhost:3000
+    SERVICE_PREFIX: ${self:service}-${self:provider.stage}
+
     CORE_TABLE: ${self:provider.environment.SERVICE_PREFIX}
     DOCS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-docs
     BOTS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-bots
