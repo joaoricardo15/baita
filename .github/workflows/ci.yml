@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ─── Quality Gate ────────────────────────────────────────────────
+  # ─── Quality Gate ────────────────────────────────────────────────────────
   # Runs all checks for all packages. Fails fast before any deploy.
   quality:
     name: Quality
@@ -53,27 +53,39 @@ jobs:
           path: apps/frontend/dist/
           retention-days: 1
 
-  # ─── Deploy Auth0 ───────────────────────────────────────────────
-  # Identity layer — must be configured before apps that depend on it.
+  # ─── Deploy Auth0 ───────────────────────────────────────────────────────
   deploy-auth0:
     name: Deploy Auth0
     needs: [quality]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check for Auth0 changes
+        id: changes
+        run: |
+          if git diff --name-only HEAD~1 | grep -q '^infra/auth0/'; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.changed == 'true'
         with:
           node-version: 22
       - name: Install auth0-deploy-cli
+        if: steps.changes.outputs.changed == 'true'
         run: npm install -g auth0-deploy-cli
       - name: Deploy Auth0 configuration
+        if: steps.changes.outputs.changed == 'true'
         env:
           AUTH0_DOMAIN: dev-yc4pbydg.us.auth0.com
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_DEPLOY_CLIENT_ID }}
           AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_DEPLOY_CLIENT_SECRET }}
         run: cd infra/auth0 && a0deploy import --input_file=tenant.yaml
 
-  # ─── Deploy Frontend ─────────────────────────────────────────────
+  # ─── Deploy Frontend ─────────────────────────────────────────────────────
   deploy-frontend:
     name: Deploy Frontend
     needs: [deploy-auth0]
@@ -132,7 +144,7 @@ jobs:
             sleep 3
           done
 
-  # ─── Deploy Backend ──────────────────────────────────────────────
+  # ─── Deploy Backend ──────────────────────────────────────────────────────
   deploy-backend:
     name: Deploy Backend
     needs: [deploy-auth0]
@@ -156,9 +168,7 @@ jobs:
       - name: Deploy to AWS
         run: cd apps/backend && npx serverless deploy --stage prod --conceal
 
-  # ─── Deploy Docs ─────────────────────────────────────────────────
-  # OpenAPI spec generation + S3 upload. Depends on backend because
-  # the S3 bucket and API Gateway docs route are created by backend stack.
+  # ─── Deploy OpenAPI Docs ─────────────────────────────────────────────────
   deploy-docs:
     name: Deploy Docs
     needs: [deploy-backend]
@@ -182,7 +192,7 @@ jobs:
       - name: Generate and deploy OpenAPI docs
         run: cd apps/backend && npm run docs
 
-  # ─── E2E Tests ──────────────────────────────────────────────────
+  # ─── E2E Tests ─────────────────────────────────────────────────────────
   e2e:
     name: E2E Tests
     needs: [deploy-frontend, deploy-backend]
