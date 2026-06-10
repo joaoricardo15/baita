@@ -36,7 +36,6 @@ clients:
 
   - name: Baita Backend
     app_type: non_interactive
-    logo_uri: https://baita.help/logo.png
     grant_types:
       - client_credentials
     token_endpoint_auth_method: client_secret_post
@@ -75,11 +74,9 @@ databases:
       brute_force_protection: true
 
 # ─── Social Connections ──────────────────────────────────────────
-connections:
-  - name: google-oauth2
-    strategy: google-oauth2
-    enabled_clients:
-      - Baita Frontend
+# google-oauth2 is managed in Auth0 Dashboard (contains OAuth secrets).
+# Only the enabled_clients list is declared here for reference:
+#   - Baita Frontend
 
 # ─── Actions ─────────────────────────────────────────────────────
 actions:
