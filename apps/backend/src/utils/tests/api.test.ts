@@ -258,7 +258,7 @@ describe('Api', () => {
         userAgent: 'jest-test',
       })
       expect(logEntry.timestamp).toBeDefined()
-      expect(logEntry.durationMs).toBeGreaterThanOrEqual(0)
+      expect(logEntry.duration).toBeGreaterThanOrEqual(0)
       expect(logEntry.message).toBe('GET /test → success')
       expect(logEntry.responseBody).toEqual({
         success: true,

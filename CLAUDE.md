@@ -65,7 +65,7 @@ The bot schema includes validation and integrity helpers that protect against co
 - **`clearDownstreamSamples(tasks, changedIndex)`** — Invalidates test data in steps that reference a step whose output shape changed.
 - **`computeStepConfigHash(task)`** — Fingerprints a step's config (service + inputs) to detect when sample data becomes stale.
 - **`RetryPolicySchema`** — Optional per-task retry config (`{ maxAttempts, backoffMs }`). Code generation emits retry loops with exponential backoff.
-- **`StepExecutionSchema`** — Structured per-step execution logging with timing (`durationMs`), status, input/output snapshots.
+- **`StepExecutionSchema`** — Structured per-step execution logging with timing (`duration`), status, input/output snapshots.
 
 ### API Contract
 

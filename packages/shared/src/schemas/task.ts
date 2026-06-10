@@ -107,7 +107,7 @@ export const StepExecutionSchema = z.object({
   status: TaskExecutionStatusSchema,
   startedAt: z.number(),
   completedAt: z.number(),
-  durationMs: z.number(),
+  duration: z.number(),
   input: DataTypeSchema.optional(),
   output: DataTypeSchema.optional(),
   error: z.string().optional(),

@@ -329,7 +329,7 @@ ${
           inputData: task${i}_inputData,
           outputData: task${i}_outputData,
           status: task${i}_success ? 'success' : 'fail',
-          durationMs: Date.now() - task${i}_startedAt,
+          duration: Date.now() - task${i}_startedAt,
         });
 
         ////////////////////////////////////////////////////////////////////////////////
@@ -356,7 +356,7 @@ ${
           inputData: task${i}_inputData,
           outputData: task${i}_outputData,
           status: 'filtered',
-          durationMs: Date.now() - task${i}_startedAt,
+          duration: Date.now() - task${i}_startedAt,
         });
       }`
     } catch (err: unknown) {

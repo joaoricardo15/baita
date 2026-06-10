@@ -105,7 +105,7 @@ class Api {
     const isError =
       status === ApiRequestStatus.fail || status === ApiRequestStatus.timeout
     const level = isError ? 'ERROR' : 'INFO'
-    const durationMs = Date.now() - this.startTime
+    const duration = Date.now() - this.startTime
 
     let message = `${this.method} ${this.path} → ${status}`
     if (error) message += `: ${error}`
@@ -120,7 +120,7 @@ class Api {
       method: this.method,
       path: this.path,
       status,
-      durationMs,
+      duration,
       coldStart: isColdStart,
       userId: this.userId || undefined,
       origin: this.origin || undefined,

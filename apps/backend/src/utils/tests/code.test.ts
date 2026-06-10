@@ -350,7 +350,7 @@ describe('getBotInnerCode', () => {
 
     const code = getBotInnerCode(tasks)
     expect(code).toContain('task1_startedAt = Date.now()')
-    expect(code).toContain('durationMs: Date.now() - task1_startedAt')
+    expect(code).toContain('duration: Date.now() - task1_startedAt')
   })
 
   test('generates retry loop when retryPolicy is set', () => {
