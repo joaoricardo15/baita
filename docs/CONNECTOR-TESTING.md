@@ -554,7 +554,7 @@ test.describe('MyConnector — Operation Name', () => {
 | `httpRequest`      | `method-execute` | API key auth (NewsAPI, OpenAI with userApiKey)         |
 | `oauth2Request`    | `method-execute` | OAuth2 auth (Google, Pipedrive) — auto-refreshes token |
 | `getTodo`          | `method-execute` | Built-in: reads user's todo resource                   |
-| `publishToFeed`    | `method-execute` | Built-in: publishes content to SQS queue               |
+| `publishToFeed`    | `method-execute` | Built-in: publishes content to DynamoDB feed           |
 | `sendNotification` | `method-execute` | Built-in: sends web push notification                  |
 | —                  | `code-execute`   | JavaScript sandbox execution                           |
 | —                  | `trigger-sample` | Stores sample data for trigger step                    |

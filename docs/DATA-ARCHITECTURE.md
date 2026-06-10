@@ -25,7 +25,7 @@ How data flows through the Baita monorepo: frontend → API → DynamoDB → API
 │                       BACKEND (Lambda handlers)                   │
 │                                                                   │
 │  ┌────────────┐   ┌──────────────────┐   ┌─────────────────────┐  │
-│  │ Endpoints  │──▶│   Controllers    │──▶│ DynamoDB / S3 / SQS │  │
+│  │ Endpoints  │──▶│   Controllers    │──▶│ DynamoDB / S3       │  │
 │  │ (handlers) │◀──│ (business logic) │◀──│ (module-level SDK)  │  │
 │  └────────────┘   └──────────────────┘   └─────────────────────┘  │
 └───────────────────────────────────────────────────────────────────┘

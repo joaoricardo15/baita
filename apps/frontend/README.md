@@ -30,7 +30,7 @@ Frontend application for Baita: a personal automation platform aimed at normal p
 - Visual bot builder (drag & drop workflow editor)
 - AI Assistant for natural language bot creation (Chrome Built-in AI)
 - Push notifications (VAPID-based, cross-platform including iOS PWA)
-- Content feed with real-time updates via SQS
+- Content feed with auto-expiring items (DynamoDB TTL)
 - Todo list management
 - Notes with file attachments
 - Places/maps integration

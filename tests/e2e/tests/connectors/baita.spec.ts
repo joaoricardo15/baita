@@ -4,7 +4,7 @@
  * Tests the platform's built-in services via standalone task execution:
  * - code-execute: JavaScript sandbox (VM module)
  * - getTodo: Read user's todo list
- * - publishToFeed: Publish content to user's SQS queue
+ * - publishToFeed: Publish content to user's feed (DynamoDB)
  *
  * These services require NO external connection — they always work.
  */

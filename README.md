@@ -24,7 +24,6 @@ Personal automation platform aimed at normal people. Create automated workflows 
                     │ Lambda (Node 20)  │
                     │ DynamoDB          │
                     │ S3                │
-                    │ SQS               │
                     │ EventBridge       │
                     │ CloudWatch        │
                     │ Amplify Hosting   │
@@ -33,23 +32,23 @@ Personal automation platform aimed at normal people. Create automated workflows 
 
 ## Tech Stack
 
-| Layer          | Technology                                       | Purpose                                      |
-| -------------- | ------------------------------------------------ | -------------------------------------------- |
-| **Frontend**   | React 18, TypeScript, Vite 8                     | SPA with PWA support                         |
-| **UI**         | MUI Material v5, SCSS, Bootstrap utilities       | Component library + styling                  |
-| **State**      | React Context API                                | Application state management                 |
-| **Auth**       | Auth0 (@auth0/auth0-react)                       | Authentication + authorization               |
-| **Backend**    | Node.js 20, TypeScript, Serverless Framework 3   | API + business logic                         |
-| **Database**   | DynamoDB (single-table design, on-demand)        | Data storage                                 |
-| **Storage**    | S3                                               | Bot code, file uploads, docs                 |
-| **Messaging**  | SQS                                              | Content feed delivery                        |
-| **Scheduling** | EventBridge Scheduler                            | Bot cron triggers                            |
-| **Monitoring** | CloudWatch Alarms                                | Lambda errors, DynamoDB throttle, API 5XX    |
-| **Hosting**    | AWS Amplify                                      | Frontend CDN + deploy                        |
-| **Schemas**    | Zod                                              | Shared runtime validation + TypeScript types |
-| **Monorepo**   | Turborepo + pnpm workspaces                      | Build orchestration + caching                |
-| **Testing**    | Jest (unit), Vitest (frontend), Playwright (E2E) | Multi-layer test strategy                    |
-| **CI/CD**      | GitHub Actions                                   | Automated quality gates + deploy             |
+| Layer            | Technology                                       | Purpose                                      |
+| ---------------- | ------------------------------------------------ | -------------------------------------------- |
+| **Frontend**     | React 18, TypeScript, Vite 8                     | SPA with PWA support                         |
+| **UI**           | MUI Material v5, SCSS, Bootstrap utilities       | Component library + styling                  |
+| **State**        | React Context API                                | Application state management                 |
+| **Auth**         | Auth0 (@auth0/auth0-react)                       | Authentication + authorization               |
+| **Backend**      | Node.js 20, TypeScript, Serverless Framework 3   | API + business logic                         |
+| **Database**     | DynamoDB (single-table design, on-demand)        | Data storage                                 |
+| **Storage**      | S3                                               | Bot code, file uploads, docs                 |
+| **Content Feed** | DynamoDB (TTL-based expiry)                      | Content storage + auto-cleanup               |
+| **Scheduling**   | EventBridge Scheduler                            | Bot cron triggers                            |
+| **Monitoring**   | CloudWatch Alarms                                | Lambda errors, DynamoDB throttle, API 5XX    |
+| **Hosting**      | AWS Amplify                                      | Frontend CDN + deploy                        |
+| **Schemas**      | Zod                                              | Shared runtime validation + TypeScript types |
+| **Monorepo**     | Turborepo + pnpm workspaces                      | Build orchestration + caching                |
+| **Testing**      | Jest (unit), Vitest (frontend), Playwright (E2E) | Multi-layer test strategy                    |
+| **CI/CD**        | GitHub Actions                                   | Automated quality gates + deploy             |
 
 ## Project Structure
 
@@ -149,7 +148,7 @@ Triggered via HTTP (API Gateway) or schedule (EventBridge)
     ↓
 Each task executes sequentially, outputs chained
     ↓
-Results published to user's SQS queue → content feed
+Results stored in DynamoDB as fresh content → content feed
 ```
 
 ## Security
@@ -176,7 +175,6 @@ Results published to user's SQS queue → content feed
 - **Frontend stack**: `baita-frontend-prod` (CloudFormation — Amplify)
 - **DynamoDB Table**: `baita-prod` (on-demand billing)
 - **S3 Buckets**: `baita-prod-bots`, `baita-prod-files`, `baita-prod-docs`
-- **SQS Queues**: `baita-prod-user-{userId}` (per-user content feed)
 - **Custom Domain**: `api.baita.help` (Route53 + API Gateway)
 
 ## Contributing

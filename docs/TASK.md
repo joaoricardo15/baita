@@ -203,7 +203,7 @@ Fetches the user's todo list from DynamoDB.
 
 ### method-execute → publishToFeed
 
-Publishes content items to the user's SQS feed queue, deduplicating against previously seen items.
+Publishes content items to the user's DynamoDB content store, deduplicating against existing records.
 
 **How it works:**
 
@@ -211,7 +211,7 @@ Publishes content items to the user's SQS feed queue, deduplicating against prev
 2. Validates content against `ContentSchema`
 3. Queries DynamoDB for `#CONTENT#{contentId}` records (previously seen items)
 4. Filters out duplicates, limits to 10 new items per batch
-5. Sends new items to user's SQS queue (`baita-prod-user-{userId}`)
+5. Writes new items to DynamoDB with TTL for auto-expiry
 6. Throws if 0 items are new (all duplicates)
 
 **Input format:**

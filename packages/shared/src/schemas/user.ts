@@ -7,7 +7,7 @@
  * Place, and Todo belongs to exactly one User (scoped by userId in DynamoDB).
  *
  * This file also contains user-domain value objects:
- * - Content: feed items published by bots to the user's SQS queue
+ * - Content: feed items published by bots to the user's DynamoDB content store
  * - Todo/TodoTask: task management items
  *
  * Relationships:

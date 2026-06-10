@@ -81,7 +81,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 ### Test Coverage
 
 - **Unit (Frontend):** `apps/frontend/src/providers/user.test.tsx` — retrieveContent, reactToContent, popContent, auto-refresh
-- **Unit (Backend):** `apps/backend/src/controllers/tests/user.test.ts` — SQS message parsing, deduplication, batch delete
+- **Unit (Backend):** `apps/backend/src/controllers/tests/user.test.ts` — DynamoDB content publishing, deduplication, filtering by seenAt
 - **E2E:** `tests/e2e/tests/content-feed.spec.ts` — Publish content via bot task, read from feed, verify structure, confirm consumption
 - **E2E:** `tests/e2e/tests/pages-security.spec.ts` — Feed page renders without errors
 
@@ -253,8 +253,8 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 | #    | Use Case       | User Action                          | Expected Outcome                                       |
 | ---- | -------------- | ------------------------------------ | ------------------------------------------------------ |
 | 10.1 | Sign up        | Click "Log in" → Sign up tab         | Auth0 account created, redirected to app authenticated |
-| 10.2 | Provisioning   | First login                          | DynamoDB record + SQS queue created automatically      |
-| 10.3 | Delete account | Profile → "Delete Account" → Confirm | All bots, queues, DynamoDB records, Auth0 user deleted |
+| 10.2 | Provisioning   | First login                          | DynamoDB user record created automatically             |
+| 10.3 | Delete account | Profile → "Delete Account" → Confirm | All bots, DynamoDB records, Auth0 user deleted         |
 | 10.4 | Post-delete    | Try to access API with old token     | 401 Unauthorized (auth guard rejects deleted user)     |
 
 ### Test Coverage

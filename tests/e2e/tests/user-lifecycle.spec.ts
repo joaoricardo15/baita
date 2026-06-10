@@ -6,14 +6,14 @@
  * 1. Try to log in (user may exist from a previous failed run)
  * 2. If login works → delete account via centralized DELETE /user endpoint
  * 3. Sign up fresh → guaranteed clean slate
- * 4. Verify Auth0 Post-Login Action provisioned the user (DynamoDB + SQS)
+ * 4. Verify Auth0 Post-Login Action provisioned the user (DynamoDB record)
  * 5. Copy admin OAuth connections for journey specs that need them
  *
  * User provisioning is handled automatically by the Auth0 Post-Login Action
  * which calls POST /user with an API key on first login (signup).
  *
  * Cleanup is ALWAYS performed via the DELETE /user endpoint which
- * handles: bots, SQS queues, all DynamoDB records, and Auth0 user deletion.
+ * handles: bots, all DynamoDB records, and Auth0 user deletion.
  */
 import { expect, test } from '@playwright/test'
 import fs from 'fs'
