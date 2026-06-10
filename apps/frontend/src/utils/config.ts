@@ -60,7 +60,7 @@ export const GOOGLE_MAPS_API_KEY =
   import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 export const GOOGLE_MAPS_MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || ''
 export const FILES_BASE_URL =
-  'https://baita-prod-files.s3.us-east-1.amazonaws.com'
+  'https://baita-backend-prod-files.s3.us-east-1.amazonaws.com'
 
 const appConfig: AppConfig = {
   language:
