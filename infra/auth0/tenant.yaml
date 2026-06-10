@@ -64,6 +64,7 @@ clientGrants:
       - update:actions
       - delete:actions
       - read:tenant_settings
+      - update:tenant_settings
 
 # ─── Database Connections ────────────────────────────────────────
 databases:
