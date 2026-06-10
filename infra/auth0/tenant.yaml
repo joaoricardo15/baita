@@ -57,6 +57,8 @@ clientGrants:
       - update:clients
       - read:connections
       - update:connections
+      - read:connections_options
+      - update:connections_options
       - read:resource_servers
       - read:actions
       - create:actions
