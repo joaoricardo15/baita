@@ -71,7 +71,7 @@ export async function copySystemConnections(
 
   const result = await docClient.send(
     new QueryCommand({
-      TableName: 'baita-prod',
+      TableName: 'baita-backend-prod',
       KeyConditionExpression: 'userId = :uid AND begins_with(sortKey, :sk)',
       ExpressionAttributeValues: {
         ':uid': SYSTEM_USER,
