@@ -1,8 +1,6 @@
 import { TaskExecutionStatus } from '@baita/shared'
 import { DataType } from '@baita/shared'
-import { Callback, Context } from 'aws-lambda'
-
-import { LAMBDA_TIMEOUT_BUFFER_MS } from './constants'
+import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 export enum ApiRequestStatus {
   fail = 'fail',
@@ -11,21 +9,38 @@ export enum ApiRequestStatus {
   success = 'success',
 }
 
+let isColdStart = true
+
 class Api {
-  timeoutLogger: ReturnType<typeof setTimeout>
-  logObject: {
-    inputData: DataType
-    status?: ApiRequestStatus | TaskExecutionStatus
-    message?: string
-    data?: DataType
-  }
+  private startTime: number
+  private method: string
+  private path: string
+  private requestId: string
+  private traceId: string
+  private userId: string
+  private origin: string
+  private ip: string
+  private userAgent: string
+  private requestBody: DataType | null
 
-  constructor(inputData: DataType, functionContext: Context) {
-    this.logObject = { inputData }
+  constructor(event: APIGatewayProxyEvent, context: Context) {
+    this.startTime = Date.now()
+    this.method = event.httpMethod
+    this.path = event.path
+    this.requestId = context.awsRequestId
+    this.traceId = event.headers?.['X-Amzn-Trace-Id'] || ''
+    this.origin = event.headers?.origin || event.headers?.referer || ''
+    this.ip = event.headers?.['X-Forwarded-For']?.split(',')[0]?.trim() || ''
+    this.userAgent = event.headers?.['User-Agent'] || ''
 
-    this.timeoutLogger = setTimeout(() => {
-      this.log(ApiRequestStatus.timeout)
-    }, functionContext.getRemainingTimeInMillis() - LAMBDA_TIMEOUT_BUFFER_MS)
+    const rawUserId = (event.requestContext?.authorizer?.userId as string) || ''
+    this.userId = rawUserId.includes('|') ? rawUserId.split('|')[1] : rawUserId
+
+    try {
+      this.requestBody = event.body ? JSON.parse(event.body) : null
+    } catch {
+      this.requestBody = event.body
+    }
   }
 
   parseError(err: unknown): string {
@@ -82,18 +97,44 @@ class Api {
     return ''
   }
 
-  log(
+  private emitLog(
     status: ApiRequestStatus | TaskExecutionStatus,
     error?: string,
-    data?: DataType
+    responseBody?: DataType
   ): void {
-    clearTimeout(this.timeoutLogger)
+    const isError =
+      status === ApiRequestStatus.fail || status === ApiRequestStatus.timeout
+    const level = isError ? 'ERROR' : 'INFO'
+    const durationMs = Date.now() - this.startTime
 
-    this.logObject.status = status
-    this.logObject.message = error
-    this.logObject.data = data
+    let message = `${this.method} ${this.path} → ${status}`
+    if (error) message += `: ${error}`
+
+    const logEntry: Record<string, unknown> = {
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      service: 'baita-api',
+      requestId: this.requestId,
+      traceId: this.traceId || undefined,
+      method: this.method,
+      path: this.path,
+      status,
+      durationMs,
+      coldStart: isColdStart,
+      userId: this.userId || undefined,
+      origin: this.origin || undefined,
+      ip: this.ip || undefined,
+      userAgent: this.userAgent || undefined,
+      requestBody: this.requestBody,
+      responseBody,
+      error: error || undefined,
+    }
+
+    isColdStart = false
+
     // eslint-disable-next-line no-console
-    console.log(JSON.stringify(this.logObject))
+    console.log(JSON.stringify(logEntry))
   }
 
   httpResponse(
@@ -103,8 +144,13 @@ class Api {
     data?: DataType
   ): void {
     const errorMessage = this.parseError(error)
+    const responseBody = {
+      success: status === ApiRequestStatus.success,
+      message: errorMessage,
+      data,
+    }
 
-    this.log(status, errorMessage, data)
+    this.emitLog(status, errorMessage, responseBody)
 
     callback(null, {
       statusCode: 200,
@@ -114,11 +160,7 @@ class Api {
           process.env.SERVICE_SITE_URL || 'https://www.baita.help',
         'Access-Control-Allow-Credentials': 'true',
       },
-      body: JSON.stringify({
-        success: status === ApiRequestStatus.success,
-        message: errorMessage,
-        data,
-      }),
+      body: JSON.stringify(responseBody),
     })
   }
 
@@ -129,7 +171,7 @@ class Api {
   ): void {
     const errorMessage = this.parseError(error)
 
-    this.log(status, errorMessage)
+    this.emitLog(status, errorMessage)
 
     callback(null, {
       statusCode: 200,
@@ -145,14 +187,15 @@ class Api {
     data?: DataType
   ): void {
     const errorMessage = this.parseError(error)
-
-    this.log(status, errorMessage, data)
-
-    callback(null, {
+    const responseBody = {
       success: status === TaskExecutionStatus.success,
       message: errorMessage,
       data,
-    })
+    }
+
+    this.emitLog(status, errorMessage, responseBody)
+
+    callback(null, responseBody)
   }
 }
 

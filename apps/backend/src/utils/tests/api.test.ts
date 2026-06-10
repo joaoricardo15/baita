@@ -1,7 +1,62 @@
 // Infrastructure: API response formatting, error parsing, and timeout safety
 import { TaskExecutionStatus } from '@baita/shared'
+import { APIGatewayProxyEvent } from 'aws-lambda'
 
 import Api, { ApiRequestStatus } from '@/utils/api'
+
+const mockEvent = {
+  httpMethod: 'GET',
+  path: '/test',
+  headers: {
+    'X-Amzn-Trace-Id': 'Root=1-test-trace',
+    origin: 'https://www.baita.help',
+    'X-Forwarded-For': '127.0.0.1',
+    'User-Agent': 'jest-test',
+  },
+  multiValueHeaders: {},
+  body: null,
+  isBase64Encoded: false,
+  resource: '/test',
+  pathParameters: null,
+  queryStringParameters: null,
+  multiValueQueryStringParameters: null,
+  stageVariables: null,
+  requestContext: {
+    authorizer: { userId: 'auth0|test-user-123' },
+    resourceId: '',
+    resourcePath: '/test',
+    httpMethod: 'GET',
+    extendedRequestId: '',
+    requestTime: '',
+    path: '/test',
+    accountId: '',
+    protocol: 'HTTP/1.1',
+    stage: 'prod',
+    domainPrefix: '',
+    requestTimeEpoch: 0,
+    requestId: '',
+    identity: {
+      cognitoIdentityPoolId: null,
+      accountId: null,
+      cognitoIdentityId: null,
+      caller: null,
+      sourceIp: '127.0.0.1',
+      principalOrgId: null,
+      accessKey: null,
+      cognitoAuthenticationType: null,
+      cognitoAuthenticationProvider: null,
+      userArn: null,
+      userAgent: 'jest-test',
+      user: null,
+      apiKey: null,
+      apiKeyId: null,
+      clientCert: null,
+    },
+    domainName: '',
+    deploymentId: '',
+    apiId: '',
+  },
+} as unknown as APIGatewayProxyEvent
 
 const mockContext = {
   getRemainingTimeInMillis: () => 30000,
@@ -10,7 +65,7 @@ const mockContext = {
   functionVersion: '1',
   invokedFunctionArn: '',
   memoryLimitInMB: '128',
-  awsRequestId: '123',
+  awsRequestId: 'test-request-id-123',
   logGroupName: '',
   logStreamName: '',
   done: () => undefined,
@@ -19,16 +74,8 @@ const mockContext = {
 }
 
 describe('Api', () => {
-  beforeEach(() => {
-    jest.useFakeTimers()
-  })
-
-  afterEach(() => {
-    jest.useRealTimers()
-  })
-
   describe('parseError', () => {
-    const api = new Api({}, mockContext)
+    const api = new Api(mockEvent, mockContext)
 
     test('should parse string error', () => {
       expect(api.parseError('Something went wrong')).toBe(
@@ -88,7 +135,7 @@ describe('Api', () => {
 
   describe('httpResponse', () => {
     test('should return success response', () => {
-      const api = new Api({}, mockContext)
+      const api = new Api(mockEvent, mockContext)
       const callback = jest.fn()
 
       api.httpResponse(callback, ApiRequestStatus.success, undefined, {
@@ -111,7 +158,7 @@ describe('Api', () => {
     })
 
     test('should return failure response with error message', () => {
-      const api = new Api({}, mockContext)
+      const api = new Api(mockEvent, mockContext)
       const callback = jest.fn()
 
       api.httpResponse(callback, ApiRequestStatus.fail, new Error('Not found'))
@@ -134,7 +181,7 @@ describe('Api', () => {
 
   describe('httpConnectorResponse', () => {
     test('should return HTML with window.close script', () => {
-      const api = new Api({}, mockContext)
+      const api = new Api(mockEvent, mockContext)
       const callback = jest.fn()
 
       api.httpConnectorResponse(callback, ApiRequestStatus.success)
@@ -149,7 +196,7 @@ describe('Api', () => {
 
   describe('taskExecutionResponse', () => {
     test('should return task execution result', () => {
-      const api = new Api({}, mockContext)
+      const api = new Api(mockEvent, mockContext)
       const callback = jest.fn()
 
       api.taskExecutionResponse(
@@ -167,7 +214,7 @@ describe('Api', () => {
     })
 
     test('should return failure for failed task', () => {
-      const api = new Api({}, mockContext)
+      const api = new Api(mockEvent, mockContext)
       const callback = jest.fn()
 
       api.taskExecutionResponse(
@@ -184,34 +231,97 @@ describe('Api', () => {
     })
   })
 
-  describe('timeout behavior', () => {
-    test('should log timeout before lambda expires', () => {
+  describe('structured log format', () => {
+    test('should emit structured JSON with all expected fields', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
-      new Api({ test: true }, mockContext)
+      const api = new Api(mockEvent, mockContext)
+      const callback = jest.fn()
 
-      jest.advanceTimersByTime(29800)
+      api.httpResponse(callback, ApiRequestStatus.success, undefined, {
+        items: [],
+      })
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('"status":"timeout"')
-      )
+      const logCall = consoleSpy.mock.calls[0][0]
+      const logEntry = JSON.parse(logCall)
+
+      expect(logEntry).toMatchObject({
+        level: 'INFO',
+        service: 'baita-api',
+        requestId: 'test-request-id-123',
+        traceId: 'Root=1-test-trace',
+        method: 'GET',
+        path: '/test',
+        status: 'success',
+        userId: 'test-user-123',
+        origin: 'https://www.baita.help',
+        ip: '127.0.0.1',
+        userAgent: 'jest-test',
+      })
+      expect(logEntry.timestamp).toBeDefined()
+      expect(logEntry.durationMs).toBeGreaterThanOrEqual(0)
+      expect(logEntry.message).toBe('GET /test → success')
+      expect(logEntry.responseBody).toEqual({
+        success: true,
+        message: '',
+        data: { items: [] },
+      })
 
       consoleSpy.mockRestore()
     })
 
-    test('should cancel timeout when response is sent', () => {
+    test('should emit ERROR level for failures', () => {
       const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
-      const api = new Api({}, mockContext)
+      const api = new Api(mockEvent, mockContext)
       const callback = jest.fn()
 
-      api.httpResponse(callback, ApiRequestStatus.success, undefined, {})
+      api.httpResponse(callback, ApiRequestStatus.fail, new Error('Boom'))
 
-      consoleSpy.mockClear()
+      const logEntry = JSON.parse(consoleSpy.mock.calls[0][0])
 
-      jest.advanceTimersByTime(30000)
+      expect(logEntry.level).toBe('ERROR')
+      expect(logEntry.error).toBe('Boom')
+      expect(logEntry.message).toBe('GET /test → fail: Boom')
 
-      expect(consoleSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining('"status":"timeout"')
-      )
+      consoleSpy.mockRestore()
+    })
+
+    test('should parse request body from event', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      const eventWithBody = {
+        ...mockEvent,
+        body: JSON.stringify({ name: 'test', email: 'a@b.com' }),
+      } as unknown as APIGatewayProxyEvent
+
+      const api = new Api(eventWithBody, mockContext)
+      const callback = jest.fn()
+
+      api.httpResponse(callback, ApiRequestStatus.success)
+
+      const logEntry = JSON.parse(consoleSpy.mock.calls[0][0])
+      expect(logEntry.requestBody).toEqual({ name: 'test', email: 'a@b.com' })
+
+      consoleSpy.mockRestore()
+    })
+
+    test('should not include Authorization or X-Api-Key in logs', () => {
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+      const sensitiveEvent = {
+        ...mockEvent,
+        headers: {
+          ...mockEvent.headers,
+          Authorization: 'Bearer secret-jwt-token',
+          'X-Api-Key': 'secret-api-key',
+        },
+      } as unknown as APIGatewayProxyEvent
+
+      const api = new Api(sensitiveEvent, mockContext)
+      const callback = jest.fn()
+
+      api.httpResponse(callback, ApiRequestStatus.success)
+
+      const logOutput = consoleSpy.mock.calls[0][0]
+      expect(logOutput).not.toContain('secret-jwt-token')
+      expect(logOutput).not.toContain('secret-api-key')
 
       consoleSpy.mockRestore()
     })

@@ -1,4 +1,3 @@
-export const LAMBDA_TIMEOUT_BUFFER_MS = 200
 export const LOG_LOOKBACK_DAYS = 10
 export const LOG_QUERY_LIMIT = 20
 export const CONTENT_TTL_DAYS = 7
