@@ -75,7 +75,7 @@ npm install -g auth0-deploy-cli
 ### Environment Variables
 
 ```bash
-export AUTH0_DOMAIN=auth.baita.help
+export AUTH0_DOMAIN=dev-yc4pbydg.us.auth0.com
 export AUTH0_CLIENT_ID=<baita-m2m-client-id>
 export AUTH0_CLIENT_SECRET=<baita-m2m-client-secret>
 ```

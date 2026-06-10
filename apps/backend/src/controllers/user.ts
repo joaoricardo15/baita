@@ -66,14 +66,11 @@ class User {
         }
       )
 
-      await axios.delete(
-        `https://${AUTH0_DOMAIN}/api/v2/users/auth0|${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${tokenResponse.data.access_token}`,
-          },
-        }
-      )
+      await axios.delete(`${AUTH0_AUDIENCE}users/auth0|${userId}`, {
+        headers: {
+          Authorization: `Bearer ${tokenResponse.data.access_token}`,
+        },
+      })
     } catch (err) {
       console.error('Failed to delete Auth0 user:', err)
     }
