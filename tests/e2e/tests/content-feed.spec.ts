@@ -2,12 +2,13 @@
  * Content Feed E2E Tests
  *
  * User Journey: Content Feed
- * Tests the full content lifecycle using real AWS resources:
+ * Tests the full content lifecycle using DynamoDB:
  * 1. Create a bot with a publishToFeed task
- * 2. Execute the task (writes to user's SQS queue)
- * 3. Read content from feed (GET /content consumes from SQS)
+ * 2. Execute the task (writes content records to DynamoDB)
+ * 3. Read content from feed (GET /content returns fresh items)
  * 4. Verify content structure matches what was published
- * 5. Verify consumption (second read returns empty — SQS deletes on delivery)
+ * 5. React to content (PATCH marks as seen)
+ * 6. Verify reacted content no longer appears in feed
  *
  * Part of the 'journeys' project — depends on user-lifecycle.spec.ts setup.
  */
@@ -161,54 +162,36 @@ test.describe('Content Feed', () => {
     logResult('publishToFeed executed', {
       status: body.data?.status,
       outputData: body.data?.outputData,
-      inputData: body.data?.inputData,
     })
     expect(body.data?.status).toBe('success')
   })
 
   test('read content from feed and verify structure', async ({ request }) => {
-    // SQS messages are available almost immediately after sendMessageBatch,
-    // but allow a short window for propagation
-    let content: {
-      contentId: string
-      header: string
-      author: { name: string }
-    }[] = []
+    const res = await request.get(`${API_URL}/content`, {
+      headers: authHeaders(token),
+    })
+    expect(res.status()).toBe(200)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+    expect(body.data?.length).toBeGreaterThan(0)
 
-    for (let attempt = 1; attempt <= 5; attempt++) {
-      await new Promise((r) => setTimeout(r, 2000))
-
-      const res = await request.get(`${API_URL}/content`, {
-        headers: authHeaders(token),
-      })
-      expect(res.status()).toBe(200)
-      const body = await res.json()
-      expect(body.success).toBe(true)
-
-      if (body.data?.length > 0) {
-        content = body.data
-        logResult('Content available', { attempt, items: content.length })
-        break
-      }
-      logResult('Feed empty, retrying', { attempt })
-    }
-
-    expect(content.length).toBeGreaterThan(0)
-
-    const found = content.find(
-      (item) => item.contentId === testContent[0].contentId
+    const found = body.data.find(
+      (item: { contentId: string }) =>
+        item.contentId === testContent[0].contentId
     )
     expect(found).toBeTruthy()
-    expect(found!.header).toBe('E2E Test Article 1')
-    expect(found!.author.name).toBe('E2E Bot')
+    expect(found.header).toBe('E2E Test Article 1')
+    expect(found.author.name).toBe('E2E Bot')
+    expect(found.publishedAt).toBeDefined()
+    expect(found.seenAt).toBeUndefined()
 
     logResult('Content verified', {
-      totalItems: content.length,
+      totalItems: body.data.length,
       matchedTestContent: true,
     })
   })
 
-  test('content is consumed after read (SQS deletes on delivery)', async ({
+  test('content persists on second read (no longer deleted on delivery)', async ({
     request,
   }) => {
     const res = await request.get(`${API_URL}/content`, {
@@ -222,10 +205,92 @@ test.describe('Content Feed', () => {
       (item: { contentId: string }) =>
         item.contentId === testContent[0].contentId
     )
-    expect(stillPresent).toBeFalsy()
-    logResult('Content consumed (not present on second read)', {
-      remainingItems: body.data?.length ?? 0,
+    expect(stillPresent).toBeTruthy()
+    logResult('Content persists on second read', {
+      itemsStillPresent: body.data?.length,
     })
+  })
+
+  test('react to content marks it as seen', async ({ request }) => {
+    const res = await request.patch(
+      `${API_URL}/content/${testContent[0].contentId}`,
+      {
+        headers: authHeaders(token),
+        data: { reaction: 'like' },
+      }
+    )
+    expect(res.status()).toBe(200)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+    logResult('Reacted to content', { reaction: 'like' })
+  })
+
+  test('reacted content no longer appears in feed', async ({ request }) => {
+    const res = await request.get(`${API_URL}/content`, {
+      headers: authHeaders(token),
+    })
+    expect(res.status()).toBe(200)
+    const body = await res.json()
+    expect(body.success).toBe(true)
+
+    const reactedItem = body.data?.find(
+      (item: { contentId: string }) =>
+        item.contentId === testContent[0].contentId
+    )
+    expect(reactedItem).toBeFalsy()
+
+    const unreactedItem = body.data?.find(
+      (item: { contentId: string }) =>
+        item.contentId === testContent[1].contentId
+    )
+    expect(unreactedItem).toBeTruthy()
+
+    logResult('Reacted content filtered from feed', {
+      reactedItemGone: true,
+      unreactedItemPresent: true,
+    })
+  })
+
+  test('deduplication: re-publishing same content does not create duplicates', async ({
+    request,
+  }) => {
+    const task = {
+      taskId: 2,
+      service: {
+        type: 'invoke',
+        name: 'method-execute',
+        label: 'Publish content to feed',
+        config: {
+          methodName: 'publishToFeed',
+          inputFields: [
+            {
+              name: 'content',
+              label: 'content',
+              type: 'output',
+              required: true,
+            },
+          ],
+        },
+      },
+      inputData: [
+        {
+          name: 'content',
+          label: 'content',
+          type: 'output',
+          value: JSON.stringify(testContent),
+          sampleValue: testContent,
+        },
+      ],
+    }
+
+    const res = await request.post(`${API_URL}/bots/${botId}/test`, {
+      headers: authHeaders(token),
+      data: { task, taskIndex: 1 },
+    })
+    const body = await res.json()
+    expect(body.success).toBe(true)
+    expect(body.data?.outputData?.message).toContain('0')
+    logResult('Dedup verified: re-publish produced 0 new items')
   })
 
   test('cleanup: delete content bot', async ({ request }) => {

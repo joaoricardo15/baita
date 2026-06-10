@@ -2,17 +2,10 @@ process.env.CORE_TABLE = 'test-table'
 process.env.SERVICE_PREFIX = 'baita-prod'
 
 import {
-  CreateQueueCommand,
-  DeleteMessageBatchCommand,
-  GetQueueUrlCommand,
-  ReceiveMessageCommand,
-  SendMessageBatchCommand,
-  SQS,
-} from '@aws-sdk/client-sqs'
-import {
   DynamoDBDocument,
   PutCommand,
   QueryCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { mockClient } from 'aws-sdk-client-mock'
 
@@ -26,26 +19,20 @@ jest.mock('@/controllers/bot', () => {
 })
 
 const ddbMock = mockClient(DynamoDBDocument)
-const sqsMock = mockClient(SQS)
 
 import User from '../user'
 
 beforeEach(() => {
   ddbMock.reset()
-  sqsMock.reset()
 })
 
-// Journey: Account Management + Content Feed — user provisioning, content consumption, publishing
 describe('User', () => {
   describe('createUser', () => {
     it('stores user in DynamoDB with #USER sortKey', async () => {
       ddbMock.on(PutCommand).resolves({})
-      sqsMock.on(CreateQueueCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
 
       const user = new User()
-      const result = await user.createUser('auth0|user1', {
+      const result = await user.createUser('user1', {
         email: 'test@example.com',
         name: 'Test User',
       } as any)
@@ -54,27 +41,21 @@ describe('User', () => {
       const putCalls = ddbMock.commandCalls(PutCommand)
       expect(putCalls).toHaveLength(1)
       expect(putCalls[0].args[0].input.Item).toEqual({
-        userId: 'auth0|user1',
+        userId: 'user1',
         email: 'test@example.com',
         name: 'Test User',
         sortKey: '#USER',
       })
     })
 
-    it('creates SQS queue for the user', async () => {
+    it('does not create any infrastructure resources', async () => {
       ddbMock.on(PutCommand).resolves({})
-      sqsMock.on(CreateQueueCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
 
       const user = new User()
-      await user.createUser('auth0|user1', { name: '', email: '' } as any)
+      await user.createUser('user1', { name: '', email: '' } as any)
 
-      const createQueueCalls = sqsMock.commandCalls(CreateQueueCommand)
-      expect(createQueueCalls).toHaveLength(1)
-      expect(createQueueCalls[0].args[0].input.QueueName).toBe(
-        'baita-prod-user-auth0|user1'
-      )
+      const putCalls = ddbMock.commandCalls(PutCommand)
+      expect(putCalls).toHaveLength(1)
     })
 
     it('throws on DynamoDB error', async () => {
@@ -88,148 +69,150 @@ describe('User', () => {
   })
 
   describe('getContent', () => {
-    it('returns parsed messages from SQS queue', async () => {
-      sqsMock.on(GetQueueUrlCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
-      sqsMock.on(ReceiveMessageCommand).resolves({
-        Messages: [
+    it('returns only fresh content (seenAt absent)', async () => {
+      ddbMock.on(QueryCommand).resolves({
+        Items: [
+          { contentId: 'c1', header: 'Fresh', sortKey: '#CONTENT#c1' },
           {
-            MessageId: 'msg-1',
-            ReceiptHandle: 'receipt-1',
-            Body: JSON.stringify({ title: 'News 1', contentId: 'c1' }),
+            contentId: 'c2',
+            header: 'Seen',
+            seenAt: '2026-01-01',
+            sortKey: '#CONTENT#c2',
           },
-          {
-            MessageId: 'msg-2',
-            ReceiptHandle: 'receipt-2',
-            Body: JSON.stringify({ title: 'News 2', contentId: 'c2' }),
-          },
+          { contentId: 'c3', header: 'Also Fresh', sortKey: '#CONTENT#c3' },
         ],
       })
-      sqsMock.on(DeleteMessageBatchCommand).resolves({})
-
-      const user = new User()
-      const result = await user.getContent('auth0|user1')
-
-      expect(result).toHaveLength(2)
-      expect(result![0].title).toBe('News 1')
-      expect(result![1].contentId).toBe('c2')
-    })
-
-    it('returns empty array when no messages', async () => {
-      sqsMock.on(GetQueueUrlCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
-      sqsMock.on(ReceiveMessageCommand).resolves({})
-
-      const user = new User()
-      const result = await user.getContent('auth0|user1')
-
-      expect(result).toEqual([])
-    })
-
-    it('deletes messages after receiving them', async () => {
-      sqsMock.on(GetQueueUrlCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
-      sqsMock.on(ReceiveMessageCommand).resolves({
-        Messages: [
-          { MessageId: 'msg-1', ReceiptHandle: 'receipt-1', Body: '{}' },
-        ],
-      })
-      sqsMock.on(DeleteMessageBatchCommand).resolves({})
-
-      const user = new User()
-      await user.getContent('auth0|user1')
-
-      const deleteCalls = sqsMock.commandCalls(DeleteMessageBatchCommand)
-      expect(deleteCalls).toHaveLength(1)
-      expect(deleteCalls[0].args[0].input.Entries).toEqual([
-        { Id: 'msg-1', ReceiptHandle: 'receipt-1' },
-      ])
-    })
-
-    it('filters out messages with invalid JSON bodies', async () => {
-      sqsMock.on(GetQueueUrlCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
-      sqsMock.on(ReceiveMessageCommand).resolves({
-        Messages: [
-          { MessageId: 'msg-1', ReceiptHandle: 'r1', Body: 'not-json' },
-          {
-            MessageId: 'msg-2',
-            ReceiptHandle: 'r2',
-            Body: JSON.stringify({ title: 'Valid' }),
-          },
-        ],
-      })
-      sqsMock.on(DeleteMessageBatchCommand).resolves({})
 
       const user = new User()
       const result = await user.getContent('user1')
 
-      expect(result).toHaveLength(1)
-      expect(result![0].title).toBe('Valid')
+      expect(result).toHaveLength(2)
+      expect(result[0].contentId).toBe('c1')
+      expect(result[1].contentId).toBe('c3')
+    })
+
+    it('returns empty array when no content exists', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+
+      const user = new User()
+      const result = await user.getContent('user1')
+
+      expect(result).toEqual([])
+    })
+
+    it('returns empty array when all content is seen', async () => {
+      ddbMock.on(QueryCommand).resolves({
+        Items: [
+          { contentId: 'c1', seenAt: '2026-01-01', sortKey: '#CONTENT#c1' },
+        ],
+      })
+
+      const user = new User()
+      const result = await user.getContent('user1')
+
+      expect(result).toEqual([])
+    })
+  })
+
+  describe('reactToContent', () => {
+    it('updates content record with seenAt and reaction', async () => {
+      ddbMock.on(UpdateCommand).resolves({})
+
+      const user = new User()
+      await user.reactToContent('user1', 'c1', 'like')
+
+      const updateCalls = ddbMock.commandCalls(UpdateCommand)
+      expect(updateCalls).toHaveLength(1)
+      expect(updateCalls[0].args[0].input.Key).toEqual({
+        userId: 'user1',
+        sortKey: '#CONTENT#c1',
+      })
     })
   })
 
   describe('publishContent', () => {
-    it('sends new content to SQS queue', async () => {
-      sqsMock.on(GetQueueUrlCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
+    it('writes new content to DynamoDB', async () => {
       ddbMock.on(QueryCommand).resolves({ Items: [] })
-      sqsMock.on(SendMessageBatchCommand).resolves({})
+      ddbMock.on(PutCommand).resolves({})
 
       const user = new User()
-      await user.publishContent('user1', [
-        { contentId: 'c1', title: 'News' } as any,
+      const result = await user.publishContent('user1', [
+        {
+          contentId: 'c1',
+          header: 'News',
+          date: '2026-01-01',
+          author: { name: 'Test' },
+        } as any,
       ])
 
-      const sendCalls = sqsMock.commandCalls(SendMessageBatchCommand)
-      expect(sendCalls).toHaveLength(1)
-      expect(sendCalls[0].args[0].input.Entries).toHaveLength(1)
+      expect(result.published).toBe(1)
+      expect(result.total).toBe(1)
+
+      const putCalls = ddbMock.commandCalls(PutCommand)
+      expect(putCalls).toHaveLength(1)
+      expect(putCalls[0].args[0].input.Item?.contentId).toBe('c1')
+      expect(putCalls[0].args[0].input.Item?.publishedAt).toBeDefined()
+      expect(putCalls[0].args[0].input.Item?.ttl).toBeDefined()
     })
 
-    it('filters out already-seen content', async () => {
-      sqsMock.on(GetQueueUrlCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
+    it('filters out already-existing content', async () => {
       ddbMock.on(QueryCommand).resolves({
-        Items: [{ contentId: 'c1' }],
+        Items: [{ contentId: 'c1', sortKey: '#CONTENT#c1' }],
       })
-      sqsMock.on(SendMessageBatchCommand).resolves({})
+      ddbMock.on(PutCommand).resolves({})
 
       const user = new User()
-      await user.publishContent('user1', [
-        { contentId: 'c1', title: 'Old' } as any,
-        { contentId: 'c2', title: 'New' } as any,
+      const result = await user.publishContent('user1', [
+        { contentId: 'c1', header: 'Old' } as any,
+        {
+          contentId: 'c2',
+          header: 'New',
+          date: '2026-01-01',
+          author: { name: 'Test' },
+        } as any,
       ])
 
-      const sendCalls = sqsMock.commandCalls(SendMessageBatchCommand)
-      expect(sendCalls).toHaveLength(1)
-      expect(sendCalls[0].args[0].input.Entries).toHaveLength(1)
-      const body = JSON.parse(
-        sendCalls[0].args[0].input.Entries![0].MessageBody!
-      )
-      expect(body.contentId).toBe('c2')
+      expect(result.published).toBe(1)
+      expect(result.total).toBe(2)
+
+      const putCalls = ddbMock.commandCalls(PutCommand)
+      expect(putCalls).toHaveLength(1)
+      expect(putCalls[0].args[0].input.Item?.contentId).toBe('c2')
     })
 
-    it('does not send batch when all content already seen', async () => {
-      sqsMock.on(GetQueueUrlCommand).resolves({
-        QueueUrl: 'https://sqs.us-east-1.amazonaws.com/123/queue',
-      })
+    it('does not write when all content already exists', async () => {
       ddbMock.on(QueryCommand).resolves({
-        Items: [{ contentId: 'c1' }],
+        Items: [{ contentId: 'c1', sortKey: '#CONTENT#c1' }],
       })
 
       const user = new User()
-      await user.publishContent('user1', [
-        { contentId: 'c1', title: 'Old' } as any,
+      const result = await user.publishContent('user1', [
+        { contentId: 'c1', header: 'Old' } as any,
       ])
 
-      const sendCalls = sqsMock.commandCalls(SendMessageBatchCommand)
-      expect(sendCalls).toHaveLength(0)
+      expect(result.published).toBe(0)
+      expect(result.total).toBe(1)
+
+      const putCalls = ddbMock.commandCalls(PutCommand)
+      expect(putCalls).toHaveLength(0)
+    })
+
+    it('respects CONTENT_BATCH_LIMIT', async () => {
+      ddbMock.on(QueryCommand).resolves({ Items: [] })
+      ddbMock.on(PutCommand).resolves({})
+
+      const items = Array.from({ length: 15 }, (_, i) => ({
+        contentId: `c${i}`,
+        header: `News ${i}`,
+        date: '2026-01-01',
+        author: { name: 'Test' },
+      }))
+
+      const user = new User()
+      const result = await user.publishContent('user1', items as any)
+
+      expect(result.published).toBe(10)
+      expect(result.total).toBe(15)
     })
   })
 })

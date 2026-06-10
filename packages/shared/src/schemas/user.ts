@@ -45,6 +45,10 @@ export const ContentSchema = z.object({
   likes: z.number().optional(),
   comments: z.number().optional(),
   author: ContentAuthorSchema,
+  reaction: z.enum(['like', 'dislike', 'skip']).optional(),
+  publishedAt: z.string().optional(),
+  seenAt: z.string().optional(),
+  ttl: z.number().optional(),
 })
 export type IContent = z.infer<typeof ContentSchema>
 

@@ -195,7 +195,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   '/content:get': {
     summary: 'Get content feed',
     description:
-      "Reads and consumes content items from the user's SQS message queue. Items are delivered once — they are deleted from the queue immediately after reading. Content is published to the queue by bot automations. Previously seen items are deduplicated at publish time.",
+      "Returns fresh (unseen) content items from the user's feed. Content is published by bot automations and stored in DynamoDB. Items remain in the feed until the user reacts to them (via PATCH /content/{contentId}). Deduplication happens at publish time — the same contentId is never stored twice.",
   },
   '/tasks/execute:post': {
     summary: 'Execute a task',
@@ -276,7 +276,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   '/user:delete': {
     summary: 'Delete account',
     description:
-      'Permanently and irreversibly deletes the authenticated user account. This cascades to: all bots (including deployed Lambda functions, API Gateway endpoints, and EventBridge schedules), all stored data records, all connections, and the SQS content queue.',
+      'Permanently and irreversibly deletes the authenticated user account. This cascades to: all bots (including deployed Lambda functions, API Gateway endpoints, and EventBridge schedules), all stored data records, all connections, and the Auth0 user record.',
   },
 }
 
@@ -450,7 +450,7 @@ const spec = {
     {
       name: 'Content',
       description:
-        'Personalized content feed populated by bot automations (SQS-backed, consumed on read)',
+        'Personalized content feed populated by bot automations (DynamoDB-backed, persists until reacted)',
     },
     {
       name: 'Tasks',

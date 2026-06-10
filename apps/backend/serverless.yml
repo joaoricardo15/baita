@@ -70,23 +70,6 @@ provider:
         - Effect: Allow
           Action:
             [
-              sqs:CreateQueue,
-              sqs:GetQueueUrl,
-              sqs:SendMessage,
-              sqs:SendMessageBatch,
-              sqs:ReceiveMessage,
-              sqs:DeleteMessage,
-              sqs:DeleteMessageBatch,
-              sqs:GetQueueAttributes,
-              sqs:SetQueueAttributes,
-              sqs:DeleteQueue,
-              sqs:TagQueue,
-            ]
-          Resource:
-            - arn:aws:sqs:us-east-1:*:${self:provider.environment.SERVICE_PREFIX}-*
-        - Effect: Allow
-          Action:
-            [
               lambda:CreateFunction,
               lambda:UpdateFunctionCode,
               lambda:DeleteFunction,
@@ -302,6 +285,11 @@ functions:
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+      - http:
+          path: content/{contentId}
+          method: patch
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
 
   # ─── Generic Data CRUD (dynamic resource types) ────────────
   endpoint-data:
@@ -405,6 +393,9 @@ resources:
           - AttributeName: sortKey
             AttributeType: S
         BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: ttl
+          Enabled: true
 
     # S3 Buckets
     botsBucket:

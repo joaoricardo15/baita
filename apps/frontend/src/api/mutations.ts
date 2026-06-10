@@ -37,8 +37,7 @@ export const updateTodo = (tasks: ITodoTask[]) =>
   })
 
 export const reactToContent = (content: IContent, reaction: string) =>
-  getApiResponse<void>('put', `data/content/${content.contentId}`, {
-    ...content,
+  getApiResponse<void>('patch', `content/${content.contentId}`, {
     reaction,
   })
 

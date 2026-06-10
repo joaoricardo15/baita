@@ -1,37 +1,20 @@
-import { SQS } from '@aws-sdk/client-sqs'
 import { IContent, IUser } from '@baita/shared'
 import axios from 'axios'
 
 import Bot from '@/controllers/bot'
 import Data from '@/controllers/data'
-import { CONTENT_BATCH_LIMIT, SQS_RETENTION_SECONDS } from '@/utils/constants'
+import { CONTENT_BATCH_LIMIT, CONTENT_TTL_DAYS } from '@/utils/constants'
 
-const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
 const AUTH0_DOMAIN = process.env.AUTH0_DOMAIN || ''
 const AUTH0_AUDIENCE = process.env.AUTH0_AUDIENCE || ''
 const AUTH0_M2M_CLIENT_ID = process.env.AUTH0_M2M_CLIENT_ID || ''
 const AUTH0_M2M_CLIENT_SECRET = process.env.AUTH0_M2M_CLIENT_SECRET || ''
 
 class User {
-  private sqs: SQS
-
-  constructor() {
-    this.sqs = new SQS({})
-  }
-
   async createUser(userId: string, user: IUser) {
     try {
       const dataStore = new Data(userId, 'user')
       await dataStore.create('', user)
-
-      await this.sqs.createQueue({
-        QueueName: `${SERVICE_PREFIX}-user-${userId}`,
-        Attributes: {
-          MessageRetentionPeriod: SQS_RETENTION_SECONDS.toString(),
-        },
-        tags: { 'user-id': userId, 'managed-by': 'baita' },
-      })
-
       return user
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
@@ -59,15 +42,6 @@ class User {
       }
     } catch (err) {
       console.error('Failed to query/delete bots:', err)
-    }
-
-    try {
-      const mainQueue = await this.sqs.getQueueUrl({
-        QueueName: `${SERVICE_PREFIX}-user-${userId}`,
-      })
-      await this.sqs.deleteQueue({ QueueUrl: mainQueue.QueueUrl! })
-    } catch (err) {
-      console.error('Failed to delete main queue:', err)
     }
 
     try {
@@ -107,36 +81,24 @@ class User {
 
   async getContent(userId: string) {
     try {
-      const queueUrlResult = await this.sqs.getQueueUrl({
-        QueueName: `${SERVICE_PREFIX}-user-${userId}`,
+      const contentStore = new Data(userId, 'content')
+      const allContent = await contentStore.list()
+
+      if (!allContent) return []
+
+      return allContent.filter((item: Record<string, unknown>) => !item.seenAt)
+    } catch (err: unknown) {
+      throw err instanceof Error ? err : new Error(String(err))
+    }
+  }
+
+  async reactToContent(userId: string, contentId: string, reaction: string) {
+    try {
+      const contentStore = new Data(userId, 'content')
+      await contentStore.update(contentId, {
+        seenAt: new Date().toISOString(),
+        reaction,
       })
-
-      const messagesResult = await this.sqs.receiveMessage({
-        QueueUrl: queueUrlResult.QueueUrl,
-        MaxNumberOfMessages: 10,
-      })
-
-      if (!messagesResult.Messages) {
-        return []
-      }
-
-      await this.sqs.deleteMessageBatch({
-        QueueUrl: queueUrlResult.QueueUrl,
-        Entries: messagesResult.Messages?.map((message) => ({
-          Id: message.MessageId,
-          ReceiptHandle: message.ReceiptHandle,
-        })),
-      })
-
-      return messagesResult.Messages.map((message) => {
-        if (message.Body) {
-          try {
-            return JSON.parse(message.Body)
-          } catch {
-            return null
-          }
-        }
-      }).filter((message) => message)
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }
@@ -147,31 +109,25 @@ class User {
     content: IContent[]
   ): Promise<{ published: number; total: number }> {
     try {
-      const queueResult = await this.sqs.getQueueUrl({
-        QueueName: `${SERVICE_PREFIX}-user-${userId}`,
-      })
-
       const contentStore = new Data(userId, 'content')
-      const alreadySeen = await contentStore.list()
+      const existingContent = await contentStore.list()
 
-      const newContent = !alreadySeen
-        ? content.slice(0, CONTENT_BATCH_LIMIT)
-        : content
-            .filter(
-              ({ contentId }) =>
-                !alreadySeen
-                  .map((c: Record<string, unknown>) => c.contentId)
-                  .includes(contentId)
-            )
-            .slice(0, CONTENT_BATCH_LIMIT)
+      const existingIds = new Set(
+        (existingContent || []).map((c: Record<string, unknown>) => c.contentId)
+      )
 
-      if (newContent.length > 0) {
-        await this.sqs.sendMessageBatch({
-          QueueUrl: queueResult.QueueUrl,
-          Entries: newContent.map((entry, index) => ({
-            Id: index.toString(),
-            MessageBody: JSON.stringify(entry),
-          })),
+      const newContent = content
+        .filter(({ contentId }) => !existingIds.has(contentId))
+        .slice(0, CONTENT_BATCH_LIMIT)
+
+      const ttl =
+        Math.floor(Date.now() / 1000) + CONTENT_TTL_DAYS * 24 * 60 * 60
+
+      for (const item of newContent) {
+        await contentStore.create(item.contentId, {
+          ...item,
+          publishedAt: new Date().toISOString(),
+          ttl,
         })
       }
 
