@@ -6,8 +6,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  frontend:
-    name: Frontend
+  # ─── Quality Gate ────────────────────────────────────────────────
+  # Runs all checks for all packages. Fails fast before any deploy.
+  quality:
+    name: Quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,20 +24,66 @@ jobs:
       - name: Type-check shared schemas
         run: cd packages/shared && npx tsc --noEmit
 
-      - name: Lint
+      - name: Lint frontend
         run: cd apps/frontend && npm run lint
-
-      - name: Spell check
+      - name: Spell check frontend
         run: cd apps/frontend && npm run spell
+      - name: Type-check frontend
+        run: cd apps/frontend && npx tsc --noEmit
+      - name: Test frontend
+        run: cd apps/frontend && npm test
 
-      - name: Build
+      - name: Lint backend
+        run: cd apps/backend && npx eslint 'src/**/*.ts'
+      - name: Type-check backend
+        run: cd apps/backend && npx tsc --noEmit
+      - name: Test backend
+        run: cd apps/backend && npx jest --no-coverage
+
+      - name: Build frontend
         env:
           VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
           VITE_GOOGLE_MAPS_MAP_ID: ${{ secrets.VITE_GOOGLE_MAPS_MAP_ID }}
         run: cd apps/frontend && npm run build
 
-      - name: Test
-        run: cd apps/frontend && npm test
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: apps/frontend/dist/
+          retention-days: 1
+
+  # ─── Deploy Auth0 ───────────────────────────────────────────────
+  # Identity layer — must be configured before apps that depend on it.
+  deploy-auth0:
+    name: Deploy Auth0
+    needs: [quality]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install auth0-deploy-cli
+        run: npm install -g auth0-deploy-cli
+      - name: Deploy Auth0 configuration
+        env:
+          AUTH0_DOMAIN: auth.baita.help
+          AUTH0_CLIENT_ID: ${{ secrets.AUTH0_DEPLOY_CLIENT_ID }}
+          AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_DEPLOY_CLIENT_SECRET }}
+        run: cd infra/auth0 && a0deploy import --input_file=tenant.yaml
+
+  # ─── Deploy Frontend ─────────────────────────────────────────────
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [deploy-auth0]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: apps/frontend/dist/
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -57,12 +105,10 @@ jobs:
             --output text)
           echo "app-id=$APP_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Package build artifact
-        run: cd apps/frontend/dist && zip -qr /tmp/deploy.zip .
-
-      - name: Upload and deploy to Amplify
+      - name: Package and deploy to Amplify
         id: deploy
         run: |
+          cd apps/frontend/dist && zip -qr /tmp/deploy.zip .
           DEPLOY=$(aws amplify create-deployment \
             --app-id ${{ steps.infra.outputs.app-id }} --branch-name main --output json)
           curl --fail -s -T /tmp/deploy.zip \
@@ -86,8 +132,10 @@ jobs:
             sleep 3
           done
 
-  backend:
-    name: Backend
+  # ─── Deploy Backend ──────────────────────────────────────────────
+  deploy-backend:
+    name: Deploy Backend
+    needs: [deploy-auth0]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -99,18 +147,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type-check shared schemas
-        run: cd packages/shared && npx tsc --noEmit
-
-      - name: Lint
-        run: cd apps/backend && npx eslint 'src/**/*.ts'
-
-      - name: Type-check
-        run: cd apps/backend && npx tsc --noEmit
-
-      - name: Test
-        run: cd apps/backend && npx jest --no-coverage
-
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -120,12 +156,36 @@ jobs:
       - name: Deploy to AWS
         run: cd apps/backend && npx serverless deploy --stage prod --conceal
 
+  # ─── Deploy Docs ─────────────────────────────────────────────────
+  # OpenAPI spec generation + S3 upload. Depends on backend because
+  # the S3 bucket and API Gateway docs route are created by backend stack.
+  deploy-docs:
+    name: Deploy Docs
+    needs: [deploy-backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
       - name: Generate and deploy OpenAPI docs
         run: cd apps/backend && npm run docs
 
+  # ─── E2E Tests ──────────────────────────────────────────────────
   e2e:
     name: E2E Tests
-    needs: [frontend, backend]
+    needs: [deploy-frontend, deploy-backend]
     runs-on: ubuntu-latest
     env:
       API_URL: https://api.baita.help
