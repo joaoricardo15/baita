@@ -102,15 +102,32 @@ All connector/service icons live in `apps/frontend/public/icons/` and are refere
 Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main`:
 
 ```
-frontend (type-check shared → lint → spell → build → test → deploy infra → deploy artifact) ─┐
-backend  (type-check shared → lint → type-check → test → deploy → docs)                      ─┤→ e2e → cleanup
+quality (shared type-check → frontend lint/spell/type-check/test/build → backend lint/type-check/test)
+    │
+    ▼
+deploy-auth0 (identity layer — apps depend on it)
+    │
+    ├── deploy-frontend (CloudFormation + Amplify upload)
+    ├── deploy-backend  (Serverless Framework)
+    │       │
+    │       └── deploy-docs (OpenAPI spec → S3, after backend creates the bucket)
+    │
+    └───────┬── e2e (setup → journey tests → cleanup)
 ```
 
-Both jobs run in parallel. E2E tests run after both complete. A cleanup step (`if: always()`) deletes the E2E test user even if tests fail.
+Quality gate runs once — all checks for all packages. Auth0 deploys first (identity layer). Frontend and backend deploy in parallel after Auth0. Docs deploy after backend (depends on S3 bucket). E2E tests run after frontend + backend are live.
 
-**Frontend deploy**: CloudFormation deploys `baita-frontend-prod` stack (Amplify app), reads App ID from stack output, then uploads pre-built artifact directly (no remote rebuild).
+**Quality**: Shared type-check, frontend lint/spell/type-check/test/build, backend lint/type-check/test. Produces frontend build artifact for deploy.
 
-**E2E cleanup**: Reads saved auth token and calls `DELETE /user` to remove test user. Runs unconditionally.
+**Deploy Auth0**: Uses `auth0-deploy-cli` to apply `infra/auth0/tenant.yaml` — manages actions, clients, connections, and grants. Runs first because both apps depend on the identity layer.
+
+**Deploy Frontend**: Downloads build artifact from quality, deploys CloudFormation stack (Amplify app), uploads to Amplify.
+
+**Deploy Backend**: Serverless Framework deploys Lambda functions, API Gateway, DynamoDB table, S3 buckets, and IAM roles.
+
+**Deploy Docs**: Generates OpenAPI spec from Zod schemas and uploads to S3 docs bucket (created by backend stack).
+
+**E2E**: Sets up test user (Auth0 signup), runs Playwright journey specs against production, cleans up (`if: always()`).
 
 ## E2E Testing
 
@@ -198,7 +215,7 @@ All domain data is user-scoped and stored in a single DynamoDB table (`baita-pro
 - **Region**: `us-east-1` for everything
 - **Backend stack**: `baita-backend-prod` (Serverless Framework / CloudFormation)
 - **Frontend stack**: `baita-frontend-prod` (CloudFormation — Amplify app + branch)
-- **Resource prefix**: `baita-prod` (DynamoDB table, S3 buckets, SQS queues, Lambda roles)
+- **Resource prefix**: `baita-prod` (DynamoDB table, S3 buckets, Lambda roles)
 - **Amplify App ID**: Dynamic — read from `baita-frontend-prod` stack outputs in CI (not hardcoded)
 
 ## Environment Variables & Secrets
@@ -207,13 +224,15 @@ Consistent pattern across the monorepo: **no secrets in source code**.
 
 ### GitHub Secrets (CI/CD)
 
-| Secret                     | Purpose                          |
-| -------------------------- | -------------------------------- |
-| `AWS_ACCESS_KEY_ID`        | AWS deploy credentials           |
-| `AWS_SECRET_ACCESS_KEY`    | AWS deploy credentials           |
-| `E2E_TEST_PASSWORD`        | E2E test user Auth0 password     |
-| `VITE_GOOGLE_MAPS_API_KEY` | Google Maps JS API key (build)   |
-| `VITE_GOOGLE_MAPS_MAP_ID`  | Google Maps map style ID (build) |
+| Secret                       | Purpose                          |
+| ---------------------------- | -------------------------------- |
+| `AWS_ACCESS_KEY_ID`          | AWS deploy credentials           |
+| `AWS_SECRET_ACCESS_KEY`      | AWS deploy credentials           |
+| `E2E_TEST_PASSWORD`          | E2E test user Auth0 password     |
+| `VITE_GOOGLE_MAPS_API_KEY`   | Google Maps JS API key (build)   |
+| `VITE_GOOGLE_MAPS_MAP_ID`    | Google Maps map style ID (build) |
+| `AUTH0_DEPLOY_CLIENT_ID`     | Auth0 M2M client ID (deploy)     |
+| `AUTH0_DEPLOY_CLIENT_SECRET` | Auth0 M2M client secret (deploy) |
 
 ### Backend (AWS Lambda + SSM Parameter Store)
 
@@ -284,7 +303,7 @@ Before pushing, verify:
 
 ## AWS Resource Integrity
 
-User accounts have coupled AWS resources (DynamoDB + SQS queue) that MUST stay in sync. See `apps/backend/CLAUDE.md` → "User Lifecycle & AWS Resource Integrity" for full rules and audit commands.
+User accounts are data-only entities in DynamoDB (no per-user infrastructure). Bots have coupled AWS resources (Lambda + API Gateway + S3 + Scheduler) that MUST be cleaned up on deletion.
 
 **Critical rules:**
 

@@ -34,7 +34,7 @@ Before reporting a task as done, self-check:
 
 - **Runtime**: Node.js 20.x + TypeScript 5.9 (strict mode)
 - **Framework**: Serverless Framework 3.40
-- **Cloud**: AWS (Lambda, DynamoDB, S3, SQS, EventBridge Scheduler, CloudWatch, API Gateway)
+- **Cloud**: AWS (Lambda, DynamoDB, S3, EventBridge Scheduler, CloudWatch, API Gateway)
 - **Bundler**: serverless-esbuild
 - **Validation**: AJV (JSON Schema)
 - **HTTP Client**: Axios (external API calls)
@@ -152,7 +152,7 @@ Public config (Auth0 domain/audience, OAuth token URLs) is hardcoded in `serverl
 ┌────────────────────────────────▼────────────────────────────────┐
 │  Functional Layer (src/controllers/)                            │
 │  ─ Bot: code gen, deploy, logs                                  │
-│  ─ User: signup, deletion, SQS management                       │
+│  ─ User: signup, deletion, content feed                            │
 │  ─ Data: CRUD, validation, nested updates (single DDB gateway)  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -274,25 +274,24 @@ Sort key format: `#TYPE` for singletons, `#TYPE#id` for collections. The Data co
    - `code-execute` → VM sandbox execution (`src/tasks/executor/code.ts`)
    - `method-execute` → Built-in methods like HTTP, OAuth2, notifications (`src/tasks/executor/methods.ts`)
    - `trigger-sample` → Stores test data for the trigger step
-8. Results published to user's SQS queue for content feed
+8. Results stored in DynamoDB as fresh content for the user's feed
 9. Execution logs captured in CloudWatch, queryable via logs endpoint
 
-**IAM note**: Bot Lambda role (`botsRole`) only has `lambda:InvokeFunction` + CloudWatch. It cannot access DynamoDB/SQS/SSM directly — all data operations go through `endpoint-task` which has full permissions.
+**IAM note**: Bot Lambda role (`botsRole`) only has `lambda:InvokeFunction` + CloudWatch. It cannot access DynamoDB/SSM directly — all data operations go through `endpoint-task` which has full permissions.
 
 ### Content Feed Lifecycle
 
-The content feed uses SQS as a transient message queue + DynamoDB for deduplication:
+The content feed is entirely DynamoDB-based. Fresh content persists until the user reacts to it:
 
 1. **Publish**: Bot's "Publish content to feed" step calls `publishContent()` which:
-   - Queries DynamoDB for `#CONTENT#{contentId}` records (already-seen items)
-   - Filters out duplicates, limits to `CONTENT_BATCH_LIMIT` (10) new items
-   - Sends new items to the user's SQS queue
-   - **Note**: Returns success even when 0 items are published (all filtered as duplicates)
-2. **Consume**: Frontend calls `GET /content` → `getContent()` reads up to 10 messages from SQS and **deletes them immediately** (one-time consumption)
-3. **Deduplicate**: When user swipes/reacts to content in the feed, the frontend calls `POST /data/content` which writes a `#CONTENT#{contentId}` record to DynamoDB via the **generic Data controller** (runtime operation — not visible as a static code reference to `#CONTENT`)
-4. **Retention**: SQS messages expire after 2 days if not consumed
-
-**Important for debugging**: Because `#CONTENT` records are written by the generic Data controller at runtime (via `POST /data/content`), you cannot find explicit `#CONTENT` write references by grepping the codebase. The Data controller dynamically constructs sortKeys as `#{type}#{id}` — for content, this becomes `#CONTENT#{contentId}`. Always consider this runtime behavior when tracing data flow.
+   - Queries DynamoDB for all existing `#CONTENT#{contentId}` records (seen or fresh)
+   - Filters out duplicates (any existing contentId is skipped)
+   - Writes new items to DynamoDB with `publishedAt` timestamp and a 7-day `ttl`
+   - Batch limit: `CONTENT_BATCH_LIMIT` (10) new items per publish
+2. **Fetch**: Frontend calls `GET /content` → `getContent()` queries all content records and returns only those where `seenAt` is absent (fresh items)
+3. **React**: User swipes content → frontend calls `PATCH /content/{contentId}` → sets `seenAt` timestamp + reaction, removes `ttl` (item persists permanently for history)
+4. **Expiry**: Unread content auto-expires after 7 days via DynamoDB TTL (`CONTENT_TTL_DAYS`)
+5. **Dedup**: At publish time, any contentId that already exists (fresh or seen) is skipped
 
 ### Code Execution Safety
 
@@ -374,7 +373,8 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 
 ### Content
 
-- `GET /content` — Get content feed (from SQS)
+- `GET /content` — Get fresh content feed
+- `PATCH /content/{contentId}` — React to content (marks as seen)
 
 ### Bots
 
@@ -487,7 +487,7 @@ cd tests/e2e && npm test
 
 | Page/Feature        | Endpoint                                  | Tested | Notes                                     |
 | ------------------- | ----------------------------------------- | ------ | ----------------------------------------- |
-| Home (Content Feed) | GET /content                              | Yes    | Auth + SQS access                         |
+| Home (Content Feed) | GET /content                              | Yes    | DynamoDB query + filter                   |
 | Todo                | GET /data/todo                            | Yes    | DynamoDB query                            |
 | Bots List           | GET /bots                                 | Yes    | DynamoDB query                            |
 | Connections         | GET /connections                          | Yes    | DynamoDB query                            |
@@ -498,7 +498,7 @@ cd tests/e2e && npm test
 | Connector Services  | POST /tasks/execute                       | Yes    | Baita, Google, NewsAPI, OpenAI, Pipedrive |
 | Connection Health   | POST /connections/{connectionId}/health   | Yes    | OAuth token refresh + API probe           |
 | Connection Details  | GET /connections/{connectionId}           | Yes    | Linked bots lookup                        |
-| User Deletion       | DELETE /user                              | Yes    | Full cleanup (DDB, Auth0, SQS, bots)      |
+| User Deletion       | DELETE /user                              | Yes    | Full cleanup (DDB, Auth0, bots)           |
 | Auth Rejection      | GET without token                         | Yes    | Security — 401 returned                   |
 | CORS on Errors      | GET with Origin header                    | Yes    | CORS headers on 4XX                       |
 | Error Handling      | Invalid operations                        | Yes    | Structured error response                 |
@@ -521,44 +521,27 @@ When adding a new endpoint or feature:
 - **Cleanup**: Pure Node script (`scripts/cleanup.ts`) — reads token, calls DELETE /user. No browser needed.
 - **CI**: GitHub Actions — three explicit steps (`e2e:setup` → `e2e:test` → `e2e:cleanup`)
 
-## User Lifecycle & AWS Resource Integrity
+## User Lifecycle
 
-Every user has **two coupled AWS resources** that MUST be created and destroyed together:
+User accounts are **data-only** — creating a user writes a single DynamoDB record (`#USER`). No per-user infrastructure is provisioned.
 
-| Resource                | Name Pattern               | Created By     | Destroyed By   |
-| ----------------------- | -------------------------- | -------------- | -------------- |
-| DynamoDB `#USER` record | `userId` + `#USER`         | `createUser()` | `deleteUser()` |
-| SQS queue               | `baita-prod-user-{userId}` | `createUser()` | `deleteUser()` |
+### Creation
 
-### Rules (NEVER violate)
+`createUser()` writes one DynamoDB record. That's it. The Auth0 Post-Login Action calls `POST /user` on first login (uses `app_metadata.provisioned` flag for retry semantics).
 
-1. **Atomic creation** — `createUser()` MUST create both resources (DDB record + SQS queue). If any step fails, the user is in a broken state.
-2. **Atomic deletion** — `deleteUser()` MUST delete both resources (plus bots via `deleteBot()`). Errors in queue deletion are logged but don't block record deletion.
-3. **Never delete DynamoDB user records directly** — Always use `DELETE /user` endpoint which calls `deleteUser()`. Direct DDB deletes leave orphaned SQS queues and bot Lambdas.
-4. **Never delete SQS queues manually** unless auditing confirms the queue is orphaned (no matching DDB `#USER` record).
-5. **No partial user state** — A userId that exists in DynamoDB MUST have an SQS queue. A queue that exists MUST have a matching DynamoDB record.
+### Deletion
 
-### Periodic Audit (run quarterly or after incidents)
+`deleteUser()` cascades through:
 
-Cross-reference DynamoDB users against SQS queues to detect drift:
+1. Delete all bots (via `deleteBot()` — cleans up Lambda + API Gateway + S3 + Scheduler)
+2. Delete all DynamoDB records (via `deleteAllForUser()`)
+3. Delete Auth0 user (via M2M token — required, cannot be avoided)
 
-```bash
-# List all SQS queues
-aws sqs list-queues --profile baita --region us-east-1 --queue-name-prefix baita-prod-user- --output json | jq -r '.QueueUrls[]'
+### Rules
 
-# List all DynamoDB users
-aws dynamodb scan --profile baita --region us-east-1 --table-name baita-prod \
-  --filter-expression "sortKey = :sk" --expression-attribute-values '{":sk":{"S":"#USER"}}' \
-  --projection-expression "userId, email" --output json | jq '.Items[] | {userId: .userId.S, email: .email.S}'
-
-# For each SQS queue, verify a matching #USER record exists
-# Orphaned queues (no DDB record) are safe to delete
-# Users missing queues need queues recreated
-```
-
-### Historical Context
-
-Orphaned queues were discovered in June 2026 — users deleted before `deleteUser()` had comprehensive SQS cleanup. The code is now correct; this section exists to prevent future regressions if the deletion logic is ever modified.
+- **Never delete DynamoDB user records directly** — use `DELETE /user` endpoint
+- **Never delete bots directly from DynamoDB** — use `DELETE /bots/{botId}`
+- **Any code that deletes users or bots MUST go through controller methods**
 
 ## Known Limitations
 
