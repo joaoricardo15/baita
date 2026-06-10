@@ -1,0 +1,93 @@
+# Baita Auth0 Tenant Configuration
+# Managed by auth0-deploy-cli — do not edit in Auth0 Dashboard directly.
+# Deploy: cd infra/auth0 && a0deploy import --input_file=tenant.yaml
+
+tenant:
+  friendly_name: Baita
+  support_email: joaoricardocardoso15@gmail.com
+
+# ─── Applications (Clients) ──────────────────────────────────────
+clients:
+  - name: Baita Frontend
+    app_type: spa
+    logo_uri: https://baita.help/logo.png
+    callbacks:
+      - http://localhost:3000
+      - https://www.baita.help
+    allowed_logout_urls:
+      - http://localhost:3000
+      - https://www.baita.help
+    web_origins:
+      - http://localhost:3000
+      - https://www.baita.help
+    grant_types:
+      - authorization_code
+      - refresh_token
+      - implicit
+    token_endpoint_auth_method: none
+    oidc_conformant: true
+    initiate_login_uri: https://www.baita.help
+    refresh_token:
+      rotation_type: rotating
+      expiration_type: expiring
+      token_lifetime: 2592000
+      idle_token_lifetime: 1296000
+      leeway: 31557600
+
+  - name: Baita Backend
+    app_type: non_interactive
+    logo_uri: https://baita.help/logo.png
+    grant_types:
+      - client_credentials
+    token_endpoint_auth_method: client_secret_post
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 3600
+
+# ─── Client Grants ───────────────────────────────────────────────
+clientGrants:
+  - client_id: Baita Backend
+    audience: https://dev-yc4pbydg.us.auth0.com/api/v2/
+    scope:
+      - delete:users
+      - read:client_grants
+      - create:client_grants
+      - update:client_grants
+      - read:clients
+      - update:clients
+      - read:connections
+      - update:connections
+      - read:resource_servers
+      - read:actions
+      - create:actions
+      - update:actions
+      - delete:actions
+      - read:tenant_settings
+
+# ─── Database Connections ────────────────────────────────────────
+databases:
+  - name: baita-users
+    enabled_clients:
+      - Baita Frontend
+    options:
+      brute_force_protection: true
+
+# ─── Social Connections ──────────────────────────────────────────
+connections:
+  - name: google-oauth2
+    strategy: google-oauth2
+    enabled_clients:
+      - Baita Frontend
+
+# ─── Actions ─────────────────────────────────────────────────────
+actions:
+  - name: Provision Backend User
+    code: ./actions/post-login-provision/code.js
+    supported_triggers:
+      - id: post-login
+        version: v3
+    runtime: node22
+    secrets:
+      - name: BAITA_CREATE_USER_API_KEY
+      - name: BAITA_API_URL
+    deployed: true
