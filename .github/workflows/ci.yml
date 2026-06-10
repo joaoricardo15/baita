@@ -68,7 +68,7 @@ jobs:
         run: npm install -g auth0-deploy-cli
       - name: Deploy Auth0 configuration
         env:
-          AUTH0_DOMAIN: auth.baita.help
+          AUTH0_DOMAIN: dev-yc4pbydg.us.auth0.com
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_DEPLOY_CLIENT_ID }}
           AUTH0_CLIENT_SECRET: ${{ secrets.AUTH0_DEPLOY_CLIENT_SECRET }}
         run: cd infra/auth0 && a0deploy import --input_file=tenant.yaml
