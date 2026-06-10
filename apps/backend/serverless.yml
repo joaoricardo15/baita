@@ -338,6 +338,9 @@ functions:
           authorizer: ${self:custom.authorizer}
 
   # ─── Tasks ─────────────────────────────────────────────────
+  task-execute:
+    handler: src/endpoints/task-execute/index.handler
+
   endpoint-tasks:
     handler: src/endpoints/tasks/index.handler
     events:

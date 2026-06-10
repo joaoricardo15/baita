@@ -3,7 +3,8 @@
  *
  * Tests Google services via standalone task execution:
  * - list-messages: List Gmail emails (gmail.readonly scope)
- * - get-message: Get specific email by ID
+ * - get-message: Get specific email by ID (path parameter interpolation)
+ * - send-message: Send email (gmail.send scope, RFC 2822 body format)
  *
  * Requires: Google OAuth2 connection (copied from admin in setup).
  * Fails hard if connection is broken — never skips silently.
@@ -78,8 +79,23 @@ test.describe('Google Connector — Gmail', () => {
 
     const task = buildGoogleTask(googleConnectionId, {
       label: 'Get email',
-      path: `gmail/v1/users/me/messages/${firstMessageId}`,
+      path: 'gmail/v1/users/me/messages/{messageId}',
       method: 'get',
+      extraInputFields: [
+        {
+          name: 'queryParams.messageId',
+          label: 'Message ID',
+          type: 'output',
+        },
+      ],
+      extraInputData: [
+        {
+          name: 'queryParams.messageId',
+          label: 'Message ID',
+          type: 'text',
+          value: firstMessageId,
+        },
+      ],
     })
 
     const body = await executeTask(request, token, task)
@@ -98,5 +114,60 @@ test.describe('Google Connector — Gmail', () => {
       hasSnippet: !!message.snippet,
       hasPayload: !!message.payload,
     })
+  })
+
+  test('send-message: sends an email', async ({ request }) => {
+    const task = buildGoogleTask(googleConnectionId, {
+      label: 'Send email',
+      path: 'gmail/v1/users/me/messages/send',
+      method: 'post',
+      bodyEncoding: 'email-rfc2822',
+      outputPath: 'id',
+      extraInputFields: [
+        { name: 'bodyParams.to', label: 'To', type: 'output', required: true },
+        {
+          name: 'bodyParams.subject',
+          label: 'Subject',
+          type: 'output',
+          required: true,
+        },
+        {
+          name: 'bodyParams.body',
+          label: 'Body',
+          type: 'output',
+          required: true,
+        },
+      ],
+      extraInputData: [
+        {
+          name: 'bodyParams.to',
+          label: 'To',
+          type: 'text',
+          value: 'e2e-test@baita.help',
+        },
+        {
+          name: 'bodyParams.subject',
+          label: 'Subject',
+          type: 'text',
+          value: `E2E test ${Date.now()}`,
+        },
+        {
+          name: 'bodyParams.body',
+          label: 'Body',
+          type: 'text',
+          value: 'Automated E2E test email — safe to ignore.',
+        },
+      ],
+    })
+
+    const body = await executeTask(request, token, task)
+    expect(body.success).toBe(true)
+    expect(
+      body.data.status,
+      `Gmail send failed: ${String(body.data.outputData)}. ` +
+        'Admin must reconnect Google at https://baita.help → Connections.'
+    ).toBe('success')
+    expect(body.data.outputData).toBeTruthy()
+    logResult('Gmail send-message', { messageId: body.data.outputData })
   })
 })

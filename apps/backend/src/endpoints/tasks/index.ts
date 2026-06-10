@@ -1,73 +1,50 @@
-import { DataType, validateTasks } from '@baita/shared'
+import { validateTasks } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
-import Task from '@/controllers/task'
+import { execute } from '@/endpoints/task-execute'
 import Api, { ApiRequestStatus } from '@/utils/api'
 import { getAuthenticatedUserId } from '@/utils/auth'
-
-interface IDirectInvocation {
-  direct: true
-  userId: string
-  task: { service?: unknown; app?: unknown; connectionId?: string | number }
-  resolvedInputData: DataType
-}
-
-interface IDirectResult {
-  success: boolean
-  data?: DataType
-  message?: string
-}
+import { getDataFromService } from '@/utils/bot'
 
 export const handler = async (
-  event: APIGatewayProxyEvent | IDirectInvocation,
+  event: APIGatewayProxyEvent,
   context: Context,
   callback: Callback
-): Promise<IDirectResult | undefined> => {
-  if ('direct' in event && event.direct) {
-    const {
-      userId,
-      task: taskDef,
-      resolvedInputData,
-    } = event as IDirectInvocation
-    const taskController = new Task()
-    try {
-      const result = await taskController.execute(
-        userId,
-        taskDef as Parameters<typeof taskController.execute>[1],
-        resolvedInputData
-      )
-      return {
-        success: result.status === 'success',
-        data: result.outputData ?? undefined,
-        message:
-          result.status !== 'success'
-            ? JSON.stringify(result.outputData)
-            : undefined,
-      }
-    } catch (err: unknown) {
-      return {
-        success: false,
-        message: err instanceof Error ? err.message : String(err),
-      }
-    }
-  }
-
-  const apiEvent = event as APIGatewayProxyEvent
-  const api = new Api(apiEvent, context)
-  const task = new Task()
+): Promise<void> => {
+  const api = new Api(event, context)
 
   try {
-    const userId = getAuthenticatedUserId(apiEvent)
-    const body = JSON.parse(apiEvent.body || '{}')
+    const userId = getAuthenticatedUserId(event)
+    const task = JSON.parse(event.body || '{}')
 
-    validateTasks([body])
+    validateTasks([task])
 
-    const data = await task.execute(userId, body)
+    const inputData = getDataFromService(
+      task.service?.config.inputFields || [],
+      task.inputData || [],
+      true
+    )
 
-    api.httpResponse(callback, ApiRequestStatus.success, undefined, data)
+    const result = await execute({ userId, task, resolvedInputData: inputData })
+
+    if (!result.success) {
+      console.warn('[tasks:http] Task failed', {
+        userId,
+        error: result.message,
+      })
+    }
+
+    api.httpResponse(callback, ApiRequestStatus.success, undefined, {
+      status: result.success ? 'success' : 'fail',
+      inputData,
+      outputData: result.success
+        ? (result.data ?? null)
+        : (result.message ?? null),
+      timestamp: Date.now(),
+    })
   } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[tasks:http] Unhandled error', { error: message })
     api.httpResponse(callback, ApiRequestStatus.fail, err)
   }
-
-  return undefined
 }

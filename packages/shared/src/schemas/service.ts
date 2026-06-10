@@ -157,6 +157,7 @@ export const ServiceConfigSchema = z.object({
   inputFields: z.array(VariableSchema).optional(),
   outputPath: z.string().optional(),
   outputMapping: z.record(z.string()).optional(),
+  bodyEncoding: z.string().optional(),
 })
 export type IServiceConfig = z.infer<typeof ServiceConfigSchema>
 

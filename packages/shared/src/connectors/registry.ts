@@ -127,6 +127,7 @@ function operationToService(
       inputFields,
       outputPath: op.outputPath,
       outputMapping: op.outputMapping,
+      bodyEncoding: op.bodyEncoding,
     },
   }
 }

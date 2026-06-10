@@ -9,11 +9,12 @@ import {
   ITask,
   ITaskExecutionResult,
   ServiceName,
+  TaskExecutionStatus,
   validateTaskExecutionResult,
 } from '@baita/shared'
 import { v4 as uuidv4 } from 'uuid'
 
-import Task from '@/controllers/task'
+import { execute } from '@/endpoints/task-execute'
 import { getBotSampleCode, getCodeFile, getCompleteBotCode } from '@/utils/code'
 import {
   DISABLED_SCHEDULE_EXPRESSION,
@@ -421,8 +422,17 @@ class Bot {
         if (!botData?.triggerSamples) return
         sample = botData.triggerSamples.reverse()[0]
       } else {
-        const taskController = new Task()
-        sample = await taskController.execute(userId, task)
+        const result = await execute({ userId, task })
+        sample = {
+          status: result.success
+            ? TaskExecutionStatus.success
+            : TaskExecutionStatus.fail,
+          inputData: {},
+          outputData: result.success
+            ? (result.data ?? null)
+            : (result.message ?? null),
+          timestamp: Date.now(),
+        }
       }
 
       validateTaskExecutionResult(sample)

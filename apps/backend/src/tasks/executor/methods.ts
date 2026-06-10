@@ -13,6 +13,8 @@ import Data from '@/controllers/data'
 import User from '@/controllers/user'
 import { getDataFromPath, getMappedData } from '@/utils/bot'
 
+import { applyBodyEncoding, interpolatePathParams } from './utils'
+
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || ''
 const SERVICE_SITE_URL = process.env.SERVICE_SITE_URL || ''
@@ -149,6 +151,12 @@ async function httpRequest(
     queryParams,
   } = inputData as IHttpRequest
 
+  const {
+    path: resolvedPath,
+    queryParams: resolvedQueryParams,
+    bodyParams: resolvedBodyParams,
+  } = interpolatePathParams(path, queryParams, bodyParams)
+
   const headers = { ...inputHeaders }
 
   if (connectionId && userId) {
@@ -164,12 +172,17 @@ async function httpRequest(
     }
   }
 
+  const requestBody = applyBodyEncoding(
+    resolvedBodyParams,
+    serviceConfig.bodyEncoding
+  )
+
   const axiosInput = {
-    url: appConfig.apiUrl + (path ? `/${path}` : ''),
+    url: appConfig.apiUrl + (resolvedPath ? `/${resolvedPath}` : ''),
     method,
     headers,
-    data: bodyParams,
-    params: queryParams,
+    data: requestBody,
+    params: resolvedQueryParams,
   }
 
   const response = await Axios(axiosInput)
@@ -238,15 +251,26 @@ async function oauth2Request(
     credentials: updatedCredentials,
   })
 
+  const {
+    path: resolvedPath,
+    queryParams: resolvedQueryParams,
+    bodyParams: resolvedBodyParams,
+  } = interpolatePathParams(path, queryParams, bodyParams)
+
+  const requestBody = applyBodyEncoding(
+    resolvedBodyParams,
+    serviceConfig.bodyEncoding
+  )
+
   const axiosInput = {
-    url: appConfig.apiUrl + (path ? `/${path}` : ''),
+    url: appConfig.apiUrl + (resolvedPath ? `/${resolvedPath}` : ''),
     method,
     headers: {
       ...inputHeaders,
       Authorization: `Bearer ${authResponse.data.access_token}`,
     },
-    data: bodyParams,
-    params: queryParams,
+    data: requestBody,
+    params: resolvedQueryParams,
   }
 
   const response = await Axios(axiosInput)

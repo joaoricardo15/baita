@@ -127,7 +127,7 @@ export function buildBaitaMethodTask(
 // --- Google Connector ---
 
 const GOOGLE_APP_CONFIG = {
-  apiUrl: 'https://www.googleapis.com',
+  apiUrl: 'https://gmail.googleapis.com',
   auth: {
     type: 'body',
     method: 'post',
@@ -144,6 +144,7 @@ export function buildGoogleTask(
     path: string
     method: string
     outputPath?: string
+    bodyEncoding?: string
     extraInputFields?: object[]
     extraInputData?: object[]
   }
@@ -187,6 +188,7 @@ export function buildGoogleTask(
         methodName: 'oauth2Request',
         inputFields,
         outputPath: operation.outputPath || '',
+        ...(operation.bodyEncoding && { bodyEncoding: operation.bodyEncoding }),
       },
     },
     inputData,

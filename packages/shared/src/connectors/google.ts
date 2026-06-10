@@ -37,6 +37,7 @@ export const googleConnector: IConnectorManifest = {
       description: 'Send an email message',
       method: 'POST',
       path: '/gmail/v1/users/me/messages/send',
+      bodyEncoding: 'email-rfc2822',
       inputFields: [
         {
           name: 'to',

@@ -72,6 +72,7 @@ export const ConnectorOperationSchema = z.object({
   inputFields: z.array(VariableSchema),
   outputPath: z.string().optional(),
   outputMapping: z.record(z.string()).optional(),
+  bodyEncoding: z.string().optional(),
 })
 export type IConnectorOperation = z.infer<typeof ConnectorOperationSchema>
 
