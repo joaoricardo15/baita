@@ -58,7 +58,7 @@ export async function executeTask(
   for (let attempt = 1; attempt <= 2; attempt++) {
     const res = await request.post(`${API_URL}/bots/${botId}/test`, {
       headers: authHeaders(token),
-      data: { task, taskIndex: 1 },
+      data: { task, taskIndex: 0 },
       timeout: 35000,
     })
     if (res.status() >= 502 && attempt < 2) {
