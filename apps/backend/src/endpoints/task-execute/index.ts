@@ -1,12 +1,11 @@
 import { DataType, ITask } from '@baita/shared'
 
 import { executeTask } from '@/tasks/executor'
-import { getDataFromService } from '@/utils/bot'
 
 export interface ITaskExecuteEvent {
   userId: string
   task: ITask
-  resolvedInputData?: DataType
+  resolvedInputData: DataType
 }
 
 export interface ITaskExecuteResult {
@@ -36,14 +35,6 @@ export async function execute(
     app: appName,
   })
 
-  const inputData =
-    resolvedInputData ??
-    getDataFromService(
-      task.service?.config.inputFields || [],
-      task.inputData || [],
-      true
-    )
-
   try {
     const data = await executeTask({
       botId: 'standalone',
@@ -51,7 +42,7 @@ export async function execute(
       connectionId: task.connectionId as string,
       appConfig: task.app?.config || {},
       serviceConfig: task.service?.config || {},
-      inputData,
+      inputData: resolvedInputData,
       serviceName: task.service?.name,
     })
 

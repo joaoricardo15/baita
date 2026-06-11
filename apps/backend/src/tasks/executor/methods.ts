@@ -13,12 +13,9 @@ import Data from '@/controllers/data'
 import User from '@/controllers/user'
 import { getDataFromPath, getMappedData } from '@/utils/bot'
 
-import {
-  applyBodyEncoding,
-  interpolatePathParams,
-  resolveBodyEncoding,
-  resolveOutputMapping,
-} from './utils'
+import { applyBodyEncoding, interpolatePathParams } from './utils'
+
+const REQUEST_TIMEOUT_MS = 10_000
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || ''
@@ -146,21 +143,8 @@ interface IHttpRequest {
 async function httpRequest(
   taskInput: ITaskExecutionInput<DataType>
 ): Promise<DataType | undefined> {
-  const { appConfig, serviceConfig, inputData, connectionId, userId } =
-    taskInput
-  const {
-    path,
-    method,
-    headers: inputHeaders,
-    bodyParams,
-    queryParams,
-  } = inputData as IHttpRequest
-
-  const {
-    path: resolvedPath,
-    queryParams: resolvedQueryParams,
-    bodyParams: resolvedBodyParams,
-  } = interpolatePathParams(path, queryParams, bodyParams)
+  const { inputData, connectionId, userId } = taskInput
+  const { headers: inputHeaders } = inputData as IHttpRequest
 
   const headers = { ...inputHeaders }
 
@@ -177,41 +161,14 @@ async function httpRequest(
     }
   }
 
-  const requestBody = applyBodyEncoding(
-    resolvedBodyParams,
-    resolveBodyEncoding(serviceConfig.bodyEncoding, path)
-  )
-
-  const axiosInput = {
-    url: appConfig.apiUrl + (resolvedPath ? `/${resolvedPath}` : ''),
-    method,
-    headers,
-    data: requestBody,
-    params: resolvedQueryParams,
-  }
-
-  const response = await Axios(axiosInput)
-
-  const initialData = getDataFromPath(response.data, serviceConfig.outputPath)
-
-  return getMappedData(
-    initialData || response.data,
-    resolveOutputMapping(serviceConfig.outputMapping, path)
-  )
+  return makeApiRequest(taskInput, headers)
 }
 
 async function oauth2Request(
   taskInput: ITaskExecutionInput<DataType>
 ): Promise<DataType | undefined> {
-  const { userId, appConfig, serviceConfig, inputData, connectionId } =
-    taskInput
-  const {
-    path,
-    method,
-    headers: inputHeaders,
-    bodyParams,
-    queryParams,
-  } = inputData as IHttpRequest
+  const { userId, appConfig, inputData, connectionId } = taskInput
+  const { headers: inputHeaders } = inputData as IHttpRequest
 
   if (!connectionId) {
     throw new Error('No connection selected — connect an account first')
@@ -239,6 +196,7 @@ async function oauth2Request(
       appConfig.auth.headers as Record<string, string> | undefined,
       credentialsResponse.credentials.refresh_token
     ),
+    timeout: REQUEST_TIMEOUT_MS,
   }
 
   const authResponse = await Axios(axiosAuthInput)
@@ -256,6 +214,21 @@ async function oauth2Request(
     credentials: updatedCredentials,
   })
 
+  const headers = {
+    ...inputHeaders,
+    Authorization: `Bearer ${authResponse.data.access_token}`,
+  }
+
+  return makeApiRequest(taskInput, headers)
+}
+
+async function makeApiRequest(
+  taskInput: ITaskExecutionInput<DataType>,
+  headers: Record<string, string>
+): Promise<DataType | undefined> {
+  const { appConfig, serviceConfig, inputData } = taskInput
+  const { path, method, bodyParams, queryParams } = inputData as IHttpRequest
+
   const {
     path: resolvedPath,
     queryParams: resolvedQueryParams,
@@ -264,27 +237,23 @@ async function oauth2Request(
 
   const requestBody = applyBodyEncoding(
     resolvedBodyParams,
-    resolveBodyEncoding(serviceConfig.bodyEncoding, path)
+    serviceConfig.bodyEncoding
   )
 
-  const axiosInput = {
+  const response = await Axios({
     url: appConfig.apiUrl + (resolvedPath ? `/${resolvedPath}` : ''),
     method,
-    headers: {
-      ...inputHeaders,
-      Authorization: `Bearer ${authResponse.data.access_token}`,
-    },
+    headers,
     data: requestBody,
     params: resolvedQueryParams,
-  }
-
-  const response = await Axios(axiosInput)
+    timeout: REQUEST_TIMEOUT_MS,
+  })
 
   const initialData = getDataFromPath(response.data, serviceConfig.outputPath)
 
   return getMappedData(
     initialData || response.data,
-    resolveOutputMapping(serviceConfig.outputMapping, path)
+    serviceConfig.outputMapping
   )
 }
 

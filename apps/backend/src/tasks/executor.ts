@@ -26,9 +26,14 @@ export async function executeTask(
 ): Promise<DataType | undefined> {
   const { serviceName, ...rest } = params
   const input = rest as ITaskExecutionInput<DataType>
-  const resolvedName = serviceName || inferServiceName(input)
 
-  switch (resolvedName) {
+  if (!serviceName) {
+    throw new Error(
+      'serviceName is required — task.service.name must be defined'
+    )
+  }
+
+  switch (serviceName) {
     case 'code-execute':
       return executeCode(input)
     case 'method-execute':
@@ -36,16 +41,8 @@ export async function executeTask(
     case 'trigger-sample':
       return executeTriggerSample(input)
     default:
-      throw new Error(`Unknown service: ${resolvedName}`)
+      throw new Error(`Unknown service: ${serviceName}`)
   }
-}
-
-function inferServiceName(input: ITaskExecutionInput<DataType>): string {
-  if ((input.serviceConfig as Record<string, unknown>)?.methodName)
-    return 'method-execute'
-  if ((input.inputData as Record<string, unknown>)?.code !== undefined)
-    return 'code-execute'
-  return 'unknown'
 }
 
 async function executeTriggerSample(

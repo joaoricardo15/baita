@@ -23,33 +23,33 @@ export const openaiConnector: IConnectorManifest = {
       path: '/chat/completions',
       inputFields: [
         {
-          name: 'bodyParams.model',
+          name: 'model',
           label: 'Model',
           type: VariableType.constant,
           required: true,
           value: 'gpt-4o-mini',
         },
         {
-          name: 'bodyParams.temperature',
+          name: 'temperature',
           label: 'Temperature',
           type: VariableType.constant,
           value: 0.9,
         },
         {
-          name: 'bodyParams.max_completion_tokens',
+          name: 'max_completion_tokens',
           label: 'Max tokens',
           type: VariableType.constant,
           value: 100,
         },
         {
-          name: 'bodyParams.messages.0.role',
+          name: 'messages.0.role',
           label: 'Role of chat message',
           type: VariableType.constant,
           required: true,
           value: 'user',
         },
         {
-          name: 'bodyParams.messages.0.content',
+          name: 'messages.0.content',
           label: 'Content of chat message',
           type: VariableType.output,
           required: true,
@@ -65,20 +65,20 @@ export const openaiConnector: IConnectorManifest = {
       path: '/images/generations',
       inputFields: [
         {
-          name: 'bodyParams.model',
+          name: 'model',
           label: 'Image generation model',
           type: VariableType.constant,
           required: true,
           value: 'dall-e-3',
         },
         {
-          name: 'bodyParams.prompt',
+          name: 'prompt',
           label: 'What kind of image?',
           type: VariableType.output,
           required: true,
         },
         {
-          name: 'bodyParams.size',
+          name: 'size',
           label: 'Size',
           type: VariableType.constant,
           required: true,

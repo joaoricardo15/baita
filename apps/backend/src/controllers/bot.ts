@@ -15,6 +15,7 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 
 import { execute } from '@/endpoints/task-execute'
+import { getDataFromService } from '@/utils/bot'
 import { getBotSampleCode, getCodeFile, getCompleteBotCode } from '@/utils/code'
 import {
   DISABLED_SCHEDULE_EXPRESSION,
@@ -422,7 +423,12 @@ class Bot {
         if (!botData?.triggerSamples) return
         sample = botData.triggerSamples.reverse()[0]
       } else {
-        const result = await execute({ userId, task })
+        const resolvedInputData = getDataFromService(
+          task.service?.config.inputFields || [],
+          task.inputData || [],
+          true
+        )
+        const result = await execute({ userId, task, resolvedInputData })
         sample = {
           status: result.success
             ? TaskExecutionStatus.success
