@@ -27,6 +27,16 @@ test.describe('NewsAPI Connector — Top Headlines', () => {
       path: 'top-headlines',
       queryParams: { country: 'us', pageSize: '5' },
       outputPath: 'articles',
+      outputMapping: {
+        source: '###NewsAPI',
+        contentId: 'publishedAt',
+        header: 'title',
+        body: 'description',
+        image: 'urlToImage',
+        date: 'publishedAt',
+        url: 'url',
+        'author.name': 'source.name',
+      },
     })
 
     const body = await executeTask(request, token, task)

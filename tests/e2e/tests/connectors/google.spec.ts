@@ -81,6 +81,15 @@ test.describe('Google Connector — Gmail', () => {
       label: 'Get email',
       path: 'gmail/v1/users/me/messages/{messageId}',
       method: 'get',
+      outputMapping: {
+        id: 'id',
+        snippet: 'snippet',
+        from: 'payload.headers[name=From].value',
+        to: 'payload.headers[name=To].value',
+        subject: 'payload.headers[name=Subject].value',
+        date: 'payload.headers[name=Date].value',
+        body: 'payload|email-body',
+      },
       extraInputFields: [
         {
           name: 'queryParams.messageId',

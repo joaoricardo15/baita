@@ -145,6 +145,7 @@ export function buildGoogleTask(
     method: string
     outputPath?: string
     bodyEncoding?: string
+    outputMapping?: Record<string, string>
     extraInputFields?: object[]
     extraInputData?: object[]
   }
@@ -189,6 +190,9 @@ export function buildGoogleTask(
         inputFields,
         outputPath: operation.outputPath || '',
         ...(operation.bodyEncoding && { bodyEncoding: operation.bodyEncoding }),
+        ...(operation.outputMapping && {
+          outputMapping: operation.outputMapping,
+        }),
       },
     },
     inputData,
