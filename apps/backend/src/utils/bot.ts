@@ -17,17 +17,38 @@ export function getDataFromPath(
   >
 
   for (let i = 0; i < paths.length; i++) {
-    const key = isNaN(Number(paths[i])) ? paths[i] : Number(paths[i])
+    const segment = paths[i]
+    const findMatch = segment.match(/^(\w+)\[(\w+)=(.+)\]$/)
 
-    if (
-      !current ||
-      typeof current !== 'object' ||
-      !Object.hasOwn(current, key)
-    ) {
-      return undefined
+    if (findMatch) {
+      const [, arrayKey, searchKey, searchValue] = findMatch
+      if (
+        !current ||
+        typeof current !== 'object' ||
+        !Object.hasOwn(current, arrayKey)
+      ) {
+        return undefined
+      }
+      const arr = current[arrayKey]
+      if (!Array.isArray(arr)) return undefined
+      const found = arr.find(
+        (item: Record<string, unknown>) => item[searchKey] === searchValue
+      )
+      if (!found) return undefined
+      current = found as Record<string | number, unknown>
+    } else {
+      const key = isNaN(Number(segment)) ? segment : Number(segment)
+
+      if (
+        !current ||
+        typeof current !== 'object' ||
+        !Object.hasOwn(current, key)
+      ) {
+        return undefined
+      }
+
+      current = current[key] as Record<string | number, unknown>
     }
-
-    current = current[key] as Record<string | number, unknown>
   }
 
   return current
@@ -43,9 +64,19 @@ export function getDataFromMapping(
   for (let i = 0; i < outputKeys.length; i++) {
     const outputKey = outputKeys[i]
     const mappingValue = outputMapping[outputKey]
-    const outputValue = mappingValue.startsWith('###')
-      ? mappingValue.slice(3)
-      : getDataFromPath(data, mappingValue)
+
+    let outputValue: DataType | undefined
+    if (mappingValue.startsWith('###')) {
+      outputValue = mappingValue.slice(3)
+    } else {
+      const [path, ...pipes] = mappingValue.split('|')
+      outputValue = getDataFromPath(data, path)
+      for (const pipe of pipes) {
+        if (outputValue === undefined) break
+        outputValue = applyPipe(outputValue, pipe)
+      }
+    }
+
     if (outputValue !== undefined) {
       mappedData = setObjectDataFromPath(
         mappedData,
@@ -56,6 +87,16 @@ export function getDataFromMapping(
   }
 
   return mappedData
+}
+
+function applyPipe(value: DataType, pipe: string): DataType | undefined {
+  switch (pipe) {
+    case 'base64url':
+      if (typeof value !== 'string') return value
+      return Buffer.from(value, 'base64url').toString('utf-8')
+    default:
+      return value
+  }
 }
 
 export function getMappedData(

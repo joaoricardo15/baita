@@ -70,6 +70,45 @@ describe('getDataFromPath', () => {
       freq: 4,
     })
   })
+
+  test('should find element in array by property match', () => {
+    const data = {
+      payload: {
+        headers: [
+          { name: 'From', value: 'sender@test.com' },
+          { name: 'To', value: 'recipient@test.com' },
+          { name: 'Subject', value: 'Hello' },
+        ],
+      },
+    }
+    expect(getDataFromPath(data, 'payload.headers[name=From].value')).toBe(
+      'sender@test.com'
+    )
+    expect(getDataFromPath(data, 'payload.headers[name=Subject].value')).toBe(
+      'Hello'
+    )
+  })
+
+  test('should return undefined when array find has no match', () => {
+    const data = {
+      headers: [{ name: 'From', value: 'test@test.com' }],
+    }
+    expect(getDataFromPath(data, 'headers[name=Missing].value')).toBeUndefined()
+  })
+
+  test('should find in nested array with mimeType', () => {
+    const data = {
+      payload: {
+        parts: [
+          { mimeType: 'text/html', body: { data: 'html-content' } },
+          { mimeType: 'text/plain', body: { data: 'plain-content' } },
+        ],
+      },
+    }
+    expect(
+      getDataFromPath(data, 'payload.parts[mimeType=text/plain].body.data')
+    ).toBe('plain-content')
+  })
 })
 
 describe('getDataFromMapping', () => {
@@ -105,6 +144,36 @@ describe('getDataFromMapping', () => {
     expect(getDataFromMapping(data, outputMapping)).toStrictEqual({
       name: 'Baita',
       hobby: 'reading',
+    })
+  })
+
+  test('should apply base64url pipe decode', () => {
+    const encoded = Buffer.from('Hello World').toString('base64url')
+    const data = { body: { data: encoded } }
+    const outputMapping = { content: 'body.data|base64url' }
+    expect(getDataFromMapping(data, outputMapping)).toStrictEqual({
+      content: 'Hello World',
+    })
+  })
+
+  test('should combine array find with pipe decode', () => {
+    const encoded = Buffer.from('Email body text').toString('base64url')
+    const data = {
+      payload: {
+        parts: [
+          { mimeType: 'text/html', body: { data: 'html' } },
+          { mimeType: 'text/plain', body: { data: encoded } },
+        ],
+        headers: [{ name: 'Subject', value: 'Test' }],
+      },
+    }
+    const outputMapping = {
+      subject: 'payload.headers[name=Subject].value',
+      body: 'payload.parts[mimeType=text/plain].body.data|base64url',
+    }
+    expect(getDataFromMapping(data, outputMapping)).toStrictEqual({
+      subject: 'Test',
+      body: 'Email body text',
     })
   })
 })

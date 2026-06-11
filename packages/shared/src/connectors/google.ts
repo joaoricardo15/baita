@@ -97,6 +97,15 @@ export const googleConnector: IConnectorManifest = {
         },
       ],
       outputPath: '',
+      outputMapping: {
+        id: 'id',
+        snippet: 'snippet',
+        from: 'payload.headers[name=From].value',
+        to: 'payload.headers[name=To].value',
+        subject: 'payload.headers[name=Subject].value',
+        date: 'payload.headers[name=Date].value',
+        body: 'payload.parts[mimeType=text/plain].body.data|base64url',
+      },
     },
   ],
 }

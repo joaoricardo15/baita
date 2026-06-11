@@ -143,7 +143,7 @@ test.describe('Google Connector — Gmail', () => {
           name: 'bodyParams.to',
           label: 'To',
           type: 'text',
-          value: 'e2e-test@baita.help',
+          value: 'joaoricardo15@hotmail.com',
         },
         {
           name: 'bodyParams.subject',
