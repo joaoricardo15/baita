@@ -1,4 +1,4 @@
-import { DataType } from '@baita/shared'
+import { DataType, getAllConnectors } from '@baita/shared'
 
 export function interpolatePathParams(
   path: string,
@@ -64,4 +64,23 @@ export function applyBodyEncoding(
     default:
       return bodyParams
   }
+}
+
+export function resolveBodyEncoding(
+  serviceConfigEncoding: string | undefined,
+  path: string
+): string | undefined {
+  if (serviceConfigEncoding) return serviceConfigEncoding
+
+  const connectors = getAllConnectors()
+  for (const connector of connectors) {
+    for (const op of connector.operations) {
+      const opPath = op.path.startsWith('/') ? op.path.slice(1) : op.path
+      if (opPath === path && op.bodyEncoding) {
+        return op.bodyEncoding
+      }
+    }
+  }
+
+  return undefined
 }

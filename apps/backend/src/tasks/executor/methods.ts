@@ -13,7 +13,11 @@ import Data from '@/controllers/data'
 import User from '@/controllers/user'
 import { getDataFromPath, getMappedData } from '@/utils/bot'
 
-import { applyBodyEncoding, interpolatePathParams } from './utils'
+import {
+  applyBodyEncoding,
+  interpolatePathParams,
+  resolveBodyEncoding,
+} from './utils'
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || ''
@@ -174,7 +178,7 @@ async function httpRequest(
 
   const requestBody = applyBodyEncoding(
     resolvedBodyParams,
-    serviceConfig.bodyEncoding
+    resolveBodyEncoding(serviceConfig.bodyEncoding, path)
   )
 
   const axiosInput = {
@@ -259,7 +263,7 @@ async function oauth2Request(
 
   const requestBody = applyBodyEncoding(
     resolvedBodyParams,
-    serviceConfig.bodyEncoding
+    resolveBodyEncoding(serviceConfig.bodyEncoding, path)
   )
 
   const axiosInput = {
