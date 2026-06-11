@@ -1,8 +1,8 @@
 import {
-  IConnection,
   IBot,
   IBotLog,
   IBotModel,
+  IConnection,
   IContent,
   INote,
   IPlace,

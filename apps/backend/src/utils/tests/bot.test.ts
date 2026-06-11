@@ -176,6 +176,111 @@ describe('getDataFromMapping', () => {
       body: 'Email body text',
     })
   })
+
+  test('email-body pipe: simple message (body in payload.body.data)', () => {
+    const encoded = Buffer.from('Simple email body').toString('base64url')
+    const data = {
+      payload: {
+        body: { data: encoded, size: 17 },
+        mimeType: 'text/plain',
+        headers: [{ name: 'Subject', value: 'Simple' }],
+      },
+    }
+    const outputMapping = { body: 'payload|email-body' }
+    expect(getDataFromMapping(data, outputMapping)).toStrictEqual({
+      body: 'Simple email body',
+    })
+  })
+
+  test('email-body pipe: multipart (text/plain in top-level parts)', () => {
+    const encoded = Buffer.from('Multipart body').toString('base64url')
+    const data = {
+      payload: {
+        body: { size: 0 },
+        mimeType: 'multipart/alternative',
+        parts: [
+          { mimeType: 'text/plain', body: { data: encoded, size: 14 } },
+          { mimeType: 'text/html', body: { data: 'aHRtbA', size: 100 } },
+        ],
+      },
+    }
+    const outputMapping = { body: 'payload|email-body' }
+    expect(getDataFromMapping(data, outputMapping)).toStrictEqual({
+      body: 'Multipart body',
+    })
+  })
+
+  test('email-body pipe: nested multipart (text/plain inside multipart/alternative inside multipart/mixed)', () => {
+    const encoded = Buffer.from('Nested body content').toString('base64url')
+    const data = {
+      payload: {
+        body: { size: 0 },
+        mimeType: 'multipart/mixed',
+        parts: [
+          {
+            mimeType: 'multipart/alternative',
+            body: { size: 0 },
+            parts: [
+              {
+                mimeType: 'text/plain',
+                body: { data: encoded, size: 19 },
+              },
+              { mimeType: 'text/html', body: { data: 'aHRtbA', size: 50 } },
+            ],
+          },
+          {
+            mimeType: 'application/pdf',
+            filename: 'doc.pdf',
+            body: { attachmentId: 'abc', size: 5000 },
+          },
+        ],
+      },
+    }
+    const outputMapping = { body: 'payload|email-body' }
+    expect(getDataFromMapping(data, outputMapping)).toStrictEqual({
+      body: 'Nested body content',
+    })
+  })
+
+  test('email-body pipe: full output mapping with all fields', () => {
+    const encoded = Buffer.from('Full email body here').toString('base64url')
+    const data = {
+      id: 'msg123',
+      snippet: 'Full email...',
+      payload: {
+        body: { size: 0 },
+        mimeType: 'multipart/alternative',
+        headers: [
+          { name: 'From', value: 'sender@test.com' },
+          { name: 'To', value: 'receiver@test.com' },
+          { name: 'Subject', value: 'Test Subject' },
+          { name: 'Date', value: 'Mon, 10 Jun 2026 10:00:00 +0000' },
+        ],
+        parts: [
+          { mimeType: 'text/plain', body: { data: encoded, size: 20 } },
+          { mimeType: 'text/html', body: { data: 'aHRtbA', size: 100 } },
+        ],
+      },
+    }
+    const outputMapping = {
+      id: 'id',
+      snippet: 'snippet',
+      from: 'payload.headers[name=From].value',
+      to: 'payload.headers[name=To].value',
+      subject: 'payload.headers[name=Subject].value',
+      date: 'payload.headers[name=Date].value',
+      body: 'payload|email-body',
+    }
+    expect(getDataFromMapping(data, outputMapping)).toStrictEqual({
+      id: 'msg123',
+      snippet: 'Full email...',
+      from: 'sender@test.com',
+      to: 'receiver@test.com',
+      subject: 'Test Subject',
+      date: 'Mon, 10 Jun 2026 10:00:00 +0000',
+      body: 'Full email body here',
+    })
+  })
 })
 
 describe('getMappedData', () => {

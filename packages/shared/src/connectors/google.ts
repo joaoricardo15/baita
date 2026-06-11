@@ -104,7 +104,7 @@ export const googleConnector: IConnectorManifest = {
         to: 'payload.headers[name=To].value',
         subject: 'payload.headers[name=Subject].value',
         date: 'payload.headers[name=Date].value',
-        body: 'payload.parts[mimeType=text/plain].body.data|base64url',
+        body: 'payload|email-body',
       },
     },
   ],
