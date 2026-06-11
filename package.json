@@ -23,6 +23,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
+      "eslint --fix",
+      "cspell --no-must-find-files",
       "prettier --write"
     ],
     "*.{json,md,yml,yaml}": [

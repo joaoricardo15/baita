@@ -8,8 +8,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "test": "jest --watchAll",
-    "test:run": "jest --no-coverage",
+    "test": "jest --no-coverage",
+    "test:watch": "jest --watchAll",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

@@ -19,10 +19,9 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Spell check frontend
-        run: cd apps/frontend && npm run spell
-      - name: Lint, type-check, and test (parallel)
-        run: pnpm turbo run lint type-check test:run
+      - uses: rharkor/caching-for-turbo@v2.4.2
+      - name: Quality checks
+        run: pnpm turbo run lint spell type-check format:check test --filter=!@baita/e2e
 
   # ─── Deploy Frontend ───────────────────────────────────────────────────
   deploy-frontend:

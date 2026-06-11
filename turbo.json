@@ -5,11 +5,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".build/**", ".serverless/**"]
     },
-    "test": {
-      "dependsOn": ["^build"]
-    },
-    "test:run": {},
+    "test": {},
     "lint": {},
-    "type-check": {}
+    "spell": {},
+    "type-check": {},
+    "format:check": {}
   }
 }
