@@ -88,7 +88,7 @@ provider:
         - Effect: Allow
           Action: [iam:PassRole]
           Resource:
-            - !GetAtt botSchedulerRole.Arn
+            - arn:aws:iam::${aws:accountId}:role/${self:provider.environment.SERVICE_PREFIX}-bot-scheduler
         - Effect: Allow
           Action: [ssm:GetParameter, ssm:GetParameters]
           Resource: arn:aws:ssm:us-east-1:*:parameter/baita/prod/*
@@ -104,9 +104,9 @@ provider:
     CORE_TABLE: ${self:provider.environment.SERVICE_PREFIX}
     DOCS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-docs
     FILES_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-files
-    BOT_EXECUTE_ARN: !GetAtt BotDashexecuteLambdaFunction.Arn
+    BOT_EXECUTE_ARN: arn:aws:lambda:us-east-1:${aws:accountId}:function:${self:provider.environment.SERVICE_PREFIX}-bot-execute
     BOT_EXECUTION_LOG_GROUP: /baita/bot-executions
-    BOT_SCHEDULER_ROLE: !GetAtt botSchedulerRole.Arn
+    BOT_SCHEDULER_ROLE: arn:aws:iam::${aws:accountId}:role/${self:provider.environment.SERVICE_PREFIX}-bot-scheduler
     # Auth0 Management API (M2M)
     AUTH0_DOMAIN: auth.baita.help
     AUTH0_AUDIENCE: https://dev-yc4pbydg.us.auth0.com/api/v2/
@@ -462,7 +462,7 @@ resources:
                 - Effect: Allow
                   Action: [lambda:InvokeFunction]
                   Resource:
-                    - !GetAtt BotDashexecuteLambdaFunction.Arn
+                    - arn:aws:lambda:us-east-1:${aws:accountId}:function:${self:provider.environment.SERVICE_PREFIX}-bot-execute
 
     # API Gateway docs route (serves OpenAPI spec at root /)
     docsRootMethod:
