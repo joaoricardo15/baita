@@ -109,10 +109,16 @@ test.describe('Google Connector — Gmail', () => {
     const message = body.data.outputData as Record<string, unknown>
     expect(message).toHaveProperty('id')
     expect(message).toHaveProperty('snippet')
+    expect(message).toHaveProperty('from')
+    expect(message).toHaveProperty('subject')
+    expect(message).toHaveProperty('body')
+    expect(typeof message.body).toBe('string')
+    expect((message.body as string).length).toBeGreaterThan(5)
     logResult('Gmail get-message', {
       id: message.id,
-      hasSnippet: !!message.snippet,
-      hasPayload: !!message.payload,
+      from: message.from,
+      subject: (message.subject as string)?.slice(0, 40),
+      bodyPreview: (message.body as string)?.slice(0, 60),
     })
   })
 

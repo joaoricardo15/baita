@@ -47,11 +47,11 @@ test.describe('NewsAPI Connector — Top Headlines', () => {
     expect(articles.length).toBeGreaterThan(0)
 
     const first = articles[0] as Record<string, unknown>
-    expect(first).toHaveProperty('title')
+    expect(first).toHaveProperty('header')
     expect(first).toHaveProperty('url')
     logResult('NewsAPI top-headlines', {
       count: articles.length,
-      firstTitle: (first.title as string)?.slice(0, 60),
+      firstHeader: (first.header as string)?.slice(0, 60),
     })
   })
 
