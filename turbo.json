@@ -8,9 +8,8 @@
     "test": {
       "dependsOn": ["^build"]
     },
+    "test:run": {},
     "lint": {},
-    "type-check": {
-      "dependsOn": ["^build"]
-    }
+    "type-check": {}
   }
 }

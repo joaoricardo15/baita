@@ -8,22 +8,8 @@ on:
 jobs:
   # ─── Quality Gate ───────────────────────────────────────────────────────
   quality:
-    name: Quality (${{ matrix.app }})
+    name: Quality
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - app: Frontend
-            lint-cmd: cd apps/frontend && npm run lint
-            spell-cmd: cd apps/frontend && npm run spell
-            typecheck-cmd: cd apps/frontend && npx tsc --noEmit
-            test-cmd: cd apps/frontend && npm test
-          - app: Backend
-            lint-cmd: cd apps/backend && npx eslint 'src/**/*.ts'
-            spell-cmd: ''
-            typecheck-cmd: cd apps/backend && npx tsc --noEmit
-            test-cmd: cd apps/backend && npx jest --no-coverage
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -33,17 +19,10 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Type-check shared schemas
-        run: cd packages/shared && npx tsc --noEmit
-      - name: Lint
-        run: ${{ matrix.lint-cmd }}
-      - name: Spell check
-        if: matrix.spell-cmd != ''
-        run: ${{ matrix.spell-cmd }}
-      - name: Type-check
-        run: ${{ matrix.typecheck-cmd }}
-      - name: Test
-        run: ${{ matrix.test-cmd }}
+      - name: Spell check frontend
+        run: cd apps/frontend && npm run spell
+      - name: Lint, type-check, and test (parallel)
+        run: pnpm turbo run lint type-check test:run
 
   # ─── Deploy Frontend ───────────────────────────────────────────────────
   deploy-frontend:
