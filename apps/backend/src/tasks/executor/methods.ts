@@ -17,6 +17,7 @@ import {
   applyBodyEncoding,
   interpolatePathParams,
   resolveBodyEncoding,
+  resolveOutputMapping,
 } from './utils'
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''
@@ -195,7 +196,7 @@ async function httpRequest(
 
   return getMappedData(
     initialData || response.data,
-    serviceConfig.outputMapping
+    resolveOutputMapping(serviceConfig.outputMapping, path)
   )
 }
 
@@ -283,7 +284,7 @@ async function oauth2Request(
 
   return getMappedData(
     initialData || response.data,
-    serviceConfig.outputMapping
+    resolveOutputMapping(serviceConfig.outputMapping, path)
   )
 }
 

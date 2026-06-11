@@ -71,16 +71,33 @@ export function resolveBodyEncoding(
   path: string
 ): string | undefined {
   if (serviceConfigEncoding) return serviceConfigEncoding
+  return resolveFromConnector(path)?.bodyEncoding
+}
 
+export function resolveOutputMapping(
+  serviceConfigMapping: Record<string, string> | undefined,
+  path: string
+): Record<string, string> | undefined {
+  if (serviceConfigMapping) return serviceConfigMapping
+  return resolveFromConnector(path)?.outputMapping
+}
+
+function resolveFromConnector(
+  path: string
+):
+  | { bodyEncoding?: string; outputMapping?: Record<string, string> }
+  | undefined {
   const connectors = getAllConnectors()
   for (const connector of connectors) {
     for (const op of connector.operations) {
       const opPath = op.path.startsWith('/') ? op.path.slice(1) : op.path
-      if (opPath === path && op.bodyEncoding) {
-        return op.bodyEncoding
+      if (opPath === path) {
+        return {
+          bodyEncoding: op.bodyEncoding,
+          outputMapping: op.outputMapping,
+        }
       }
     }
   }
-
   return undefined
 }
