@@ -68,8 +68,8 @@ export const handler = async (
         case 'DELETE': {
           const resource = new Data(userId, 'bot')
           const botRecord = await resource.read(botId)
-          if (!botRecord?.apiId) throw new Error('Bot not found')
-          await bot.deleteBot(userId, botId, botRecord.apiId as string)
+          if (!botRecord) throw new Error('Bot not found')
+          await bot.deleteBot(userId, botId)
           break
         }
       }

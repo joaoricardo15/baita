@@ -4,17 +4,18 @@
  * DDD Role: Aggregate Root (consistency boundary for all workflow data)
  *
  * A Bot is a complete automation workflow: an ordered list of Tasks that
- * execute sequentially when triggered. At deployment time, the tasks are
- * compiled into a standalone AWS Lambda function via code generation.
+ * execute sequentially when triggered. A shared execution engine interprets
+ * the task definitions at runtime — no per-bot infrastructure is deployed.
  *
  * Relationships:
  * - Bot.tasks[] → ordered Task entities (the workflow steps)
- * - Bot.userId → owner (User entity)
+ * - Bot.userId → owner (User entity, stored as DynamoDB partition key)
  * - Bot.modelId → optional template reference (BotModel)
- * - Bot.apiId → AWS API Gateway resource ID (read from DynamoDB at delete time)
+ * - Bot.triggerToken → opaque token encoding userId for the trigger URL
  * - Bot.triggerSamples[] → cached trigger execution results
  * - BotLog references Bot via botId
  *
+ * Trigger URL: /bots/{botId}/run/{triggerToken}
  * External references to this aggregate MUST go through botId.
  * Tasks within the bot are not independently addressable from outside.
  */
@@ -54,10 +55,8 @@ export type IBotModel = z.infer<typeof BotModelSchema>
 export const BotSchema = z.object({
   botId: z.string(),
   modelId: z.string().optional(),
-  apiId: z.string(),
   name: z.string(),
   active: z.boolean(),
-  triggerUrl: z.string(),
   triggerSamples: z.array(TaskExecutionResultSchema),
   tasks: z.array(TaskSchema),
   image: z.string().optional(),

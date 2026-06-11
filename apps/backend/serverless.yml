@@ -65,29 +65,12 @@ provider:
         - Effect: Allow
           Action: [s3:PutObject, s3:GetObject, s3:DeleteObject]
           Resource:
-            - arn:aws:s3:::${self:provider.environment.BOTS_BUCKET}/*
             - arn:aws:s3:::${self:provider.environment.FILES_BUCKET}/*
         - Effect: Allow
-          Action:
-            [
-              lambda:CreateFunction,
-              lambda:UpdateFunctionCode,
-              lambda:DeleteFunction,
-              lambda:InvokeFunction,
-              lambda:TagResource,
-            ]
-          Resource:
-            - arn:aws:lambda:us-east-1:*:function:${self:provider.environment.SERVICE_PREFIX}-*
-        - Effect: Allow
-          Action:
-            [
-              logs:CreateLogGroup,
-              logs:DeleteLogGroup,
-              logs:StartQuery,
-              logs:GetQueryResults,
-            ]
+          Action: [logs:StartQuery, logs:GetQueryResults]
           Resource:
             - arn:aws:logs:us-east-1:*:log-group:/aws/lambda/${self:provider.environment.SERVICE_PREFIX}-*:*
+            - arn:aws:logs:us-east-1:*:log-group:${self:provider.environment.BOT_EXECUTION_LOG_GROUP}:*
         - Effect: Allow
           Action:
             [
@@ -103,21 +86,9 @@ provider:
             - arn:aws:scheduler:us-east-1:*:schedule/${self:provider.environment.SERVICE_PREFIX}-*/*
             - arn:aws:scheduler:us-east-1:*:schedule-group/${self:provider.environment.SERVICE_PREFIX}-*
         - Effect: Allow
-          Action:
-            [
-              apigateway:POST,
-              apigateway:DELETE,
-              apigateway:GET,
-              apigateway:TagResource,
-            ]
-          Resource:
-            - arn:aws:apigateway:us-east-1::/apis
-            - arn:aws:apigateway:us-east-1::/apis/*
-            - arn:aws:apigateway:us-east-1::/tags/*
-        - Effect: Allow
           Action: [iam:PassRole]
           Resource:
-            - ${self:provider.environment.BOTS_PERMISSION}
+            - !GetAtt botSchedulerRole.Arn
         - Effect: Allow
           Action: [ssm:GetParameter, ssm:GetParameters]
           Resource: arn:aws:ssm:us-east-1:*:parameter/baita/prod/*
@@ -132,9 +103,10 @@ provider:
 
     CORE_TABLE: ${self:provider.environment.SERVICE_PREFIX}
     DOCS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-docs
-    BOTS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-bots
     FILES_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-files
-    BOTS_PERMISSION: arn:aws:iam::${aws:accountId}:role/${self:provider.environment.SERVICE_PREFIX}
+    BOT_EXECUTE_ARN: !GetAtt BotDashexecuteLambdaFunction.Arn
+    BOT_EXECUTION_LOG_GROUP: /baita/bot-executions
+    BOT_SCHEDULER_ROLE: !GetAtt botSchedulerRole.Arn
     # Auth0 Management API (M2M)
     AUTH0_DOMAIN: auth.baita.help
     AUTH0_AUDIENCE: https://dev-yc4pbydg.us.auth0.com/api/v2/
@@ -337,18 +309,14 @@ functions:
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
-  # ─── Tasks ─────────────────────────────────────────────────
-  task-execute:
-    handler: src/endpoints/task-execute/index.handler
-
-  endpoint-tasks:
-    handler: src/endpoints/tasks/index.handler
+  # ─── Bot Execution (public trigger + scheduler) ────────────
+  bot-execute:
+    handler: src/endpoints/bots/run/index.handler
+    timeout: 300
     events:
       - http:
-          path: tasks/execute
+          path: bots/{botId}/run/{token}
           method: post
-          cors: ${self:custom.cors}
-          authorizer: ${self:custom.authorizer}
 
   # ─── OAuth Callback ────────────────────────────────────────
   oauth-callback:
@@ -402,11 +370,6 @@ resources:
           Enabled: true
 
     # S3 Buckets
-    botsBucket:
-      Type: AWS::S3::Bucket
-      DeletionPolicy: Retain
-      Properties:
-        BucketName: ${self:provider.environment.BOTS_BUCKET}
     # Public GET gated by Referer header (bucket policy below).
     filesBucket:
       Type: AWS::S3::Bucket
@@ -472,41 +435,34 @@ resources:
               Action: s3:GetObject
               Resource: arn:aws:s3:::${self:provider.environment.DOCS_BUCKET}/*
 
-    # IAM role assumed by deployed bot Lambdas
-    botsRole:
+    # Bot execution log group (shared across all bots)
+    botExecutionLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /baita/bot-executions
+        RetentionInDays: 14
+
+    # IAM role assumed by EventBridge Scheduler to invoke bot-execute
+    botSchedulerRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: ${self:provider.environment.SERVICE_PREFIX}
+        RoleName: ${self:provider.environment.SERVICE_PREFIX}-bot-scheduler
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action: sts:AssumeRole
               Principal:
-                Service:
-                  [
-                    lambda.amazonaws.com,
-                    scheduler.amazonaws.com,
-                    apigateway.amazonaws.com,
-                  ]
+                Service: scheduler.amazonaws.com
         Policies:
-          - PolicyName: ${self:provider.environment.SERVICE_PREFIX}
+          - PolicyName: invoke-bot-execute
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
                 - Effect: Allow
                   Action: [lambda:InvokeFunction]
                   Resource:
-                    - arn:aws:lambda:us-east-1:*:function:${self:provider.environment.SERVICE_PREFIX}-*
-                - Effect: Allow
-                  Action:
-                    [
-                      logs:CreateLogStream,
-                      logs:CreateLogGroup,
-                      logs:PutLogEvents,
-                    ]
-                  Resource:
-                    - arn:aws:logs:us-east-1:*:log-group:/aws/lambda/${self:provider.environment.SERVICE_PREFIX}-*:*
+                    - !GetAtt BotDashexecuteLambdaFunction.Arn
 
     # API Gateway docs route (serves OpenAPI spec at root /)
     docsRootMethod:

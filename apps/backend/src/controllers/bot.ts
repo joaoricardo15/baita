@@ -1,9 +1,9 @@
-import { ApiGatewayV2 } from '@aws-sdk/client-apigatewayv2'
 import { CloudWatchLogs } from '@aws-sdk/client-cloudwatch-logs'
-import { Lambda } from '@aws-sdk/client-lambda'
-import { S3 } from '@aws-sdk/client-s3'
 import { Scheduler } from '@aws-sdk/client-scheduler'
 import {
+  computeTriggerToken,
+  DataType,
+  generateId,
   IBot,
   IBotModel,
   ITask,
@@ -12,11 +12,9 @@ import {
   TaskExecutionStatus,
   validateTaskExecutionResult,
 } from '@baita/shared'
-import { v4 as uuidv4 } from 'uuid'
 
-import { execute } from '@/endpoints/task-execute'
-import { getDataFromService } from '@/utils/bot'
-import { getBotSampleCode, getCodeFile, getCompleteBotCode } from '@/utils/code'
+import { resolveTaskInputs } from '@/engine/resolver'
+import { executeTask } from '@/tasks/executor'
 import {
   DISABLED_SCHEDULE_EXPRESSION,
   LOG_LOOKBACK_DAYS,
@@ -25,122 +23,33 @@ import {
 
 import Data from './data'
 
-const BOTS_BUCKET = process.env.BOTS_BUCKET || ''
-const BOTS_PERMISSION = process.env.BOTS_PERMISSION || ''
 const SERVICE_PREFIX = process.env.SERVICE_PREFIX || ''
+const BOT_EXECUTE_ARN = process.env.BOT_EXECUTE_ARN || ''
+const BOT_SCHEDULER_ROLE = process.env.BOT_SCHEDULER_ROLE || ''
+const BOT_EXECUTION_LOG_GROUP = process.env.BOT_EXECUTION_LOG_GROUP || ''
 
 class Bot {
-  private lambda: Lambda
-  private s3: S3
   private scheduler: Scheduler
-  private apigateway: ApiGatewayV2
   private cloudWatchLogs: CloudWatchLogs
 
   constructor() {
-    this.lambda = new Lambda({})
-    this.s3 = new S3({})
     this.scheduler = new Scheduler({})
-    this.apigateway = new ApiGatewayV2({})
     this.cloudWatchLogs = new CloudWatchLogs({})
-  }
-
-  async getBotLogs(botId: string, searchTerms: string | string[] | undefined) {
-    try {
-      const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
-
-      let queryString =
-        'fields @message | sort @timestamp desc | filter @message like "\tINFO\t"'
-
-      if (searchTerms) {
-        if (Array.isArray(searchTerms)) {
-          searchTerms.forEach(
-            (term) => (queryString += ` | filter @message like /(?i)${term}/`)
-          )
-        } else queryString += ` | filter @message like /(?i)${searchTerms}/`
-      }
-
-      let startResponse
-      try {
-        startResponse = await this.cloudWatchLogs.startQuery({
-          limit: LOG_QUERY_LIMIT,
-          queryString,
-          endTime: Date.now(),
-          startTime: Date.now() - LOG_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
-          logGroupName: `/aws/lambda/${botPrefix}`,
-        })
-      } catch (err: unknown) {
-        console.error(err)
-        return []
-      }
-
-      let queryResponse
-      while (!queryResponse || queryResponse.status !== 'Complete') {
-        await new Promise((resolve) => setTimeout(resolve, 100))
-
-        queryResponse = await this.cloudWatchLogs.getQueryResults({
-          queryId: startResponse.queryId,
-        })
-      }
-
-      return queryResponse?.results?.map((result) =>
-        JSON.parse(
-          result
-            .find((obj) => obj.field === '@message')
-            ?.value?.split('\tINFO\t')[1] || '{}'
-        )
-      )
-    } catch (err: unknown) {
-      throw err instanceof Error ? err : new Error(String(err))
-    }
   }
 
   async createBot(userId: string) {
     try {
-      const botId = uuidv4()
+      const botId = generateId()
       const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
-      const tags = { 'bot-id': botId, 'user-id': userId, 'managed-by': 'baita' }
-
-      const sampleCode = getBotSampleCode(userId, botId)
-      const codeFile = await getCodeFile(sampleCode)
-
-      await this.s3.putObject({
-        Bucket: BOTS_BUCKET,
-        Key: `${botId}.zip`,
-        Body: codeFile,
-      })
-
-      const lambdaResult = await this.lambda.createFunction({
-        FunctionName: botPrefix,
-        Handler: 'index.handler',
-        Runtime: 'nodejs20.x',
-        Timeout: 300,
-        Role: BOTS_PERMISSION,
-        Tags: tags,
-        Code: {
-          S3Bucket: BOTS_BUCKET,
-          S3Key: `${botId}.zip`,
-        },
-      })
-
-      const botUrl = '/bot'
-
-      const apiResult = await this.apigateway.createApi({
-        Name: botPrefix,
-        ProtocolType: 'HTTP',
-        CredentialsArn: BOTS_PERMISSION,
-        RouteKey: `ANY ${botUrl}`,
-        Target: lambdaResult.FunctionArn,
-        Tags: tags,
-        CorsConfiguration: {
-          AllowHeaders: ['*'],
-          AllowOrigins: ['*'],
-          AllowMethods: ['*'],
-        },
-      })
+      const triggerToken = computeTriggerToken(userId)
 
       await this.scheduler.createScheduleGroup({
         Name: botPrefix,
-        Tags: Object.entries(tags).map(([Key, Value]) => ({ Key, Value })),
+        Tags: [
+          { Key: 'bot-id', Value: botId },
+          { Key: 'user-id', Value: userId },
+          { Key: 'managed-by', Value: 'baita' },
+        ],
       })
 
       await this.scheduler.createSchedule({
@@ -148,12 +57,11 @@ class Bot {
         GroupName: botPrefix,
         State: 'DISABLED',
         ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
-        FlexibleTimeWindow: {
-          Mode: 'OFF',
-        },
+        FlexibleTimeWindow: { Mode: 'OFF' },
         Target: {
-          Arn: lambdaResult.FunctionArn || '',
-          RoleArn: BOTS_PERMISSION,
+          Arn: BOT_EXECUTE_ARN,
+          RoleArn: BOT_SCHEDULER_ROLE,
+          Input: JSON.stringify({ botId, token: triggerToken }),
         },
       })
 
@@ -163,15 +71,8 @@ class Bot {
         description: '',
         image: '',
         active: false,
-        apiId: apiResult.ApiId || '',
-        triggerUrl: `${apiResult.ApiEndpoint}${botUrl}`,
         triggerSamples: [],
-        tasks: [
-          {
-            taskId: Date.now(),
-            inputData: [],
-          },
-        ],
+        tasks: [{ taskId: Date.now(), inputData: [] }],
       }
 
       const dataStore = new Data(userId, 'bot')
@@ -183,53 +84,72 @@ class Bot {
     }
   }
 
+  async deployBot(
+    userId: string,
+    botId: string,
+    name: string,
+    active: boolean,
+    tasks: ITask[]
+  ) {
+    try {
+      const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
+      const triggerToken = computeTriggerToken(userId)
+
+      if (active && tasks[0].service?.name === ServiceName.schedule) {
+        await this.scheduler.updateSchedule({
+          Name: botPrefix,
+          GroupName: botPrefix,
+          State: 'ENABLED',
+          ScheduleExpression: tasks[0].inputData.find(
+            (input) => input.name === 'expression'
+          )?.value as string,
+          ScheduleExpressionTimezone: tasks[0].inputData.find(
+            (input) => input.name === 'timeZone'
+          )?.value as string,
+          FlexibleTimeWindow: { Mode: 'OFF' },
+          Target: {
+            Arn: BOT_EXECUTE_ARN,
+            RoleArn: BOT_SCHEDULER_ROLE,
+            Input: JSON.stringify({ botId, token: triggerToken }),
+          },
+        })
+      } else {
+        await this.scheduler.updateSchedule({
+          Name: botPrefix,
+          GroupName: botPrefix,
+          State: 'DISABLED',
+          ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
+          FlexibleTimeWindow: { Mode: 'OFF' },
+          Target: {
+            Arn: BOT_EXECUTE_ARN,
+            RoleArn: BOT_SCHEDULER_ROLE,
+            Input: JSON.stringify({ botId, token: triggerToken }),
+          },
+        })
+      }
+
+      const dataStore = new Data(userId, 'bot')
+      const dbResult = await dataStore.update(botId, { name, tasks, active })
+
+      return dbResult
+    } catch (err: unknown) {
+      throw err instanceof Error ? err : new Error(String(err))
+    }
+  }
+
   async deployBotModel(userId: string, model: IBotModel) {
     try {
-      const botId = uuidv4()
+      const botId = generateId()
       const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
-      const tags = { 'bot-id': botId, 'user-id': userId, 'managed-by': 'baita' }
-
-      const sampleCode = getCompleteBotCode(userId, botId, model.tasks)
-      const codeFile = await getCodeFile(sampleCode)
-
-      await this.s3.putObject({
-        Bucket: BOTS_BUCKET,
-        Key: `${botId}.zip`,
-        Body: codeFile,
-      })
-
-      const lambdaResult = await this.lambda.createFunction({
-        FunctionName: botPrefix,
-        Handler: 'index.handler',
-        Runtime: 'nodejs20.x',
-        Timeout: 300,
-        Role: BOTS_PERMISSION,
-        Tags: tags,
-        Code: {
-          S3Bucket: BOTS_BUCKET,
-          S3Key: `${botId}.zip`,
-        },
-      })
-
-      const botUrl = '/bot'
-
-      const apiResult = await this.apigateway.createApi({
-        Name: botPrefix,
-        ProtocolType: 'HTTP',
-        CredentialsArn: BOTS_PERMISSION,
-        RouteKey: `ANY ${botUrl}`,
-        Target: lambdaResult.FunctionArn,
-        Tags: tags,
-        CorsConfiguration: {
-          AllowHeaders: ['*'],
-          AllowOrigins: ['*'],
-          AllowMethods: ['*'],
-        },
-      })
+      const triggerToken = computeTriggerToken(userId)
 
       await this.scheduler.createScheduleGroup({
         Name: botPrefix,
-        Tags: Object.entries(tags).map(([Key, Value]) => ({ Key, Value })),
+        Tags: [
+          { Key: 'bot-id', Value: botId },
+          { Key: 'user-id', Value: userId },
+          { Key: 'managed-by', Value: 'baita' },
+        ],
       })
 
       if (model.tasks[0].service?.name === ServiceName.schedule) {
@@ -243,12 +163,11 @@ class Bot {
           ScheduleExpressionTimezone: model.tasks[0].inputData.find(
             (input) => input.name === 'timeZone'
           )?.value as string,
-          FlexibleTimeWindow: {
-            Mode: 'OFF',
-          },
+          FlexibleTimeWindow: { Mode: 'OFF' },
           Target: {
-            Arn: lambdaResult.FunctionArn || '',
-            RoleArn: BOTS_PERMISSION,
+            Arn: BOT_EXECUTE_ARN,
+            RoleArn: BOT_SCHEDULER_ROLE,
+            Input: JSON.stringify({ botId, token: triggerToken }),
           },
         })
       } else {
@@ -257,12 +176,11 @@ class Bot {
           GroupName: botPrefix,
           State: 'DISABLED',
           ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
-          FlexibleTimeWindow: {
-            Mode: 'OFF',
-          },
+          FlexibleTimeWindow: { Mode: 'OFF' },
           Target: {
-            Arn: lambdaResult.FunctionArn || '',
-            RoleArn: BOTS_PERMISSION,
+            Arn: BOT_EXECUTE_ARN,
+            RoleArn: BOT_SCHEDULER_ROLE,
+            Input: JSON.stringify({ botId, token: triggerToken }),
           },
         })
       }
@@ -270,10 +188,7 @@ class Bot {
       const bot: IBot = {
         botId,
         active: true,
-        apiId: apiResult.ApiId || '',
-        triggerUrl: `${apiResult.ApiEndpoint}${botUrl}`,
         triggerSamples: [],
-
         name: model.name,
         image: model.image,
         tasks: model.tasks,
@@ -290,28 +205,18 @@ class Bot {
     }
   }
 
-  async deleteBot(userId: string, botId: string, apiId: string) {
+  async deleteBot(userId: string, botId: string) {
     try {
       const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
 
       const dataStore = new Data(userId, 'bot')
       await dataStore.delete(botId)
 
-      const results = await Promise.allSettled([
-        this.apigateway.deleteApi({ ApiId: apiId }),
-        this.scheduler.deleteScheduleGroup({ Name: botPrefix }),
-        this.lambda.deleteFunction({ FunctionName: botPrefix }),
-        this.cloudWatchLogs.deleteLogGroup({
-          logGroupName: `/aws/lambda/${botPrefix}`,
-        }),
-        this.s3.deleteObject({ Bucket: BOTS_BUCKET, Key: `${botId}.zip` }),
-      ])
-
-      results.forEach((r, i) => {
-        if (r.status === 'rejected') {
-          console.error(`deleteBot step ${i} failed for ${botId}:`, r.reason)
-        }
-      })
+      try {
+        await this.scheduler.deleteScheduleGroup({ Name: botPrefix })
+      } catch (err: unknown) {
+        console.error(`deleteBot scheduler cleanup failed for ${botId}:`, err)
+      }
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }
@@ -342,77 +247,6 @@ class Bot {
     }
   }
 
-  async deployBot(
-    userId: string,
-    botId: string,
-    name: string,
-    active: boolean,
-    tasks: ITask[]
-  ) {
-    try {
-      const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
-
-      const botCode = !active
-        ? getBotSampleCode(userId, botId)
-        : getCompleteBotCode(userId, botId, tasks)
-      const codeFile = await getCodeFile(botCode)
-
-      await this.s3.putObject({
-        Bucket: BOTS_BUCKET,
-        Key: `${botId}.zip`,
-        Body: codeFile,
-      })
-
-      const lambdaResult = await this.lambda.updateFunctionCode({
-        FunctionName: botPrefix,
-        S3Bucket: BOTS_BUCKET,
-        S3Key: `${botId}.zip`,
-      })
-
-      if (active && tasks[0].service?.name === ServiceName.schedule) {
-        await this.scheduler.updateSchedule({
-          Name: botPrefix,
-          GroupName: botPrefix,
-          State: 'ENABLED',
-          ScheduleExpression: tasks[0].inputData.find(
-            (input) => input.name === 'expression'
-          )?.value as string,
-          ScheduleExpressionTimezone: tasks[0].inputData.find(
-            (input) => input.name === 'timeZone'
-          )?.value as string,
-          FlexibleTimeWindow: {
-            Mode: 'OFF',
-          },
-          Target: {
-            Arn: lambdaResult.FunctionArn || '',
-            RoleArn: BOTS_PERMISSION,
-          },
-        })
-      } else {
-        await this.scheduler.updateSchedule({
-          Name: botPrefix,
-          GroupName: botPrefix,
-          State: 'DISABLED',
-          ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
-          FlexibleTimeWindow: {
-            Mode: 'OFF',
-          },
-          Target: {
-            Arn: lambdaResult.FunctionArn || '',
-            RoleArn: BOTS_PERMISSION,
-          },
-        })
-      }
-
-      const dataStore = new Data(userId, 'bot')
-      const dbResult = await dataStore.update(botId, { name, tasks, active })
-
-      return dbResult
-    } catch (err: unknown) {
-      throw err instanceof Error ? err : new Error(String(err))
-    }
-  }
-
   async testBot(userId: string, botId: string, task: ITask, taskIndex: string) {
     try {
       let sample: ITaskExecutionResult
@@ -420,23 +254,42 @@ class Bot {
       if (Number(taskIndex) === 0) {
         const dataStore = new Data(userId, 'bot')
         const botData = await dataStore.read(botId)
-        if (!botData?.triggerSamples) return
-        sample = botData.triggerSamples.reverse()[0]
+        if (!botData?.triggerSamples?.length) {
+          throw new Error(
+            'No trigger samples available — run the trigger first'
+          )
+        }
+        sample = botData.triggerSamples.at(-1)!
       } else {
-        const resolvedInputData = getDataFromService(
-          task.service?.config.inputFields || [],
-          task.inputData || [],
-          true
+        const dataStore = new Data(userId, 'bot')
+        const botData = (await dataStore.read(botId)) as IBot | undefined
+        const taskOutputs: DataType[] = (botData?.tasks || []).map(
+          (t) => (t.sampleResult?.outputData ?? null) as DataType
         )
-        const result = await execute({ userId, task, resolvedInputData })
+
+        const resolvedInputData = resolveTaskInputs(
+          task.service?.config?.inputFields || [],
+          task.inputData || [],
+          taskOutputs
+        )
+
+        const data = await executeTask({
+          botId,
+          userId,
+          connectionId: task.connectionId as string | undefined,
+          appConfig: task.app?.config || {},
+          serviceConfig: task.service?.config || {},
+          inputData: resolvedInputData,
+          serviceName: task.service?.name,
+        })
+
         sample = {
-          status: result.success
-            ? TaskExecutionStatus.success
-            : TaskExecutionStatus.fail,
-          inputData: {},
-          outputData: result.success
-            ? (result.data ?? null)
-            : (result.message ?? null),
+          status:
+            data !== undefined
+              ? TaskExecutionStatus.success
+              : TaskExecutionStatus.fail,
+          inputData: resolvedInputData,
+          outputData: data ?? null,
           timestamp: Date.now(),
         }
       }
@@ -452,6 +305,53 @@ class Bot {
       )
 
       return sample
+    } catch (err: unknown) {
+      throw err instanceof Error ? err : new Error(String(err))
+    }
+  }
+
+  async getBotLogs(botId: string, searchTerms: string | string[] | undefined) {
+    try {
+      let queryString = `fields @message | sort @timestamp desc | filter @message like "\tINFO\t" | filter @message like "${botId}"`
+
+      if (searchTerms) {
+        if (Array.isArray(searchTerms)) {
+          searchTerms.forEach(
+            (term) => (queryString += ` | filter @message like /(?i)${term}/`)
+          )
+        } else queryString += ` | filter @message like /(?i)${searchTerms}/`
+      }
+
+      let startResponse
+      try {
+        startResponse = await this.cloudWatchLogs.startQuery({
+          limit: LOG_QUERY_LIMIT,
+          queryString,
+          endTime: Date.now(),
+          startTime: Date.now() - LOG_LOOKBACK_DAYS * 24 * 60 * 60 * 1000,
+          logGroupName: BOT_EXECUTION_LOG_GROUP,
+        })
+      } catch (err: unknown) {
+        console.error(err)
+        return []
+      }
+
+      let queryResponse
+      while (!queryResponse || queryResponse.status !== 'Complete') {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        queryResponse = await this.cloudWatchLogs.getQueryResults({
+          queryId: startResponse.queryId,
+        })
+      }
+
+      return queryResponse?.results?.map((result) =>
+        JSON.parse(
+          result
+            .find((obj) => obj.field === '@message')
+            ?.value?.split('\tINFO\t')[1] || '{}'
+        )
+      )
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }

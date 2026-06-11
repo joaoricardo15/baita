@@ -4,10 +4,15 @@ import { CopyToClipboard } from 'react-copy-to-clipboard'
 
 import { Button } from '@/components'
 import { NotificationContext } from '@/providers/notification'
+import { computeRunUrl } from '@/utils/bot'
 import { getLabels, Labels } from '@/utils/labels'
 
-const WebhookService: FC<{ triggerUrl: string }> = ({ triggerUrl }) => {
+const WebhookService: FC<{ botId: string; userId: string }> = ({
+  botId,
+  userId,
+}) => {
   const { showSnack } = useContext(NotificationContext)
+  const runUrl = computeRunUrl(botId, userId)
 
   return (
     <div
@@ -15,12 +20,12 @@ const WebhookService: FC<{ triggerUrl: string }> = ({ triggerUrl }) => {
       style={{ alignItems: 'center' }}
     >
       <div>
-        {labels.triggerUrl}
-        {triggerUrl}
+        {labels.url}
+        {runUrl}
       </div>
       <div className="mx-3">
         <CopyToClipboard
-          text={triggerUrl}
+          text={runUrl}
           onCopy={() => showSnack(labels.urlCopiedToClipboard, 'success')}
         >
           <Button iconButton icon={<FileCopyIcon />} />
@@ -34,11 +39,11 @@ export default WebhookService
 
 const LABELS: Labels = {
   en: {
-    triggerUrl: 'URL: ',
+    url: 'URL: ',
     urlCopiedToClipboard: 'URL copied to clipboard',
   },
   pt: {
-    triggerUrl: 'URL: ',
+    url: 'URL: ',
     urlCopiedToClipboard: 'URL copiada para área de transferência',
   },
 }

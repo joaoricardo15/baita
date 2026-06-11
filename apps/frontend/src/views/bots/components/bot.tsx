@@ -16,6 +16,7 @@ import { useDeleteBot, useDeployBot, usePublishBotModel } from '@/hooks/useBots'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { LINKS } from '@/router'
+import { computeRunUrl } from '@/utils/bot'
 import { getLabels, Labels } from '@/utils/labels'
 
 import BotCard from './botCard'
@@ -64,8 +65,11 @@ const Bot: FC<{
   }
 
   const onTestBot = (bot: IBot) => {
+    const userId = user?.userId || ''
+    const runUrl = computeRunUrl(bot.botId, userId)
+
     showLoading(true)
-    Axios.post(bot.triggerUrl)
+    Axios.post(runUrl)
       .then((result) => {
         if (result.data.success) {
           showSnack(labels.testSuccess, 'success')

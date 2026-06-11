@@ -16,8 +16,7 @@ This document is the architectural reference for the data model. It explains wha
 ┌─────────────────────┐     ┌─────────────────────────────┐
 │    CONNECTION       │     │        BOT (aggregate)      │
 │  connectionId       │     │  botId, name, active        │
-│  appId ─────────┐   │     │  apiId, triggerUrl          │
-│  credentials    │   │     │                             │
+│  appId ─────────┐   │     │                             │
 └─────────────────┼───┘     │  tasks: [                   │
                   │         │    ┌──────────────────┐     │
                   │         │    │     TASK         │     │
@@ -36,7 +35,7 @@ This document is the architectural reference for the data model. It explains wha
                   │         │    │  │  config    │  │     │
                   │         │    │  └────────────┘  │     │
                   │         │    │                  │     │
-                  │         │    │  inputData: Variable[] │
+                  │         │    │  inputData       │     │
                   │         │    │  sampleResult    │     │
                   │         │    │  conditions      │     │
                   │         │    │  retryPolicy     │     │
@@ -145,9 +144,9 @@ Industry equivalent:
 
 App config is embedded directly in each Task (not referenced via appId lookup) because:
 
-- Bot code generation needs all config inline (no runtime lookups)
-- The generated Lambda function is a self-contained artifact
+- The execution engine needs all config inline for each step (no extra DB reads)
 - Performance: no DynamoDB reads during bot execution for static config
+- Simplifies the execution model (each task is self-contained)
 
 ### 3. Connection as standalone entity — Why not embedded
 
@@ -155,7 +154,7 @@ Unlike App, Connection stores sensitive credentials and is:
 
 - Shared across multiple bots/tasks
 - Has independent lifecycle (outlives any single bot)
-- Security boundary (credentials fetched only at execution time, never in generated code)
+- Security boundary (credentials fetched only at execution time, not embedded in bot data)
 
 ### 4. Variable's dual role — Known compromise
 
@@ -172,8 +171,8 @@ Alternative (n8n's approach): separate `INodeProperties` and `INodeExecutionData
 Tasks are never referenced externally (only within their parent Bot). Using array index as identity:
 
 - Simplifies forward-reference validation (`outputIndex < currentIndex`)
-- Maps directly to generated code (`task0_outputData`, `task1_outputData`)
-- Avoids UUID-to-position mapping in code generation
+- Maps directly to engine's `taskOutputs[index]` at runtime
+- Avoids UUID-to-position mapping overhead
 
 Trade-off: reordering tasks requires updating all `outputIndex` references. Handled by `removeStepReferences()`.
 
@@ -250,6 +249,6 @@ The shared package includes validators that protect workflow integrity:
 | Circular references            | All data flows forward (task → earlier task only)     |
 | Schema definitions scattered   | All Zod schemas in `schemas/` folder                  |
 | Mixing persistence with domain | Schemas in `shared/`, DynamoDB ops in controllers     |
-| Credentials in generated code  | Connection resolved at execution time, never baked in |
+| Credentials in bot data        | Connection resolved at execution time, never embedded |
 | No validation boundaries       | `validateBot()` enforces integrity before deploy      |
 | Implicit data relationships    | Variable.outputIndex explicitly links task outputs    |

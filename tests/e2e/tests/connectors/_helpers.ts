@@ -1,11 +1,9 @@
 /**
  * Connector E2E Test Helpers
  *
- * Shared utilities for testing connector services via the standalone
- * POST /tasks/execute endpoint.
- *
- * Each helper builds a valid ITask payload matching the exact shape
- * that connectorToAppService() + the frontend would produce.
+ * Shared utilities for testing connector services via the bot test endpoint
+ * POST /bots/{botId}/test. Each helper builds a valid ITask payload matching
+ * the exact shape that connectorToAppService() + the frontend would produce.
  */
 import { APIRequestContext } from '@playwright/test'
 
@@ -24,15 +22,43 @@ export interface IExecuteResponse {
   data: ITaskExecutionResult
 }
 
+let testBotId: string | undefined
+
+export async function ensureTestBot(
+  request: APIRequestContext,
+  token: string
+): Promise<string> {
+  if (testBotId) return testBotId
+  const res = await request.post(`${API_URL}/bots`, {
+    headers: authHeaders(token),
+  })
+  const body = await res.json()
+  testBotId = body.data.botId
+  return testBotId!
+}
+
+export async function cleanupTestBot(
+  request: APIRequestContext,
+  token: string
+): Promise<void> {
+  if (!testBotId) return
+  await request
+    .delete(`${API_URL}/bots/${testBotId}`, { headers: authHeaders(token) })
+    .catch(() => {})
+  testBotId = undefined
+}
+
 export async function executeTask(
   request: APIRequestContext,
   token: string,
   task: object
 ): Promise<IExecuteResponse> {
+  const botId = await ensureTestBot(request, token)
+
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const res = await request.post(`${API_URL}/tasks/execute`, {
+    const res = await request.post(`${API_URL}/bots/${botId}/test`, {
       headers: authHeaders(token),
-      data: task,
+      data: { task, taskIndex: 1 },
       timeout: 35000,
     })
     if (res.status() >= 502 && attempt < 2) {

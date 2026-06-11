@@ -40,10 +40,8 @@ const makeActionTask = (
 
 const makeBot = (tasks: ITask[]): IBot => ({
   botId: 'bot-1',
-  apiId: 'api-1',
   name: 'Test Bot',
   active: false,
-  triggerUrl: 'https://example.com',
   triggerSamples: [],
   tasks,
 })
@@ -591,11 +589,8 @@ describe('Zod Schema Parsing', () => {
     it('accepts valid complete bot', () => {
       const result = BotSchema.safeParse({
         botId: 'bot-1',
-        userId: 'user-1',
-        apiId: 'api-1',
         name: 'Test',
         active: true,
-        triggerUrl: 'https://example.com',
         triggerSamples: [],
         tasks: [{ taskId: 0, inputData: [] }],
       })
@@ -610,11 +605,8 @@ describe('Zod Schema Parsing', () => {
     it('rejects bot with invalid task in tasks array', () => {
       const result = BotSchema.safeParse({
         botId: 'bot-1',
-        userId: 'user-1',
-        apiId: 'api-1',
         name: 'Test',
         active: true,
-        triggerUrl: 'https://example.com',
         triggerSamples: [],
         tasks: [{ invalid: true }],
       })

@@ -2,8 +2,6 @@ import { DataType, ITransform, IVariable, VariableType } from '@baita/shared'
 
 import { pipes } from './pipes'
 
-export const OUTPUT_CODE = '###baita.help###'
-
 export function getDataFromPath(
   data: DataType,
   outputPath?: string
@@ -141,66 +139,6 @@ export function setObjectDataFromPath(
   return data
 }
 
-export function getOutputVariableString(index: number, path: string): string {
-  return `task${index}_outputData${path
-    .split('.')
-    .map((x) => x && (!isNaN(Number(x)) ? `[${x}]` : `['${x}']`))
-    .join('')}`
-}
-
-const escapeString = (s: string): string =>
-  s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
-
-const operatorToJs = (op?: string): string => {
-  switch (op) {
-    case 'equals':
-      return '==='
-    case 'notEquals':
-      return '!=='
-    case 'greaterThan':
-      return '>'
-    case 'lessThan':
-      return '<'
-    default:
-      return '==='
-  }
-}
-
-export function buildTransformExpression(transform: ITransform): string {
-  const { operation, index, property, operator, value, direction } = transform
-  const prop = property ? escapeString(property) : ''
-  const val = value ? escapeString(value) : ''
-
-  switch (operation) {
-    case 'first':
-      return '[0]'
-    case 'last':
-      return '.slice(-1)[0]'
-    case 'at':
-      return `[${index ?? 0}]`
-    case 'count':
-      return '.length'
-    case 'pluck':
-      return `.map(item => item['${prop}'])`
-    case 'filter':
-      if (operator === 'contains')
-        return `.filter(item => String(item['${prop}']).includes('${val}'))`
-      if (operator === 'exists')
-        return `.filter(item => item['${prop}'] !== undefined && item['${prop}'] !== null)`
-      if (operator === 'notExists')
-        return `.filter(item => item['${prop}'] === undefined || item['${prop}'] === null)`
-      return `.filter(item => item['${prop}'] ${operatorToJs(operator)} '${val}')`
-    case 'join':
-      return `.join('${val || ', '}')`
-    case 'sort': {
-      const dir = direction === 'desc' ? -1 : 1
-      return `.sort((a, b) => a['${prop}'] > b['${prop}'] ? ${dir} : ${-dir})`
-    }
-    default:
-      return ''
-  }
-}
-
 export function applyTransformToValue(
   data: DataType,
   transform: ITransform
@@ -260,41 +198,6 @@ export function applyTransformToValue(
   }
 }
 
-export function getValueFromInputVariable(
-  variable: IVariable,
-  testData?: boolean
-): DataType | undefined {
-  const { label, value, sampleValue, type, outputIndex, outputPath } = variable
-
-  if (testData) {
-    const testValue = sampleValue ?? value
-    if (testValue === undefined) {
-      throw Error(`Variable '${label}' has no sample value`)
-    }
-
-    if (variable.transform)
-      return applyTransformToValue(testValue, variable.transform)
-    return testValue
-  }
-
-  if (type === VariableType.output) {
-    if (outputIndex === undefined && outputPath === undefined) {
-      return value
-    }
-    if (outputIndex === undefined || outputPath === undefined) {
-      throw Error(`Variable '${label}' has incomplete output reference`)
-    }
-
-    let ref = getOutputVariableString(outputIndex, outputPath)
-    if (variable.transform) {
-      ref += buildTransformExpression(variable.transform)
-    }
-    return OUTPUT_CODE + ref + OUTPUT_CODE
-  }
-
-  return value
-}
-
 export function getValueFromServiceVariable(
   variable: IVariable
 ): DataType | undefined {
@@ -317,79 +220,4 @@ export function getValueFromServiceVariable(
   }
 
   return undefined
-}
-
-export function getDataFromService(
-  serviceFields: IVariable[],
-  inputData: IVariable[],
-  testData?: boolean
-): DataType {
-  let data: object = {}
-
-  for (let j = 0; j < serviceFields.length; j++) {
-    const serviceVariable = serviceFields[j]
-    const serviceVariableValue = getValueFromServiceVariable(serviceVariable)
-
-    if (serviceVariableValue === undefined) {
-      let inputVariable = inputData.find((x) => x.name === serviceVariable.name)
-
-      if (inputVariable === undefined && serviceVariable.name === 'token') {
-        inputVariable = inputData.find((x) => x.name === 'pushSubscription')
-      }
-
-      if (inputVariable === undefined) {
-        if (serviceVariable.required) {
-          throw Error(
-            `Required input field '${serviceVariable.label}' is missing`
-          )
-        }
-      } else {
-        const inputVariableValue = getValueFromInputVariable(
-          inputVariable,
-          testData
-        )
-
-        if (inputVariableValue === undefined) {
-          if (serviceVariable.required) {
-            throw Error(
-              `Required input field '${serviceVariable.label}' has no value`
-            )
-          }
-        } else {
-          data = setObjectDataFromPath(
-            data,
-            inputVariableValue,
-            serviceVariable.name
-          )
-        }
-      }
-    } else {
-      data = setObjectDataFromPath(
-        data,
-        serviceVariableValue,
-        serviceVariable.name
-      )
-    }
-  }
-
-  for (let i = 0; i < inputData.length; i++) {
-    const inputDataField = inputData[i]
-
-    if (inputDataField.customFieldId) {
-      const inputDataVariableValue = getValueFromInputVariable(
-        inputDataField,
-        testData
-      )
-
-      if (inputDataVariableValue !== undefined) {
-        data = setObjectDataFromPath(
-          data,
-          inputDataVariableValue,
-          inputDataField.name
-        )
-      }
-    }
-  }
-
-  return data
 }

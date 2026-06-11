@@ -63,7 +63,7 @@ src/
 ├── lib/            # Module-level AWS SDK clients (DynamoDB singleton)
 ├── tasks/          # Task execution logic
 │   └── executor/   # Service-specific executors (code.ts, methods.ts)
-├── utils/          # Helpers (api response, bot data manipulation, code generation, auth guard)
+├── utils/          # Helpers (api response, bot data manipulation, auth guard)
 │   └── tests/      # Unit tests
 └── docs/           # OpenAPI generated docs
 ```
@@ -151,7 +151,7 @@ Public config (Auth0 domain/audience, OAuth token URLs) is hardcoded in `serverl
                                  │
 ┌────────────────────────────────▼────────────────────────────────┐
 │  Functional Layer (src/controllers/)                            │
-│  ─ Bot: code gen, deploy, logs                                  │
+│  ─ Bot: deploy (scheduler), test, logs                          │
 │  ─ User: signup, deletion, content feed                            │
 │  ─ Data: CRUD, validation, nested updates (single DDB gateway)  │
 └─────────────────────────────────────────────────────────────────┘
@@ -160,7 +160,7 @@ Public config (Auth0 domain/audience, OAuth token URLs) is hardcoded in `serverl
 - **Endpoints**: Parse request, call controller, return HTTP response via `Api` class
 - **Controllers**: Business logic. Bot and User controllers delegate ALL data operations to Data controller.
 - **Data Controller** (`controllers/data.ts`): The **single gateway** to DynamoDB. Only file that imports `@/lib/dynamodb`. Handles validate(), list(), read(), create(), update(), delete(), updateNested(), appendToList(), deleteAllForUser().
-- **Utils**: Shared helpers for code generation, data manipulation, response formatting
+- **Utils**: Shared helpers for data manipulation, response formatting
 - **Lib**: Module-level AWS SDK clients (DynamoDB singleton) — reused across warm Lambda invocations
 
 ### Single Data Gateway Principle
@@ -265,19 +265,23 @@ Sort key format: `#TYPE` for singletons, `#TYPE#id` for collections. The Data co
 ### Bot Execution Architecture
 
 1. User creates/edits bot via frontend (visual workflow builder)
-2. On deploy: backend generates Lambda code from bot task definitions (`src/utils/code.ts`)
-3. Generated code packaged as ZIP, uploaded to S3, deployed as standalone Lambda
-4. Bot triggered via HTTP (API Gateway) or schedule (EventBridge Scheduler)
-5. Each task executes sequentially, outputs chained via `task${n}_outputData` variables
-6. Task execution: bot Lambda invokes `endpoint-task` via direct Lambda-to-Lambda call (not HTTP)
-7. The task endpoint dispatcher (`src/tasks/executor.ts`) routes to the correct executor:
+2. On deploy: backend enables/disables EventBridge Scheduler (no code generation, no per-bot Lambda)
+3. Bot triggered via HTTP (`POST /bots/{botId}/run/{token}`) or schedule (EventBridge → Lambda)
+4. A single shared `bot-execute` Lambda loads the bot definition from DynamoDB and runs it:
+   - Iterates tasks sequentially
+   - Resolves inputs from previous task outputs (`src/engine/resolver.ts`)
+   - Evaluates conditions (`src/engine/conditions.ts`)
+   - Executes each task via `executeTask()` (`src/tasks/executor.ts`)
+5. Task executors route by service name:
    - `code-execute` → VM sandbox execution (`src/tasks/executor/code.ts`)
-   - `method-execute` → Built-in methods like HTTP, OAuth2, notifications (`src/tasks/executor/methods.ts`)
+   - `method-execute` → Built-in methods: HTTP, OAuth2, notifications (`src/tasks/executor/methods.ts`)
    - `trigger-sample` → Stores test data for the trigger step
-8. Results stored in DynamoDB as fresh content for the user's feed
-9. Execution logs captured in CloudWatch, queryable via logs endpoint
+6. Results logged to shared CloudWatch LogGroup (`/baita/bot-executions`)
+7. Execution results can publish to user's content feed
 
-**IAM note**: Bot Lambda role (`botsRole`) only has `lambda:InvokeFunction` + CloudWatch. It cannot access DynamoDB/SSM directly — all data operations go through `endpoint-task` which has full permissions.
+**Per-bot resources:** Only an EventBridge Scheduler (for scheduled bots). No per-bot Lambda, API Gateway, S3, or LogGroup.
+
+**Testing:** `POST /bots/{botId}/test` executes a single task using the same engine resolver and executor. Previous step data comes from stored `sampleResult` values.
 
 ### Content Feed Lifecycle
 
@@ -340,7 +344,7 @@ The content feed is entirely DynamoDB-based. Fresh content persists until the us
 ### AWS SDK Usage
 
 - DynamoDB client lives at module level in `src/lib/dynamodb.ts` — shared across warm Lambda invocations
-- Other SDK clients (Lambda, S3, Scheduler, etc.) instantiated in controller constructors
+- Other SDK clients (Scheduler, CloudWatchLogs) instantiated in controller constructors
 - Use `DynamoDBDocument.from()` for simplified DynamoDB operations
 - `removeUndefinedValues: true` in marshall options for DynamoDB puts
 
@@ -382,10 +386,11 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 - `POST /bots` — Create bot
 - `GET /bots/{botId}` — Get bot
 - `PATCH /bots/{botId}` — Update bot
-- `DELETE /bots/{botId}` — Delete bot (cleans up Lambda + API Gateway + S3 + Scheduler)
-- `POST /bots/{botId}/deploy` — Deploy/deactivate bot
+- `DELETE /bots/{botId}` — Delete bot (cleans up EventBridge Scheduler)
+- `POST /bots/{botId}/deploy` — Deploy/deactivate bot (enable/disable schedule)
 - `POST /bots/{botId}/test` — Test individual task (taskIndex in body)
 - `GET /bots/{botId}/logs` — Get execution logs
+- `POST /bots/{botId}/run/{token}` — Trigger bot execution (public, no auth — token encodes userId)
 
 ### Models (shared, system user)
 
@@ -398,7 +403,7 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 
 ### Tasks
 
-- `POST /tasks/execute` — Execute task (also accepts direct Lambda invoke from bots)
+- Task execution is handled internally by the bot engine (no standalone endpoint)
 
 ### Connections
 
@@ -492,10 +497,10 @@ cd tests/e2e && npm test
 | Bots List           | GET /bots                                 | Yes    | DynamoDB query                            |
 | Connections         | GET /connections                          | Yes    | DynamoDB query                            |
 | Data CRUD           | GET/POST/PATCH/DELETE /data/smoke-note/\* | Yes    | Full create/read/update/list/delete cycle |
-| Bot Lifecycle       | POST /bots + GET logs + DELETE            | Yes    | Lambda + S3 + API Gateway + Scheduler     |
-| Bot Deploy          | POST /bots/{botId}/deploy                 | Yes    | Code generation + Lambda deploy           |
-| Bot Test            | POST /bots/{botId}/test                   | Yes    | Task execution via executor               |
-| Connector Services  | POST /tasks/execute                       | Yes    | Baita, Google, NewsAPI, OpenAI, Pipedrive |
+| Bot Lifecycle       | POST /bots + GET logs + DELETE            | Yes    | EventBridge Scheduler                     |
+| Bot Deploy          | POST /bots/{botId}/deploy                 | Yes    | Enable/disable Scheduler                  |
+| Bot Test            | POST /bots/{botId}/test                   | Yes    | Task execution via engine resolver        |
+| Connector Services  | POST /bots/{botId}/test                   | Yes    | Baita, Google, NewsAPI, OpenAI, Pipedrive |
 | Connection Health   | POST /connections/{connectionId}/health   | Yes    | OAuth token refresh + API probe           |
 | Connection Details  | GET /connections/{connectionId}           | Yes    | Linked bots lookup                        |
 | User Deletion       | DELETE /user                              | Yes    | Full cleanup (DDB, Auth0, bots)           |
@@ -533,7 +538,7 @@ User accounts are **data-only** — creating a user writes a single DynamoDB rec
 
 `deleteUser()` cascades through:
 
-1. Delete all bots (via `deleteBot()` — cleans up Lambda + API Gateway + S3 + Scheduler)
+1. Delete all bots (via `deleteBot()` — cleans up EventBridge Scheduler)
 2. Delete all DynamoDB records (via `deleteAllForUser()`)
 3. Delete Auth0 user (via M2M token — required, cannot be avoided)
 

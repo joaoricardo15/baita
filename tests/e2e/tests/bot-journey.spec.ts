@@ -17,17 +17,18 @@ import { expect, test } from '@playwright/test'
 import { API_URL, authHeaders, loadAuthData, logResult } from './helpers'
 
 let token: string
+let userId: string
 
 test.beforeAll(() => {
   const data = loadAuthData()
   token = data.accessToken
+  userId = data.userId
 })
 
 test.describe.configure({ mode: 'serial' })
 
 test.describe('Bot Lifecycle', () => {
   let botId: string
-  let triggerUrl: string
 
   test.afterAll(async ({ request }) => {
     if (botId) {
@@ -47,12 +48,9 @@ test.describe('Bot Lifecycle', () => {
     const body = await res.json()
     expect(body.success).toBe(true)
     expect(body.data.botId).toBeTruthy()
-    expect(body.data.apiId).toBeTruthy()
-    expect(body.data.triggerUrl).toMatch(/^https:\/\//)
 
     botId = body.data.botId
-    triggerUrl = body.data.triggerUrl
-    logResult('Bot created', { botId, triggerUrl })
+    logResult('Bot created', { botId })
   })
 
   test('configure bot with webhook trigger and code task', async ({
@@ -64,7 +62,6 @@ test.describe('Bot Lifecycle', () => {
         botId,
         name: `e2e-bot-${Date.now()}`,
         active: false,
-        triggerUrl,
         tasks: [
           {
             taskId: 1,
@@ -176,13 +173,17 @@ test.describe('Bot Lifecycle', () => {
   })
 
   test('trigger bot via webhook', async ({ request }) => {
+    const { computeTriggerToken } = await import('@baita/shared')
+    const token64 = computeTriggerToken(userId)
+    const runUrl = `${API_URL}/bots/${botId}/run/${token64}`
+
     await new Promise((r) => setTimeout(r, 2000))
-    let res = await request.post(triggerUrl, {
+    let res = await request.post(runUrl, {
       data: { source: 'e2e-test', timestamp: Date.now() },
     })
     if (res.status() === 404 || res.status() === 500) {
       await new Promise((r) => setTimeout(r, 5000))
-      res = await request.post(triggerUrl, {
+      res = await request.post(runUrl, {
         data: { source: 'e2e-test', timestamp: Date.now() },
       })
     }

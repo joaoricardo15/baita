@@ -27,11 +27,7 @@ class User {
         const botController = new Bot()
         for (const bot of bots) {
           try {
-            await botController.deleteBot(
-              userId,
-              bot.botId as string,
-              bot.apiId as string
-            )
+            await botController.deleteBot(userId, bot.botId as string)
           } catch (err) {
             errors.push(`Bot ${bot.botId}: ${err}`)
           }

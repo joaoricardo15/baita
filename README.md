@@ -111,7 +111,7 @@ Single unified workflow (`.github/workflows/ci.yml`) on push to `main`:
 
 ```
 frontend (type-check shared → lint → spell → build → test → deploy to Amplify) ─┐
-backend  (type-check shared → lint → type-check → test → deploy → docs)         ─┤→ e2e (Playwright)
+backend  (type-check shared → lint → type-check → test → deploy → docs)        ─┤→ e2e (Playwright)
 ```
 
 Both jobs run in parallel. E2E tests run against production after both deploy.
@@ -136,20 +136,35 @@ if (result.success) {
 ## Bot Execution Architecture
 
 ```
-User creates bot (visual builder or AI assistant)
-    ↓
-Bot definition stored as JSON (IBot with ITask[])
-    ↓
-On deploy: backend generates Lambda code from task definitions
-    ↓
-Generated code packaged as ZIP → S3 → deployed as standalone Lambda
-    ↓
-Triggered via HTTP (API Gateway) or schedule (EventBridge)
-    ↓
-Each task executes sequentially, outputs chained
-    ↓
-Results stored in DynamoDB as fresh content → content feed
+┌─────────────────────────────────────────────────────────────────────────┐
+│  User creates bot (visual builder or AI assistant)                      │
+│  Bot definition stored as JSON in DynamoDB (IBot with ITask[])          │
+└─────────────────────────────────┬───────────────────────────────────────┘
+                                  │
+           ┌──────────────────────┴──────────────────────┐
+           │                                             │
+           ▼                                             ▼
+┌─────────────────────────┐               ┌───────────────────────────────┐
+│  Webhook Trigger        │               │  Schedule Trigger             │
+│  POST /bots/{id}/run/   │               │  EventBridge Scheduler        │
+│       {token}           │               │  (invokes Lambda directly)    │
+└────────────┬────────────┘               └──────────────┬────────────────┘
+             │                                           │
+             └────────────────────┬──────────────────────┘
+                                  │
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│  bot-execute Lambda (shared engine)                                     │
+│                                                                         │
+│  1. Load bot definition from DynamoDB                                   │
+│  2. For each task: resolve inputs → check conditions → execute          │
+│  3. Chain outputs between steps                                         │
+│  4. Log results to CloudWatch                                           │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
+
+No per-bot infrastructure is deployed. Bots are pure data — a single shared engine
+interprets and executes them at runtime.
 
 ## Security
 
@@ -174,7 +189,7 @@ Results stored in DynamoDB as fresh content → content feed
 - **Backend stack**: `baita-backend-prod` (Serverless Framework)
 - **Frontend stack**: `baita-frontend-prod` (CloudFormation — Amplify)
 - **DynamoDB Table**: `baita-backend-prod` (on-demand billing)
-- **S3 Buckets**: `baita-backend-prod-bots`, `baita-backend-prod-files`, `baita-backend-prod-docs`
+- **S3 Buckets**: `baita-backend-prod-files`, `baita-backend-prod-docs`
 - **Custom Domain**: `api.baita.help` (Route53 + API Gateway)
 
 ## Contributing

@@ -13,6 +13,7 @@ import { useParams } from 'react-router-dom'
 import { OptionsInput } from '@/components'
 import { useBot, useUpdateBot } from '@/hooks/useBots'
 import { AppsContext } from '@/providers/apps'
+import { AuthContext } from '@/providers/auth'
 import { getLabels, Labels } from '@/utils/labels'
 
 import NewConnection from './newConnection'
@@ -24,8 +25,10 @@ const TaskService: FC<{
 }> = ({ taskIndex }) => {
   const { botId } = useParams()
   const { services } = useContext(AppsContext)
+  const { user } = useContext(AuthContext)
   const { data: bot } = useBot(botId)
   const updateBot = useUpdateBot()
+  const userId = user?.userId || ''
 
   const [task, setTask] = useState<ITask>()
 
@@ -197,7 +200,7 @@ const TaskService: FC<{
 
           {/***** Webhook specific display *****/}
           {task.service?.name === ServiceName.webhook && (
-            <WebhookService triggerUrl={bot.triggerUrl} />
+            <WebhookService botId={bot.botId} userId={userId} />
           )}
 
           {/***** Push notification specific display *****/}

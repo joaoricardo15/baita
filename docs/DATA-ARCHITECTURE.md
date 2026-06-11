@@ -65,21 +65,19 @@ Every endpoint uses `getAuthenticatedUserId(event)` from `src/utils/auth.ts`:
 
 ### Generic Resource CRUD
 
-`POST /resource/{name}/{operation}[/{id}]`
+`GET/POST/PATCH/DELETE /data/{type}[/{id}]`
 
-Operations: `list`, `read`, `create`, `update`, `delete`, `upload`, `remove`
+### Bot Endpoints
 
-### Bot Endpoints (operation-based routing, all POST)
-
-| Endpoint                   | Purpose                       |
-| -------------------------- | ----------------------------- |
-| `POST /bot/create`         | Create bot                    |
-| `POST /bot/update/{botId}` | Update bot                    |
-| `POST /bot/delete/{botId}` | Delete bot + Lambda + S3      |
-| `POST /bot/deploy/{botId}` | Deploy (code gen + Lambda)    |
-| `POST /bot/test/{botId}`   | Test step (taskIndex in body) |
-| `POST /bot/logs/{botId}`   | CloudWatch logs               |
-| `POST /model/{operation}`  | Shared bot models (CRUD)      |
+| Endpoint                         | Purpose                             |
+| -------------------------------- | ----------------------------------- |
+| `POST /bots`                     | Create bot                          |
+| `PATCH /bots/{botId}`            | Update bot configuration            |
+| `DELETE /bots/{botId}`           | Delete bot + EventBridge Scheduler  |
+| `POST /bots/{botId}/deploy`      | Activate/deactivate (scheduler)     |
+| `POST /bots/{botId}/test`        | Test single step                    |
+| `GET /bots/{botId}/logs`         | Execution logs (CloudWatch)         |
+| `POST /bots/{botId}/run/{token}` | Trigger execution (public, no auth) |
 
 ## Frontend
 
