@@ -281,6 +281,50 @@ describe('getDataFromMapping', () => {
       body: 'Full email body here',
     })
   })
+
+  test('email-body pipe: HTML fallback when text/plain is empty', () => {
+    const emptyPlain = Buffer.from('\r\n').toString('base64url')
+    const html = Buffer.from(
+      '<html><body><p>Hello from Expedia!</p><p>Book your trip.</p></body></html>'
+    ).toString('base64url')
+    const data = {
+      payload: {
+        body: { size: 0 },
+        mimeType: 'multipart/alternative',
+        parts: [
+          { mimeType: 'text/plain', body: { data: emptyPlain, size: 2 } },
+          { mimeType: 'text/html', body: { data: html, size: 200 } },
+        ],
+      },
+    }
+    const outputMapping = { body: 'payload|email-body' }
+    const result = getDataFromMapping(data, outputMapping) as {
+      body: string
+    }
+    expect(result.body).toContain('Hello from Expedia!')
+    expect(result.body).toContain('Book your trip.')
+    expect(result.body).not.toContain('<p>')
+  })
+
+  test('email-body pipe: strips style/script tags from HTML', () => {
+    const html = Buffer.from(
+      '<html><head><style>body{color:red}</style></head><body><script>alert("x")</script><p>Real content</p></body></html>'
+    ).toString('base64url')
+    const data = {
+      payload: {
+        body: { size: 0 },
+        mimeType: 'multipart/alternative',
+        parts: [{ mimeType: 'text/html', body: { data: html, size: 200 } }],
+      },
+    }
+    const outputMapping = { body: 'payload|email-body' }
+    const result = getDataFromMapping(data, outputMapping) as {
+      body: string
+    }
+    expect(result.body).toBe('Real content')
+    expect(result.body).not.toContain('color:red')
+    expect(result.body).not.toContain('alert')
+  })
 })
 
 describe('getMappedData', () => {
