@@ -22,11 +22,10 @@ Each app has its own `CLAUDE.md` with specific conventions. This file governs cr
 
 Before EVERY commit, verify ALL of these automatically:
 
-1. All affected test suites pass (`pnpm turbo run test`)
-2. Type-check passes (`npx tsc --noEmit` on affected packages)
-3. Documentation reflects new features (CLAUDE.md, README.md)
-4. New logic has unit test coverage
-5. No stale references in docs (paths, branch names, API shapes)
+1. All quality checks pass (`pnpm turbo run lint spell type-check format:check test --filter=!@baita/e2e`)
+2. Documentation reflects new features (CLAUDE.md, README.md)
+3. New logic has unit test coverage
+4. No stale references in docs (paths, branch names, API shapes)
 
 ### Feature Development Methodology
 
@@ -102,30 +101,24 @@ All connector/service icons live in `apps/frontend/public/icons/` and are refere
 Single unified workflow in `.github/workflows/ci.yml` triggered on push to `main`:
 
 ```
-quality (shared type-check → frontend lint/spell/type-check/test/build → backend lint/type-check/test)
+quality (turbo: lint + spell + type-check + format:check + test — all parallel, cached)
     │
-    ▼
-deploy-auth0 (identity layer — apps depend on it)
-    │
-    ├── deploy-frontend (CloudFormation + Amplify upload)
-    ├── deploy-backend  (Serverless Framework)
-    │       │
-    │       └── deploy-docs (OpenAPI spec → S3, after backend creates the bucket)
+    ├── deploy-frontend (build + CloudFormation + Amplify upload)
+    ├── deploy-backend  (Serverless Framework + OpenAPI docs)
+    ├── deploy-auth0    (auth0-deploy-cli)
     │
     └───────┬── e2e (setup → journey tests → cleanup)
 ```
 
-Quality gate runs once — all checks for all packages. Auth0 deploys first (identity layer). Frontend and backend deploy in parallel after Auth0. Docs deploy after backend (depends on S3 bucket). E2E tests run after frontend + backend are live.
+Quality gate uses Turborepo to run all checks in parallel with remote caching (via `rharkor/caching-for-turbo`). Unchanged packages are skipped entirely on subsequent runs. All three deploys run in parallel after quality passes. E2E tests run after all deploys complete.
 
-**Quality**: Shared type-check, frontend lint/spell/type-check/test/build, backend lint/type-check/test. Produces frontend build artifact for deploy.
+**Quality**: `pnpm turbo run lint spell type-check format:check test` — runs across `@baita/shared`, `@baita/frontend`, and `@baita/backend` in parallel. Turbo remote cache means unchanged packages return instantly.
 
-**Deploy Auth0**: Uses `auth0-deploy-cli` to apply `infra/auth0/tenant.yaml` — manages actions, clients, connections, and grants. Runs first because both apps depend on the identity layer.
+**Deploy Frontend**: Builds frontend (Vite), deploys CloudFormation stack (Amplify app), uploads to Amplify.
 
-**Deploy Frontend**: Downloads build artifact from quality, deploys CloudFormation stack (Amplify app), uploads to Amplify.
+**Deploy Backend**: Serverless Framework deploys Lambda functions, API Gateway, DynamoDB table, S3 buckets, and IAM roles. Generates and deploys OpenAPI docs to S3.
 
-**Deploy Backend**: Serverless Framework deploys Lambda functions, API Gateway, DynamoDB table, S3 buckets, and IAM roles.
-
-**Deploy Docs**: Generates OpenAPI spec from Zod schemas and uploads to S3 docs bucket (created by backend stack).
+**Deploy Auth0**: Uses `auth0-deploy-cli` to apply `infra/auth0/tenant.yaml` — manages actions, clients, connections, and grants.
 
 **E2E**: Sets up test user (Auth0 signup), runs Playwright journey specs against production, cleans up (`if: always()`).
 
@@ -162,11 +155,12 @@ pnpm install
 cd apps/backend && npm start &
 cd apps/frontend && npm start
 
-# Run all tests
-pnpm turbo run test
+# Run all quality checks (same as CI)
+pnpm turbo run lint spell type-check format:check test --filter=!@baita/e2e
 
-# Type-check everything
-pnpm turbo run type-check
+# Run tests in watch mode (local dev)
+cd apps/frontend && npm run test:watch
+cd apps/backend && npm run test:watch
 
 # Run E2E tests
 cd tests/e2e && npm test
@@ -294,8 +288,7 @@ VITE_GOOGLE_MAPS_MAP_ID=<map-id>
 
 Before pushing, verify:
 
-- [ ] `pnpm turbo run type-check` passes (all packages, 0 errors)
-- [ ] `pnpm turbo run test` passes (all unit tests)
+- [ ] `pnpm turbo run lint spell type-check format:check test --filter=!@baita/e2e` passes
 - [ ] Schema changes in `packages/shared/` don't break either app
 - [ ] Both apps' CLAUDE.md files are consistent with this root file
 - [ ] Every page handles API failures gracefully (no infinite loading)
