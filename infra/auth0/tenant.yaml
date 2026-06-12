@@ -14,12 +14,14 @@ clients:
     callbacks:
       - http://localhost:3000
       - https://www.baita.help
+      - https://baita-backend-prod-docs.s3.us-east-1.amazonaws.com/oauth2-redirect.html
     allowed_logout_urls:
       - http://localhost:3000
       - https://www.baita.help
     web_origins:
       - http://localhost:3000
       - https://www.baita.help
+      - https://baita-backend-prod-docs.s3.us-east-1.amazonaws.com
     grant_types:
       - authorization_code
       - refresh_token
