@@ -1,6 +1,7 @@
 import {
   AppSchema,
   BotSchema,
+  BotTemplateSchema,
   ConnectionSchema,
   getRegisteredTypes,
   ServiceSchema,
@@ -172,32 +173,32 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     summary: 'List bot templates',
     operationId: 'listBotTemplates',
     description:
-      'Returns all shared bot templates. Models are system-level resources that any authenticated user can browse and deploy as their own bot.',
-    responseSchema: 'Bot',
+      'Returns all shared bot templates. Templates are system-level resources that any authenticated user can browse and deploy as their own bot.',
+    responseSchema: 'BotTemplate',
   },
   '/bot-templates/{templateId}:get': {
     summary: 'Get bot template',
     operationId: 'getBotTemplate',
     description: 'Returns a specific shared bot template by ID.',
     parameterOverrides: { templateId: { description: 'Template ID (UUID)' } },
-    responseSchema: 'Bot',
+    responseSchema: 'BotTemplate',
   },
   '/bot-templates/{templateId}:put': {
     summary: 'Create or replace bot template',
     operationId: 'putBotTemplate',
     description:
-      'Creates a new shared bot template or replaces an existing one. The client provides the modelId. The request body must include the full template definition with tasks array.',
+      'Creates a new shared bot template or replaces an existing one. The client provides the templateId. The request body must include the full template definition with tasks array.',
     parameterOverrides: { templateId: { description: 'Template ID (UUID)' } },
-    requestSchema: 'Bot',
+    requestSchema: 'BotTemplate',
     requestExample: {
-      modelId: 'my-template-id',
+      templateId: 'my-template-id',
       name: 'Daily News Digest',
       author: 'baita',
       description: 'Fetches headlines and publishes to feed',
       image: '/icons/newsapi.svg',
       tasks: [],
     },
-    responseSchema: 'Bot',
+    responseSchema: 'BotTemplate',
   },
   '/bot-templates/{templateId}:delete': {
     summary: 'Delete bot template',
@@ -209,7 +210,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     summary: 'Deploy template as bot',
     operationId: 'deployBotTemplate',
     description:
-      "Creates a new bot for the authenticated user from a shared model template. Copies the model's task definitions into a fresh bot owned by the current user.",
+      "Creates a new bot for the authenticated user from a shared template. Copies the template's task definitions into a fresh bot owned by the current user.",
     parameterOverrides: { templateId: { description: 'Template ID (UUID)' } },
     responseSchema: 'Bot',
   },
@@ -522,6 +523,7 @@ const schemas = {
     required: ['success'],
   },
   Bot: toJsonSchema(BotSchema, 'Bot'),
+  BotTemplate: toJsonSchema(BotTemplateSchema, 'BotTemplate'),
   Task: toJsonSchema(TaskSchema, 'Task'),
   Service: toJsonSchema(ServiceSchema, 'Service'),
   App: toJsonSchema(AppSchema, 'App'),
@@ -554,9 +556,9 @@ const spec = {
         'Automation bots — workflows that execute tasks on a schedule or webhook trigger',
     },
     {
-      name: 'Bot Templates',
+      name: 'Bot-templates',
       description:
-        'Shared automation templates that users can deploy as their own bots',
+        'Shared automation templates that users can browse and deploy as their own bots',
     },
     {
       name: 'Connections',

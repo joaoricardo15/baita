@@ -129,7 +129,7 @@ describe('Bots Page', () => {
               botId: 'bot-1',
               userId: 'test',
               name: 'Model Bot',
-              modelId: 'model-1',
+              templateId: 'template-1',
               tasks: [],
               active: true,
             },
@@ -166,7 +166,7 @@ describe('Bots Page', () => {
           success: true,
           data: [
             {
-              modelId: 'model-1',
+              templateId: 'template-1',
               name: 'Template Bot',
               author: 'baita',
               tasks: [],
@@ -193,7 +193,7 @@ describe('Bots Page', () => {
               botId: 'bot-1',
               userId: 'test',
               name: 'Deployed',
-              modelId: 'model-1',
+              templateId: 'template-1',
               tasks: [],
               active: true,
             },
@@ -205,7 +205,7 @@ describe('Bots Page', () => {
           success: true,
           data: [
             {
-              modelId: 'model-1',
+              templateId: 'template-1',
               name: 'Template Bot',
               author: 'baita',
               tasks: [],

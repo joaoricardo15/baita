@@ -29,7 +29,7 @@ export const Bots: FC = () => {
       ) : (
         <>
           {bots
-            .filter((bot) => bot.modelId)
+            .filter((bot) => bot.templateId)
             .map((bot) => (
               <div className="mb-2" key={bot.botId}>
                 <Bot bot={bot} />
@@ -38,15 +38,17 @@ export const Bots: FC = () => {
 
           {botTemplates?.map(
             (botTemplate) =>
-              !bots.map((b) => b.modelId).includes(botTemplate.modelId) && (
-                <div key={botTemplate.modelId} className="mb-2">
+              !bots
+                .map((b) => b.templateId)
+                .includes(botTemplate.templateId) && (
+                <div key={botTemplate.templateId} className="mb-2">
                   <BotTemplate botTemplate={botTemplate} />
                 </div>
               )
           )}
 
           {bots
-            .filter((bot) => !bot.modelId)
+            .filter((bot) => !bot.templateId)
             .map((bot, i) => (
               <div className="mb-2" key={i}>
                 <Bot bot={bot} />

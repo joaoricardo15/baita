@@ -10,7 +10,7 @@ describe('Entity Type Registry', () => {
     const types = getRegisteredTypes()
     expect(types).toContain('user')
     expect(types).toContain('bot')
-    expect(types).toContain('model')
+    expect(types).toContain('template')
     expect(types).toContain('connection')
     expect(types).toContain('note')
     expect(types).toContain('place')

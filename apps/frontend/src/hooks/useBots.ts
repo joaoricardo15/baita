@@ -166,7 +166,7 @@ export function usePublishBotTemplate() {
 export function useDeleteBotTemplate() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (modelId: string) => mutations.deleteBotTemplate(modelId),
+    mutationFn: (templateId: string) => mutations.deleteBotTemplate(templateId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['botTemplates'] })
     },

@@ -18,7 +18,7 @@ export type IBotLog = z.infer<typeof BotLogSchema>
 
 export const BotSchema = z.object({
   botId: z.string(),
-  modelId: z.string().optional(),
+  templateId: z.string().optional(),
   name: z.string(),
   active: z.boolean(),
   triggerSamples: z.array(TaskExecutionResultSchema),

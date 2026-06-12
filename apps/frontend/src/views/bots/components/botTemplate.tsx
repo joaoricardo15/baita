@@ -35,7 +35,7 @@ const BotTemplate: FC<{
   const onDeleteBot = () => {
     showLoading(true)
     deleteBotTemplate
-      .mutateAsync(botTemplate.modelId)
+      .mutateAsync(botTemplate.templateId)
       .finally(() => showLoading(false))
   }
 

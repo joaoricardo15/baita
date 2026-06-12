@@ -18,7 +18,11 @@ export interface IEntityTypeConfig {
 export const entityRegistry: Record<string, IEntityTypeConfig> = {
   user: { schema: UserSchema, idField: '', singleton: true },
   bot: { schema: BotSchema, idField: 'botId', singleton: false },
-  model: { schema: BotTemplateSchema, idField: 'modelId', singleton: false },
+  template: {
+    schema: BotTemplateSchema,
+    idField: 'templateId',
+    singleton: false,
+  },
   connection: {
     schema: ConnectionSchema,
     idField: 'connectionId',

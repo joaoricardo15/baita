@@ -26,7 +26,7 @@ export const handler = async (
     } else {
       const method = event.httpMethod
       const templateId = event.pathParameters?.templateId
-      const resource = new Data(SYSTEM_USER, 'model')
+      const resource = new Data(SYSTEM_USER, 'template')
 
       if (templateId) {
         switch (method) {

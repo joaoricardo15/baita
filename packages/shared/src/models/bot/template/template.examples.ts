@@ -7,7 +7,7 @@ import {
 import { IBotTemplate } from './template.schema'
 
 export const exampleBotTemplateNews: IBotTemplate = {
-  modelId: 'model-news-digest',
+  templateId: 'template-news-digest',
   name: 'News Digest',
   author: 'baita',
   description:
@@ -136,7 +136,7 @@ export const exampleBotTemplateNews: IBotTemplate = {
 }
 
 export const exampleBotTemplateTodo: IBotTemplate = {
-  modelId: 'model-todo-reminder',
+  templateId: 'template-todo-reminder',
   name: 'Todo Reminder',
   author: 'baita',
   description:

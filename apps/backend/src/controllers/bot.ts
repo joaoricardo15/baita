@@ -124,7 +124,7 @@ class Bot {
     return await store.update(botId, { name, tasks, active })
   }
 
-  async deployBotTemplate(userId: string, model: IBotTemplate) {
+  async deployBotTemplate(userId: string, template: IBotTemplate) {
     const botId = generateId()
     const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
 
@@ -137,15 +137,15 @@ class Bot {
       ],
     })
 
-    if (model.tasks[0].service?.name === ServiceName.schedule) {
+    if (template.tasks[0].service?.name === ServiceName.schedule) {
       await this.scheduler.createSchedule({
         Name: botPrefix,
         GroupName: botPrefix,
         State: 'ENABLED',
-        ScheduleExpression: model.tasks[0].inputData.find(
+        ScheduleExpression: template.tasks[0].inputData.find(
           (input) => input.name === 'expression'
         )?.value as string,
-        ScheduleExpressionTimezone: model.tasks[0].inputData.find(
+        ScheduleExpressionTimezone: template.tasks[0].inputData.find(
           (input) => input.name === 'timeZone'
         )?.value as string,
         FlexibleTimeWindow: { Mode: 'OFF' },
@@ -174,11 +174,11 @@ class Bot {
       botId,
       active: true,
       triggerSamples: [],
-      name: model.name,
-      image: model.image,
-      tasks: model.tasks,
-      modelId: model.modelId,
-      description: model.description,
+      name: template.name,
+      image: template.image,
+      tasks: template.tasks,
+      templateId: template.templateId,
+      description: template.description,
     }
 
     const store = new Data(userId, 'bot')

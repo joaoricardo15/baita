@@ -136,7 +136,7 @@ const Bot: FC<{
   const parseBotTemplate = (bot: IBot): IBotTemplate => ({
     name: bot.name,
     image: bot.image,
-    modelId: bot.botId,
+    templateId: bot.botId,
     author: user?.email || '',
     description: bot.description,
     tasks: bot.tasks.map((task: ITask) => ({
@@ -195,7 +195,7 @@ const Bot: FC<{
                 label: labels.publishButton,
                 icon: <AutoFixHighIcon color="secondary" />,
                 onClick: () => onPublishModel(),
-                condition: isAdmin && !bot.modelId,
+                condition: isAdmin && !bot.templateId,
               },
               {
                 label: labels.deleteButton,

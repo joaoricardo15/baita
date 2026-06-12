@@ -17,7 +17,7 @@ export async function handleDeploy(
 
   const bot = new Bot()
   return await bot.deployBotTemplate(userId, {
-    modelId: templateId,
+    templateId,
     author,
     name,
     image,

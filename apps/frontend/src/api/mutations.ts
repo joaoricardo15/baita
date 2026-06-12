@@ -22,8 +22,12 @@ export const deleteBot = (botId: string) =>
 export const deployBot = (botId: string, bot: Partial<IBot>) =>
   getApiResponse<IBot>('post', `bots/${botId}/deploy`, bot)
 
-export const deployBotTemplate = (model: IBotTemplate) =>
-  getApiResponse<IBot>('post', `bot-templates/${model.modelId}/deploy`, model)
+export const deployBotTemplate = (template: IBotTemplate) =>
+  getApiResponse<IBot>(
+    'post',
+    `bot-templates/${template.templateId}/deploy`,
+    template
+  )
 
 export const testBotTask = (botId: string, task: ITask, taskIndex: number) =>
   getApiResponse<ITaskExecutionResult>('post', `bots/${botId}/test`, {
@@ -71,10 +75,14 @@ export const removeImage = (imageId: string) =>
     `data/image/files/${encodeURIComponent(imageId)}`
   )
 
-export const publishBotTemplate = (model: IBotTemplate) =>
-  getApiResponse<IBotTemplate>('put', `bot-templates/${model.modelId}`, model)
+export const publishBotTemplate = (template: IBotTemplate) =>
+  getApiResponse<IBotTemplate>(
+    'put',
+    `bot-templates/${template.templateId}`,
+    template
+  )
 
-export const deleteBotTemplate = (modelId: string) =>
-  getApiResponse<void>('delete', `bot-templates/${modelId}`)
+export const deleteBotTemplate = (templateId: string) =>
+  getApiResponse<void>('delete', `bot-templates/${templateId}`)
 
 export const deleteUser = () => getApiResponse<void>('delete', 'user')
