@@ -423,8 +423,7 @@ resources:
           CorsRules:
             - AllowedHeaders: ['*']
               AllowedMethods: [GET]
-              AllowedOrigins:
-                - ${self:provider.environment.SERVICE_API_URL}
+              AllowedOrigins: ['*']
     docsBucketPolicy:
       Type: AWS::S3::BucketPolicy
       Properties:

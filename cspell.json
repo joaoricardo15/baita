@@ -71,7 +71,9 @@
     "vitejs",
     "vitest",
     "webpush",
-    "workbox"
+    "workbox",
+    "pkce",
+    "PKCE"
   ],
   "ignorePaths": [
     "node_modules",

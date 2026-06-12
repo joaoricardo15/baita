@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <title>Swagger UI: OAuth2 Redirect</title>
+  </head>
+  <body>
+    <script>
+      'use strict'
+      function run() {
+        var oauth2 = window.opener.swaggerUIRedirectOauth2
+        var sentState = oauth2.state
+        var redirectUrl = oauth2.redirectUrl
+        var isValid, qp, arr
+
+        if (/code|token|error/.test(window.location.href)) {
+          var urlParams = new URLSearchParams(window.location.search)
+          var hashParams = new URLSearchParams(
+            window.location.hash.substring(1)
+          )
+
+          // Merge search and hash params
+          for (var [key, value] of hashParams.entries()) {
+            urlParams.set(key, value)
+          }
+
+          var code = urlParams.get('code')
+          var token = urlParams.get('access_token')
+          var state = urlParams.get('state')
+          var error = urlParams.get('error')
+
+          if (state && sentState && state !== sentState) {
+            // State mismatch
+            if (oauth2.errCb) {
+              oauth2.errCb({
+                authId: oauth2.auth.name,
+                source: 'auth',
+                level: 'warning',
+                message: 'Authorization may be unsafe. State does not match.',
+              })
+            }
+          }
+
+          if (code || token) {
+            if (code) {
+              oauth2.auth.code = code
+            }
+            if (token) {
+              oauth2.auth.token = { access_token: token }
+            }
+            oauth2.callback({ auth: oauth2.auth, redirectUrl: redirectUrl })
+          } else if (error) {
+            oauth2.errCb({
+              authId: oauth2.auth.name,
+              source: 'auth',
+              level: 'error',
+              message:
+                urlParams.get('error_description') ||
+                'Authorization failed: ' + error,
+            })
+          }
+        }
+        window.close()
+      }
+      run()
+    </script>
+  </body>
+</html>

@@ -59,8 +59,10 @@ interface ServerlessConfig {
 interface OperationDoc {
   summary: string
   description: string
+  operationId?: string
   requestSchema?: string
   responseSchema?: string
+  requestExample?: Record<string, unknown>
   parameterOverrides?: Record<string, { description: string; enum?: string[] }>
 }
 
@@ -72,17 +74,20 @@ const DATA_TYPE_PARAM = {
 const OPERATION_DOCS: Record<string, OperationDoc> = {
   '/bots:get': {
     summary: 'List bots',
+    operationId: 'listBots',
     description: 'Returns all automation bots owned by the authenticated user.',
     responseSchema: 'Bot',
   },
   '/bots:post': {
     summary: 'Create bot',
+    operationId: 'createBot',
     description:
       'Creates a new empty bot with a server-generated ID and webhook trigger URL.',
     responseSchema: 'Bot',
   },
   '/bots/{botId}:get': {
     summary: 'Get bot',
+    operationId: 'getBot',
     description:
       'Returns a specific bot including its task definitions, deployment state, and trigger URL.',
     parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
@@ -90,6 +95,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/bots/{botId}:patch': {
     summary: 'Update bot',
+    operationId: 'updateBot',
     description:
       'Partially updates a bot. Send only the fields to change: name, description, image, active state, or tasks array.',
     parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
@@ -98,45 +104,77 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/bots/{botId}:delete': {
     summary: 'Delete bot',
+    operationId: 'deleteBot',
     description:
-      'Permanently deletes the bot and all its deployed AWS resources (Lambda function, API Gateway endpoint, EventBridge schedule, S3 code package, and CloudWatch log group).',
+      'Permanently deletes the bot and all its deployed AWS resources (EventBridge schedule group and schedule).',
     parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
   },
   '/bots/{botId}/deploy:post': {
     summary: 'Deploy bot',
+    operationId: 'deployBot',
     description:
-      'Generates executable Lambda code from the bot task definitions, packages it as a ZIP, uploads to S3, and deploys as a standalone Lambda with API Gateway trigger and optional EventBridge schedule. The bot must pass validation before deployment.',
+      'Activates or deactivates the bot schedule. When active with a schedule trigger, enables the EventBridge schedule. The bot tasks must pass validation before deployment.',
     parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
     requestSchema: 'Bot',
+    requestExample: {
+      name: 'My Daily Bot',
+      active: true,
+      tasks: [],
+    },
     responseSchema: 'Bot',
   },
   '/bots/{botId}/test:post': {
     summary: 'Test bot task',
+    operationId: 'testBotTask',
     description:
-      'Executes a single task step within the bot for testing purposes. Provide the task definition and taskIndex in the request body. Returns the execution result including output data and status.',
+      'Executes a single task step for testing. Provide the task definition and its index within the bot. Returns the execution result with input/output data and status. For trigger steps (index 0), returns the last stored trigger sample.',
     parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
+    requestExample: {
+      taskIndex: 1,
+      task: {
+        taskId: 1,
+        service: { name: 'code-execute' },
+        inputData: [{ name: 'code', value: 'return { greeting: "hello" }' }],
+      },
+    },
     responseSchema: 'TaskExecutionResult',
   },
   '/bots/{botId}/logs:get': {
     summary: 'Get bot execution logs',
+    operationId: 'getBotLogs',
     description:
-      'Retrieves recent execution logs from CloudWatch for the deployed bot Lambda. Optionally filter by search terms via query parameters.',
+      'Retrieves recent execution logs from CloudWatch for this bot. Optionally filter by search terms in the request body. Returns up to 100 log entries from the last 14 days.',
     parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
+  },
+  '/bots/{botId}/run/{token}:post': {
+    summary: 'Trigger bot execution',
+    operationId: 'triggerBot',
+    description:
+      'Public webhook endpoint — no JWT required. The token encodes the owner userId. If the bot is active, invokes the bot engine asynchronously. If inactive, stores the request payload as a trigger sample for testing.',
+    parameterOverrides: {
+      botId: { description: 'Bot ID (UUID)' },
+      token: {
+        description: 'Trigger token (encodes userId, obtained from bot record)',
+      },
+    },
   },
   '/models:get': {
     summary: 'List bot models',
+    operationId: 'listModels',
     description:
       'Returns all shared bot model templates. Models are system-level resources that any authenticated user can browse and deploy as their own bot.',
     responseSchema: 'Bot',
   },
   '/models/{modelId}:get': {
     summary: 'Get bot model',
+    operationId: 'getModel',
     description: 'Returns a specific shared bot model template by ID.',
     parameterOverrides: { modelId: { description: 'Model ID (UUID)' } },
     responseSchema: 'Bot',
   },
   '/models/{modelId}:put': {
     summary: 'Create or replace bot model',
+    operationId: 'putModel',
     description:
       'Creates a new shared bot model or replaces an existing one. The client provides the modelId. The request body must include the full model definition with tasks array.',
     parameterOverrides: { modelId: { description: 'Model ID (UUID)' } },
@@ -145,11 +183,13 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/models/{modelId}:delete': {
     summary: 'Delete bot model',
+    operationId: 'deleteModel',
     description: 'Permanently removes a shared bot model template.',
     parameterOverrides: { modelId: { description: 'Model ID (UUID)' } },
   },
   '/models/{modelId}/deploy:post': {
     summary: 'Deploy model as bot',
+    operationId: 'deployModel',
     description:
       "Creates a new bot for the authenticated user from a shared model template. Copies the model's task definitions into a fresh bot owned by the current user.",
     parameterOverrides: { modelId: { description: 'Model ID (UUID)' } },
@@ -157,19 +197,26 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/connections:get': {
     summary: 'List connections',
+    operationId: 'listConnections',
     description:
       'Returns all OAuth and API-key connections owned by the authenticated user. Credentials are included in the response.',
     responseSchema: 'Connection',
   },
   '/connections:post': {
     summary: 'Create API-key connection',
+    operationId: 'createConnection',
     description:
-      'Creates a new connection using an API key. The server generates a UUID for the connection. OAuth connections are created automatically via the OAuth callback flow. Request body must include `connectorId` and `apiKey`.',
+      'Creates a new connection using an API key. The server generates a UUID for the connection. OAuth connections are created automatically via the OAuth callback flow.',
     requestSchema: 'Connection',
+    requestExample: {
+      connectorId: 'newsapi',
+      apiKey: 'your-api-key-here',
+    },
     responseSchema: 'Connection',
   },
   '/connections/{connectionId}:get': {
     summary: 'Get connection details',
+    operationId: 'getConnection',
     description:
       'Returns the connection record (credentials excluded for security) along with a list of bots that reference this connection in their task definitions.',
     parameterOverrides: {
@@ -178,6 +225,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/connections/{connectionId}:delete': {
     summary: 'Delete connection',
+    operationId: 'deleteConnection',
     description:
       'Permanently removes the connection and its stored credentials. Bots referencing this connection will fail on their next execution.',
     parameterOverrides: {
@@ -186,37 +234,54 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/connections/{connectionId}/health:post': {
     summary: 'Check connection health',
+    operationId: 'checkConnectionHealth',
     description:
-      'Tests whether the stored credentials are still valid by making a probe request to the provider. For OAuth2 connections with expired tokens, automatically attempts a token refresh before reporting status. Returns: healthy, expired, error, or unknown.',
+      'Tests whether the stored credentials are still valid by making a probe request to the provider. For OAuth2 connections with expired tokens, automatically attempts a token refresh. Returns status: healthy, expired, error, or unknown.',
     parameterOverrides: {
       connectionId: { description: 'Connection ID' },
     },
   },
   '/content:get': {
     summary: 'Get content feed',
+    operationId: 'getContentFeed',
     description:
-      "Returns fresh (unseen) content items from the user's feed. Content is published by bot automations and stored in DynamoDB. Items remain in the feed until the user reacts to them (via PATCH /content/{contentId}). Deduplication happens at publish time — the same contentId is never stored twice.",
+      "Returns fresh (unseen) content items from the user's feed. Items remain until the user reacts to them. Unread content auto-expires after 7 days via DynamoDB TTL.",
+  },
+  '/content/{contentId}:patch': {
+    summary: 'React to content',
+    operationId: 'reactToContent',
+    description:
+      'Marks a content item as seen and records the reaction. Once reacted, the item is permanently stored (TTL removed) and no longer appears in the feed.',
+    parameterOverrides: {
+      contentId: { description: 'Content item ID' },
+    },
+    requestExample: {
+      reaction: 'like',
+    },
   },
   '/data/{type}:get': {
     summary: 'List or read data',
+    operationId: 'listData',
     description:
-      'For collection types (note, place, connection): returns all records of that type as an array. For singleton types (todo): returns the single record directly. The type parameter determines which DynamoDB partition prefix to query.',
+      'For collection types (note, place, connection): returns all records as an array. For singleton types (todo, user): returns the single record directly.',
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
     },
   },
   '/data/{type}:put': {
     summary: 'Write singleton data',
+    operationId: 'putSingletonData',
     description:
-      'Creates or replaces a singleton record (no ID needed). Used for types that have exactly one record per user, like todo. The full record body replaces any existing data.',
+      'Creates or replaces a singleton record (no ID needed). Used for types that have exactly one record per user (e.g., todo).',
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
     },
   },
   '/data/{type}/{id}:put': {
     summary: 'Create or replace data record',
+    operationId: 'putDataRecord',
     description:
-      'Creates a new record or fully replaces an existing one at the given ID. The client provides the ID (idempotent operation). Send the complete record body.',
+      'Creates a new record or fully replaces an existing one at the given ID. Client provides the ID (idempotent).',
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
       id: { description: 'Record ID (client-generated)' },
@@ -224,6 +289,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/data/{type}/{id}:get': {
     summary: 'Get data record',
+    operationId: 'getDataRecord',
     description: 'Returns a specific record by type and ID.',
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
@@ -232,8 +298,9 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/data/{type}/{id}:patch': {
     summary: 'Partially update data record',
+    operationId: 'updateDataRecord',
     description:
-      'Updates only the provided fields on an existing record. Fields not included in the request body remain unchanged.',
+      'Updates only the provided fields on an existing record. Fields not included remain unchanged.',
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
       id: { description: 'Record ID' },
@@ -241,6 +308,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/data/{type}/{id}:delete': {
     summary: 'Delete data record',
+    operationId: 'deleteDataRecord',
     description: 'Permanently removes a specific record.',
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
@@ -249,8 +317,9 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/data/{type}/{id}/upload:post': {
     summary: 'Get file upload URL',
+    operationId: 'getUploadUrl',
     description:
-      'Returns a presigned S3 PUT URL (15-minute expiry) for uploading a file associated with this record. The client should PUT the file content directly to the returned URL.',
+      'Returns a presigned S3 PUT URL (15-minute expiry) for uploading a file associated with this record. PUT the file content directly to the returned URL.',
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
       id: { description: 'Record ID' },
@@ -258,6 +327,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/data/{type}/{id}/files/{fileId}:delete': {
     summary: 'Remove uploaded file',
+    operationId: 'deleteFile',
     description:
       'Deletes a previously uploaded file from S3. The fileId corresponds to the S3 object key.',
     parameterOverrides: {
@@ -268,8 +338,9 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
   },
   '/user:delete': {
     summary: 'Delete account',
+    operationId: 'deleteUser',
     description:
-      'Permanently and irreversibly deletes the authenticated user account. This cascades to: all bots (including deployed Lambda functions, API Gateway endpoints, and EventBridge schedules), all stored data records, all connections, and the Auth0 user record.',
+      'Permanently and irreversibly deletes the authenticated user account. Cascades to: all bots (including EventBridge schedules), all data records, all connections, and the Auth0 user record.',
   },
 }
 
@@ -307,6 +378,15 @@ function pathToTag(path: string): string {
   return segment.charAt(0).toUpperCase() + segment.slice(1)
 }
 
+function generateOperationId(path: string, method: string): string {
+  const segments = path
+    .replace(/^\//, '')
+    .split('/')
+    .filter((s) => !s.startsWith('{'))
+  const resource = segments.join('_')
+  return `${method}_${resource}`
+}
+
 function generatePaths() {
   const routes = extractRoutes()
   const paths: Record<string, Record<string, object>> = {}
@@ -319,6 +399,7 @@ function generatePaths() {
 
     const entry: Record<string, unknown> = {
       summary: doc?.summary || `${method.toUpperCase()} ${path}`,
+      operationId: doc?.operationId || generateOperationId(path, method),
       tags: [pathToTag(path)],
       responses: {
         200: {
@@ -371,14 +452,17 @@ function generatePaths() {
     }
 
     if (method === 'post' || method === 'patch' || method === 'put') {
+      const schemaOrGeneric = doc?.requestSchema
+        ? { $ref: `#/components/schemas/${doc.requestSchema}` }
+        : { type: 'object' }
+
+      const mediaType: Record<string, unknown> = { schema: schemaOrGeneric }
+      if (doc?.requestExample) {
+        mediaType.example = doc.requestExample
+      }
+
       entry.requestBody = {
-        content: {
-          'application/json': {
-            schema: doc?.requestSchema
-              ? { $ref: `#/components/schemas/${doc.requestSchema}` }
-              : { type: 'object' },
-          },
-        },
+        content: { 'application/json': mediaType },
       }
     }
 
@@ -442,32 +526,34 @@ const spec = {
     },
     {
       name: 'Content',
-      description:
-        'Personalized content feed populated by bot automations (DynamoDB-backed, persists until reacted)',
-    },
-    {
-      name: 'Tasks',
-      description:
-        'Execute individual automation steps for testing before deployment',
+      description: 'Personalized content feed populated by bot automations',
     },
     {
       name: 'Data',
       description:
-        'Generic CRUD storage for user data records (notes, places, todos, and any custom type)',
+        'Generic CRUD storage for user data records (notes, places, todos, and any registered entity type)',
     },
     {
       name: 'User',
       description: 'Account management (deletion)',
     },
   ],
-  security: [{ bearerAuth: [] }],
+  security: [{ auth0: ['openid', 'profile'] }],
   components: {
     securitySchemes: {
-      bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        description: 'Auth0 JWT Bearer token',
+      auth0: {
+        type: 'oauth2',
+        description: 'Auth0 OAuth2 with PKCE (click Authorize to login)',
+        flows: {
+          authorizationCode: {
+            authorizationUrl: 'https://auth.baita.help/authorize',
+            tokenUrl: 'https://auth.baita.help/oauth/token',
+            scopes: {
+              openid: 'OpenID Connect',
+              profile: 'User profile',
+            },
+          },
+        },
       },
     },
     schemas,
