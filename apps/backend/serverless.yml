@@ -486,3 +486,31 @@ resources:
           - StatusCode: '200'
             ResponseParameters:
               method.response.header.Content-Type: true
+
+    # OAuth2 redirect page for Swagger UI Authorize flow (must be same origin)
+    oauthRedirectResource:
+      Type: AWS::ApiGateway::Resource
+      Properties:
+        RestApiId: !Ref ApiGatewayRestApi
+        ParentId: !GetAtt ApiGatewayRestApi.RootResourceId
+        PathPart: oauth2-redirect.html
+    oauthRedirectMethod:
+      Type: AWS::ApiGateway::Method
+      Properties:
+        RestApiId: !Ref ApiGatewayRestApi
+        ResourceId: !Ref oauthRedirectResource
+        HttpMethod: GET
+        AuthorizationType: NONE
+        Integration:
+          Type: HTTP
+          IntegrationHttpMethod: GET
+          Uri: http://${self:provider.environment.DOCS_BUCKET}.s3-website-us-east-1.amazonaws.com/oauth2-redirect.html
+          PassthroughBehavior: WHEN_NO_MATCH
+          IntegrationResponses:
+            - StatusCode: '200'
+              ResponseParameters:
+                method.response.header.Content-Type: "'text/html'"
+        MethodResponses:
+          - StatusCode: '200'
+            ResponseParameters:
+              method.response.header.Content-Type: true
