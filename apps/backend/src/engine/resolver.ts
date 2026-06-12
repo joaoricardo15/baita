@@ -14,7 +14,7 @@ export function resolveVariable(
 
   if (type === VariableType.output) {
     if (outputIndex === undefined || outputPath === undefined) {
-      return value
+      return variable.sampleValue ?? value
     }
 
     const stepOutput = taskOutputs[outputIndex]

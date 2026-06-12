@@ -173,8 +173,7 @@ test.describe('Bot Lifecycle', () => {
   })
 
   test('trigger bot via webhook', async ({ request }) => {
-    const { computeTriggerToken } = await import('@baita/shared')
-    const token64 = computeTriggerToken(userId)
+    const token64 = Buffer.from(userId, 'hex').toString('base64url')
     const runUrl = `${API_URL}/bots/${botId}/run/${token64}`
 
     await new Promise((r) => setTimeout(r, 2000))

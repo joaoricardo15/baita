@@ -291,9 +291,6 @@ importers:
 
   packages/shared:
     dependencies:
-      nanoid:
-        specifier: ^5.1.11
-        version: 5.1.11
       zod:
         specifier: ^3
         version: 3.25.76
@@ -319,9 +316,6 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: ^3.1053.0
         version: 3.1053.0(@aws-sdk/client-dynamodb@3.1053.0)
-      '@baita/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@playwright/test':
         specifier: ^1.50
         version: 1.60.0
@@ -10573,14 +10567,6 @@ packages:
         integrity: sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ==,
       }
     engines: { node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1 }
-    hasBin: true
-
-  nanoid@5.1.11:
-    resolution:
-      {
-        integrity: sha512-v+KEsUv2ps74PaSKv0gHTxTCgMXOIfBEbaqa6w6ISIGC7ZsvHN4N9oJ8d4cmf0n5oTzQz2SLmThbQWhjd/8eKg==,
-      }
-    engines: { node: ^18 || >=20 }
     hasBin: true
 
   napi-postinstall@0.3.4:
@@ -21197,8 +21183,6 @@ snapshots:
   mute-stream@4.0.0: {}
 
   nanoid@3.3.12: {}
-
-  nanoid@5.1.11: {}
 
   napi-postinstall@0.3.4: {}
 

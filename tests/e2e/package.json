@@ -14,7 +14,6 @@
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "^3.1053.0",
     "@aws-sdk/lib-dynamodb": "^3.1053.0",
-    "@baita/shared": "workspace:*",
     "@playwright/test": "^1.50",
     "@types/node": "^24.13.0",
     "tsx": "^4.19",

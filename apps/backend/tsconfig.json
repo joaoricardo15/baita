@@ -4,7 +4,6 @@
     "lib": ["esnext"],
     "preserveConstEnums": true,
     "sourceMap": true,
-    "allowJs": true,
     "moduleResolution": "node",
     "outDir": ".build",
     "rootDir": "./",
