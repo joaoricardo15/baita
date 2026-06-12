@@ -242,24 +242,32 @@ class Bot {
         taskOutputs
       )
 
-      const data = await executeTask({
-        botId,
-        userId,
-        connectionId: task.connectionId as string | undefined,
-        appConfig: task.app?.config || {},
-        serviceConfig: task.service?.config || {},
-        inputData: resolvedInputData,
-        serviceName: task.service?.name,
-      })
+      try {
+        const data = await executeTask({
+          botId,
+          userId,
+          connectionId: task.connectionId as string | undefined,
+          appConfig: task.app?.config || {},
+          serviceConfig: task.service?.config || {},
+          inputData: resolvedInputData,
+          serviceName: task.service?.name,
+        })
 
-      sample = {
-        status:
-          data !== undefined
-            ? TaskExecutionStatus.success
-            : TaskExecutionStatus.fail,
-        inputData: resolvedInputData,
-        outputData: data ?? null,
-        timestamp: Date.now(),
+        sample = {
+          status: TaskExecutionStatus.success,
+          inputData: resolvedInputData,
+          outputData: data ?? null,
+          timestamp: Date.now(),
+        }
+      } catch (err: unknown) {
+        sample = {
+          status: TaskExecutionStatus.fail,
+          inputData: resolvedInputData,
+          outputData: (err instanceof Error ? err.message : String(err)) as
+            | string
+            | DataType,
+          timestamp: Date.now(),
+        }
       }
     }
 
