@@ -538,19 +538,19 @@ const spec = {
       description: 'Account management (deletion)',
     },
   ],
-  security: [{ auth0: ['openid', 'profile'] }],
+  security: [{ auth0: ['openid'] }],
   components: {
     securitySchemes: {
       auth0: {
         type: 'oauth2',
-        description: 'Auth0 OAuth2 with PKCE (click Authorize to login)',
+        description:
+          'Click Authorize, login with your Baita account, then close the popup. All requests will include your token automatically.',
         flows: {
           authorizationCode: {
             authorizationUrl: 'https://auth.baita.help/authorize',
             tokenUrl: 'https://auth.baita.help/oauth/token',
             scopes: {
-              openid: 'OpenID Connect',
-              profile: 'User profile',
+              openid: 'Required for authentication',
             },
           },
         },
