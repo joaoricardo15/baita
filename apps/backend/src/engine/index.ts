@@ -1,11 +1,5 @@
-import {
-  DataType,
-  IBot,
-  ITaskExecutionResult,
-  TaskExecutionStatus,
-} from '@baita/shared'
+import { DataType, IBot } from '@baita/shared'
 
-import Bot from '@/controllers/bot'
 import Data from '@/controllers/data'
 
 import { runBot } from './run'
@@ -31,15 +25,7 @@ export const handler = async (event: IEngineEvent) => {
   }
 
   if (!bot.active) {
-    const sample: ITaskExecutionResult = {
-      status: TaskExecutionStatus.success,
-      inputData: payload ?? {},
-      outputData: payload ?? {},
-      timestamp: Date.now(),
-    }
-    const botController = new Bot()
-    await botController.addTriggerSample(userId, botId, sample)
-    return { success: true, message: 'Trigger sample stored' }
+    return { success: true, message: 'Bot is inactive — skipping execution' }
   }
 
   const result = await runBot({
