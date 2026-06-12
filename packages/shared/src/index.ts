@@ -10,6 +10,7 @@ export {
   getConnectorByAppId,
   getConnectorById,
 } from './connectors/registry'
+export * from './models'
 export type { EntityType, IEntityTypeConfig } from './registry'
 export {
   entityRegistry,
@@ -19,14 +20,9 @@ export {
 } from './registry'
 export * from './schemas/api'
 export * from './schemas/app'
-export * from './schemas/bot'
-export * from './schemas/connection'
 export * from './schemas/connector'
-export * from './schemas/note'
-export * from './schemas/place'
 export * from './schemas/service'
 export * from './schemas/task'
-export * from './schemas/user'
 export { generateId } from './utils/id'
 export {
   computeRunUrl,

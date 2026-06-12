@@ -1,6 +1,6 @@
 import {
   IBot,
-  IBotModel,
+  IBotTemplate,
   IContent,
   INote,
   IPlace,
@@ -22,8 +22,8 @@ export const deleteBot = (botId: string) =>
 export const deployBot = (botId: string, bot: Partial<IBot>) =>
   getApiResponse<IBot>('post', `bots/${botId}/deploy`, bot)
 
-export const deployBotModel = (model: IBotModel) =>
-  getApiResponse<IBot>('post', `models/${model.modelId}/deploy`, model)
+export const deployBotTemplate = (model: IBotTemplate) =>
+  getApiResponse<IBot>('post', `bot-templates/${model.modelId}/deploy`, model)
 
 export const testBotTask = (botId: string, task: ITask, taskIndex: number) =>
   getApiResponse<ITaskExecutionResult>('post', `bots/${botId}/test`, {
@@ -71,10 +71,10 @@ export const removeImage = (imageId: string) =>
     `data/image/files/${encodeURIComponent(imageId)}`
   )
 
-export const publishBotModel = (model: IBotModel) =>
-  getApiResponse<IBotModel>('put', `models/${model.modelId}`, model)
+export const publishBotTemplate = (model: IBotTemplate) =>
+  getApiResponse<IBotTemplate>('put', `bot-templates/${model.modelId}`, model)
 
-export const deleteBotModel = (modelId: string) =>
-  getApiResponse<void>('delete', `models/${modelId}`)
+export const deleteBotTemplate = (modelId: string) =>
+  getApiResponse<void>('delete', `bot-templates/${modelId}`)
 
 export const deleteUser = () => getApiResponse<void>('delete', 'user')

@@ -195,32 +195,32 @@ functions:
           path: bots/{botId}/run/{token}
           method: post
 
-  # ─── Bot Models (shared templates) ─────────────────────────
-  endpoint-models:
-    handler: src/endpoints/models/index.handler
+  # ─── Bot Templates (shared automation templates) ────────────
+  endpoint-bot-templates:
+    handler: src/endpoints/bots/template/index.handler
     events:
       - http:
-          path: models
+          path: bot-templates
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: models/{modelId}
+          path: bot-templates/{templateId}
           method: put
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: models/{modelId}
+          path: bot-templates/{templateId}
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: models/{modelId}
+          path: bot-templates/{templateId}
           method: delete
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
       - http:
-          path: models/{modelId}/deploy
+          path: bot-templates/{templateId}/deploy
           method: post
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}

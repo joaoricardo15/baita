@@ -1,4 +1,10 @@
-import { IBot, IBotModel, ITask, IVariable, validateBot } from '@baita/shared'
+import {
+  IBot,
+  IBotTemplate,
+  ITask,
+  IVariable,
+  validateBot,
+} from '@baita/shared'
 import {
   AutoFixHigh as AutoFixHighIcon,
   Delete as DeleteIcon,
@@ -12,7 +18,11 @@ import { FC, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Menu from '@/components/menu'
-import { useDeleteBot, useDeployBot, usePublishBotModel } from '@/hooks/useBots'
+import {
+  useDeleteBot,
+  useDeployBot,
+  usePublishBotTemplate,
+} from '@/hooks/useBots'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { LINKS } from '@/router'
@@ -28,7 +38,7 @@ const Bot: FC<{
   const { user, isAdmin } = useContext(AuthContext)
   const deleteBot = useDeleteBot()
   const deployBot = useDeployBot()
-  const publishBotModel = usePublishBotModel()
+  const publishBotTemplate = usePublishBotTemplate()
   const { showLoading, showSnack } = useContext(NotificationContext)
 
   const onNavigateToBot = () => {
@@ -83,7 +93,7 @@ const Bot: FC<{
       .finally(() => showLoading(false))
   }
 
-  const parseModelBot = (bot: IBot): IBotModel => ({
+  const parseBotTemplate = (bot: IBot): IBotTemplate => ({
     name: bot.name,
     image: bot.image,
     modelId: bot.botId,
@@ -102,8 +112,8 @@ const Bot: FC<{
 
   const onPublishModel = () => {
     showLoading(true)
-    publishBotModel
-      .mutateAsync(parseModelBot(bot))
+    publishBotTemplate
+      .mutateAsync(parseBotTemplate(bot))
       .then(() => showSnack(labels.publishSuccess, 'success'))
       .catch((error) =>
         showSnack(

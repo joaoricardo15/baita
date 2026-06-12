@@ -12,7 +12,7 @@
  * to chain data through the workflow.
  *
  * Relationships:
- * - Always nested in Bot.tasks[] or BotModel.tasks[]
+ * - Always nested in Bot.tasks[] or BotTemplate.tasks[]
  * - task.service → Service value object (execution strategy)
  * - task.app → App value object (API config)
  * - task.connectionId → FK to Connection entity

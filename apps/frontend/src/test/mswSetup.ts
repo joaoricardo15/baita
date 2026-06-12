@@ -8,7 +8,7 @@ export const handlers = [
     return HttpResponse.json({ success: true, data: [] })
   }),
 
-  http.get(`${API_BASE}/models`, () => {
+  http.get(`${API_BASE}/bot-templates`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 
@@ -61,10 +61,15 @@ export const handlers = [
     })
   }),
 
-  http.post(`${API_BASE}/models/:modelId/deploy`, () => {
+  http.post(`${API_BASE}/bot-templates/:templateId/deploy`, () => {
     return HttpResponse.json({
       success: true,
-      data: { botId: 'model-bot-id', userId: 'test', tasks: [], active: false },
+      data: {
+        botId: 'template-bot-id',
+        userId: 'test',
+        tasks: [],
+        active: false,
+      },
     })
   }),
 

@@ -4,7 +4,7 @@ import {
   DataType,
   generateId,
   IBot,
-  IBotModel,
+  IBotTemplate,
   ITask,
   ITaskExecutionResult,
   ServiceName,
@@ -124,7 +124,7 @@ class Bot {
     return await store.update(botId, { name, tasks, active })
   }
 
-  async deployBotModel(userId: string, model: IBotModel) {
+  async deployBotTemplate(userId: string, model: IBotTemplate) {
     const botId = generateId()
     const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
 

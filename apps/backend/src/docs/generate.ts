@@ -158,41 +158,41 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
       },
     },
   },
-  '/models:get': {
-    summary: 'List bot models',
-    operationId: 'listModels',
+  '/bot-templates:get': {
+    summary: 'List bot templates',
+    operationId: 'listBotTemplates',
     description:
-      'Returns all shared bot model templates. Models are system-level resources that any authenticated user can browse and deploy as their own bot.',
+      'Returns all shared bot templates. Models are system-level resources that any authenticated user can browse and deploy as their own bot.',
     responseSchema: 'Bot',
   },
-  '/models/{modelId}:get': {
-    summary: 'Get bot model',
-    operationId: 'getModel',
-    description: 'Returns a specific shared bot model template by ID.',
-    parameterOverrides: { modelId: { description: 'Model ID (UUID)' } },
+  '/bot-templates/{templateId}:get': {
+    summary: 'Get bot template',
+    operationId: 'getBotTemplate',
+    description: 'Returns a specific shared bot template by ID.',
+    parameterOverrides: { templateId: { description: 'Template ID (UUID)' } },
     responseSchema: 'Bot',
   },
-  '/models/{modelId}:put': {
-    summary: 'Create or replace bot model',
-    operationId: 'putModel',
+  '/bot-templates/{templateId}:put': {
+    summary: 'Create or replace bot template',
+    operationId: 'putBotTemplate',
     description:
-      'Creates a new shared bot model or replaces an existing one. The client provides the modelId. The request body must include the full model definition with tasks array.',
-    parameterOverrides: { modelId: { description: 'Model ID (UUID)' } },
+      'Creates a new shared bot template or replaces an existing one. The client provides the modelId. The request body must include the full template definition with tasks array.',
+    parameterOverrides: { templateId: { description: 'Template ID (UUID)' } },
     requestSchema: 'Bot',
     responseSchema: 'Bot',
   },
-  '/models/{modelId}:delete': {
-    summary: 'Delete bot model',
-    operationId: 'deleteModel',
-    description: 'Permanently removes a shared bot model template.',
-    parameterOverrides: { modelId: { description: 'Model ID (UUID)' } },
+  '/bot-templates/{templateId}:delete': {
+    summary: 'Delete bot template',
+    operationId: 'deleteBotTemplate',
+    description: 'Permanently removes a shared bot template.',
+    parameterOverrides: { templateId: { description: 'Template ID (UUID)' } },
   },
-  '/models/{modelId}/deploy:post': {
-    summary: 'Deploy model as bot',
-    operationId: 'deployModel',
+  '/bot-templates/{templateId}/deploy:post': {
+    summary: 'Deploy template as bot',
+    operationId: 'deployBotTemplate',
     description:
       "Creates a new bot for the authenticated user from a shared model template. Copies the model's task definitions into a fresh bot owned by the current user.",
-    parameterOverrides: { modelId: { description: 'Model ID (UUID)' } },
+    parameterOverrides: { templateId: { description: 'Template ID (UUID)' } },
     responseSchema: 'Bot',
   },
   '/connections:get': {
@@ -515,9 +515,9 @@ const spec = {
         'Automation bots — workflows that execute tasks on a schedule or webhook trigger',
     },
     {
-      name: 'Models',
+      name: 'Bot Templates',
       description:
-        'Shared bot templates that users can deploy as their own bots',
+        'Shared automation templates that users can deploy as their own bots',
     },
     {
       name: 'Connections',

@@ -1,6 +1,6 @@
 import {
   IBot,
-  IBotModel,
+  IBotTemplate,
   ITask,
   IVariable,
   ServiceType,
@@ -32,10 +32,10 @@ export function useBot(botId: string | undefined) {
   })
 }
 
-export function useBotModels() {
+export function useBotTemplates() {
   return useQuery({
-    queryKey: ['botModels', 'baita'],
-    queryFn: queries.fetchBotModels,
+    queryKey: ['botTemplates', 'baita'],
+    queryFn: queries.fetchBotTemplates,
   })
 }
 
@@ -115,12 +115,12 @@ export function useDeployBot() {
   })
 }
 
-export function useDeployBotModel() {
+export function useDeployBotTemplate() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ model }: { model: IBotModel }) => {
+    mutationFn: async ({ model }: { model: IBotTemplate }) => {
       const tasks = await parseUserInputs(model.tasks)
-      return mutations.deployBotModel({
+      return mutations.deployBotTemplate({
         ...model,
         tasks,
       })
@@ -153,22 +153,22 @@ export function useTestBotTask() {
   })
 }
 
-export function usePublishBotModel() {
+export function usePublishBotTemplate() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (model: IBotModel) => mutations.publishBotModel(model),
+    mutationFn: (model: IBotTemplate) => mutations.publishBotTemplate(model),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['botModels'] })
+      queryClient.invalidateQueries({ queryKey: ['botTemplates'] })
     },
   })
 }
 
-export function useDeleteBotModel() {
+export function useDeleteBotTemplate() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (modelId: string) => mutations.deleteBotModel(modelId),
+    mutationFn: (modelId: string) => mutations.deleteBotTemplate(modelId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['botModels'] })
+      queryClient.invalidateQueries({ queryKey: ['botTemplates'] })
     },
   })
 }

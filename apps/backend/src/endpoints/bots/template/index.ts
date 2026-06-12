@@ -25,23 +25,23 @@ export const handler = async (
       data = await handleDeploy(event, userId)
     } else {
       const method = event.httpMethod
-      const modelId = event.pathParameters?.modelId
+      const templateId = event.pathParameters?.templateId
       const resource = new Data(SYSTEM_USER, 'model')
 
-      if (modelId) {
+      if (templateId) {
         switch (method) {
           case 'GET':
-            data = await resource.read(modelId)
+            data = await resource.read(templateId)
             break
           case 'PUT': {
             const body = JSON.parse(event.body || '{}')
             resource.validate(body)
-            await resource.create(modelId, body)
+            await resource.create(templateId, body)
             data = body
             break
           }
           case 'DELETE':
-            await resource.delete(modelId)
+            await resource.delete(templateId)
             break
         }
       } else {

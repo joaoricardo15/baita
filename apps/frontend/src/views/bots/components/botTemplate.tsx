@@ -1,27 +1,27 @@
-import { IBotModel } from '@baita/shared'
+import { IBotTemplate } from '@baita/shared'
 import { Delete as DeleteIcon } from '@mui/icons-material'
 import { FC, useContext } from 'react'
 
 import { Button } from '@/components'
-import { useDeleteBotModel, useDeployBotModel } from '@/hooks/useBots'
+import { useDeleteBotTemplate, useDeployBotTemplate } from '@/hooks/useBots'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
 
 import BotCard from './botCard'
 
-const BotModel: FC<{
-  botModel: IBotModel
-}> = ({ botModel }) => {
+const BotTemplate: FC<{
+  botTemplate: IBotTemplate
+}> = ({ botTemplate }) => {
   const { isAdmin } = useContext(AuthContext)
   const { showLoading, showSnack } = useContext(NotificationContext)
-  const deployBotModel = useDeployBotModel()
-  const deleteBotModel = useDeleteBotModel()
+  const deployBotTemplate = useDeployBotTemplate()
+  const deleteBotTemplate = useDeleteBotTemplate()
 
-  const onDeployBotModel = () => {
+  const onDeployBotTemplate = () => {
     showLoading(true)
-    deployBotModel
-      .mutateAsync({ model: botModel })
+    deployBotTemplate
+      .mutateAsync({ model: botTemplate })
       .then(() => {
         showLoading(false)
         showSnack(labels.testSuccess, 'success')
@@ -34,17 +34,17 @@ const BotModel: FC<{
 
   const onDeleteBot = () => {
     showLoading(true)
-    deleteBotModel
-      .mutateAsync(botModel.modelId)
+    deleteBotTemplate
+      .mutateAsync(botTemplate.modelId)
       .finally(() => showLoading(false))
   }
 
   return (
     <BotCard
-      name={botModel.name}
-      image={botModel.image}
-      description={botModel.description}
-      onToggleBot={onDeployBotModel}
+      name={botTemplate.name}
+      image={botTemplate.image}
+      description={botTemplate.description}
+      onToggleBot={onDeployBotTemplate}
       actionComponent={
         isAdmin && (
           <Button iconButton icon={<DeleteIcon />} onClick={onDeleteBot} />
@@ -54,7 +54,7 @@ const BotModel: FC<{
   )
 }
 
-export default BotModel
+export default BotTemplate
 
 const LABELS: Labels = {
   en: {

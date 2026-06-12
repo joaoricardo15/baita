@@ -9,7 +9,7 @@ import {
   TaskExecutionStatus,
   TaskSchema,
   validateBot,
-} from '../schemas/bot'
+} from '../models/bot/bot.schema'
 import { ServiceName, ServiceType, VariableType } from '../schemas/service'
 
 const makeTriggerTask = (taskId = 1000): ITask => ({

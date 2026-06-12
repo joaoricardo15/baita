@@ -1,7 +1,7 @@
 import {
   IBot,
   IBotLog,
-  IBotModel,
+  IBotTemplate,
   IConnection,
   IContent,
   INote,
@@ -16,7 +16,8 @@ export const fetchBots = () => getApiResponse<IBot[]>('get', 'bots')
 export const fetchBot = (botId: string) =>
   getApiResponse<IBot>('get', `bots/${botId}`)
 
-export const fetchBotModels = () => getApiResponse<IBotModel[]>('get', 'models')
+export const fetchBotTemplates = () =>
+  getApiResponse<IBotTemplate[]>('get', 'bot-templates')
 
 export const fetchLogs = (botId: string) =>
   getApiResponse<IBotLog[]>('get', `bots/${botId}/logs`)

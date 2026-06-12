@@ -2,16 +2,16 @@
  * Bots Page Tests
  *
  * User Journey: Bot Management
- * Tests the bots listing page — loading, rendering, model separation.
+ * Tests the bots listing page — loading, rendering, template separation.
  *
  * Covers:
  * - Page renders without crashing
  * - Shows skeleton during loading
  * - Shows bots list after loading
  * - Shows Add bot button
- * - Separates model bots from custom bots
- * - Shows bot models that are not yet deployed
- * - Hides bot models that are already deployed by user
+ * - Separates template bots from custom bots
+ * - Shows bot templates that are not yet deployed
+ * - Hides bot templates that are already deployed by user
  * - Handles API failure gracefully
  */
 import { screen, waitFor } from '@testing-library/react'
@@ -75,7 +75,7 @@ describe('Bots Page', () => {
           ],
         })
       ),
-      http.get(`${API_BASE}/models`, () =>
+      http.get(`${API_BASE}/bot-templates`, () =>
         HttpResponse.json({ success: true, data: [] })
       )
     )
@@ -104,7 +104,7 @@ describe('Bots Page', () => {
           { status: 500 }
         )
       ),
-      http.get(`${API_BASE}/models`, () =>
+      http.get(`${API_BASE}/bot-templates`, () =>
         HttpResponse.json(
           { success: false, message: 'Network Error' },
           { status: 500 }
@@ -119,7 +119,7 @@ describe('Bots Page', () => {
     })
   })
 
-  it('separates model bots from custom bots', async () => {
+  it('separates template bots from custom bots', async () => {
     server.use(
       http.get(`${API_BASE}/bots`, () =>
         HttpResponse.json({
@@ -143,7 +143,7 @@ describe('Bots Page', () => {
           ],
         })
       ),
-      http.get(`${API_BASE}/models`, () =>
+      http.get(`${API_BASE}/bot-templates`, () =>
         HttpResponse.json({ success: true, data: [] })
       )
     )
@@ -156,12 +156,12 @@ describe('Bots Page', () => {
     })
   })
 
-  it('shows bot models that are not yet deployed', async () => {
+  it('shows bot templates that are not yet deployed', async () => {
     server.use(
       http.get(`${API_BASE}/bots`, () =>
         HttpResponse.json({ success: true, data: [] })
       ),
-      http.get(`${API_BASE}/models`, () =>
+      http.get(`${API_BASE}/bot-templates`, () =>
         HttpResponse.json({
           success: true,
           data: [
@@ -183,7 +183,7 @@ describe('Bots Page', () => {
     })
   })
 
-  it('hides bot models that are already deployed by user', async () => {
+  it('hides bot templates that are already deployed by user', async () => {
     server.use(
       http.get(`${API_BASE}/bots`, () =>
         HttpResponse.json({
@@ -200,7 +200,7 @@ describe('Bots Page', () => {
           ],
         })
       ),
-      http.get(`${API_BASE}/models`, () =>
+      http.get(`${API_BASE}/bot-templates`, () =>
         HttpResponse.json({
           success: true,
           data: [

@@ -1,7 +1,9 @@
+import type { IContent } from '../models/content/content.schema'
+import { ContentSchema } from '../models/content/content.schema'
+import type { IUser } from '../models/user/user.schema'
+import { UserSchema } from '../models/user/user.schema'
 import type { ITask, ITaskExecutionResult } from '../schemas/task'
 import { TaskExecutionResultSchema, TaskSchema } from '../schemas/task'
-import type { IContent, IUser } from '../schemas/user'
-import { ContentSchema, UserSchema } from '../schemas/user'
 import { validate } from './validate'
 
 export function validateTasks(tasks: ITask[]): void {

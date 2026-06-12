@@ -1,10 +1,13 @@
 import { z } from 'zod'
 
-import { BotSchema } from './schemas/bot'
-import { ConnectionSchema } from './schemas/connection'
-import { NoteSchema } from './schemas/note'
-import { PlaceSchema } from './schemas/place'
-import { ContentSchema, TodoSchema, UserSchema } from './schemas/user'
+import { BotSchema } from './models/bot/bot.schema'
+import { BotTemplateSchema } from './models/bot/template/template.schema'
+import { ConnectionSchema } from './models/connection/connection.schema'
+import { ContentSchema } from './models/content/content.schema'
+import { NoteSchema } from './models/note/note.schema'
+import { PlaceSchema } from './models/place/place.schema'
+import { TodoSchema } from './models/todo/todo.schema'
+import { UserSchema } from './models/user/user.schema'
 
 export interface IEntityTypeConfig {
   schema: z.ZodSchema | null
@@ -15,7 +18,7 @@ export interface IEntityTypeConfig {
 export const entityRegistry: Record<string, IEntityTypeConfig> = {
   user: { schema: UserSchema, idField: '', singleton: true },
   bot: { schema: BotSchema, idField: 'botId', singleton: false },
-  model: { schema: BotSchema, idField: 'modelId', singleton: false },
+  model: { schema: BotTemplateSchema, idField: 'modelId', singleton: false },
   connection: {
     schema: ConnectionSchema,
     idField: 'connectionId',

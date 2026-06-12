@@ -73,7 +73,8 @@
     "webpush",
     "workbox",
     "pkce",
-    "PKCE"
+    "PKCE",
+    "Centraal"
   ],
   "ignorePaths": [
     "node_modules",

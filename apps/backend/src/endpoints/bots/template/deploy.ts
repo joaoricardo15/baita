@@ -7,8 +7,8 @@ export async function handleDeploy(
   event: APIGatewayProxyEvent,
   userId: string
 ): Promise<unknown> {
-  const modelId = event.pathParameters?.modelId
-  if (!modelId) throw new Error('Missing modelId')
+  const templateId = event.pathParameters?.templateId
+  if (!templateId) throw new Error('Missing templateId')
 
   const body = JSON.parse(event.body || '{}')
   const { name, author, description, image, tasks } = body
@@ -16,8 +16,8 @@ export async function handleDeploy(
   validateTasks(tasks)
 
   const bot = new Bot()
-  return await bot.deployBotModel(userId, {
-    modelId,
+  return await bot.deployBotTemplate(userId, {
+    modelId: templateId,
     author,
     name,
     image,
