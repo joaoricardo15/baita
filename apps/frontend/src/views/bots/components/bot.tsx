@@ -9,9 +9,9 @@ import {
   AutoFixHigh as AutoFixHighIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
-  FlashOnSharp as FlashOnSharpIcon,
   History as HistoryIcon,
   MoreVert as MoreVertIcon,
+  SendSharp as TriggerIcon,
 } from '@mui/icons-material'
 import Axios from 'axios'
 import { FC, useContext } from 'react'
@@ -82,13 +82,16 @@ const Bot: FC<{
     Axios.post(runUrl)
       .then((result) => {
         if (result.data.success) {
-          showSnack(labels.testSuccess, 'success')
+          showSnack(labels.triggerSuccess, 'success')
         } else {
-          showSnack(labels.testFail, 'error')
+          showSnack(labels.triggerFail, 'error')
         }
       })
       .catch((error) =>
-        showSnack(typeof error === 'string' ? error : labels.testFail, 'error')
+        showSnack(
+          typeof error === 'string' ? error : labels.triggerFail,
+          'error'
+        )
       )
       .finally(() => showLoading(false))
   }
@@ -135,8 +138,8 @@ const Bot: FC<{
         <Menu
           links={[
             {
-              label: labels.testButton,
-              icon: <FlashOnSharpIcon color="secondary" />,
+              label: labels.triggerButton,
+              icon: <TriggerIcon color="secondary" />,
               onClick: () => onTestBot(bot),
               condition: bot.active,
             },
@@ -174,10 +177,9 @@ export default Bot
 
 const LABELS: Labels = {
   en: {
-    testButton: 'Test',
-    testInactiveMessage: 'Bot is inactive',
-    testSuccess: 'Test run successfully',
-    testFail: 'Test failed',
+    triggerButton: 'Trigger',
+    triggerSuccess: 'Bot triggered successfully',
+    triggerFail: 'Trigger failed',
     toggleError: 'Failed to toggle bot',
     editButton: 'Edit',
     logsButton: 'Logs',
@@ -187,10 +189,9 @@ const LABELS: Labels = {
     publishFail: 'Model not published',
   },
   pt: {
-    testButton: 'Testar',
-    testInactiveMessage: 'Bot está inativado',
-    testSuccess: 'Testado com sucesso',
-    testFail: 'Testado com falha',
+    triggerButton: 'Disparar',
+    triggerSuccess: 'Bot disparado com sucesso',
+    triggerFail: 'Falha ao disparar',
     toggleError: 'Falha ao alternar bot',
     editButton: 'Editar',
     logsButton: 'Logs',

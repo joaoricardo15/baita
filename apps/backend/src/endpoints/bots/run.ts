@@ -46,9 +46,7 @@ export async function handleRun(
       }
       const botController = new Bot()
       await botController.addTriggerSample(userId, botId, sample)
-      api.httpResponse(callback, ApiRequestStatus.success, undefined, {
-        message: 'Trigger sample stored',
-      })
+      api.httpResponse(callback, ApiRequestStatus.success)
       return
     }
 
@@ -62,9 +60,7 @@ export async function handleRun(
       }),
     })
 
-    api.httpResponse(callback, ApiRequestStatus.success, undefined, {
-      message: 'Bot execution triggered',
-    })
+    api.httpResponse(callback, ApiRequestStatus.success)
   } catch (err: unknown) {
     api.httpResponse(callback, ApiRequestStatus.fail, err)
   }
