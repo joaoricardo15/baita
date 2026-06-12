@@ -11,7 +11,7 @@
     "report": "playwright show-report",
     "verify": "TEST_ENV=local PWDEBUG=1 playwright test verify.spec.ts --headed",
     "visual": "TEST_ENV=local playwright test --project=visual ; API_URL=http://localhost:5000/prod npm run e2e:cleanup",
-    "visual:ci": "TEST_ENV=local VISUAL_STRICT=1 playwright test --project=visual ; npm run e2e:cleanup",
+    "visual:ci": "VISUAL_STRICT=1 playwright test --project=visual ; npm run e2e:cleanup",
     "visual:update": "TEST_ENV=local playwright test --project=visual --update-snapshots ; API_URL=http://localhost:5000/prod npm run e2e:cleanup"
   },
   "devDependencies": {
