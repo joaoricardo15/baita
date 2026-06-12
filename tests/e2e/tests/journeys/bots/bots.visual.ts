@@ -248,6 +248,202 @@ test.describe('Bot Journey', () => {
     })
   })
 
+  test('bot editor — webhook URL fits viewport', async ({ page }) => {
+    await page.goto(`/bots/${botId}`)
+    await waitForPageReady(page)
+
+    const serviceAccordion = page
+      .locator('.MuiAccordionSummary-root', { hasText: 'Service' })
+      .first()
+    await expect(serviceAccordion).toBeVisible()
+    await serviceAccordion.click()
+    await page.waitForTimeout(500)
+
+    // Assert: URL text is visible and contains expected format
+    const urlText = page.locator('text=URL:').first()
+    await expect(urlText).toBeVisible({ timeout: 5000 })
+
+    // Assert: the URL text area doesn't overflow viewport
+    const urlParent = page.locator(':has(> :text("URL:"))').first()
+    const box = await urlParent.boundingBox()
+    if (box) {
+      expect(box.x + box.width).toBeLessThanOrEqual(375)
+    }
+
+    // Assert: URL contains expected format
+    const fullText = await urlText.textContent()
+    expect(fullText).toContain('URL:')
+
+    // Assert: page body doesn't have horizontal scroll
+    const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
+    expect(bodyWidth).toBeLessThanOrEqual(375)
+
+    await expect(page).toHaveScreenshot('bot-webhook-url-mobile.png', {
+      fullPage: true,
+    })
+  })
+
+  test('bot editor — bot with description', async ({ page, request }) => {
+    const res = await request.patch(`${API_URL}/bots/${botId}`, {
+      headers: getApiHeaders(),
+      data: {
+        name: 'My Automation Bot',
+        description: 'Processes webhook data and sends notifications',
+        active: false,
+        tasks: [
+          {
+            taskId: 1,
+            inputData: [],
+            app: {
+              appId: 'baita',
+              name: 'Baita',
+              icon: '/icons/baita.svg',
+              config: {},
+            },
+            service: {
+              type: 'trigger',
+              name: 'webhook',
+              label: 'Webhook',
+              config: {},
+            },
+          },
+        ],
+      },
+    })
+    const body = await res.json()
+    expect(body.success, `PATCH: ${body.message}`).toBeTruthy()
+
+    await page.goto(`/bots/${botId}`)
+    await waitForPageReady(page)
+
+    // Assert: bot name and description are visible and fit viewport
+    const nameInput = page.locator('input[value="My Automation Bot"]')
+    await expect(nameInput).toBeVisible()
+
+    const descInput = page.locator(
+      'input[value="Processes webhook data and sends notifications"]'
+    )
+    await expect(descInput).toBeVisible()
+    const descBox = await descInput.boundingBox()
+    expect(descBox).not.toBeNull()
+    expect(descBox!.x + descBox!.width).toBeLessThanOrEqual(375)
+
+    await expect(page).toHaveScreenshot('bot-with-description.png', {
+      fullPage: true,
+    })
+  })
+
+  test('bot editor — failed test result', async ({ page, request }) => {
+    const patchRes = await request.patch(`${API_URL}/bots/${botId}`, {
+      headers: getApiHeaders(),
+      data: {
+        name: 'My Automation Bot',
+        active: false,
+        tasks: [
+          {
+            taskId: 1,
+            inputData: [],
+            app: {
+              appId: 'baita',
+              name: 'Baita',
+              icon: '/icons/baita.svg',
+              config: {},
+            },
+            service: {
+              type: 'trigger',
+              name: 'webhook',
+              label: 'Webhook',
+              config: {},
+            },
+          },
+          {
+            taskId: 2,
+            inputData: [
+              {
+                name: 'code',
+                label: 'Code',
+                type: 'code',
+                value: 'throw new Error("Something went wrong")',
+                sampleValue: 'throw new Error("Something went wrong")',
+              },
+            ],
+            app: {
+              appId: 'baita',
+              name: 'Baita',
+              icon: '/icons/baita.svg',
+              config: {},
+            },
+            service: {
+              type: 'invoke',
+              name: 'code-execute',
+              label: 'Run Javascript',
+              config: { customFields: true },
+            },
+          },
+        ],
+      },
+    })
+    const patchBody = await patchRes.json()
+    expect(patchBody.success, `PATCH: ${patchBody.message}`).toBeTruthy()
+
+    // Run the failing test
+    const testRes = await request.post(`${API_URL}/bots/${botId}/test`, {
+      headers: getApiHeaders(),
+      data: {
+        task: {
+          taskId: 2,
+          service: {
+            type: 'invoke',
+            name: 'code-execute',
+            label: 'Run Javascript',
+            config: {
+              inputFields: [
+                { name: 'code', label: 'Code', type: 'code', required: true },
+              ],
+            },
+          },
+          inputData: [
+            {
+              name: 'code',
+              label: 'Code',
+              type: 'code',
+              value: 'throw new Error("Something went wrong")',
+              sampleValue: 'throw new Error("Something went wrong")',
+            },
+          ],
+        },
+        taskIndex: 1,
+      },
+    })
+    const testBody = await testRes.json()
+    expect(testBody.success).toBeTruthy()
+
+    await page.goto(`/bots/${botId}`)
+    await waitForPageReady(page)
+
+    // Expand the Test accordion for the action task
+    const testAccordion = page
+      .locator('.MuiAccordionSummary-root', { hasText: 'Test' })
+      .last()
+    await expect(testAccordion).toBeVisible()
+    await testAccordion.click()
+    await page.waitForTimeout(500)
+
+    // Assert: failure status is displayed
+    await expect(page.locator('text=fail').first()).toBeVisible({
+      timeout: 5000,
+    })
+
+    // Assert: error message content is shown
+    await expect(
+      page.locator('text=Something went wrong').first()
+    ).toBeVisible()
+
+    await expect(page).toHaveScreenshot('bot-test-result-failure.png', {
+      fullPage: true,
+    })
+  })
+
   test('bot editor — deployed (active)', async ({ page, request }) => {
     const deployRes = await request.post(`${API_URL}/bots/${botId}/deploy`, {
       headers: getApiHeaders(),

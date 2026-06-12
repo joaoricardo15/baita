@@ -79,7 +79,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Deploy to Amplify
+      - name: Deploy Amplify infrastructure
         run: |
           aws cloudformation deploy \
             --stack-name baita-frontend-prod \
@@ -87,26 +87,31 @@ jobs:
             --parameter-overrides Stage=prod \
             --no-fail-on-empty-changeset
 
+      - name: Upload build to Amplify
+        run: |
           APP_ID=$(aws cloudformation describe-stacks \
             --stack-name baita-frontend-prod \
             --query 'Stacks[0].Outputs[?OutputKey==`AmplifyAppId`].OutputValue' \
             --output text)
-
           cd apps/frontend/dist && zip -qr /tmp/deploy.zip .
-
           DEPLOY=$(aws amplify create-deployment --app-id "$APP_ID" --branch-name main --output json)
-          curl --fail -s -T /tmp/deploy.zip "$(echo $DEPLOY | jq -r '.zipUploadUrl')"
-          JOB=$(echo $DEPLOY | jq -r '.jobId')
-          aws amplify start-deployment --app-id "$APP_ID" --branch-name main --job-id "$JOB"
+          curl --fail --silent --show-error -T /tmp/deploy.zip "$(echo "$DEPLOY" | jq -r '.zipUploadUrl')"
+          JOB_ID=$(echo "$DEPLOY" | jq -r '.jobId')
+          aws amplify start-deployment --app-id "$APP_ID" --branch-name main --job-id "$JOB_ID"
+          echo "JOB_ID=$JOB_ID" >> "$GITHUB_ENV"
+          echo "AMPLIFY_APP_ID=$APP_ID" >> "$GITHUB_ENV"
 
+      - name: Wait for Amplify deployment
+        timeout-minutes: 5
+        run: |
           while true; do
-            STATUS=$(aws amplify get-job --app-id "$APP_ID" --branch-name main --job-id "$JOB" \
+            STATUS=$(aws amplify get-job --app-id "$AMPLIFY_APP_ID" --branch-name main --job-id "$JOB_ID" \
               --query 'job.summary.status' --output text)
             case $STATUS in
-              SUCCEED) exit 0 ;;
-              FAILED|CANCELLED) exit 1 ;;
+              SUCCEED) echo "Deployment succeeded"; exit 0 ;;
+              FAILED|CANCELLED) echo "Deployment $STATUS"; exit 1 ;;
             esac
-            sleep 3
+            sleep 5
           done
 
   # ─── Deploy Backend ────────────────────────────────────────────────────

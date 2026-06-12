@@ -64,6 +64,7 @@ export default defineConfig({
         viewport: { width: 375, height: 812 },
         deviceScaleFactor: 2,
       },
+      workers: 1,
       snapshotPathTemplate: '{snapshotDir}/{testFileDir}/{arg}{ext}',
       snapshotDir: './tests/journeys',
       expect: {
