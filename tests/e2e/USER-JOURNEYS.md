@@ -116,10 +116,10 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 - **Unit (Frontend):** `apps/frontend/src/views/bot/tests/assistant.test.tsx` — AI assistant interaction flow
 - **Unit (Frontend):** `apps/frontend/src/utils/tests/ai.test.ts` — AI response parsing, context building
 - **Unit (Backend):** `apps/backend/src/controllers/tests/bot.test.ts` — Create, deploy, delete, logs, connections
-- **Unit (Backend):** `apps/backend/src/utils/tests/code.test.ts` — Code generation, conditions, retry logic
-- **Unit (Backend):** `apps/backend/src/utils/tests/bot.test.ts` — Data path resolution, variable mapping
-- **Unit (Backend):** `apps/backend/src/tasks/executor/methods.ts` — Runtime method dispatch (publishToFeed, HTTP, OAuth2, notifications)
-- **Unit (Backend):** `apps/backend/src/tasks/executor/code.ts` — VM sandbox execution, isolation
+- **Unit (Backend):** `apps/backend/src/engine/tests/data.test.ts` — Data path resolution, variable mapping, pipes
+- **Unit (Backend):** `apps/backend/src/engine/executor/tests/methods.test.ts` — Runtime method dispatch (publishToFeed, HTTP, OAuth2, notifications)
+- **Unit (Backend):** `apps/backend/src/engine/executor/code.ts` — VM sandbox execution, isolation
+- **Unit (Backend):** `apps/backend/src/engine/tests/engine.test.ts` — Engine orchestration, conditions, retry logic
 - **Unit (Shared):** `packages/shared/src/tests/bot.test.ts` — validateBot, step references, config hashing
 - **E2E:** `tests/e2e/tests/bot-journey.spec.ts` — Full lifecycle: create → configure → test task → deploy → trigger → verify logs → deactivate → delete
 
@@ -220,7 +220,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 ### Test Coverage
 
 - **Unit (Frontend):** `apps/frontend/src/utils/push.test.ts` — Platform detection, subscribe/unsubscribe, PWA detection
-- **Unit (Backend):** `apps/backend/src/tasks/executor/methods.ts` — sendNotification method implementation
+- **Unit (Backend):** `apps/backend/src/engine/executor/methods.ts` — sendNotification method implementation
 
 ---
 

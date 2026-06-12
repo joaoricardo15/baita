@@ -1,16 +1,16 @@
 # Connector Service Testing Guide
 
-How to test any connector service via the standalone task execution endpoint. This guide serves both developers working on the platform and AI assistants helping users build automations.
+How to test any connector service via the bot test endpoint. This guide serves both developers working on the platform and AI assistants helping users build automations.
 
 ## Overview
 
-Every connector service can be tested independently using:
+Every connector service can be tested using:
 
 ```
-POST /task/execute
+POST /bots/{botId}/test
 ```
 
-This endpoint accepts a single task object, resolves its input data, executes the service, and returns the result — no bot creation or deployment needed.
+This authenticated endpoint accepts a single task object and its index within the bot, resolves its input data (using previous steps' sample outputs), executes the service, and returns the result. The task payload format below works identically for task testing during bot development.
 
 ## How It Works
 

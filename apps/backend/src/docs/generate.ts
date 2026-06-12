@@ -197,13 +197,6 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     description:
       "Returns fresh (unseen) content items from the user's feed. Content is published by bot automations and stored in DynamoDB. Items remain in the feed until the user reacts to them (via PATCH /content/{contentId}). Deduplication happens at publish time — the same contentId is never stored twice.",
   },
-  '/tasks/execute:post': {
-    summary: 'Execute a task',
-    description:
-      'Executes a single automation task step (HTTP request, JavaScript code, push notification, OAuth2 API call, etc.). Used for testing individual steps in the bot builder before deployment. The request body is a complete task definition including service, app, and input variables.',
-    requestSchema: 'Task',
-    responseSchema: 'TaskExecutionResult',
-  },
   '/data/{type}:get': {
     summary: 'List or read data',
     description:

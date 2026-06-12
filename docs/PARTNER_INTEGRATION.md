@@ -252,7 +252,7 @@ There are **two separate systems** handling OAuth for a partner — understand b
 When a user clicks "New Connection", the **connector manifest** (`packages/shared/src/connectors/{partner}.ts`) drives:
 
 - Authorization URL construction (frontend builds the popup URL)
-- Token exchange (backend handler at `apps/backend/src/connectors/oauth/index.ts`)
+- Token exchange (backend handler at `apps/backend/src/endpoints/oauth/callback.ts`)
 - User info fetching and connection storage
 
 The `tokenAuthMethod` field in the manifest controls how `client_id`/`client_secret` are sent during the initial code-for-tokens exchange:
@@ -283,7 +283,7 @@ When a deployed bot runs a task using the connection, the **app config** from `a
 
 After integrating a new partner, verify these flows:
 
-1. **Unit tests** — OAuth handler + token refresh (`apps/backend/src/connectors/oauth/tests/`)
+1. **Unit tests** — OAuth handler + token refresh (`apps/backend/src/endpoints/oauth/tests/`)
 2. **E2E tests** — Connection CRUD with partner-specific credential shape (`tests/e2e/tests/connections.spec.ts`)
 3. **Manual test** — Open bot builder → add task → click "New Connection" → authorize → verify connection saved
 4. **Bot execution test** — Deploy a bot with the partner task → run it → verify API call succeeds with refreshed token

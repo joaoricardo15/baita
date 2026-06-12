@@ -53,8 +53,8 @@ Credentials stored in DynamoDB → Connection linked to bot task
 
 **Components**:
 
-- **Handler**: `apps/backend/src/connectors/oauth/index.ts` (generic, manifest-driven)
-- **Registry**: `apps/backend/src/connectors/oauth/registry.ts`
+- **Handler**: `apps/backend/src/endpoints/oauth/callback.ts` (generic, manifest-driven)
+- **Registry**: `packages/shared/src/connectors/registry.ts`
 - **Manifests**: `packages/shared/src/connectors/` (Google, Pipedrive)
 - **Frontend**: `apps/frontend/src/views/bot/components/service/newConnection.tsx`
 - **Token storage**: DynamoDB (`#CONNECTION#{connectionId}`)

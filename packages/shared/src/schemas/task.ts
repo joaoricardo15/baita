@@ -19,8 +19,8 @@
  * - task.inputData[].outputIndex → references earlier task in same bot
  * - task.sampleResult → cached test execution output
  *
- * Runtime: Tasks can be executed independently via POST /task/execute (for
- * testing), or baked into generated Lambda code at bot deployment time.
+ * Runtime: Tasks are executed via POST /bots/{botId}/test (single step testing)
+ * or by the shared bot engine during a full bot run.
  */
 import { z } from 'zod'
 
