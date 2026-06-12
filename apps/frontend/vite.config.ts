@@ -10,6 +10,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       injectRegister: false,
+      injectManifest: { maximumFileSizeToCacheInBytes: 3 * 1024 * 1024 },
       devOptions: { enabled: false },
     }),
     {
