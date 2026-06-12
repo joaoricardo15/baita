@@ -1,7 +1,6 @@
+import { defineConfig } from '@playwright/test'
 import fs from 'fs'
 import path from 'path'
-
-import { defineConfig } from '@playwright/test'
 
 const envFile = path.join(__dirname, '.env')
 if (fs.existsSync(envFile)) {
@@ -13,10 +12,14 @@ if (fs.existsSync(envFile)) {
 
 const isLocal = process.env.TEST_ENV === 'local'
 const isLocalBackend = isLocal && !process.env.API_URL
+const isStrictVisual = !!process.env.VISUAL_STRICT
+const skipSetup = !!process.env.SKIP_SETUP
 
 if (isLocalBackend) {
   process.env.API_URL = 'http://localhost:5000/prod'
 }
+
+const visualThreshold = isStrictVisual ? 0.01 : 0.05
 
 export default defineConfig({
   testDir: './tests',
@@ -37,18 +40,38 @@ export default defineConfig({
     },
     {
       name: 'journeys',
+      testDir: './tests/journeys',
+      testMatch: '**/*.spec.ts',
       use: {
         storageState: 'playwright/.auth/user.json',
       },
-      testMatch: [
-        '**/connectors/*.spec.ts',
-        '**/todo-journey.spec.ts',
-        '**/bot-journey.spec.ts',
-        '**/connections.spec.ts',
-        '**/pages-security.spec.ts',
-        '**/notes-journey.spec.ts',
-        '**/content-feed.spec.ts',
-      ],
+    },
+    {
+      name: 'connectors',
+      testDir: './tests/connectors',
+      testMatch: '**/*.spec.ts',
+      use: {
+        storageState: 'playwright/.auth/user.json',
+      },
+    },
+    {
+      name: 'visual',
+      testDir: './tests/journeys',
+      testMatch: '**/*.visual.ts',
+      ...(skipSetup ? {} : { dependencies: ['setup'] }),
+      use: {
+        storageState: 'playwright/.auth/user.json',
+        viewport: { width: 375, height: 812 },
+        deviceScaleFactor: 2,
+      },
+      snapshotPathTemplate: '{snapshotDir}/{testFileDir}/{arg}{ext}',
+      snapshotDir: './tests/journeys',
+      expect: {
+        toHaveScreenshot: {
+          maxDiffPixelRatio: visualThreshold,
+          animations: 'disabled',
+        },
+      },
     },
   ],
   ...(isLocalBackend

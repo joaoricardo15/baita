@@ -74,7 +74,12 @@
     "workbox",
     "pkce",
     "PKCE",
-    "Centraal"
+    "Centraal",
+    "googletagmanager",
+    "networkidle",
+    "pageerror",
+    "requestfailed",
+    "unreacted"
   ],
   "ignorePaths": [
     "node_modules",

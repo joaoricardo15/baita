@@ -23,10 +23,38 @@ jobs:
       - name: Quality checks
         run: pnpm turbo run lint spell type-check format:check test --filter=!@baita/e2e
 
+  # ─── Visual Regression ──────────────────────────────────────────────────
+  visual:
+    name: Visual Regression
+    runs-on: ubuntu-latest
+    env:
+      E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright
+        run: cd tests/e2e && npx playwright install --with-deps chromium
+      - name: Run visual regression tests
+        run: cd tests/e2e && npm run visual:ci
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-diff
+          path: tests/e2e/test-results/
+          retention-days: 7
+
   # ─── Deploy Frontend ───────────────────────────────────────────────────
   deploy-frontend:
     name: Deploy Frontend
-    needs: [quality]
+    needs: [quality, visual]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -83,7 +111,7 @@ jobs:
   # ─── Deploy Backend ────────────────────────────────────────────────────
   deploy-backend:
     name: Deploy Backend
-    needs: [quality]
+    needs: [quality, visual]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -110,7 +138,7 @@ jobs:
   # ─── Deploy Auth0 ──────────────────────────────────────────────────────
   deploy-auth0:
     name: Deploy Auth0
-    needs: [quality]
+    needs: [quality, visual]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
