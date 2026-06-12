@@ -222,13 +222,20 @@ class Bot {
   async testBot(userId: string, botId: string, task: ITask, taskIndex: string) {
     let sample: ITaskExecutionResult
 
-    if (Number(taskIndex) === 0 && task.service?.type !== 'invoke') {
+    const isTrigger =
+      !task.service ||
+      task.service.name === ServiceName.webhook ||
+      task.service.name === ServiceName.schedule
+    if (Number(taskIndex) === 0 && isTrigger) {
       const store = new Data(userId, 'bot')
       const botData = await store.read(botId)
-      if (!botData?.triggerSamples?.length) {
-        throw new Error('No trigger samples available — run the trigger first')
+      const lastSample = botData?.triggerSamples?.at(-1)
+      sample = lastSample ?? {
+        status: TaskExecutionStatus.success,
+        inputData: null,
+        outputData: null,
+        timestamp: Date.now(),
       }
-      sample = botData.triggerSamples.at(-1)!
     } else {
       const store = new Data(userId, 'bot')
       const botData = (await store.read(botId)) as IBot | undefined

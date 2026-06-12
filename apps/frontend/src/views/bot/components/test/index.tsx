@@ -34,6 +34,8 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
           const result = updatedBot.tasks[taskIndex]?.sampleResult
           if (result?.status === 'fail') {
             showSnack(labels.testFail, 'error')
+          } else if (!result?.outputData) {
+            showSnack(labels.noData, 'info')
           } else {
             showSnack(labels.testSuccess, 'success')
           }
@@ -69,12 +71,14 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
               onClick={() => testTask(taskIndex)}
             ></Button>
           </div>
-          {task.sampleResult && (
-            <Highlight
-              className="mt-4"
-              data={task.sampleResult.outputData || {}}
-            />
-          )}
+          {task.sampleResult &&
+            (task.sampleResult.outputData ? (
+              <Highlight className="mt-4" data={task.sampleResult.outputData} />
+            ) : (
+              <Text className="mt-4 text-secondary fst-italic">
+                {labels.noData}
+              </Text>
+            ))}
         </>
       )}
     </>
@@ -85,10 +89,12 @@ export default TaskTest
 
 const LABELS: Labels = {
   en: {
+    noData: 'No data received yet — send a request to the trigger URL',
     testSuccess: 'Task executed successfully!',
     testFail: 'Task execution failed',
   },
   pt: {
+    noData: 'Nenhum dado recebido ainda — envie uma requisição para a URL',
     testSuccess: 'Tarefa executada com sucesso!',
     testFail: 'Falha na execução da tarefa',
   },
