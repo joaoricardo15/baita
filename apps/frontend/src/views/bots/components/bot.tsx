@@ -13,10 +13,17 @@ import {
   MoreVert as MoreVertIcon,
   SendSharp as TriggerIcon,
 } from '@mui/icons-material'
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from '@mui/material'
 import Axios from 'axios'
-import { FC, useContext } from 'react'
+import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { Button } from '@/components'
 import Menu from '@/components/menu'
 import {
   useDeleteBot,
@@ -40,6 +47,10 @@ const Bot: FC<{
   const deployBot = useDeployBot()
   const publishBotTemplate = usePublishBotTemplate()
   const { showLoading, showSnack } = useContext(NotificationContext)
+
+  const [triggerOpen, setTriggerOpen] = useState(false)
+  const [triggerBody, setTriggerBody] = useState('')
+  const [triggerError, setTriggerError] = useState(false)
 
   const onNavigateToBot = () => {
     navigate(LINKS.bot(bot.botId))
@@ -74,12 +85,38 @@ const Bot: FC<{
       .finally(() => showLoading(false))
   }
 
-  const onTestBot = (bot: IBot) => {
+  const onOpenTrigger = () => {
+    const sample = bot.triggerSamples?.[0]?.inputData
+    setTriggerBody(JSON.stringify(sample || {}, null, 2))
+    setTriggerError(false)
+    setTriggerOpen(true)
+  }
+
+  const onTriggerBodyChange = (value: string) => {
+    setTriggerBody(value)
+    try {
+      JSON.parse(value)
+      setTriggerError(false)
+    } catch {
+      setTriggerError(true)
+    }
+  }
+
+  const onConfirmTrigger = () => {
+    let body: object
+    try {
+      body = JSON.parse(triggerBody)
+    } catch {
+      setTriggerError(true)
+      return
+    }
+
+    setTriggerOpen(false)
     const userId = user?.userId || ''
     const runUrl = computeRunUrl(bot.botId, userId)
 
     showLoading(true)
-    Axios.post(runUrl)
+    Axios.post(runUrl, body)
       .then((result) => {
         if (result.data.success) {
           showSnack(labels.triggerSuccess, 'success')
@@ -128,48 +165,95 @@ const Bot: FC<{
   }
 
   return (
-    <BotCard
-      name={bot.name}
-      image={bot.image}
-      active={bot.active}
-      description={bot.description}
-      onToggleBot={onDeployBot}
-      actionComponent={
-        <Menu
-          links={[
-            {
-              label: labels.triggerButton,
-              icon: <TriggerIcon color="secondary" />,
-              onClick: () => onTestBot(bot),
-              condition: bot.active,
-            },
-            {
-              label: labels.editButton,
-              icon: <EditIcon color="secondary" />,
-              onClick: () => onNavigateToBot(),
-            },
-            {
-              label: labels.logsButton,
-              icon: <HistoryIcon color="secondary" />,
-              onClick: () => onNavigateToLogs(),
-            },
-            {
-              label: labels.publishButton,
-              icon: <AutoFixHighIcon color="secondary" />,
-              onClick: () => onPublishModel(),
-              condition: isAdmin && !bot.modelId,
-            },
-            {
-              label: labels.deleteButton,
-              icon: <DeleteIcon color="secondary" />,
-              onClick: () => onDeleteBot(),
-            },
-          ]}
-        >
-          <MoreVertIcon />
-        </Menu>
-      }
-    />
+    <>
+      <BotCard
+        name={bot.name}
+        image={bot.image}
+        active={bot.active}
+        description={bot.description}
+        onToggleBot={onDeployBot}
+        actionComponent={
+          <Menu
+            links={[
+              {
+                label: labels.triggerButton,
+                icon: <TriggerIcon color="secondary" />,
+                onClick: onOpenTrigger,
+                condition: bot.active,
+              },
+              {
+                label: labels.editButton,
+                icon: <EditIcon color="secondary" />,
+                onClick: () => onNavigateToBot(),
+              },
+              {
+                label: labels.logsButton,
+                icon: <HistoryIcon color="secondary" />,
+                onClick: () => onNavigateToLogs(),
+              },
+              {
+                label: labels.publishButton,
+                icon: <AutoFixHighIcon color="secondary" />,
+                onClick: () => onPublishModel(),
+                condition: isAdmin && !bot.modelId,
+              },
+              {
+                label: labels.deleteButton,
+                icon: <DeleteIcon color="secondary" />,
+                onClick: () => onDeleteBot(),
+              },
+            ]}
+          >
+            <MoreVertIcon />
+          </Menu>
+        }
+      />
+
+      <Dialog
+        open={triggerOpen}
+        onClose={() => setTriggerOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>{labels.triggerDialogTitle}</DialogTitle>
+        <DialogContent>
+          <textarea
+            value={triggerBody}
+            onChange={(e) => onTriggerBodyChange(e.target.value)}
+            spellCheck={false}
+            style={{
+              width: '100%',
+              minHeight: 200,
+              fontFamily: 'monospace',
+              fontSize: '0.875rem',
+              padding: 12,
+              border: triggerError ? '1px solid red' : '1px solid #ccc',
+              borderRadius: 4,
+              resize: 'vertical',
+              outline: 'none',
+            }}
+          />
+          {triggerError && (
+            <p style={{ color: 'red', fontSize: '0.75rem', marginTop: 4 }}>
+              {labels.triggerInvalidJson}
+            </p>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button type="text" onClick={() => setTriggerOpen(false)}>
+            {labels.triggerCancel}
+          </Button>
+          <Button
+            type="text"
+            color="primary"
+            onClick={onConfirmTrigger}
+            disabled={triggerError}
+          >
+            {labels.triggerButton}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   )
 }
 
@@ -180,6 +264,9 @@ const LABELS: Labels = {
     triggerButton: 'Trigger',
     triggerSuccess: 'Bot triggered successfully',
     triggerFail: 'Trigger failed',
+    triggerDialogTitle: 'Trigger with payload',
+    triggerInvalidJson: 'Invalid JSON',
+    triggerCancel: 'Cancel',
     toggleError: 'Failed to toggle bot',
     editButton: 'Edit',
     logsButton: 'Logs',
@@ -192,6 +279,9 @@ const LABELS: Labels = {
     triggerButton: 'Disparar',
     triggerSuccess: 'Bot disparado com sucesso',
     triggerFail: 'Falha ao disparar',
+    triggerDialogTitle: 'Disparar com payload',
+    triggerInvalidJson: 'JSON invalido',
+    triggerCancel: 'Cancelar',
     toggleError: 'Falha ao alternar bot',
     editButton: 'Editar',
     logsButton: 'Logs',
