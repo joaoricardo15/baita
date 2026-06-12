@@ -6,5 +6,6 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^src/(.*)$': '<rootDir>/src/$1',
   },
+  testMatch: ['**/*.test.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/tests/e2e/'],
 }
