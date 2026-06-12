@@ -11,8 +11,6 @@ package:
   individually: true
 
 custom:
-  serverless-offline:
-    useChildProcesses: true
   customDomain:
     domainName: api.baita.help
     stage: prod
@@ -56,11 +54,9 @@ provider:
               dynamodb:DeleteItem,
               dynamodb:BatchWriteItem,
               dynamodb:Query,
-              dynamodb:Scan,
             ]
           Resource:
             - arn:aws:dynamodb:us-east-1:*:table/${self:provider.environment.CORE_TABLE}
-            - arn:aws:dynamodb:us-east-1:*:table/${self:provider.environment.CORE_TABLE}/index/*
         - Effect: Allow
           Action: [s3:PutObject, s3:GetObject, s3:DeleteObject]
           Resource:
@@ -94,9 +90,6 @@ provider:
         - Effect: Allow
           Action: [ssm:GetParameter, ssm:GetParameters]
           Resource: arn:aws:ssm:us-east-1:*:parameter/baita/prod/*
-        - Effect: Allow
-          Action: [tag:GetResources]
-          Resource: '*'
   environment:
     SERVICE_API_URL: https://api.baita.help
     SERVICE_SITE_URL: https://www.baita.help

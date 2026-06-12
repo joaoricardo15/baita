@@ -58,7 +58,7 @@ src/
 │   ├── connections/     # Connection CRUD + health
 │   ├── content/         # Content feed
 │   ├── data/            # Generic data CRUD
-│   ├── models/          # Bot model templates
+│   ├── bots/template/   # Bot templates (shared automation templates)
 │   ├── oauth/           # OAuth callback
 │   └── user/            # User create/delete
 ├── engine/             # Bot execution engine (no HTTP entry point)
@@ -425,7 +425,7 @@ The content feed is entirely DynamoDB-based. Fresh content persists until the us
 - Interfaces: Prefixed with `I` (e.g., `IUser`, `IBot`, `ITask`, `IVariable`)
 - Enums: PascalCase values (e.g., `TaskExecutionStatus.success`)
 - Controllers: PascalCase class names matching the domain (e.g., `Bot`, `User`, `Data`)
-- Endpoints: lowercase folders organized by domain (`bots/`, `connections/`, `content/`, `data/`, `models/`, `oauth/`, `user/`)
+- Endpoints: lowercase folders organized by domain (`bots/`, `connections/`, `content/`, `data/`, `oauth/`, `user/`)
 - Environment variables: UPPER_SNAKE_CASE
 
 ### TypeScript
@@ -500,14 +500,13 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 - `GET /bots/{botId}/logs` — Get execution logs
 - `POST /bots/{botId}/run/{token}` — Trigger bot execution (public, no auth — token encodes userId)
 
-### Models (shared, system user)
+### Bot Templates (shared, system user)
 
-- `GET /models` — List shared bot models (userId='baita')
-- `POST /models` — Create model
-- `GET /models/{modelId}` — Get specific model
-- `PATCH /models/{modelId}` — Update model
-- `DELETE /models/{modelId}` — Delete model
-- `POST /models/{modelId}/deploy` — Deploy as bot from model
+- `GET /bot-templates` — List shared bot templates (userId='baita')
+- `PUT /bot-templates/{templateId}` — Create/update template
+- `GET /bot-templates/{templateId}` — Get specific template
+- `DELETE /bot-templates/{templateId}` — Delete template
+- `POST /bot-templates/{templateId}/deploy` — Deploy as bot from template
 
 ### Connections
 
