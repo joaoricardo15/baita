@@ -222,7 +222,7 @@ class Bot {
   async testBot(userId: string, botId: string, task: ITask, taskIndex: string) {
     let sample: ITaskExecutionResult
 
-    if (Number(taskIndex) === 0 && !task.service) {
+    if (Number(taskIndex) === 0 && task.service?.type !== 'invoke') {
       const store = new Data(userId, 'bot')
       const botData = await store.read(botId)
       if (!botData?.triggerSamples?.length) {

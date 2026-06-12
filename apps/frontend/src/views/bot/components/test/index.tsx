@@ -1,4 +1,4 @@
-import { getTaskLabel, validateBot } from '@baita/shared'
+import { getTaskLabel, IBot, validateBot } from '@baita/shared'
 import { FlashOnSharp as FlashOnSharpIcon } from '@mui/icons-material'
 import { FC, useContext } from 'react'
 import { useParams } from 'react-router-dom'
@@ -30,8 +30,13 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
       showLoading(true)
       testBotTask
         .mutateAsync({ bot, taskIndex })
-        .then(() => {
-          showSnack(labels.testSuccess, 'success')
+        .then((updatedBot: IBot) => {
+          const result = updatedBot.tasks[taskIndex]?.sampleResult
+          if (result?.status === 'fail') {
+            showSnack(labels.testFail, 'error')
+          } else {
+            showSnack(labels.testSuccess, 'success')
+          }
         })
         .catch((err: { message?: string }) => {
           showSnack(err?.message || labels.testFail, 'error')
@@ -65,18 +70,10 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
             ></Button>
           </div>
           {task.sampleResult && (
-            <>
-              {task.sampleResult.status === 'success' ? (
-                <Highlight
-                  className="mt-4"
-                  data={task.sampleResult.outputData || {}}
-                />
-              ) : (
-                <Text className="mt-4" color="error">
-                  {String(task.sampleResult.outputData || labels.noOutputData)}
-                </Text>
-              )}
-            </>
+            <Highlight
+              className="mt-4"
+              data={task.sampleResult.outputData || {}}
+            />
           )}
         </>
       )}
@@ -88,12 +85,10 @@ export default TaskTest
 
 const LABELS: Labels = {
   en: {
-    noOutputData: 'No output data...',
     testSuccess: 'Task executed successfully!',
     testFail: 'Task execution failed',
   },
   pt: {
-    noOutputData: 'Nenhum dado de saída...',
     testSuccess: 'Tarefa executada com sucesso!',
     testFail: 'Falha na execução da tarefa',
   },
