@@ -17,7 +17,7 @@
  *   BAITA_CREATE_USER_API_KEY — internal provisioning API key
  *
  * Variables (public, not secrets):
- *   BAITA_API_URL             — https://api.baita.help
+ *   BAITA_API_URL — https://api.baita.help
  */
 
 const BAITA_API_URL = 'https://api.baita.help'

@@ -5,11 +5,10 @@
  * 1. Copy this file and rename to your-connector.ts
  * 2. Fill in all fields below
  * 3. Export from packages/shared/src/index.ts
- * 4. Register in packages/shared/src/connectors/registry.ts
- * 5. Add appId mapping to registry.ts APP_ID_MAP
- * 6. Add OAuth secrets to AWS SSM (/baita/prod/{name}-client-id, etc.)
- * 7. Add env vars to apps/backend/serverless.yml
- * 8. Deploy: cd apps/backend && npm run deploy
+ * 4. Register in packages/shared/src/connectors/registry.ts (add to connectors array)
+ * 5. Add OAuth secrets to AWS SSM (/baita/prod/{name}-client-id, etc.)
+ * 6. Add env vars to apps/backend/serverless.yml
+ * 7. Deploy: cd apps/backend && npm run deploy
  */
 import { VariableType } from '../schemas/service'
 import { IConnectorManifest } from './index'

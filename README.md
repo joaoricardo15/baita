@@ -2,70 +2,177 @@
 
 Personal automation platform aimed at normal people. Create automated workflows (bots) that connect services, run on schedules, and publish results to your feed.
 
-**Live at**: https://baita.help | **API**: https://api.baita.help
+**Live at**: https://baita.help | **API**: https://api.baita.help | **Docs**: https://api.baita.help/
+
+---
+
+## How It Works
+
+Users build **bots** — sequential workflows that trigger on events (webhooks, schedules) and execute tasks (API calls, code, notifications). The platform handles OAuth connections, data piping between steps, and content publishing — all without code.
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           User's Bot                                    │
+│                                                                         │
+│   ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────────────┐   │
+│   │ Trigger │ ──▶ │ Step 1  │ ──▶ │ Step 2  │ ──▶ │ Publish to Feed │   │
+│   │         │     │         │     │         │     │                 │   │
+│   │Schedule │     │Gmail API│     │Run Code │     │ Content Card    │   │
+│   │Webhook  │     │Pipedrive│     │OpenAI   │     │ Push Notify     │   │
+│   └─────────┘     └─────────┘     └─────────┘     └─────────────────┘   │
+│                                                                         │
+│   Each step's output feeds into the next step's input.                  │
+│   Conditions can skip steps. Transforms reshape data between steps.     │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                        Monorepo (Turborepo + pnpm)           │
-├──────────────┬──────────────┬────────────────┬───────────────┤
-│ apps/frontend│ apps/backend │ packages/shared│ tests/e2e     │
-│ React + Vite │ Serverless FW│ Zod Schemas    │ Playwright    │
-│ → Amplify    │ → Lambda+API │ → TypeScript   │ → E2E tests   │
-└──────────────┴──────────────┴────────────────┴───────────────┘
-                              │
-                    ┌─────────┴─────────┐
-                    │      AWS          │
-                    ├───────────────────┤
-                    │ API Gateway       │
-                    │ Lambda (Node 20)  │
-                    │ DynamoDB          │
-                    │ S3                │
-                    │ EventBridge       │
-                    │ CloudWatch        │
-                    │ Amplify Hosting   │
-                    └───────────────────┘
+              ┌─────────────────────────────────────┐
+              │          Frontend (React SPA)       │
+              │          www.baita.help             │
+              │                                     │
+              │  Visual Bot Builder │ Content Feed  │
+              │  AI Assistant       │ Todo / Notes  │
+              └───────────────┬─────────────────────┘
+                              │ HTTPS (JWT)
+┌─────────────────────────────▼────────────────────────────────────────┐
+│                        AWS (us-east-1)                               │
+│                                                                      │
+│  ┌───────────────────────────────────────────────────────────┐       │
+│  │  API Gateway (api.baita.help)                             │       │
+│  │  ─ Lambda Authorizer (Auth0 JWT verification)             │       │
+│  │  ─ CORS headers on all responses (including errors)       │       │
+│  └──────────────────────────┬────────────────────────────────┘       │
+│                             │                                        │
+│  ┌──────────────────────────▼────────────────────────────────┐       │
+│  │  Lambda Functions (Node.js 20 + TypeScript)               │       │
+│  │                                                           │       │
+│  │  endpoint-bots    endpoint-data     endpoint-connections  │       │
+│  │  endpoint-user    endpoint-content  endpoint-models       │       │
+│  │                                                           │       │
+│  └──────────────────────────┬────────────────────────────────┘       │
+│                             │                                        │
+│  ┌──────────────────────────▼────────────────────────────────┐       │
+│  │  Bot Engine Lambda (300s timeout, async invoke)           │       │
+│  │  ─ Loads bot definition from DB                           │       │
+│  │  ─ Resolves inputs from previous outputs                  │       │
+│  │  ─ Evaluates skip conditions                              │       │
+│  │  ─ Executes tasks (HTTP, code sandbox, push)              │       │
+│  └───────────────────────────────────────────────────────────┘       │
+│                                                                      │
+│  ┌────────────┐  ┌───────────┐  ┌───────────────┐  ┌──────────────┐  │
+│  │  DynamoDB  │  │  S3       │  │  EventBridge  │  │  CloudWatch  │  │
+│  │  (single   │  │  (files,  │  │  Scheduler    │  │  (logs,      │  │
+│  │   table)   │  │   docs)   │  │  (cron bots)  │  │   alarms)    │  │
+│  └────────────┘  └───────────┘  └───────────────┘  └──────────────┘  │
+│                                                                      │
+│  ┌─────────────┐                                                     │
+│  │  Amplify    │                                                     │
+│  │  (frontend  │                                                     │
+│  │   hosting)  │                                                     │
+│  └─────────────┘                                                     │
+└──────────────────────────────────────────────────────────────────────┘
+
+              ┌───────────────────────────┐
+              │  Auth0 (auth.baita.help)  │
+              │  ─ JWT issuance           │
+              │  ─ Google + email login   │
+              │  ─ User provisioning      │
+              └───────────────────────────┘
 ```
+
+### Bot Execution Flow
+
+```
+                            ┌─────────────────────────────┐
+                            │    HOW BOTS GET TRIGGERED   │
+                            └─────────────────────────────┘
+
+     External System                    Schedule                   User (Test)
+          │                                │                           │
+          │ POST /bots/{id}/run/{token}    │ EventBridge fires         │ POST /bots/{id}/test
+          │ (no auth —▶ token = secret)    │ every N minutes/hours     │ (JWT auth, single step)
+          │                                │                           │
+          ▼                                ▼                           ▼
+   ┌──────────────┐              ┌─────────────────┐          ┌──────────────────┐
+   │ Trigger      │              │ Scheduler       │          │ Bot Controller   │
+   │ Endpoint     │              │ (direct invoke) │          │ (in-process)     │
+   │              │              │                 │          │                  │
+   │ Decode token │              │                 │          │ Same resolver +  │
+   │ Verify bot   │              │                 │          │ executor, but    │
+   │ Invoke       │              │                 │          │ runs ONE task    │
+   │ engine async │              │                 │          │ synchronously    │
+   └──────┬───────┘              └────────┬────────┘          └────────┬─────────┘
+          │                               │                            │
+          └──────────────┬────────────────┘                            │
+                         ▼                                             │
+              ┌──────────────────────┐                                 │
+              │   Bot Engine Lambda  │                                 │
+              │                      │                                 │
+              │  for each task:      │                                 │
+              │   1. Resolve inputs  │                                 │
+              │   2. Check conditions│                                 │
+              │   3. Execute ◀───────┼─────────────────────────────────┘
+              │   4. Store output    │
+              │                      │
+              │  Log → CloudWatch    │
+              └──────────────────────┘
+```
+
+**Key insight:** Bots are pure data (JSON in DynamoDB). No per-bot infrastructure. A single shared engine interprets and runs them at runtime.
+
+---
 
 ## Tech Stack
 
-| Layer            | Technology                                       | Purpose                                      |
-| ---------------- | ------------------------------------------------ | -------------------------------------------- |
-| **Frontend**     | React 18, TypeScript, Vite 8                     | SPA with PWA support                         |
-| **UI**           | MUI Material v5, SCSS, Bootstrap utilities       | Component library + styling                  |
-| **State**        | React Context API                                | Application state management                 |
-| **Auth**         | Auth0 (@auth0/auth0-react)                       | Authentication + authorization               |
-| **Backend**      | Node.js 20, TypeScript, Serverless Framework 3   | API + business logic                         |
-| **Database**     | DynamoDB (single-table design, on-demand)        | Data storage                                 |
-| **Storage**      | S3                                               | Bot code, file uploads, docs                 |
-| **Content Feed** | DynamoDB (TTL-based expiry)                      | Content storage + auto-cleanup               |
-| **Scheduling**   | EventBridge Scheduler                            | Bot cron triggers                            |
-| **Monitoring**   | CloudWatch Alarms                                | Lambda errors, DynamoDB throttle, API 5XX    |
-| **Hosting**      | AWS Amplify                                      | Frontend CDN + deploy                        |
-| **Schemas**      | Zod                                              | Shared runtime validation + TypeScript types |
-| **Monorepo**     | Turborepo + pnpm workspaces                      | Build orchestration + caching                |
-| **Testing**      | Jest (unit), Vitest (frontend), Playwright (E2E) | Multi-layer test strategy                    |
-| **CI/CD**        | GitHub Actions                                   | Automated quality gates + deploy             |
+| Layer      | Technology                                          | Purpose                          |
+| ---------- | --------------------------------------------------- | -------------------------------- |
+| Frontend   | React 18, TypeScript 6, Vite 8                      | SPA with PWA support             |
+| UI         | MUI Material v5, SCSS, Bootstrap                    | Component library + styling      |
+| Auth       | Auth0 (Google + email/password)                     | Authentication + authorization   |
+| Backend    | Node.js 20, TypeScript, Serverless Framework        | API + business logic             |
+| Database   | DynamoDB (single-table, on-demand)                  | All application data             |
+| Storage    | S3                                                  | File uploads, OpenAPI docs       |
+| Scheduling | EventBridge Scheduler                               | Bot cron triggers                |
+| Hosting    | AWS Amplify                                         | Frontend CDN + deploy            |
+| Schemas    | Zod (@baita/shared)                                 | Single source of truth for types |
+| Monorepo   | Turborepo + pnpm workspaces                         | Build orchestration + caching    |
+| Testing    | Vitest (frontend), Jest (backend), Playwright (E2E) | Multi-layer test coverage        |
+| CI/CD      | GitHub Actions                                      | Quality gates + deploy pipeline  |
 
-## Project Structure
+---
+
+## Monorepo Structure
 
 ```
 baita/
 ├── apps/
-│   ├── frontend/          # React SPA (see apps/frontend/CLAUDE.md)
-│   └── backend/           # Serverless API (see apps/backend/CLAUDE.md)
+│   ├── frontend/          React SPA → AWS Amplify
+│   │                      See apps/frontend/README.md
+│   │
+│   └── backend/           Serverless API → AWS Lambda + API Gateway
+│                          See apps/backend/README.md
 ├── packages/
-│   └── shared/            # @baita/shared — Zod schemas, types, enums
+│   └── shared/            @baita/shared — Zod schemas, types, connectors
+│                          See packages/shared/README.md
 ├── tests/
-│   └── e2e/               # Playwright E2E tests (auth + pages + API)
-├── .github/workflows/     # CI/CD pipelines
-├── CLAUDE.md              # AI assistant instructions (conventions, rules)
-├── turbo.json             # Turborepo task config
-└── pnpm-workspace.yaml    # Workspace package declarations
+│   └── e2e/               Playwright E2E tests (runs against production)
+│
+├── infra/
+│   └── auth0/             Auth0 tenant config (IaC via auth0-deploy-cli)
+│                          See infra/auth0/README.md
+│
+├── .github/workflows/     CI/CD pipeline
+├── turbo.json             Turborepo task definitions
+├── pnpm-workspace.yaml    Workspace package declarations
+└── CLAUDE.md              AI assistant instructions
 ```
+
+---
 
 ## Getting Started
 
@@ -73,9 +180,9 @@ baita/
 
 - Node.js 22+ (see `.nvmrc`)
 - pnpm 11+ (`npm install -g pnpm`)
-- AWS CLI configured with profile `baita` (for deployment)
+- AWS CLI configured with profile `baita` (for backend/deploy)
 
-### Setup
+### Install
 
 ```bash
 git clone https://github.com/joaoricardo15/baita.git
@@ -86,115 +193,107 @@ pnpm install
 ### Development
 
 ```bash
-# Start backend (localhost:5000)
+# Start backend API (localhost:5000)
 cd apps/backend && npm start
 
 # Start frontend (localhost:3000)
 cd apps/frontend && npm start
 
-# Run all tests
-pnpm turbo run test
+# Run quality checks (same as CI)
+pnpm turbo run lint spell type-check format:check test --filter=!@baita/e2e
 
-# Type-check everything
-pnpm turbo run type-check
-```
-
-### E2E Tests
-
-```bash
+# Run E2E tests (hits production after deploy)
 cd tests/e2e && npm test
 ```
 
+---
+
 ## CI/CD Pipeline
 
-Single unified workflow (`.github/workflows/ci.yml`) on push to `main`:
+Single workflow (`.github/workflows/ci.yml`) on push to `main`:
 
 ```
-frontend (type-check shared → lint → spell → build → test → deploy to Amplify) ─┐
-backend  (type-check shared → lint → type-check → test → deploy → docs)        ─┤→ e2e (Playwright)
+┌────────────────────────────────────────────────────────────────────┐
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │  Quality Gate                                                │  │
+│  │  pnpm turbo run lint spell type-check format:check test      │  │
+│  │  (parallel, cached — unchanged packages skipped)             │  │
+│  └───────────────────────────────┬──────────────────────────────┘  │
+│                                  │                                 │
+│              ┌───────────────────┼────────────────────┐            │
+│              │                   │                    │            │
+│              ▼                   ▼                    ▼            │
+│   ┌──────────────────┐ ┌─────────────────┐ ┌───────────────────┐   │
+│   │ Deploy Frontend  │ │ Deploy Backend  │ │ Deploy Auth0      │   │
+│   │ (Vite build →    │ │ (Serverless     │ │ (auth0-deploy-cli │   │
+│   │  Amplify upload) │ │  Framework)     │ │  → tenant.yaml)   │   │
+│   └────────┬─────────┘ └─────────┬───────┘ └──────────┬────────┘   │
+│            │                     │                    │            │
+│            └─────────────────────┼────────────────────┘            │
+│                                  │                                 │
+│                                  ▼                                 │
+│               ┌────────────────────────────────┐                   │
+│               │  E2E Tests (Playwright)        │                   │
+│               │  Sign up → Journey tests →     │                   │
+│               │  Cleanup (always)              │                   │
+│               └────────────────────────────────┘                   │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
-Both jobs run in parallel. E2E tests run against production after both deploy.
+---
 
-## Shared Schemas (`@baita/shared`)
+## Data Model
 
-All domain models are defined once using Zod in `packages/shared/`:
+All domain data lives in a single DynamoDB table (user-scoped). Models are defined once as Zod schemas in `@baita/shared` and shared between frontend and backend:
 
-```typescript
-// Schemas provide BOTH TypeScript types AND runtime validation
-import { IBot, ITask, BotSchema, TaskSchema } from '@baita/shared'
+| Model         | Purpose                                              |
+| ------------- | ---------------------------------------------------- |
+| `IBot`        | Workflow definition (tasks, triggers, connections)   |
+| `ITask`       | Single step in a bot (service + inputs + conditions) |
+| `IConnection` | OAuth token pair for a third-party service           |
+| `IContent`    | Feed item published by a bot execution               |
+| `ITodo`       | User's todo list (singleton)                         |
+| `INote`       | Text note with optional file attachments             |
+| `IPlace`      | Location pin (Google Maps)                           |
+| `IUser`       | User profile + preferences                           |
 
-// Runtime validation
-const result = TaskSchema.safeParse(untrustedData)
-if (result.success) {
-  // result.data is fully typed as ITask
-}
-```
+---
 
-**Models**: `IUser`, `IBot`, `ITask`, `IService`, `IVariable`, `IApp`, `IConnection`, `IContent`, `ITodo`
+## Connectors (Integrations)
 
-## Bot Execution Architecture
+| Connector     | Auth    | Capabilities                                                                      |
+| ------------- | ------- | --------------------------------------------------------------------------------- |
+| **Baita**     | None    | Webhook trigger, schedule, code execution, push notifications, content publishing |
+| **Google**    | OAuth2  | Gmail (read/send), Calendar (list/create), Drive                                  |
+| **Pipedrive** | OAuth2  | CRM deals, contacts, organizations                                                |
+| **OpenAI**    | API Key | Chat completions, text generation                                                 |
+| **NewsAPI**   | API Key | Headlines, article search                                                         |
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  User creates bot (visual builder or AI assistant)                      │
-│  Bot definition stored as JSON in DynamoDB (IBot with ITask[])          │
-└─────────────────────────────────┬───────────────────────────────────────┘
-                                  │
-           ┌──────────────────────┴──────────────────────┐
-           │                                             │
-           ▼                                             ▼
-┌─────────────────────────┐               ┌───────────────────────────────┐
-│  Webhook Trigger        │               │  Schedule Trigger             │
-│  POST /bots/{id}/run/   │               │  EventBridge Scheduler        │
-│       {token}           │               │  (invokes Lambda directly)    │
-└────────────┬────────────┘               └──────────────┬────────────────┘
-             │                                           │
-             └────────────────────┬──────────────────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│  bot-execute Lambda (shared engine)                                     │
-│                                                                         │
-│  1. Load bot definition from DynamoDB                                   │
-│  2. For each task: resolve inputs → check conditions → execute          │
-│  3. Chain outputs between steps                                         │
-│  4. Log results to CloudWatch                                           │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-No per-bot infrastructure is deployed. Bots are pure data — a single shared engine
-interprets and executes them at runtime.
-
-## Security
-
-- **Auth**: Auth0 JWT verification (RS256) via Lambda authorizer
-- **IAM**: Scoped permissions (least privilege per AWS service)
-- **CORS**: Gateway-level CORS headers on all responses (including 4XX/5XX)
-- **Rate Limiting**: API Gateway stage-level throttling
-- **Secrets**: AWS SSM Parameter Store (resolved at deploy time)
-- **Monitoring**: CloudWatch Alarms for errors, throttling, 5XX
+---
 
 ## Environment
 
-| Environment | Frontend               | Backend                   |
-| ----------- | ---------------------- | ------------------------- |
-| Production  | https://www.baita.help | https://api.baita.help    |
-| Local Dev   | http://localhost:3000  | http://localhost:5000/dev |
+|                | Frontend                | Backend                   |
+| -------------- | ----------------------- | ------------------------- |
+| **Production** | https://www.baita.help  | https://api.baita.help    |
+| **Local**      | http://localhost:3000   | http://localhost:5000/dev |
+| **Region**     | —                       | us-east-1                 |
+| **Auth**       | Auth0 (auth.baita.help) | Auth0 JWT verification    |
 
-## AWS Resources
+---
 
-- **Region**: `us-east-1`
-- **Profile**: `baita`
-- **Backend stack**: `baita-backend-prod` (Serverless Framework)
-- **Frontend stack**: `baita-frontend-prod` (CloudFormation — Amplify)
-- **DynamoDB Table**: `baita-backend-prod` (on-demand billing)
-- **S3 Buckets**: `baita-backend-prod-files`, `baita-backend-prod-docs`
-- **Custom Domain**: `api.baita.help` (Route53 + API Gateway)
+## Security
 
-## Contributing
+- **Authentication**: Auth0 JWT (RS256) verified by Lambda Authorizer
+- **Authorization**: All data user-scoped (userId as DynamoDB partition key)
+- **Secrets**: AWS SSM Parameter Store (never in code)
+- **CORS**: Strict origin allowlist on all responses
+- **Webhook Auth**: Unguessable token in URL (encodes userId)
+- **Code Sandbox**: Node.js `vm` module with 5s timeout for user code execution
 
-This is a personal project. The `CLAUDE.md` files contain detailed conventions for AI-assisted development.
+---
 
 ## License
 

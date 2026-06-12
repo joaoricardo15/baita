@@ -16,7 +16,6 @@ custom:
   customDomain:
     domainName: api.baita.help
     stage: prod
-  # Shared HTTP event defaults (referenced via ${self:custom.cors} and ${self:custom.authorizer})
   cors:
     origins:
       - ${self:provider.environment.SERVICE_SITE_URL}
@@ -90,6 +89,10 @@ provider:
           Resource:
             - arn:aws:iam::${aws:accountId}:role/${self:provider.environment.SERVICE_PREFIX}-bot-scheduler
         - Effect: Allow
+          Action: [lambda:InvokeFunction]
+          Resource:
+            - arn:aws:lambda:us-east-1:${aws:accountId}:function:${self:provider.environment.SERVICE_PREFIX}-bot-engine
+        - Effect: Allow
           Action: [ssm:GetParameter, ssm:GetParameters]
           Resource: arn:aws:ssm:us-east-1:*:parameter/baita/prod/*
         - Effect: Allow
@@ -104,7 +107,7 @@ provider:
     CORE_TABLE: ${self:provider.environment.SERVICE_PREFIX}
     DOCS_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-docs
     FILES_BUCKET: ${self:provider.environment.SERVICE_PREFIX}-files
-    BOT_EXECUTE_ARN: arn:aws:lambda:us-east-1:${aws:accountId}:function:${self:provider.environment.SERVICE_PREFIX}-bot-execute
+    BOT_ENGINE_ARN: arn:aws:lambda:us-east-1:${aws:accountId}:function:${self:provider.environment.SERVICE_PREFIX}-bot-engine
     BOT_EXECUTION_LOG_GROUP: /baita/bot-executions
     BOT_SCHEDULER_ROLE: arn:aws:iam::${aws:accountId}:role/${self:provider.environment.SERVICE_PREFIX}-bot-scheduler
     # Auth0 Management API (M2M)
@@ -188,6 +191,9 @@ functions:
           method: get
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
+      - http:
+          path: bots/{botId}/run/{token}
+          method: post
 
   # ─── Bot Models (shared templates) ─────────────────────────
   endpoint-models:
@@ -309,14 +315,10 @@ functions:
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
-  # ─── Bot Execution (public trigger + scheduler) ────────────
-  bot-execute:
-    handler: src/endpoints/bots/run/index.handler
+  # ─── Bot Engine (direct invoke only — no HTTP) ─────────────
+  bot-engine:
+    handler: src/engine/index.handler
     timeout: 300
-    events:
-      - http:
-          path: bots/{botId}/run/{token}
-          method: post
 
   # ─── OAuth Callback ────────────────────────────────────────
   oauth-callback:
@@ -462,7 +464,7 @@ resources:
                 - Effect: Allow
                   Action: [lambda:InvokeFunction]
                   Resource:
-                    - arn:aws:lambda:us-east-1:${aws:accountId}:function:${self:provider.environment.SERVICE_PREFIX}-bot-execute
+                    - arn:aws:lambda:us-east-1:${aws:accountId}:function:${self:provider.environment.SERVICE_PREFIX}-bot-engine
 
     # API Gateway docs route (serves OpenAPI spec at root /)
     docsRootMethod:

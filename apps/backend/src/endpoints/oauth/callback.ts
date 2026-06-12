@@ -1,3 +1,4 @@
+import { getConnectorById } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 import axios from 'axios'
 import qs from 'qs'
@@ -5,8 +6,6 @@ import qs from 'qs'
 import Bot from '@/controllers/bot'
 import Data from '@/controllers/data'
 import Api, { ApiRequestStatus } from '@/utils/api'
-
-import { getConnectorById } from '../../connectors/oauth/registry'
 
 const SERVICE_API_URL = process.env.SERVICE_API_URL || ''
 

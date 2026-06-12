@@ -49,23 +49,28 @@ Before reporting a task as done, self-check:
 
 ```
 src/
-├── authorizer/     # Lambda authorizer (Auth0 JWT verification)
-├── controllers/    # Business logic classes (User, Bot, Task, Data)
-├── endpoints/      # RESTful API Lambda handlers (one consolidated handler per domain)
-│   ├── bots/        # Bot CRUD + deploy/test/logs
-│   ├── connections/ # Connection CRUD + health
-│   ├── content/     # Content feed (GET only)
-│   ├── data/        # Generic data CRUD (replaces old resource/)
-│   ├── models/      # Bot model CRUD + deploy
-│   ├── oauth/       # OAuth callback (provider redirect handler)
-│   ├── tasks/       # Task execution
-│   └── user/        # User profile (POST create + DELETE)
-├── lib/            # Module-level AWS SDK clients (DynamoDB singleton)
-├── tasks/          # Task execution logic
-│   └── executor/   # Service-specific executors (code.ts, methods.ts)
-├── utils/          # Helpers (api response, bot data manipulation, auth guard)
-│   └── tests/      # Unit tests
-└── docs/           # OpenAPI generated docs
+├── authorizer/         # Lambda authorizer (Auth0 JWT verification)
+├── connectors/         # Connector definitions (OAuth registry)
+├── controllers/        # Business logic classes (Bot, User, Data)
+├── docs/               # OpenAPI spec generation
+├── endpoints/          # HTTP Lambda handlers (one per domain)
+│   ├── bots/            # Bot CRUD + deploy/test/logs + webhook trigger
+│   ├── connections/     # Connection CRUD + health
+│   ├── content/         # Content feed
+│   ├── data/            # Generic data CRUD
+│   ├── models/          # Bot model templates
+│   ├── oauth/           # OAuth callback
+│   └── user/            # User create/delete
+├── engine/             # Bot execution engine (no HTTP entry point)
+│   ├── executor/        # Task executors (code sandbox, HTTP methods)
+│   ├── tests/           # Engine unit tests
+│   ├── index.ts         # Engine Lambda handler (receives {botId, userId, payload?})
+│   ├── run.ts           # Orchestration loop (runBot)
+│   ├── resolver.ts      # Input resolution (output references, transforms)
+│   ├── conditions.ts    # Condition evaluation (filter tasks)
+│   └── data.ts          # Data utilities (path access, mapping, pipes)
+├── lib/                # Module-level AWS SDK clients (DynamoDB singleton)
+└── utils/              # Shared helpers (API response, auth guard, token refresh)
 ```
 
 ## Commands
@@ -141,87 +146,219 @@ Public config (Auth0 domain/audience, OAuth token URLs) is hardcoded in `serverl
 
 ## Architecture
 
-### Two-Tier Pattern
+### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  Endpoint Layer (src/endpoints/)                                │
-│  ─ Parse request, extract userId, call controller, return HTTP  │
-└────────────────────────────────┬────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                              AWS Lambda Functions                              │
+│                                                                                │
+│  ┌───────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │  authorizer   │  │endpoint-bots │  │endpoint-data │  │endpoint-user │  ...  │
+│  │  (JWT verify) │  │  (+ trigger) │  │  (generic)   │  │  (lifecycle) │       │
+│  └───────────────┘  └──────────────┘  └──────────────┘  └──────────────┘       │
+│                                                                                │
+│  ┌────────────────────────────────────────────────────────────┐                │
+│  │  bot-engine (no HTTP — invoked async by trigger/scheduler) │                │
+│  │  Timeout: 300s | Input: {botId, userId, payload?}          │                │
+│  └────────────────────────────────────────────────────────────┘                │
+└────────────────────────────────────────────────────────────────────────────────┘
+         │                    │                     │
+         ▼                    ▼                     ▼
+┌────────────────┐  ┌────────────────┐   ┌────────────────────┐
+│   API Gateway  │  │   DynamoDB     │   │  EventBridge       │
+│   (REST API)   │  │  (single table)│   │  Scheduler         │
+└────────────────┘  └────────────────┘   └────────────────────┘
+```
+
+### Layered Architecture
+
+The backend follows a strict layered pattern. Each layer has a single responsibility and only calls the layer below it.
+
+```
+┌───────────────────────────────────────────────────────────────────────────┐
+│  LAYER 1: HTTP HANDLERS (src/endpoints/)                                  │
+│                                                                           │
+│  Responsibility: Parse request → extract userId → route → return HTTP     │
+│  Pattern: One handler per domain, routes internally by path/method        │
+│  Tools: Api class (response formatting), getAuthenticatedUserId (auth)    │
+│                                                                           │
+│  bots/index.ts    connections/index.ts    data/index.ts    user/index.ts  │
+└────────────────────────────────┬──────────────────────────────────────────┘
+                                 │ calls
+┌────────────────────────────────▼──────────────────────────────────────────┐
+│  LAYER 2: CONTROLLERS (src/controllers/)                                  │
+│                                                                           │
+│  Responsibility: Business logic + AWS service orchestration               │
+│  Pattern: Classes holding SDK clients (Scheduler, CloudWatch)             │
+│  Rule: NEVER import @/lib/dynamodb — delegate to Data controller          │
+│                                                                           │
+│  Bot (deploy, test, delete, logs)  User (create, delete, content feed)    │
+└────────────────────────────────┬──────────────────────────────────────────┘
+                                 │ delegates data ops
+┌────────────────────────────────▼──────────────────────────────────────────┐
+│  LAYER 3: DATA GATEWAY (src/controllers/data.ts)                          │
+│                                                                           │
+│  Responsibility: Single point of access to DynamoDB                       │
+│  Pattern: validate() → DynamoDB operation → return                        │
+│  Methods: list, read, create, update, delete, updateNested, appendToList  │
+│  Rule: ONLY file that imports @/lib/dynamodb                              │
+└────────────────────────────────┬──────────────────────────────────────────┘
                                  │
-┌────────────────────────────────▼────────────────────────────────┐
-│  Functional Layer (src/controllers/)                            │
-│  ─ Bot: deploy (scheduler), test, logs                          │
-│  ─ User: signup, deletion, content feed                            │
-│  ─ Data: CRUD, validation, nested updates (single DDB gateway)  │
-└─────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────▼──────────────────────────────────────────┐
+│  LAYER 4: INFRASTRUCTURE (src/lib/)                                       │
+│                                                                           │
+│  Responsibility: Module-level AWS SDK client singletons                   │
+│  Pattern: Created once at cold start, reused across warm invocations      │
+│                                                                           │
+│  dynamodb.ts (DynamoDBDocument client)                                    │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Endpoints**: Parse request, call controller, return HTTP response via `Api` class
-- **Controllers**: Business logic. Bot and User controllers delegate ALL data operations to Data controller.
-- **Data Controller** (`controllers/data.ts`): The **single gateway** to DynamoDB. Only file that imports `@/lib/dynamodb`. Handles validate(), list(), read(), create(), update(), delete(), updateNested(), appendToList(), deleteAllForUser().
-- **Utils**: Shared helpers for data manipulation, response formatting
-- **Lib**: Module-level AWS SDK clients (DynamoDB singleton) — reused across warm Lambda invocations
+### Engine Architecture (src/engine/)
 
-### Single Data Gateway Principle
+The engine is a separate Lambda (`bot-engine`) with NO HTTP entry point. It receives a structured event and runs bot tasks sequentially.
 
-**Only `controllers/data.ts` may import `@/lib/dynamodb`.** All other controllers delegate data operations:
+```
+┌───────────────────────────────────────────────────────────────────┐
+│  CALLERS (fire-and-forget, InvocationType: 'Event')               │
+│                                                                   │
+│  ┌───────────────────────┐     ┌──────────────────────────┐       │
+│  │ Trigger endpoint      │     │ EventBridge Scheduler    │       │
+│  │ POST /bots/{id}/run/  │     │ (cron/rate expression)   │       │
+│  │ {token}               │     │                          │       │
+│  │                       │     │ Input: {botId, userId}   │       │
+│  │ Decodes token→userId  │     │                          │       │
+│  │ Validates bot exists  │     │                          │       │
+│  │ Invokes engine async  │     │ Invokes engine directly  │       │
+│  └───────────┬───────────┘     └─────────────┬────────────┘       │
+│              │                               │                    │
+│              └──────────────┬────────────────┘                    │
+│                             ▼                                     │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │  ENGINE HANDLER (src/engine/index.ts)                       │  │
+│  │  Input: {botId, userId, payload?}                           │  │
+│  │                                                             │  │
+│  │  1. Validate input (botId + userId required)                │  │
+│  │  2. Load bot from DynamoDB                                  │  │
+│  │  3. If inactive → store trigger sample, return              │  │
+│  │  4. If active → call runBot()                               │  │
+│  │  5. Log execution to CloudWatch                             │  │
+│  └──────────────────────────┬──────────────────────────────────┘  │
+│                             ▼                                     │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │  ORCHESTRATOR (src/engine/run.ts → runBot())                │  │
+│  │                                                             │  │
+│  │  For each task (sequentially):                              |  │
+│  │    1. Resolve inputs ─── resolver.ts                        │  │
+│  │    2. Evaluate conditions ─── conditions.ts                 │  │
+│  │    3. Execute (with retry) ─── executor/index.ts            │  │
+│  │    4. Collect output → feed next task                       │  │
+│  └──────────────────────────┬──────────────────────────────────┘  │
+│                             ▼                                     │
+│  ┌─────────────────────────────────────────────────────────────┐  │
+│  │  EXECUTOR (src/engine/executor/)                            │  │
+│  │                                                             │  │
+│  │  Routes by service name:                                    │  │
+│  │  • code-execute → VM sandbox (executor/code.ts)             │  │
+│  │  • method-execute → HTTP/OAuth2/push (executor/methods.ts)  │  │
+│  │  • publish-content → Content feed                           │  │
+│  └─────────────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+### Engine Submodule Responsibilities
+
+| File                         | Responsibility                                                                                                                            |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `engine/index.ts`            | Lambda handler. Validates event, loads bot, delegates to `runBot()`                                                                       |
+| `engine/run.ts`              | Orchestration loop. Iterates tasks, coordinates resolver/conditions/executor, handles retries, produces execution logs                    |
+| `engine/resolver.ts`         | Resolves task inputs. Maps output references (`outputIndex` + `outputPath`) to actual data from previous task outputs. Applies transforms |
+| `engine/conditions.ts`       | Evaluates OR-of-AND condition groups. Returns boolean (execute or skip)                                                                   |
+| `engine/data.ts`             | Data utilities. Path traversal (`getDataFromPath`), output mapping (`getMappedData`), pipes (base64url decode, email-body extraction)     |
+| `engine/executor/index.ts`   | Task dispatch. Routes to code or method executor based on service type                                                                    |
+| `engine/executor/code.ts`    | VM sandbox execution (Node.js `vm` module, 5s timeout)                                                                                    |
+| `engine/executor/methods.ts` | HTTP method execution. Builds requests, handles OAuth token refresh, calls external APIs                                                  |
+| `engine/executor/utils.ts`   | Request helpers. Path param interpolation, body encoding                                                                                  |
+
+### Bot Execution Flows
+
+**Three ways to run a bot — all converge at the engine:**
+
+```
+┌─────────────────────┐   ┌────────────────────────┐   ┌────────────────────────────┐
+│  WEBHOOK TRIGGER    │   │  SCHEDULED RUN         │   │  TEST (single step)        │
+│                     │   │                        │   │                            │
+│  POST /bots/{id}/   │   │  EventBridge fires     │   │  POST /bots/{id}/test      │
+│  run/{token}        │   │  with {botId,userId}   │   │  Authenticated (JWT)       │
+│                     │   │                        │   │                            │
+│  No auth (token is  │   │  Direct Lambda invoke  │   │  Runs ONE task in-process  │
+│  the secret)        │   │  (no HTTP, no timeout  │   │  (no async invoke)         │
+│                     │   │   limit)               │   │                            │
+│  Decodes token →    │   │                        │   │  Uses same resolver +      │
+│  userId             │   │                        │   │  executor as engine        │
+│                     │   │                        │   │                            │
+│  Invokes engine     │   │  Invokes engine        │   │  Returns result directly   │
+│  Lambda async       │   │  Lambda directly       │   │  to frontend               │
+│  (fire-and-forget)  │   │  (fire-and-forget)     │   │                            │
+└──────────┬──────────┘   └───────────┬────────────┘   └────────────┬───────────────┘
+           │                          │                             │
+           └────────────┬─────────────┘                             │
+                        ▼                                           ▼
+              ┌──────────────────────┐                 ┌────────────────────────────┐
+              │  bot-engine Lambda   │                 │  Bot controller (testBot)  │
+              │  (up to 300s)        │                 │  (in-process, same Lambda  │
+              │                      │                 │   as the HTTP handler)     │
+              │  runBot() → all      │                 │                            │
+              │  tasks sequentially  │                 │  resolveTaskInputs() →     │
+              └──────────────────────┘                 │  executeTask() → return    │
+                                                       └────────────────────────────┘
+```
+
+**Key principle:** "Run" always executes ALL tasks from the DB-stored bot definition. "Test" executes ONE task using the editor's current state. Both use the same `resolveTaskInputs()` + `executeTask()` code path.
+
+### Data Flow During Execution
+
+```
+taskOutputs[] array — built incrementally as tasks execute:
+
+Index 0: payload (from trigger HTTP body or {} for scheduled)
+Index 1: output of task[1] (or null if failed/filtered)
+Index 2: output of task[2]
+...
+
+Each task can reference any previous output via:
+  variable.outputIndex → which task's output
+  variable.outputPath  → JSON dot-path within that output
+  variable.transform   → optional transform (first, last, count, filter, pluck, join)
+```
+
+### Single Data Gateway
+
+**Only `controllers/data.ts` may import `@/lib/dynamodb`.** All other code delegates data operations to the Data controller:
 
 ```typescript
-// In Bot controller — delegates to Data controller
 const data = new Data(userId, 'bot')
-await data.create(botId, botPayload)
-
-// In User controller — delegates for cleanup
-const data = new Data(userId, '')
-await data.deleteAllForUser()
+await data.create(botId, botPayload) // Bot controller
+await data.deleteAllForUser() // User controller
 ```
+
+The Data controller handles: `validate()`, `list()`, `read()`, `create()`, `update()`, `delete()`, `updateNested()`, `appendToList()`, `deleteAllForUser()`.
 
 ### Entity Type Registry
 
-The registry (`packages/shared/src/registry.ts`) is the source of truth for all entity types:
-
-```typescript
-export const entityRegistry: Record<string, IEntityTypeConfig> = {
-  user: { schema: UserSchema, idField: '', singleton: true },
-  bot: { schema: BotSchema, idField: 'botId', singleton: false },
-  connection: {
-    schema: ConnectionSchema,
-    idField: 'connectionId',
-    singleton: false,
-  },
-  note: { schema: NoteSchema, idField: 'noteId', singleton: false },
-  // ... add new types here
-}
-```
-
-Adding a new entity type: add schema + registry entry → CRUD works automatically via `/data/{type}` endpoints. Zero backend code changes needed.
+The registry (`packages/shared/src/registry.ts`) is the source of truth for all entity types. Adding a new entity type = add schema + registry entry → CRUD works automatically via `/data/{type}` endpoints. Zero backend code changes.
 
 ### Handler Pattern
 
-Every endpoint follows this structure:
+Every HTTP endpoint follows this structure:
 
 ```typescript
-import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
-
-import Api, { ApiRequestStatus } from '@/utils/api'
-import { getAuthenticatedUserId } from '@/utils/auth'
-import SomeController from '@/controllers/someController'
-
-export const handler = async (
-  event: APIGatewayProxyEvent,
-  context: Context,
-  callback: Callback
-) => {
+export const handler = async (event, context, callback) => {
   const api = new Api(event, context)
-  const controller = new SomeController()
 
   try {
     const userId = getAuthenticatedUserId(event)
-    const body = JSON.parse(event.body || '{}')
-
     const data = await controller.doSomething(userId, body)
-
     api.httpResponse(callback, ApiRequestStatus.success, undefined, data)
   } catch (err: unknown) {
     api.httpResponse(callback, ApiRequestStatus.fail, err)
@@ -231,21 +368,13 @@ export const handler = async (
 
 ### API Response Format
 
-All endpoints return a standardized response:
-
 ```json
-{
-  "success": true | false,
-  "message": "error message (only on failure)",
-  "data": { ... }
-}
+{ "success": true|false, "message": "error (only on failure)", "data": {...} }
 ```
 
 ### DynamoDB Single-Table Design
 
-Table name: `baita-backend-prod` (env var `CORE_TABLE` = `SERVICE_PREFIX`)
-
-All data is **user-scoped** — every record uses `userId` as the partition key. The `userId` is NOT stored inside entity schemas (it's a storage concern, not domain data). The Data controller injects it automatically.
+Table: `baita-backend-prod` — all data is user-scoped.
 
 ```
 PK (userId) | SK (sortKey)                    | Description
@@ -260,28 +389,7 @@ userId      | #NOTE#{noteId}                  | Note
 userId      | #PLACE#{placeId}                | Place
 ```
 
-Sort key format: `#TYPE` for singletons, `#TYPE#id` for collections. The Data controller constructs these dynamically from the entity type name.
-
-### Bot Execution Architecture
-
-1. User creates/edits bot via frontend (visual workflow builder)
-2. On deploy: backend enables/disables EventBridge Scheduler (no code generation, no per-bot Lambda)
-3. Bot triggered via HTTP (`POST /bots/{botId}/run/{token}`) or schedule (EventBridge → Lambda)
-4. A single shared `bot-execute` Lambda loads the bot definition from DynamoDB and runs it:
-   - Iterates tasks sequentially
-   - Resolves inputs from previous task outputs (`src/engine/resolver.ts`)
-   - Evaluates conditions (`src/engine/conditions.ts`)
-   - Executes each task via `executeTask()` (`src/tasks/executor.ts`)
-5. Task executors route by service name:
-   - `code-execute` → VM sandbox execution (`src/tasks/executor/code.ts`)
-   - `method-execute` → Built-in methods: HTTP, OAuth2, notifications (`src/tasks/executor/methods.ts`)
-   - `trigger-sample` → Stores test data for the trigger step
-6. Results logged to shared CloudWatch LogGroup (`/baita/bot-executions`)
-7. Execution results can publish to user's content feed
-
-**Per-bot resources:** Only an EventBridge Scheduler (for scheduled bots). No per-bot Lambda, API Gateway, S3, or LogGroup.
-
-**Testing:** `POST /bots/{botId}/test` executes a single task using the same engine resolver and executor. Previous step data comes from stored `sampleResult` values.
+Sort key format: `#TYPE` for singletons, `#TYPE#id` for collections.
 
 ### Content Feed Lifecycle
 
@@ -317,7 +425,7 @@ The content feed is entirely DynamoDB-based. Fresh content persists until the us
 - Interfaces: Prefixed with `I` (e.g., `IUser`, `IBot`, `ITask`, `IVariable`)
 - Enums: PascalCase values (e.g., `TaskExecutionStatus.success`)
 - Controllers: PascalCase class names matching the domain (e.g., `Bot`, `User`, `Data`)
-- Endpoints: lowercase folders organized by domain (`bots/`, `connections/`, `content/`, `data/`, `models/`, `oauth/`, `tasks/`, `user/`)
+- Endpoints: lowercase folders organized by domain (`bots/`, `connections/`, `content/`, `data/`, `models/`, `oauth/`, `user/`)
 - Environment variables: UPPER_SNAKE_CASE
 
 ### TypeScript
@@ -400,10 +508,6 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 - `PATCH /models/{modelId}` — Update model
 - `DELETE /models/{modelId}` — Delete model
 - `POST /models/{modelId}/deploy` — Deploy as bot from model
-
-### Tasks
-
-- Task execution is handled internally by the bot engine (no standalone endpoint)
 
 ### Connections
 

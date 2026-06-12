@@ -8,8 +8,8 @@ import {
 
 import Bot from '@/controllers/bot'
 
-import { executeCode } from './executor/code'
-import { executeMethod } from './executor/methods'
+import { executeCode } from './code'
+import { executeMethod } from './methods'
 
 export interface IExecuteTaskParams {
   botId: string

@@ -11,8 +11,8 @@ import webpush from 'web-push'
 
 import Data from '@/controllers/data'
 import User from '@/controllers/user'
-import { getDataFromPath, getMappedData } from '@/utils/bot'
 
+import { getDataFromPath, getMappedData } from '../data'
 import { applyBodyEncoding, interpolatePathParams } from './utils'
 
 const REQUEST_TIMEOUT_MS = 10_000

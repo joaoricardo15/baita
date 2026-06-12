@@ -36,11 +36,6 @@ export const BotLogSchema = z.object({
 })
 export type IBotLog = z.infer<typeof BotLogSchema>
 
-export const BotUsageSchema = z.object({
-  total: z.number(),
-})
-export type IBotUsage = z.infer<typeof BotUsageSchema>
-
 /** Pre-built automation template (deployable as a new bot) */
 export const BotModelSchema = z.object({
   modelId: z.string(),

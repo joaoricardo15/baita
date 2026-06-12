@@ -6,19 +6,26 @@ import Data from '@/controllers/data'
 import Api, { ApiRequestStatus } from '@/utils/api'
 import { getAuthenticatedUserId } from '@/utils/auth'
 
+import { handleRun } from './run'
+
 export const handler = async (
   event: APIGatewayProxyEvent,
   context: Context,
   callback: Callback
 ) => {
   const api = new Api(event, context)
+  const path = event.resource || ''
+
+  if (path.includes('/run/')) {
+    return handleRun(event, api, callback)
+  }
+
   const bot = new Bot()
 
   try {
     const userId = getAuthenticatedUserId(event)
     const method = event.httpMethod
     const botId = event.pathParameters?.botId
-    const path = event.resource || ''
 
     let data
 

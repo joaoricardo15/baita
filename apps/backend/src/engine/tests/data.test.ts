@@ -1,15 +1,12 @@
-// Journey: Bot Automation — variable resolution and output mapping engine
-// These utilities power task-to-task data chaining in bot execution.
-import { DataType, VariableType } from '@baita/shared'
+import { DataType } from '@baita/shared'
 
 import {
   applyTransformToValue,
   getDataFromMapping,
   getDataFromPath,
   getMappedData,
-  getValueFromServiceVariable,
   setObjectDataFromPath,
-} from '../bot'
+} from '../data'
 
 describe('getDataFromPath', () => {
   test('should return data when there is no output path', () => {
@@ -205,7 +202,7 @@ describe('getDataFromMapping', () => {
     })
   })
 
-  test('email-body pipe: nested multipart (text/plain inside multipart/alternative inside multipart/mixed)', () => {
+  test('email-body pipe: nested multipart', () => {
     const encoded = Buffer.from('Nested body content').toString('base64url')
     const data = {
       payload: {
@@ -336,7 +333,7 @@ describe('getMappedData', () => {
     })
   })
 
-  test('should return mapped object when data is object', () => {
+  test('should map each item in array', () => {
     const data = [
       { personalInfo: { firstName: 'Baita' } },
       { personalInfo: { firstName: 'Help' } },
@@ -344,17 +341,13 @@ describe('getMappedData', () => {
     ]
     const outputMapping = { name: 'personalInfo.firstName' }
     expect(getMappedData(data, outputMapping)).toStrictEqual([
-      {
-        name: 'Baita',
-      },
-      {
-        name: 'Help',
-      },
+      { name: 'Baita' },
+      { name: 'Help' },
       {},
     ])
   })
 
-  test('should return mapped object when data is object', () => {
+  test('should build nested output structure', () => {
     const data = {
       personalInfo: { firstName: 'Baita' },
       demographicInfo: { age: 35 },
@@ -382,7 +375,7 @@ describe('setObjectDataFromPath', () => {
     })
   })
 
-  test('should return the updated data with an extra property placed accordingly as specified on inputPath and value', () => {
+  test('should set value at nested path', () => {
     const data = { person: { id: '123' } }
     const value = 'Baita'
     const inputPath = 'person.name'
@@ -391,71 +384,7 @@ describe('setObjectDataFromPath', () => {
     })
   })
 })
-describe('getValueFromServiceVariable', () => {
-  afterEach(() => {
-    delete process.env.envPropertyName
-    delete process.env.NEWS_API_KEY
-  })
 
-  test('should throw error when there is no value in constant variable', () => {
-    const variable = {
-      name: 'constProperty',
-      label: 'ConstProperty',
-      type: VariableType.constant,
-    }
-
-    expect(() => getValueFromServiceVariable(variable)).toThrow()
-  })
-
-  test('should return value from variable', () => {
-    const variable = {
-      name: 'constProperty',
-      label: 'ConstProperty',
-      type: VariableType.constant,
-      value: 'constPropertyValue',
-    }
-
-    expect(getValueFromServiceVariable(variable)).toBe('constPropertyValue')
-  })
-
-  test('should throw error when there is no environment value in environment variable', () => {
-    const variable = {
-      name: 'envProperty',
-      label: 'EnvProperty',
-      type: VariableType.environment,
-    }
-
-    expect(() => getValueFromServiceVariable(variable)).toThrow()
-  })
-
-  test('should return environment value from environment variable', () => {
-    process.env.envPropertyName = 'envPropertyValue'
-    const variable = {
-      name: 'envProperty',
-      label: 'EnvProperty',
-      type: VariableType.environment,
-      value: 'envPropertyName',
-    }
-
-    expect(getValueFromServiceVariable(variable)).toBe('envPropertyValue')
-  })
-
-  test('should return undefined for all other variable types', () => {
-    Object.values(VariableType)
-      .filter(
-        (type) => type in [VariableType.constant, VariableType.environment]
-      )
-      .forEach((type) => {
-        const variable = {
-          name: 'property',
-          label: 'Property',
-          type,
-        }
-
-        expect(getValueFromServiceVariable(variable)).toBeUndefined()
-      })
-  })
-})
 describe('applyTransformToValue', () => {
   const items = [
     { name: 'Alice', age: 30, active: true },

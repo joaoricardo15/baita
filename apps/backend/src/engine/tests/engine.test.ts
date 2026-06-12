@@ -6,13 +6,13 @@ import {
   VariableType,
 } from '@baita/shared'
 
-import { runBot } from '../index'
+import { runBot } from '../run'
 
-jest.mock('@/tasks/executor', () => ({
+jest.mock('@/engine/executor', () => ({
   executeTask: jest.fn(),
 }))
 
-import { executeTask } from '@/tasks/executor'
+import { executeTask } from '@/engine/executor'
 
 const mockExecuteTask = executeTask as jest.MockedFunction<typeof executeTask>
 
@@ -50,7 +50,7 @@ describe('runBot', () => {
       userId: 'user-1',
       botId: 'bot-1',
       tasks: [makeTriggerTask(), makeActionTask(1)],
-      triggerPayload: { input: 'data' },
+      payload: { input: 'data' },
     })
 
     expect(result.success).toBe(true)
@@ -67,7 +67,7 @@ describe('runBot', () => {
       userId: 'user-1',
       botId: 'bot-1',
       tasks: [makeTriggerTask(), makeActionTask(1)],
-      triggerPayload: {},
+      payload: {},
     })
 
     expect(result.success).toBe(false)
@@ -104,7 +104,7 @@ describe('runBot', () => {
       userId: 'user-1',
       botId: 'bot-1',
       tasks: [makeTriggerTask(), task],
-      triggerPayload: { status: 'active' },
+      payload: { status: 'active' },
     })
 
     expect(result.logs[1].status).toBe(TaskExecutionStatus.filtered)
@@ -152,7 +152,7 @@ describe('runBot', () => {
       userId: 'user-1',
       botId: 'bot-1',
       tasks,
-      triggerPayload: {},
+      payload: {},
     })
 
     expect(result.success).toBe(true)
@@ -177,7 +177,7 @@ describe('runBot', () => {
       userId: 'user-1',
       botId: 'bot-1',
       tasks: [makeTriggerTask(), task],
-      triggerPayload: {},
+      payload: {},
     })
 
     expect(result.success).toBe(true)
@@ -196,7 +196,7 @@ describe('runBot', () => {
       userId: 'user-1',
       botId: 'bot-1',
       tasks: [makeTriggerTask(), task],
-      triggerPayload: {},
+      payload: {},
     })
 
     expect(result.data).toEqual({ final: 'output' })

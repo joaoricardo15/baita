@@ -44,7 +44,7 @@ jest.mock('@/controllers/bot', () => {
   }))
 })
 
-const { handler } = require('../../../endpoints/oauth/callback')
+const { handler } = require('../callback')
 
 const createMockContext = (): Context => ({
   callbackWaitsForEmptyEventLoop: false,

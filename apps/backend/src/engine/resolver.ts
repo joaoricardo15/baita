@@ -4,7 +4,7 @@ import {
   applyTransformToValue,
   getDataFromPath,
   setObjectDataFromPath,
-} from '@/utils/bot'
+} from './data'
 
 export function resolveVariable(
   variable: IVariable,

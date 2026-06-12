@@ -1,6 +1,4 @@
-import { DataType, ITransform, IVariable, VariableType } from '@baita/shared'
-
-import { pipes } from './pipes'
+import { DataType, ITransform } from '@baita/shared'
 
 export function getDataFromPath(
   data: DataType,
@@ -54,59 +52,6 @@ export function getDataFromPath(
   return current
 }
 
-export function getDataFromMapping(
-  data: DataType,
-  outputMapping: Record<string, string>
-): Record<string, DataType> {
-  let mappedData: Record<string, DataType> = {}
-  const outputKeys = Object.keys(outputMapping)
-
-  for (let i = 0; i < outputKeys.length; i++) {
-    const outputKey = outputKeys[i]
-    const mappingValue = outputMapping[outputKey]
-
-    let outputValue: DataType | undefined
-    if (mappingValue.startsWith('###')) {
-      outputValue = mappingValue.slice(3)
-    } else {
-      const [path, ...pipes] = mappingValue.split('|')
-      outputValue = getDataFromPath(data, path)
-      for (const pipe of pipes) {
-        if (outputValue === undefined) break
-        outputValue = applyPipe(outputValue, pipe)
-      }
-    }
-
-    if (outputValue !== undefined) {
-      mappedData = setObjectDataFromPath(
-        mappedData,
-        outputValue,
-        outputKey
-      ) as Record<string, DataType>
-    }
-  }
-
-  return mappedData
-}
-
-function applyPipe(value: DataType, pipe: string): DataType | undefined {
-  const fn = pipes[pipe]
-  return fn ? fn(value) : value
-}
-
-export function getMappedData(
-  data: DataType,
-  outputMapping?: Record<string, string>
-): DataType {
-  if (!outputMapping) return data
-
-  return Array.isArray(data)
-    ? data
-        .map((item) => getDataFromMapping(item, outputMapping))
-        .filter((item) => item)
-    : getDataFromMapping(data, outputMapping)
-}
-
 export function setObjectDataFromPath(
   data: object,
   value: DataType,
@@ -137,6 +82,59 @@ export function setObjectDataFromPath(
   }
 
   return data
+}
+
+export function getMappedData(
+  data: DataType,
+  outputMapping?: Record<string, string>
+): DataType {
+  if (!outputMapping) return data
+
+  return Array.isArray(data)
+    ? data
+        .map((item) => getDataFromMapping(item, outputMapping))
+        .filter((item) => item)
+    : getDataFromMapping(data, outputMapping)
+}
+
+export function getDataFromMapping(
+  data: DataType,
+  outputMapping: Record<string, string>
+): Record<string, DataType> {
+  let mappedData: Record<string, DataType> = {}
+  const outputKeys = Object.keys(outputMapping)
+
+  for (let i = 0; i < outputKeys.length; i++) {
+    const outputKey = outputKeys[i]
+    const mappingValue = outputMapping[outputKey]
+
+    let outputValue: DataType | undefined
+    if (mappingValue.startsWith('###')) {
+      outputValue = mappingValue.slice(3)
+    } else {
+      const [path, ...pipeNames] = mappingValue.split('|')
+      outputValue = getDataFromPath(data, path)
+      for (const pipe of pipeNames) {
+        if (outputValue === undefined) break
+        outputValue = applyPipe(outputValue, pipe)
+      }
+    }
+
+    if (outputValue !== undefined) {
+      mappedData = setObjectDataFromPath(
+        mappedData,
+        outputValue,
+        outputKey
+      ) as Record<string, DataType>
+    }
+  }
+
+  return mappedData
+}
+
+function applyPipe(value: DataType, pipe: string): DataType | undefined {
+  const fn = pipes[pipe]
+  return fn ? fn(value) : value
 }
 
 export function applyTransformToValue(
@@ -198,26 +196,71 @@ export function applyTransformToValue(
   }
 }
 
-export function getValueFromServiceVariable(
-  variable: IVariable
-): DataType | undefined {
-  const { label, value, type } = variable
+// --- Pipes (used by output mapping) ---
 
-  if (type === VariableType.constant) {
-    if (value === undefined) {
-      throw Error(`Constant variable '${label}' has no value`)
-    }
+type PipeFn = (value: DataType) => DataType | undefined
 
-    return value
+function base64urlDecode(value: DataType): DataType | undefined {
+  if (typeof value !== 'string') return value
+  return Buffer.from(value, 'base64url').toString('utf-8')
+}
+
+function extractEmailBody(payload: DataType): string | undefined {
+  if (!payload || typeof payload !== 'object') return undefined
+  const p = payload as Record<string, unknown>
+
+  const bodyData = (p.body as Record<string, unknown>)?.data
+  if (typeof bodyData === 'string' && bodyData.length > 0) {
+    const decoded = Buffer.from(bodyData, 'base64url').toString('utf-8')
+    if (decoded.trim()) return decoded
   }
 
-  if (type === VariableType.environment) {
-    if (process.env[value as string] === undefined) {
-      throw Error(`Environment variable '${label}' does not exist`)
-    }
+  const parts = p.parts as Array<Record<string, unknown>> | undefined
+  if (!Array.isArray(parts)) return undefined
 
-    return process.env[value as string]
+  const textPart = parts.find((part) => part.mimeType === 'text/plain')
+  if (textPart) {
+    const data = (textPart.body as Record<string, unknown>)?.data
+    if (typeof data === 'string' && data.length > 0) {
+      const decoded = Buffer.from(data, 'base64url').toString('utf-8')
+      if (decoded.trim()) return decoded
+    }
+  }
+
+  const htmlPart = parts.find((part) => part.mimeType === 'text/html')
+  if (htmlPart) {
+    const data = (htmlPart.body as Record<string, unknown>)?.data
+    if (typeof data === 'string' && data.length > 0) {
+      const html = Buffer.from(data, 'base64url').toString('utf-8')
+      const text = stripHtml(html)
+      if (text) return text
+    }
+  }
+
+  for (const part of parts) {
+    const nested = extractEmailBody(part)
+    if (nested) return nested
   }
 
   return undefined
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+const pipes: Record<string, PipeFn> = {
+  base64url: base64urlDecode,
+  'email-body': extractEmailBody,
 }

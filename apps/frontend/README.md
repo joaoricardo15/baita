@@ -1,8 +1,48 @@
 # Baita Frontend
 
-Frontend application for Baita: a personal automation platform aimed at normal people.
+React SPA for the Baita personal automation platform. Users build bots, manage connections, view content feeds, and organize their tasks — all from a mobile-first PWA.
 
 **Live at**: https://baita.help
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          React Application                                  │
+│                                                                             │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  Router (src/router.tsx)                                              │  │
+│  │  Route definitions + protected routes (withAuthenticationRequired)    │  │
+│  └─────────────────────────────────┬─────────────────────────────────────┘  │
+│                                    │                                        │
+│  ┌─────────────────────────────────▼─────────────────────────────────────┐  │
+│  │  Views (src/views/)                                                   │  │
+│  │  Page-level components: todo, bots, feed, notes, place, profile       │  │
+│  │  Each view: index.tsx entry + components/ subfolder                   │  │
+│  └─────────────────────────────────┬─────────────────────────────────────┘  │
+│                                    │                                        │
+│  ┌──────────────────────┐  ┌───────▼─────────────────────────────────────┐  │
+│  │  Providers           │  │  Hooks (TanStack Query v5)                  │  │
+│  │  (React Context)     │  │  Data fetching, caching, mutations          │  │
+│  │                      │  │  useQuery / useMutation                     │  │
+│  │  Auth → Error →      │  │  Optimistic updates, dedup, retry           │  │
+│  │  Notification →      │  └───────┬─────────────────────────────────────┘  │
+│  │  User → Apps → Bot   │          │                                        │
+│  └──────────────────────┘  ┌───────▼─────────────────────────────────────┐  │
+│                            │  API Layer (src/api/)                       │  │
+│                            │  Axios singleton + Bearer token interceptor │  │
+│                            │  queries.ts + mutations.ts                  │  │
+│                            └─────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     │ HTTPS (JWT)
+                                     ▼
+                          https://api.baita.help
+```
+
+---
 
 ## Tech Stack
 
