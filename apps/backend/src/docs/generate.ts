@@ -100,6 +100,11 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
       'Partially updates a bot. Send only the fields to change: name, description, image, active state, or tasks array.',
     parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
     requestSchema: 'Bot',
+    requestExample: {
+      name: 'Renamed Bot',
+      description: 'Updated description',
+      active: false,
+    },
     responseSchema: 'Bot',
   },
   '/bots/{botId}:delete': {
@@ -143,7 +148,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     summary: 'Get bot execution logs',
     operationId: 'getBotLogs',
     description:
-      'Retrieves recent execution logs from CloudWatch for this bot. Optionally filter by search terms in the request body. Returns up to 100 log entries from the last 14 days.',
+      'Retrieves recent execution logs from CloudWatch for this bot. Returns up to 100 log entries from the last 14 days.',
     parameterOverrides: { botId: { description: 'Bot ID (UUID)' } },
   },
   '/bots/{botId}/run/{token}:post': {
@@ -156,6 +161,11 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
       token: {
         description: 'Trigger token (encodes userId, obtained from bot record)',
       },
+    },
+    requestExample: {
+      event: 'new_order',
+      orderId: 'ORD-12345',
+      customer: { name: 'Alice', email: 'alice@example.com' },
     },
   },
   '/bot-templates:get': {
@@ -179,6 +189,14 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
       'Creates a new shared bot template or replaces an existing one. The client provides the modelId. The request body must include the full template definition with tasks array.',
     parameterOverrides: { templateId: { description: 'Template ID (UUID)' } },
     requestSchema: 'Bot',
+    requestExample: {
+      modelId: 'my-template-id',
+      name: 'Daily News Digest',
+      author: 'baita',
+      description: 'Fetches headlines and publishes to feed',
+      image: '/icons/newsapi.svg',
+      tasks: [],
+    },
     responseSchema: 'Bot',
   },
   '/bot-templates/{templateId}:delete': {
@@ -276,6 +294,17 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
     },
+    requestExample: {
+      tasks: [
+        {
+          taskId: '1',
+          title: 'Buy groceries',
+          done: false,
+          createdAt: 1718000000000,
+          updatedAt: 1718000000000,
+        },
+      ],
+    },
   },
   '/data/{type}/{id}:put': {
     summary: 'Create or replace data record',
@@ -285,6 +314,12 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
       id: { description: 'Record ID (client-generated)' },
+    },
+    requestExample: {
+      noteId: 'note-abc123',
+      title: 'My new note',
+      createdAt: 1718000000000,
+      updatedAt: 1718000000000,
     },
   },
   '/data/{type}/{id}:get': {
@@ -304,6 +339,10 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
       id: { description: 'Record ID' },
+    },
+    requestExample: {
+      title: 'Updated title',
+      updatedAt: 1718100000000,
     },
   },
   '/data/{type}/{id}:delete': {
