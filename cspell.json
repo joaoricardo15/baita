@@ -79,7 +79,9 @@
     "networkidle",
     "pageerror",
     "requestfailed",
-    "unreacted"
+    "unreacted",
+    "possivel",
+    "excluido"
   ],
   "ignorePaths": [
     "node_modules",

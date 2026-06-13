@@ -7,12 +7,14 @@ import {
   VariableType,
 } from '@baita/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useContext, useRef } from 'react'
+import { useCallback, useContext } from 'react'
 
 import * as mutations from '@/api/mutations'
 import * as queries from '@/api/queries'
 import { AuthContext } from '@/providers/auth'
 import { getExistingSubscription } from '@/utils/push'
+
+import { flush, save } from './botSaveManager'
 
 export function useBots() {
   const { user } = useContext(AuthContext)
@@ -52,29 +54,12 @@ export function useCreateBot() {
 
 export function useUpdateBot() {
   const queryClient = useQueryClient()
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
-  const latestBotRef = useRef<{ botId: string; bot: Partial<IBot> }>()
-
-  const flush = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = undefined
-    }
-    if (latestBotRef.current) {
-      const { botId, bot } = latestBotRef.current
-      latestBotRef.current = undefined
-      mutations.updateBot(botId, bot)
-    }
-  }, [])
 
   const mutate = useCallback(
     ({ botId, bot }: { botId: string; bot: Partial<IBot> }) => {
-      queryClient.setQueryData(['bot', botId], bot)
-      latestBotRef.current = { botId, bot }
-      if (timerRef.current) clearTimeout(timerRef.current)
-      timerRef.current = setTimeout(flush, 600)
+      save(botId, bot, queryClient)
     },
-    [queryClient, flush]
+    [queryClient]
   )
 
   return { mutate, flush }
@@ -105,6 +90,7 @@ export function useDeployBot() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (bot: IBot) => {
+      await flush()
       const tasks = await parseUserInputs(bot.tasks)
       return mutations.deployBot(bot.botId, { ...bot, tasks })
     },
@@ -141,6 +127,7 @@ export function useTestBotTask() {
       bot: IBot
       taskIndex: number
     }) => {
+      await flush()
       const tasks = await parseUserInputs(bot.tasks)
       const updatedBot = { ...bot, tasks }
       await mutations.updateBot(updatedBot.botId, updatedBot)
