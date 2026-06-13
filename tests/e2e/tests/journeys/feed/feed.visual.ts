@@ -21,9 +21,8 @@ test.describe('Feed Journey', () => {
   test.afterAll(async ({ request }) => {
     for (const id of contentIds) {
       await request
-        .patch(`${API_URL}/content/${id}`, {
+        .delete(`${API_URL}/data/content/${id}`, {
           headers: getApiHeaders(),
-          data: { reaction: 'dismiss' },
         })
         .catch(() => {})
     }

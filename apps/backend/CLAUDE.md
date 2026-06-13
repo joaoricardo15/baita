@@ -639,17 +639,52 @@ User accounts are **data-only** — creating a user writes a single DynamoDB rec
 
 ### Deletion
 
-`deleteUser()` cascades through:
+`deleteUser()` cascades through (in this order):
 
-1. Delete all bots (via `deleteBot()` — cleans up EventBridge Scheduler)
-2. Delete all DynamoDB records (via `deleteAllForUser()`)
-3. Delete Auth0 user (via M2M token — required, cannot be avoided)
+1. Delete Auth0 user (via M2M token — done first because it's external and most failure-prone)
+2. Delete all bots (via `deleteBot()` — cleans up EventBridge Scheduler)
+3. Delete all DynamoDB records (via `deleteAllForUser()`)
 
-### Rules
+### Bot Deletion
 
+`deleteBot()` cascades through (in this order):
+
+1. Delete EventBridge Scheduler group (external resource — done first)
+2. Delete DynamoDB record (only after AWS resources are cleaned)
+
+If scheduler deletion fails, the DDB record is preserved and the user can retry.
+
+### Connection Deletion
+
+`DELETE /connections/{id}` cascades through:
+
+1. Clear `connectionId` references from all linked bot tasks
+2. Delete connection DynamoDB record
+
+### Deletion Safety Rules
+
+- **External resources FIRST, DynamoDB LAST** — if external deletion fails, DDB record still exists and the operation is retryable
 - **Never delete DynamoDB user records directly** — use `DELETE /user` endpoint
 - **Never delete bots directly from DynamoDB** — use `DELETE /bots/{botId}`
 - **Any code that deletes users or bots MUST go through controller methods**
+- **Never swallow errors on external resource cleanup** — propagate so the caller knows to retry
+
+### Resource Audit
+
+Run the audit script to detect orphaned resources:
+
+```bash
+cd apps/backend && ./scripts/audit-resources.sh
+```
+
+### Constants
+
+| Constant                     | Value                 | Purpose                                   |
+| ---------------------------- | --------------------- | ----------------------------------------- |
+| MAX_TRIGGER_SAMPLES          | 10                    | Cap on webhook trigger samples per bot    |
+| CONTENT_BATCH_LIMIT          | 10                    | Max content items published per execution |
+| CONTENT_TTL_DAYS             | 7                     | Auto-expire unread content                |
+| DISABLED_SCHEDULE_EXPRESSION | cron(0 0 1 \* ? 2030) | Placeholder for disabled schedules        |
 
 ## Known Limitations
 

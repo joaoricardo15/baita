@@ -296,13 +296,23 @@ Before pushing, verify:
 
 ## AWS Resource Integrity
 
-User accounts are data-only entities in DynamoDB (no per-user infrastructure). Bots have coupled AWS resources (Lambda + API Gateway + S3 + Scheduler) that MUST be cleaned up on deletion.
+User accounts are data-only entities in DynamoDB (no per-user infrastructure). Bots have coupled AWS resources (EventBridge Scheduler) that MUST be cleaned up on deletion.
+
+**Deletion safety order** — always delete external/coupled resources FIRST, DynamoDB LAST:
+
+- **User deletion**: Auth0 → bot schedulers → DynamoDB records
+- **Bot deletion**: EventBridge Scheduler group → DynamoDB record
+- **Connection deletion**: Clear bot task references → DynamoDB record
 
 **Critical rules:**
 
 - **Never delete DynamoDB user records directly** — use `DELETE /user` endpoint
-- **Never delete bots directly from DynamoDB** — use `DELETE /bots/{botId}` (cleans up Lambda + API Gateway + S3 + Scheduler)
+- **Never delete bots directly from DynamoDB** — use `DELETE /bots/{botId}` (cleans up EventBridge Scheduler)
+- **Never delete connections directly** — use `DELETE /connections/{connectionId}` (cascades to linked bots)
 - **Any code that creates/deletes users or bots MUST go through the controller methods** — they handle all coupled resource cleanup
+- **Never swallow errors on external resource cleanup** — if scheduler/Auth0 deletion fails, propagate so the user can retry
+
+**Resource audit**: Run `cd apps/backend && ./scripts/audit-resources.sh` to detect orphaned schedulers, S3 files, or DDB records without a parent user.
 
 ## Self-Verification with Playwright MCP
 

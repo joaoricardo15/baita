@@ -34,6 +34,33 @@ export const handler = async (
             break
           case 'DELETE': {
             const resource = new Data(userId, 'connection')
+
+            // When deleting a connection, we need to remove any references to it from bots
+            const connection = await resource.read(connectionId)
+            if (!connection) throw new Error('Connection not found')
+
+            const botResource = new Data(userId, 'bot')
+            const bots = (await botResource.list()) || []
+            for (const bot of bots) {
+              const tasks = bot.tasks as Array<{
+                connectionId?: string | number
+              }>
+              if (!tasks) continue
+              const hasRef = tasks.some(
+                (t) => String(t.connectionId) === String(connectionId)
+              )
+              if (hasRef) {
+                const cleaned = tasks.map((t) =>
+                  String(t.connectionId) === String(connectionId)
+                    ? { ...t, connectionId: undefined }
+                    : t
+                )
+                await botResource.update(bot.botId as string, {
+                  tasks: cleaned,
+                })
+              }
+            }
+
             await resource.delete(connectionId)
             break
           }

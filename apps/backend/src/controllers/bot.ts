@@ -18,6 +18,7 @@ import {
   DISABLED_SCHEDULE_EXPRESSION,
   LOG_LOOKBACK_DAYS,
   LOG_QUERY_LIMIT,
+  MAX_TRIGGER_SAMPLES,
 } from '@/utils/constants'
 
 import Data from './data'
@@ -190,14 +191,10 @@ class Bot {
   async deleteBot(userId: string, botId: string) {
     const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
 
+    await this.scheduler.deleteScheduleGroup({ Name: botPrefix })
+
     const store = new Data(userId, 'bot')
     await store.delete(botId)
-
-    try {
-      await this.scheduler.deleteScheduleGroup({ Name: botPrefix })
-    } catch (err: unknown) {
-      console.error(`deleteBot scheduler cleanup failed for ${botId}:`, err)
-    }
   }
 
   async updateBot(
@@ -344,7 +341,11 @@ class Bot {
     sample: ITaskExecutionResult
   ) {
     const store = new Data(userId, 'bot')
-    await store.appendToList(botId, 'triggerSamples', [sample])
+    const bot = (await store.read(botId)) as IBot | undefined
+    const samples = [...(bot?.triggerSamples || []), sample].slice(
+      -MAX_TRIGGER_SAMPLES
+    )
+    await store.update(botId, { triggerSamples: samples })
   }
 
   async addConnection(

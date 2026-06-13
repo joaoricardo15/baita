@@ -19,6 +19,8 @@ class User {
   async deleteUser(userId: string) {
     const errors: string[] = []
 
+    await this.deleteAuth0User(userId)
+
     try {
       const botStore = new Data(userId, 'bot')
       const bots = await botStore.list()
@@ -37,18 +39,8 @@ class User {
       errors.push(`Query bots: ${err}`)
     }
 
-    try {
-      const dataStore = new Data(userId, '')
-      await dataStore.deleteAllForUser()
-    } catch (err) {
-      throw new Error(`Failed to delete user data: ${err}`)
-    }
-
-    try {
-      await this.deleteAuth0User(userId)
-    } catch (err) {
-      throw new Error(`Failed to delete Auth0 user: ${err}`)
-    }
+    const dataStore = new Data(userId, '')
+    await dataStore.deleteAllForUser()
 
     if (errors.length > 0) {
       console.warn('Non-critical deletion errors:', errors)

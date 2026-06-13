@@ -48,7 +48,7 @@ export const handler = async (
           case 'PATCH': {
             const body = JSON.parse(event.body || '{}')
             const { name, image, description, active, tasks } = body
-            validateTasks(tasks)
+            if (tasks) validateTasks(tasks)
             const bot = new Bot()
             data = await bot.updateBot(
               userId,

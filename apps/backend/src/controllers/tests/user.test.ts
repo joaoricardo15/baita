@@ -1,13 +1,21 @@
 process.env.CORE_TABLE = 'test-table'
 process.env.SERVICE_PREFIX = 'baita-backend-prod'
+process.env.AUTH0_AUDIENCE = 'https://test.auth0.com/api/v2/'
+process.env.AUTH0_M2M_CLIENT_ID = 'test-client-id'
+process.env.AUTH0_M2M_CLIENT_SECRET = 'test-client-secret'
 
 import {
+  BatchWriteCommand,
   DynamoDBDocument,
   PutCommand,
   QueryCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { mockClient } from 'aws-sdk-client-mock'
+import axios from 'axios'
+
+jest.mock('axios')
+const mockedAxios = axios as jest.Mocked<typeof axios>
 
 jest.mock('@/controllers/bot', () => {
   return {
@@ -24,6 +32,7 @@ import User from '../user'
 
 beforeEach(() => {
   ddbMock.reset()
+  jest.clearAllMocks()
 })
 
 describe('User', () => {
@@ -213,6 +222,84 @@ describe('User', () => {
 
       expect(result.published).toBe(10)
       expect(result.total).toBe(15)
+    })
+  })
+
+  describe('deleteUser', () => {
+    it('calls Auth0 deletion BEFORE DynamoDB cleanup', async () => {
+      const callOrder: string[] = []
+
+      mockedAxios.post.mockImplementation(async () => {
+        callOrder.push('auth0-token')
+        return { data: { access_token: 'token' } }
+      })
+      mockedAxios.delete.mockImplementation(async () => {
+        callOrder.push('auth0-delete')
+        return { data: {} }
+      })
+
+      ddbMock.on(QueryCommand).callsFake(() => {
+        callOrder.push('query-bots')
+        return { Items: [] }
+      })
+      ddbMock.on(BatchWriteCommand).callsFake(() => {
+        callOrder.push('batch-delete')
+        return {}
+      })
+
+      const user = new User()
+      await user.deleteUser('user1')
+
+      expect(callOrder[0]).toBe('auth0-token')
+      expect(callOrder[1]).toBe('auth0-delete')
+      expect(callOrder.indexOf('auth0-delete')).toBeLessThan(
+        callOrder.indexOf('query-bots')
+      )
+    })
+
+    it('does NOT delete DynamoDB data if Auth0 deletion fails', async () => {
+      mockedAxios.post.mockRejectedValue(new Error('Auth0 unavailable'))
+
+      const user = new User()
+      await expect(user.deleteUser('user1')).rejects.toThrow()
+
+      const queryCalls = ddbMock.commandCalls(QueryCommand)
+      expect(queryCalls).toHaveLength(0)
+    })
+
+    it('deletes all bots before wiping DynamoDB records', async () => {
+      const callOrder: string[] = []
+
+      mockedAxios.post.mockResolvedValue({
+        data: { access_token: 'token' },
+      })
+      mockedAxios.delete.mockResolvedValue({ data: {} })
+
+      const BotMock = jest.requireMock('@/controllers/bot').default
+      BotMock.mockImplementation(() => ({
+        deleteBot: jest.fn().mockImplementation(async () => {
+          callOrder.push('deleteBot')
+        }),
+      }))
+
+      ddbMock.on(QueryCommand).resolves({
+        Items: [
+          { botId: 'bot1', sortKey: '#BOT#bot1' },
+          { botId: 'bot2', sortKey: '#BOT#bot2' },
+        ],
+      })
+      ddbMock.on(BatchWriteCommand).callsFake(() => {
+        callOrder.push('batch-delete')
+        return {}
+      })
+
+      const user = new User()
+      await user.deleteUser('user1')
+
+      expect(callOrder.filter((c) => c === 'deleteBot')).toHaveLength(2)
+      expect(callOrder.indexOf('deleteBot')).toBeLessThan(
+        callOrder.indexOf('batch-delete')
+      )
     })
   })
 })

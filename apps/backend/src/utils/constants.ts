@@ -4,3 +4,4 @@ export const CONTENT_TTL_DAYS = 7
 export const CONTENT_BATCH_LIMIT = 10
 export const CODE_EXECUTION_TIMEOUT_MS = 5000
 export const DISABLED_SCHEDULE_EXPRESSION = 'cron(0 0 1 * ? 2030)'
+export const MAX_TRIGGER_SAMPLES = 10
