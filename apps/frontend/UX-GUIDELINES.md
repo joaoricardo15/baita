@@ -24,7 +24,7 @@ Every list view (bots, connections, notes, todos) uses the same card structure:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ [Icon 30×30]  Name (bold)          [⋮ Menu]    │
+│ [Icon 30×30]  Name (bold)                [Menu] │
 │               Description (light)               │
 └─────────────────────────────────────────────────┘
 ```
@@ -184,7 +184,7 @@ After running a task test:
 
 ```
 ┌─────────────────────────────────────┐
-│ [●success] 2024-01-15 14:30:00     │
+│ [●success] 2024-01-15 14:30:00      │
 │                                     │
 │ {                                   │
 │   "result": "Hello World"           │

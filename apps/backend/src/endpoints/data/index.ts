@@ -13,17 +13,18 @@ export const handler = async (
 
   try {
     const userId = getAuthenticatedUserId(event)
+
     const { type, id, fileId } = event.pathParameters || {}
-    const method = event.httpMethod
-    const path = event.resource || ''
 
     if (!type) {
       throw new Error('Missing data type')
     }
 
-    const store = new Data(userId, type)
+    const method = event.httpMethod
+    const path = event.resource || ''
     const body = JSON.parse(event.body || '{}')
 
+    const store = new Data(userId, type)
     let data
 
     if (path.endsWith('/upload')) {

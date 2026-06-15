@@ -201,4 +201,22 @@ describe('runBot', () => {
 
     expect(result.data).toEqual({ final: 'output' })
   })
+
+  it('stops execution after a failed step', async () => {
+    mockExecuteTask
+      .mockRejectedValueOnce(new Error('step 1 failed'))
+      .mockResolvedValueOnce({ ok: true })
+
+    const result = await runBot({
+      userId: 'user-1',
+      botId: 'bot-1',
+      tasks: [makeTriggerTask(), makeActionTask(1), makeActionTask(2)],
+      payload: {},
+    })
+
+    expect(result.success).toBe(false)
+    expect(mockExecuteTask).toHaveBeenCalledTimes(1)
+    expect(result.logs).toHaveLength(2)
+    expect(result.logs[1].status).toBe(TaskExecutionStatus.fail)
+  })
 })

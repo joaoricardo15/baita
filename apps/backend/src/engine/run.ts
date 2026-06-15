@@ -76,18 +76,22 @@ export async function runBot(
         if (task.returnData) outputData = result.data
       } else {
         hasError = true
+        logs.push({
+          name: taskName,
+          timestamp: startTime,
+          inputData: resolvedInputData,
+          outputData: { message: result.message } as DataType,
+          status: TaskExecutionStatus.fail,
+        })
+        break
       }
 
       logs.push({
         name: taskName,
         timestamp: startTime,
         inputData: resolvedInputData,
-        outputData: result.success
-          ? (result.data ?? {})
-          : ({ message: result.message } as DataType),
-        status: result.success
-          ? TaskExecutionStatus.success
-          : TaskExecutionStatus.fail,
+        outputData: result.data ?? {},
+        status: TaskExecutionStatus.success,
       })
     } catch (err: unknown) {
       hasError = true
@@ -100,6 +104,7 @@ export async function runBot(
         outputData: { message } as DataType,
         status: TaskExecutionStatus.fail,
       })
+      break
     }
   }
 
