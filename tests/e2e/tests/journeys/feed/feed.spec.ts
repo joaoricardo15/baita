@@ -289,10 +289,11 @@ test.describe('Content Feed', () => {
     })
     const body = await res.json()
     expect(body.success).toBe(true)
-    expect(body.data?.status).toBe('fail')
-    expect(body.data?.outputData).toContain('already seen')
+    expect(body.data?.status).toBe('success')
+    expect(body.data?.outputData?.published).toBe(0)
     logResult('Dedup verified: re-publish produced 0 new items', {
       status: body.data?.status,
+      published: body.data?.outputData?.published,
     })
   })
 
