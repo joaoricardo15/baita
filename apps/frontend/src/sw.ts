@@ -67,7 +67,7 @@ function buildNotificationOptions(
   const options: ExtendedNotificationOptions = {
     body: payload.body || '',
     icon: payload.icon || '/logo.png',
-    badge: payload.badge || '/logo.png',
+    badge: payload.badge || '/badge.png',
     data: {
       url:
         payload.click_action ||

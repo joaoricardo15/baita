@@ -11,6 +11,7 @@ export default defineConfig({
       filename: 'sw.ts',
       injectRegister: false,
       injectManifest: { maximumFileSizeToCacheInBytes: 3 * 1024 * 1024 },
+      manifest: { name: 'Baita', short_name: 'Baita' },
       devOptions: { enabled: false },
     }),
     {
