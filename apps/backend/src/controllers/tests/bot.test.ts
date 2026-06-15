@@ -34,6 +34,8 @@ describe('Bot.deleteBot', () => {
   it('deletes scheduler group BEFORE DynamoDB record', async () => {
     const callOrder: string[] = []
 
+    ddbMock.on(GetCommand).resolves({ Item: { botId: 'bot1' } })
+
     schedulerMock.on(DeleteScheduleGroupCommand).callsFake(() => {
       callOrder.push('scheduler')
       return {}
@@ -51,6 +53,8 @@ describe('Bot.deleteBot', () => {
   })
 
   it('does NOT delete DynamoDB record if scheduler deletion fails', async () => {
+    ddbMock.on(GetCommand).resolves({ Item: { botId: 'bot1' } })
+
     schedulerMock
       .on(DeleteScheduleGroupCommand)
       .rejects(new Error('Scheduler unavailable'))
@@ -67,6 +71,7 @@ describe('Bot.deleteBot', () => {
   })
 
   it('uses correct schedule group name', async () => {
+    ddbMock.on(GetCommand).resolves({ Item: { botId: 'my-bot-id' } })
     schedulerMock.on(DeleteScheduleGroupCommand).resolves({})
     ddbMock.on(DeleteCommand).resolves({})
 
@@ -75,6 +80,20 @@ describe('Bot.deleteBot', () => {
 
     const calls = schedulerMock.commandCalls(DeleteScheduleGroupCommand)
     expect(calls[0].args[0].input.Name).toBe('baita-backend-prod-bot-my-bot-id')
+  })
+
+  it('throws if bot does not exist', async () => {
+    ddbMock.on(GetCommand).resolves({ Item: undefined })
+
+    const bot = new Bot()
+    await expect(bot.deleteBot('user1', 'nonexistent')).rejects.toThrow(
+      'Bot not found'
+    )
+
+    const schedulerCalls = schedulerMock.commandCalls(
+      DeleteScheduleGroupCommand
+    )
+    expect(schedulerCalls).toHaveLength(0)
   })
 })
 

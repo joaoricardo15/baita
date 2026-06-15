@@ -1,4 +1,3 @@
-import { validateTasks } from '@baita/shared'
 import { APIGatewayProxyEvent } from 'aws-lambda'
 
 import Bot from '@/controllers/bot'
@@ -14,7 +13,6 @@ export async function handleTest(
   const { task, taskIndex } = body
 
   if (taskIndex === undefined) throw new Error('Missing taskIndex')
-  validateTasks([task])
 
   const bot = new Bot()
   return await bot.testBot(userId, botId, task, String(taskIndex))

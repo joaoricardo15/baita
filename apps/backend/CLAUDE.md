@@ -51,7 +51,7 @@ Before reporting a task as done, self-check:
 src/
 ├── authorizer/         # Lambda authorizer (Auth0 JWT verification)
 ├── connectors/         # Connector definitions (OAuth registry)
-├── controllers/        # Business logic classes (Bot, User, Data)
+├── controllers/        # Business logic classes (Bot, Connection, User, Data)
 ├── docs/               # OpenAPI spec generation
 ├── endpoints/          # HTTP Lambda handlers (one per domain)
 │   ├── bots/            # Bot CRUD + deploy/test/logs + webhook trigger
@@ -181,6 +181,7 @@ The backend follows a strict layered pattern. Each layer has a single responsibi
 │  Responsibility: Parse request → extract userId → route → return HTTP     │
 │  Pattern: One handler per domain, routes internally by path/method        │
 │  Tools: Api class (response formatting), getAuthenticatedUserId (auth)    │
+│  Rule: NEVER import Data controller directly (see exceptions below)       │
 │                                                                           │
 │  bots/index.ts    connections/index.ts    data/index.ts    user/index.ts  │
 └────────────────────────────────┬──────────────────────────────────────────┘
@@ -188,11 +189,14 @@ The backend follows a strict layered pattern. Each layer has a single responsibi
 ┌────────────────────────────────▼──────────────────────────────────────────┐
 │  LAYER 2: CONTROLLERS (src/controllers/)                                  │
 │                                                                           │
-│  Responsibility: Business logic + AWS service orchestration               │
-│  Pattern: Classes holding SDK clients (Scheduler, CloudWatch)             │
+│  Responsibility: Business logic, validation, AWS service orchestration    │
+│  Pattern: Classes holding SDK clients (Scheduler, CloudWatch, Lambda)     │
 │  Rule: NEVER import @/lib/dynamodb — delegate to Data controller          │
+│  Rule: Own ALL validation (validateTasks, validateBot) for their domain   │
 │                                                                           │
-│  Bot (deploy, test, delete, logs)  User (create, delete, content feed)    │
+│  Bot (CRUD, deploy, test, trigger, logs)                                  │
+│  Connection (CRUD, health check, OAuth callback, cascade delete)          │
+│  User (create, delete, content feed)                                      │
 └────────────────────────────────┬──────────────────────────────────────────┘
                                  │ delegates data ops
 ┌────────────────────────────────▼──────────────────────────────────────────┐
@@ -358,6 +362,7 @@ export const handler = async (event, context, callback) => {
 
   try {
     const userId = getAuthenticatedUserId(event)
+    const controller = new DomainController()
     const data = await controller.doSomething(userId, body)
     api.httpResponse(callback, ApiRequestStatus.success, undefined, data)
   } catch (err: unknown) {
@@ -365,6 +370,23 @@ export const handler = async (event, context, callback) => {
   }
 }
 ```
+
+**Layer boundary rules:**
+
+- Handlers NEVER import `Data` directly — always use domain controllers
+- Handlers NEVER validate domain logic — controllers own all validation
+- Sub-handlers (`deploy.ts`, `test.ts`, `health.ts`) extract params and delegate to controllers
+- Controllers own `validateTasks()`, `validateBot()`, etc.
+- Two documented exceptions: `data/index.ts` (IS the generic dispatcher) and `bots/template/index.ts` (system-scoped CRUD)
+
+**Controller method inventory:**
+
+| Controller | Methods                                                                                                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bot        | getBot, listBots, createBot, updateBot, deleteBot, deployBot, deployBotTemplate, testBot, triggerBot, getBotLogs, addTriggerSample, addConnection |
+| Connection | listConnections, createConnection, getConnectionDetails, deleteConnection, checkHealth, handleOAuthCallback                                       |
+| User       | createUser, deleteUser, getContent, reactToContent, publishContent                                                                                |
+| Data       | validate, list, read, create, update, delete, updateNested, appendToList, deleteAllForUser, upload, remove                                        |
 
 ### API Response Format
 

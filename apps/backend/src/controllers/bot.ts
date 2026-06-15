@@ -1,4 +1,5 @@
 import { CloudWatchLogs } from '@aws-sdk/client-cloudwatch-logs'
+import { Lambda } from '@aws-sdk/client-lambda'
 import { Scheduler } from '@aws-sdk/client-scheduler'
 import {
   DataType,
@@ -9,7 +10,9 @@ import {
   ITaskExecutionResult,
   ServiceName,
   TaskExecutionStatus,
+  validateBot,
   validateTaskExecutionResult,
+  validateTasks,
 } from '@baita/shared'
 
 import { executeTask } from '@/engine/executor'
@@ -31,18 +34,91 @@ const BOT_EXECUTION_LOG_GROUP = process.env.BOT_EXECUTION_LOG_GROUP || ''
 class Bot {
   private scheduler: Scheduler
   private cloudWatchLogs: CloudWatchLogs
+  private lambda: Lambda
 
   constructor() {
     this.scheduler = new Scheduler({})
     this.cloudWatchLogs = new CloudWatchLogs({})
+    this.lambda = new Lambda({})
+  }
+
+  private botPrefix(botId: string) {
+    return `${SERVICE_PREFIX}-bot-${botId}`
+  }
+
+  private schedulerTarget(botId: string, userId: string) {
+    return {
+      Arn: BOT_ENGINE_ARN,
+      RoleArn: BOT_SCHEDULER_ROLE,
+      Input: JSON.stringify({ botId, userId }),
+    }
+  }
+
+  private getScheduleConfig(tasks: ITask[]) {
+    const trigger = tasks[0]
+    const isScheduled = trigger.service?.name === ServiceName.schedule
+
+    if (isScheduled) {
+      return {
+        State: 'ENABLED' as const,
+        ScheduleExpression: trigger.inputData.find(
+          (input) => input.name === 'expression'
+        )?.value as string,
+        ScheduleExpressionTimezone: trigger.inputData.find(
+          (input) => input.name === 'timeZone'
+        )?.value as string,
+      }
+    }
+
+    return {
+      State: 'DISABLED' as const,
+      ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
+      ScheduleExpressionTimezone: undefined,
+    }
+  }
+
+  private store(userId: string) {
+    return new Data(userId, 'bot')
+  }
+
+  async getBot(userId: string, botId: string) {
+    const bot = await this.store(userId).read(botId)
+    if (!bot) throw new Error('Bot not found')
+    return bot
+  }
+
+  async listBots(userId: string) {
+    return await this.store(userId).list()
+  }
+
+  async triggerBot(userId: string, botId: string, payload: DataType) {
+    const bot = (await this.store(userId).read(botId)) as IBot | undefined
+    if (!bot) throw new Error('Bot not found')
+
+    if (!bot.active) {
+      const sample: ITaskExecutionResult = {
+        status: TaskExecutionStatus.success,
+        inputData: payload,
+        outputData: payload,
+        timestamp: Date.now(),
+      }
+      await this.addTriggerSample(userId, botId, sample)
+      return
+    }
+
+    await this.lambda.invoke({
+      FunctionName: BOT_ENGINE_ARN,
+      InvocationType: 'Event',
+      Payload: JSON.stringify({ botId, userId, payload }),
+    })
   }
 
   async createBot(userId: string) {
     const botId = generateId()
-    const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
+    const prefix = this.botPrefix(botId)
 
     await this.scheduler.createScheduleGroup({
-      Name: botPrefix,
+      Name: prefix,
       Tags: [
         { Key: 'bot-id', Value: botId },
         { Key: 'user-id', Value: userId },
@@ -51,16 +127,12 @@ class Bot {
     })
 
     await this.scheduler.createSchedule({
-      Name: botPrefix,
-      GroupName: botPrefix,
+      Name: prefix,
+      GroupName: prefix,
       State: 'DISABLED',
       ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
       FlexibleTimeWindow: { Mode: 'OFF' },
-      Target: {
-        Arn: BOT_ENGINE_ARN,
-        RoleArn: BOT_SCHEDULER_ROLE,
-        Input: JSON.stringify({ botId, userId }),
-      },
+      Target: this.schedulerTarget(botId, userId),
     })
 
     const bot: IBot = {
@@ -73,9 +145,7 @@ class Bot {
       tasks: [{ taskId: Date.now(), inputData: [] }],
     }
 
-    const store = new Data(userId, 'bot')
-    await store.create(botId, bot)
-
+    await this.store(userId).create(botId, bot)
     return bot
   }
 
@@ -86,51 +156,42 @@ class Bot {
     active: boolean,
     tasks: ITask[]
   ) {
-    const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
-
-    if (active && tasks[0].service?.name === ServiceName.schedule) {
-      await this.scheduler.updateSchedule({
-        Name: botPrefix,
-        GroupName: botPrefix,
-        State: 'ENABLED',
-        ScheduleExpression: tasks[0].inputData.find(
-          (input) => input.name === 'expression'
-        )?.value as string,
-        ScheduleExpressionTimezone: tasks[0].inputData.find(
-          (input) => input.name === 'timeZone'
-        )?.value as string,
-        FlexibleTimeWindow: { Mode: 'OFF' },
-        Target: {
-          Arn: BOT_ENGINE_ARN,
-          RoleArn: BOT_SCHEDULER_ROLE,
-          Input: JSON.stringify({ botId, userId }),
-        },
-      })
-    } else {
-      await this.scheduler.updateSchedule({
-        Name: botPrefix,
-        GroupName: botPrefix,
-        State: 'DISABLED',
-        ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
-        FlexibleTimeWindow: { Mode: 'OFF' },
-        Target: {
-          Arn: BOT_ENGINE_ARN,
-          RoleArn: BOT_SCHEDULER_ROLE,
-          Input: JSON.stringify({ botId, userId }),
-        },
-      })
+    validateTasks(tasks)
+    const validation = validateBot({ tasks })
+    if (!validation.valid) {
+      throw new Error(validation.errors.join('; '))
     }
 
-    const store = new Data(userId, 'bot')
-    return await store.update(botId, { name, tasks, active })
+    const prefix = this.botPrefix(botId)
+    const scheduleConfig = active
+      ? this.getScheduleConfig(tasks)
+      : {
+          State: 'DISABLED' as const,
+          ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
+          ScheduleExpressionTimezone: undefined,
+        }
+
+    await this.scheduler.updateSchedule({
+      Name: prefix,
+      GroupName: prefix,
+      State: scheduleConfig.State,
+      ScheduleExpression: scheduleConfig.ScheduleExpression,
+      ScheduleExpressionTimezone: scheduleConfig.ScheduleExpressionTimezone,
+      FlexibleTimeWindow: { Mode: 'OFF' },
+      Target: this.schedulerTarget(botId, userId),
+    })
+
+    return await this.store(userId).update(botId, { name, tasks, active })
   }
 
   async deployBotTemplate(userId: string, template: IBotTemplate) {
+    validateTasks(template.tasks)
+
     const botId = generateId()
-    const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
+    const prefix = this.botPrefix(botId)
 
     await this.scheduler.createScheduleGroup({
-      Name: botPrefix,
+      Name: prefix,
       Tags: [
         { Key: 'bot-id', Value: botId },
         { Key: 'user-id', Value: userId },
@@ -138,38 +199,17 @@ class Bot {
       ],
     })
 
-    if (template.tasks[0].service?.name === ServiceName.schedule) {
-      await this.scheduler.createSchedule({
-        Name: botPrefix,
-        GroupName: botPrefix,
-        State: 'ENABLED',
-        ScheduleExpression: template.tasks[0].inputData.find(
-          (input) => input.name === 'expression'
-        )?.value as string,
-        ScheduleExpressionTimezone: template.tasks[0].inputData.find(
-          (input) => input.name === 'timeZone'
-        )?.value as string,
-        FlexibleTimeWindow: { Mode: 'OFF' },
-        Target: {
-          Arn: BOT_ENGINE_ARN,
-          RoleArn: BOT_SCHEDULER_ROLE,
-          Input: JSON.stringify({ botId, userId }),
-        },
-      })
-    } else {
-      await this.scheduler.createSchedule({
-        Name: botPrefix,
-        GroupName: botPrefix,
-        State: 'DISABLED',
-        ScheduleExpression: DISABLED_SCHEDULE_EXPRESSION,
-        FlexibleTimeWindow: { Mode: 'OFF' },
-        Target: {
-          Arn: BOT_ENGINE_ARN,
-          RoleArn: BOT_SCHEDULER_ROLE,
-          Input: JSON.stringify({ botId, userId }),
-        },
-      })
-    }
+    const scheduleConfig = this.getScheduleConfig(template.tasks)
+
+    await this.scheduler.createSchedule({
+      Name: prefix,
+      GroupName: prefix,
+      State: scheduleConfig.State,
+      ScheduleExpression: scheduleConfig.ScheduleExpression,
+      ScheduleExpressionTimezone: scheduleConfig.ScheduleExpressionTimezone,
+      FlexibleTimeWindow: { Mode: 'OFF' },
+      Target: this.schedulerTarget(botId, userId),
+    })
 
     const bot: IBot = {
       botId,
@@ -182,18 +222,16 @@ class Bot {
       description: template.description,
     }
 
-    const store = new Data(userId, 'bot')
-    await store.create(botId, bot)
-
+    await this.store(userId).create(botId, bot)
     return bot
   }
 
   async deleteBot(userId: string, botId: string) {
-    const botPrefix = `${SERVICE_PREFIX}-bot-${botId}`
+    const store = this.store(userId)
+    const bot = await store.read(botId)
+    if (!bot) throw new Error('Bot not found')
 
-    await this.scheduler.deleteScheduleGroup({ Name: botPrefix })
-
-    const store = new Data(userId, 'bot')
+    await this.scheduler.deleteScheduleGroup({ Name: this.botPrefix(botId) })
     await store.delete(botId)
   }
 
@@ -206,8 +244,9 @@ class Bot {
     active: boolean,
     tasks: ITask[]
   ) {
-    const store = new Data(userId, 'bot')
-    return await store.update(botId, {
+    if (tasks) validateTasks(tasks)
+
+    return await this.store(userId).update(botId, {
       name,
       image: image || '',
       description: description || '',
@@ -224,8 +263,7 @@ class Bot {
       task.service.name === ServiceName.webhook ||
       task.service.name === ServiceName.schedule
     if (Number(taskIndex) === 0 && isTrigger) {
-      const store = new Data(userId, 'bot')
-      const botData = await store.read(botId)
+      const botData = await this.store(userId).read(botId)
       const lastSample = botData?.triggerSamples?.at(-1)
       sample = lastSample ?? {
         status: TaskExecutionStatus.success,
@@ -234,8 +272,7 @@ class Bot {
         timestamp: Date.now(),
       }
     } else {
-      const store = new Data(userId, 'bot')
-      const botData = (await store.read(botId)) as IBot | undefined
+      const botData = (await this.store(userId).read(botId)) as IBot | undefined
       const taskOutputs: DataType[] = (botData?.tasks || []).map(
         (t) => (t.sampleResult?.outputData ?? null) as DataType
       )
@@ -278,8 +315,7 @@ class Bot {
     validateTaskExecutionResult(sample)
 
     try {
-      const store = new Data(userId, 'bot')
-      await store.updateNested(
+      await this.store(userId).updateNested(
         botId,
         `SET tasks[${taskIndex}].sampleResult = :sample`,
         {},
@@ -340,12 +376,11 @@ class Bot {
     botId: string,
     sample: ITaskExecutionResult
   ) {
-    const store = new Data(userId, 'bot')
-    const bot = (await store.read(botId)) as IBot | undefined
+    const bot = (await this.store(userId).read(botId)) as IBot | undefined
     const samples = [...(bot?.triggerSamples || []), sample].slice(
       -MAX_TRIGGER_SAMPLES
     )
-    await store.update(botId, { triggerSamples: samples })
+    await this.store(userId).update(botId, { triggerSamples: samples })
   }
 
   async addConnection(
@@ -354,8 +389,7 @@ class Bot {
     connectionId: string,
     taskIndex: number
   ) {
-    const store = new Data(userId, 'bot')
-    await store.updateNested(
+    await this.store(userId).updateNested(
       botId,
       `SET tasks[${taskIndex}].connectionId = :connectionId`,
       {},

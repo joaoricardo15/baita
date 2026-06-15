@@ -1,8 +1,7 @@
-import { DataType, validateTasks } from '@baita/shared'
+import { DataType } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
 import Bot from '@/controllers/bot'
-import Data from '@/controllers/data'
 import Api, { ApiRequestStatus } from '@/utils/api'
 import { getAuthenticatedUserId } from '@/utils/auth'
 
@@ -25,6 +24,7 @@ export const handler = async (
 
   try {
     const userId = getAuthenticatedUserId(event)
+    const bot = new Bot()
 
     let data: DataType | undefined
 
@@ -40,16 +40,12 @@ export const handler = async (
 
       if (botId) {
         switch (method) {
-          case 'GET': {
-            const resource = new Data(userId, 'bot')
-            data = await resource.read(botId)
+          case 'GET':
+            data = (await bot.getBot(userId, botId)) as DataType
             break
-          }
           case 'PATCH': {
             const body = JSON.parse(event.body || '{}')
             const { name, image, description, active, tasks } = body
-            if (tasks) validateTasks(tasks)
-            const bot = new Bot()
             data = await bot.updateBot(
               userId,
               botId,
@@ -61,27 +57,18 @@ export const handler = async (
             )
             break
           }
-          case 'DELETE': {
-            const resource = new Data(userId, 'bot')
-            const botRecord = await resource.read(botId)
-            if (!botRecord) throw new Error('Bot not found')
-            const bot = new Bot()
+          case 'DELETE':
             await bot.deleteBot(userId, botId)
             break
-          }
         }
       } else {
         switch (method) {
-          case 'GET': {
-            const resource = new Data(userId, 'bot')
-            data = await resource.list()
+          case 'GET':
+            data = await bot.listBots(userId)
             break
-          }
-          case 'POST': {
-            const bot = new Bot()
+          case 'POST':
             data = await bot.createBot(userId)
             break
-          }
         }
       }
     }
