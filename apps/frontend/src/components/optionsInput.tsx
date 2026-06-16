@@ -129,7 +129,20 @@ function OptionsInput<T>({
               : undefined
           }
           getOptionLabel={(option) => getOptionLabel(option as T | string)}
-          isOptionEqualToValue={() => true}
+          isOptionEqualToValue={(option, value) => {
+            if (option === value) return true
+            if (!optionLabelPath) return String(option) === String(value)
+            return (
+              getPropertyByPath(
+                optionLabelPath,
+                option as Record<string, unknown>
+              ) ===
+              getPropertyByPath(
+                optionLabelPath,
+                value as Record<string, unknown>
+              )
+            )
+          }}
           renderOption={getDefaultRenderOption()}
           renderGroup={customRenderGroup}
           getOptionDisabled={getOptionDisabled}

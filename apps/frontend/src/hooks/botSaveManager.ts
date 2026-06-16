@@ -49,6 +49,9 @@ export function save(
   bot: Partial<IBot>,
   queryClient: QueryClient
 ) {
+  const current = queryClient.getQueryData(['bot', botId])
+  if (current === bot) return
+
   queryClient.setQueryData(['bot', botId], bot)
   pendingBotId = botId
   pendingBot = bot

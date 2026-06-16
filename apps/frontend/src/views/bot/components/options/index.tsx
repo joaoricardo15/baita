@@ -1,5 +1,5 @@
 import { ITask, ServiceName, ServiceType } from '@baita/shared'
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { getBotInputs, useBot, useUpdateBot } from '@/hooks/useBots'
@@ -15,6 +15,12 @@ const TaskOptions: FC<{
   const updateBotMutation = useUpdateBot()
 
   const task = bot?.tasks[taskIndex]
+
+  const inputs = useMemo(
+    () => (bot ? getBotInputs(bot.tasks) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bot?.tasks]
+  )
 
   const updateTaskOptions = (fieldName: string, value: unknown) => {
     if (bot && task) {
@@ -37,7 +43,7 @@ const TaskOptions: FC<{
             <FilterConditions
               task={task}
               taskIndex={taskIndex}
-              inputs={getBotInputs(bot.tasks)}
+              inputs={inputs}
               onTaskFieldChange={updateTaskOptions}
             />
           )}

@@ -1,6 +1,6 @@
 import { ITask, IVariable } from '@baita/shared'
 import { Divider } from '@mui/material'
-import { FC } from 'react'
+import { FC, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { getBotInputs, useBot, useUpdateBot } from '@/hooks/useBots'
@@ -16,6 +16,17 @@ const TaskInput: FC<{
   const updateBotMutation = useUpdateBot()
 
   const task = bot?.tasks[taskIndex]
+
+  const outputFields = useMemo(
+    () =>
+      bot
+        ? getBotInputs(bot.tasks).filter(
+            (x) => x.outputIndex !== undefined && x.outputIndex < taskIndex
+          )
+        : [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [bot?.tasks, taskIndex]
+  )
 
   const updateBotTask = (updatedTask: ITask) => {
     if (bot) {
@@ -94,9 +105,7 @@ const TaskInput: FC<{
               serviceInputFields={task.service.config.inputFields.filter(
                 (x) => !x.customFieldId
               )}
-              outputFields={getBotInputs(bot.tasks).filter(
-                (x) => x.outputIndex !== undefined && x.outputIndex < taskIndex
-              )}
+              outputFields={outputFields}
             />
           )}
 
@@ -111,10 +120,7 @@ const TaskInput: FC<{
                 customInputFields={task.inputData.filter(
                   (x) => x.customFieldId
                 )}
-                outputFields={getBotInputs(bot.tasks).filter(
-                  (x) =>
-                    x.outputIndex !== undefined && x.outputIndex < taskIndex
-                )}
+                outputFields={outputFields}
               />
             </>
           )}

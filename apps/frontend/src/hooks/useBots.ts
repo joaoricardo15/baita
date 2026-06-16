@@ -57,7 +57,8 @@ export function useUpdateBot() {
 
   const mutate = useCallback(
     ({ botId, bot }: { botId: string; bot: Partial<IBot> }) => {
-      save(botId, bot, queryClient)
+      const updated = bot.active ? { ...bot, active: false } : bot
+      save(botId, updated, queryClient)
     },
     [queryClient]
   )

@@ -1,13 +1,12 @@
 import {
   IConnection,
   IServiceApp,
-  ITask,
   IVariable,
   MethodName,
   ServiceName,
   ServiceType,
 } from '@baita/shared'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useContext } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { OptionsInput } from '@/components'
@@ -30,19 +29,19 @@ const TaskService: FC<{
   const updateBot = useUpdateBot()
   const userId = user?.userId || ''
 
-  const [task, setTask] = useState<ITask>()
+  const task = bot?.tasks[taskIndex]
 
   const updateBotTask = (
     botId: string,
     taskIndex: number,
-    updatedTask: Partial<ITask>
+    updatedTask: Partial<import('@baita/shared').ITask>
   ) => {
     if (bot) {
       const updatedTasks = [...bot.tasks]
       updatedTasks[taskIndex] = {
         ...updatedTasks[taskIndex],
         ...updatedTask,
-      } as ITask
+      } as import('@baita/shared').ITask
       updateBot.mutate({ botId, bot: { ...bot, tasks: updatedTasks } })
     }
   }
@@ -55,9 +54,9 @@ const TaskService: FC<{
           app: appService.app,
           service: appService.service,
           sampleResult: undefined,
-        }
-        if (appService.service.config.customFields) {
-          updatedTask.inputData = []
+          inputData: appService.service.config.customFields
+            ? []
+            : task.inputData,
         }
 
         updateBotTask(bot.botId, taskIndex, updatedTask)
@@ -74,36 +73,37 @@ const TaskService: FC<{
 
   const onSelectConnection = (appConnection: IConnection) => {
     if (bot && task) {
-      task.connectionId = appConnection ? appConnection.connectionId : undefined
-      updateBotTask(bot.botId, taskIndex, task)
+      const updatedTask = {
+        ...task,
+        connectionId: appConnection ? appConnection.connectionId : undefined,
+      }
+      updateBotTask(bot.botId, taskIndex, updatedTask)
     }
   }
 
   const updateBotInputField = (fieldName: string, inputField: IVariable) => {
     if (bot && task) {
-      const inputDataIndex = task.inputData.findIndex(
+      const updatedInputData = [...task.inputData]
+      const inputDataIndex = updatedInputData.findIndex(
         (x) => x.name === fieldName
       )
 
       if (inputDataIndex >= 0) {
-        task.inputData[inputDataIndex] = inputField
+        updatedInputData[inputDataIndex] = inputField
       } else {
-        task.inputData.push(inputField)
+        updatedInputData.push(inputField)
       }
 
-      updateBotTask(bot.botId, taskIndex, task)
+      updateBotTask(bot.botId, taskIndex, {
+        ...task,
+        inputData: updatedInputData,
+      })
     }
   }
 
   const refreshAfterConnection = () => {
     // No-op: useBot query will refetch automatically via queryClient
   }
-
-  useEffect(() => {
-    if (bot) {
-      setTask(bot.tasks[taskIndex])
-    }
-  }, [bot, taskIndex])
 
   return (
     <>

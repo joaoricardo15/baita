@@ -1,15 +1,29 @@
 import { validateBot } from '@baita/shared'
 import {
+  ArrowBack as ArrowBackIcon,
+  AutoFixHigh as AutoFixHighIcon,
+  CloudDone as CloudDoneIcon,
+  CloudOff as CloudOffIcon,
+  CloudSync as CloudSyncIcon,
+  Delete as DeleteIcon,
   History as HistoryIcon,
-  PowerSettingsNewSharp as PowerSettingsNewSharpIcon,
-  SmartToyOutlined as SmartToyOutlinedIcon,
+  MoreVert as MoreVertIcon,
+  SendSharp as TriggerIcon,
 } from '@mui/icons-material'
+import { Switch } from '@mui/material'
 import { FC, useContext, useState } from 'react'
-import ReactConfetti from 'react-confetti'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { Button, TextInput } from '@/components'
-import { useBot, useDeployBot, useUpdateBot } from '@/hooks/useBots'
+import Menu from '@/components/menu'
+import {
+  useBot,
+  useDeleteBot,
+  useDeployBot,
+  useUpdateBot,
+} from '@/hooks/useBots'
+import { useBotSaveStatus } from '@/hooks/useBotSaveStatus'
+import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { LINKS } from '@/router'
 import { getLabels, Labels } from '@/utils/labels'
@@ -22,15 +36,17 @@ const TopBar: FC<{
 }> = ({ name, description, image, isActive }) => {
   const { botId } = useParams()
   const navigate = useNavigate()
+  const { isAdmin } = useContext(AuthContext)
   const { showLoading, showSnack } = useContext(NotificationContext)
   const { data: bot } = useBot(botId)
   const updateBot = useUpdateBot()
   const deployBot = useDeployBot()
+  const deleteBot = useDeleteBot()
+  const saveStatus = useBotSaveStatus()
 
   const [botName, setBotName] = useState(name)
   const [botDescription, setBotDescription] = useState(description)
   const [botImage, setBotImage] = useState(image)
-  const [celebrate, setCelebrate] = useState(false)
 
   const onNameChange = (name: string) => {
     if (bot) {
@@ -47,12 +63,6 @@ const TopBar: FC<{
   const onImageChange = (image?: string) => {
     if (bot) {
       updateBot.mutate({ botId: bot.botId, bot: { ...bot, image } })
-    }
-  }
-
-  const onHistoryClick = () => {
-    if (bot) {
-      navigate(LINKS.logs(bot.botId))
     }
   }
 
@@ -76,44 +86,81 @@ const TopBar: FC<{
     }
   }
 
+  const onDeleteBot = () => {
+    if (bot) {
+      showLoading(true)
+      deleteBot
+        .mutateAsync({ botId: bot.botId })
+        .then(() => navigate(LINKS.bots))
+        .finally(() => showLoading(false))
+    }
+  }
+
+  const menuLinks = [
+    {
+      label: labels.triggerButton,
+      icon: <TriggerIcon color="secondary" />,
+      onClick: () => {},
+      condition: isActive,
+    },
+    {
+      label: labels.logsButton,
+      icon: <HistoryIcon color="secondary" />,
+      onClick: () => bot && navigate(LINKS.logs(bot.botId)),
+    },
+    {
+      label: labels.publishButton,
+      icon: <AutoFixHighIcon color="secondary" />,
+      onClick: () => {},
+      condition: isAdmin && !bot?.templateId,
+    },
+    {
+      label: labels.deleteButton,
+      icon: <DeleteIcon color="secondary" />,
+      onClick: onDeleteBot,
+    },
+  ]
+
   return (
     <>
-      {celebrate && (
-        <ReactConfetti
-          recycle={false}
-          onConfettiComplete={() => setCelebrate(false)}
-        />
-      )}
-      <div className="d-flex justify-content-between mx-3">
-        <div className="d-flex w-100 text-primary align-items-center">
-          <SmartToyOutlinedIcon color="secondary" />
+      <div className="d-flex justify-content-between align-items-center me-3">
+        <div className="d-flex align-items-center w-100">
+          <Button
+            iconButton
+            onClick={() => navigate(LINKS.bots)}
+            icon={<ArrowBackIcon color="secondary" />}
+          />
           <TextInput
             value={botName}
-            className="w-100 mx-2"
+            className="mx-1"
             variant="fs-3 text-primary"
             placeholder={labels.namePlaceholder}
             onChange={(value) => setBotName(value)}
             onBlur={() => onNameChange(botName)}
           />
-        </div>
-        <div className="d-flex">
-          <Button
-            iconButton
-            onClick={onHistoryClick}
-            tooltip={labels.historyTooltip}
-            icon={<HistoryIcon color="secondary" />}
-          />
-          <Button
-            iconButton
-            onClick={onToggleBot}
-            tooltip={isActive ? labels.turnOffTooltip : labels.turnOnTooltip}
-            icon={
-              <PowerSettingsNewSharpIcon
-                color={isActive ? 'info' : 'secondary'}
+          <Switch checked={isActive} onChange={onToggleBot} size="small" />
+          <div
+            className="d-flex align-items-center"
+            style={{ width: 20, minWidth: 20 }}
+          >
+            {saveStatus === 'saving' && (
+              <CloudSyncIcon
+                color="secondary"
+                style={{ fontSize: 18 }}
+                className="animate-pulse-once"
               />
-            }
-          ></Button>
+            )}
+            {saveStatus === 'saved' && (
+              <CloudDoneIcon color="success" style={{ fontSize: 18 }} />
+            )}
+            {saveStatus === 'error' && (
+              <CloudOffIcon color="error" style={{ fontSize: 18 }} />
+            )}
+          </div>
         </div>
+        <Menu links={menuLinks}>
+          <MoreVertIcon />
+        </Menu>
       </div>
       <div className="d-flex align-items-center">
         {botImage && (
@@ -149,21 +196,27 @@ export default TopBar
 const LABELS: Labels = {
   en: {
     namePlaceholder: "Bot's name",
-    historyTooltip: 'History',
     turnOnTooltip: 'Turn on',
     turnOffTooltip: 'Turn off',
     toggleError: 'Failed to deploy bot',
     description: 'Description',
     icon: 'Icon url',
+    triggerButton: 'Trigger',
+    logsButton: 'Logs',
+    deleteButton: 'Delete',
+    publishButton: 'Publish',
   },
   pt: {
     namePlaceholder: 'Nome do bot',
-    historyTooltip: 'Histórico',
     turnOnTooltip: 'Ativar',
     turnOffTooltip: 'Desativar',
     toggleError: 'Falha ao alternar bot',
     description: 'Descrição',
     icon: 'Url do ícone',
+    triggerButton: 'Disparar',
+    logsButton: 'Logs',
+    deleteButton: 'Deletar',
+    publishButton: 'Publicar',
   },
 }
 
