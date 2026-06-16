@@ -22,23 +22,23 @@ const BotCard: FC<{
   return (
     <Card className="p-2">
       <div className="d-flex justify-content-between align-items-center">
-        <div className="d-flex align-items-center">
+        <div className="d-flex align-items-center overflow-hidden">
           {image && (
-            <div style={{ width: 60 }} className="m-3">
+            <div style={{ width: 60, minWidth: 60 }} className="m-3">
               <img width={60} src={image} alt="Bot front image" />
             </div>
           )}
-          <div className="mx-2">
+          <div className="mx-2" style={{ minWidth: 0 }}>
             <div className="d-flex align-items-center">
               {name ? (
-                <Text className="fw-bold align-self-center">{name}</Text>
+                <Text className="fw-bold text-truncate">{name}</Text>
               ) : (
                 <Text>{labels.noName}</Text>
               )}
               <Switch checked={active} onChange={onToggleBot} />
             </div>
             {description && (
-              <Text className="fw-light fs-6">{description}</Text>
+              <Text className="fw-light fs-6 text-truncate">{description}</Text>
             )}
           </div>
         </div>

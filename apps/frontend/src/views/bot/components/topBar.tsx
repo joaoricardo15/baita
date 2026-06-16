@@ -123,8 +123,8 @@ const TopBar: FC<{
 
   return (
     <>
-      <div className="d-flex justify-content-between align-items-center me-3">
-        <div className="d-flex align-items-center w-100">
+      <div className="d-flex justify-content-between align-items-center mx-2">
+        <div className="d-flex align-items-center overflow-hidden">
           <Button
             iconButton
             onClick={() => navigate(LINKS.bots)}
@@ -132,15 +132,15 @@ const TopBar: FC<{
           />
           <TextInput
             value={botName}
-            className="mx-1"
-            variant="fs-3 text-primary"
+            fitContent
+            variant="fw-bold text-primary"
             placeholder={labels.namePlaceholder}
-            onChange={(value) => setBotName(value)}
+            onChange={setBotName}
             onBlur={() => onNameChange(botName)}
           />
           <Switch checked={isActive} onChange={onToggleBot} size="small" />
           <div
-            className="d-flex align-items-center"
+            className="d-flex align-items-center ms-1"
             style={{ width: 20, minWidth: 20 }}
           >
             {saveStatus === 'saving' && (
@@ -196,8 +196,6 @@ export default TopBar
 const LABELS: Labels = {
   en: {
     namePlaceholder: "Bot's name",
-    turnOnTooltip: 'Turn on',
-    turnOffTooltip: 'Turn off',
     toggleError: 'Failed to deploy bot',
     description: 'Description',
     icon: 'Icon url',
@@ -208,8 +206,6 @@ const LABELS: Labels = {
   },
   pt: {
     namePlaceholder: 'Nome do bot',
-    turnOnTooltip: 'Ativar',
-    turnOffTooltip: 'Desativar',
     toggleError: 'Falha ao alternar bot',
     description: 'Descrição',
     icon: 'Url do ícone',
