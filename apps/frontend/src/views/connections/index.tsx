@@ -5,7 +5,7 @@ import {
 } from '@mui/icons-material'
 import { FC, useState } from 'react'
 
-import { Button, EmptyState, Loading, Skeleton } from '@/components'
+import { Button, EmptyState, ListItem, Loading, Skeleton } from '@/components'
 import { useConnections } from '@/hooks/useConnections'
 import { getLabels, Labels } from '@/utils/labels'
 
@@ -29,10 +29,10 @@ export const Connections: FC = () => {
           description={labels.emptyHint}
         />
       ) : (
-        connections.map((connection) => (
-          <div className="mb-2" key={String(connection.connectionId)}>
+        connections.map((connection, i) => (
+          <ListItem key={String(connection.connectionId)} index={i}>
             <ConnectionCard connection={connection} />
-          </div>
+          </ListItem>
         ))
       )}
 
@@ -63,9 +63,9 @@ const LABELS: Labels = {
     addConnection: 'Add connection',
   },
   pt: {
-    empty: 'Nenhuma conexao ainda',
-    emptyHint: 'Conecte seu primeiro app para comecar',
-    addConnection: 'Adicionar conexao',
+    empty: 'Nenhuma conexao ainda', // cspell:disable-line
+    emptyHint: 'Conecte seu primeiro app para comecar', // cspell:disable-line
+    addConnection: 'Adicionar conexao', // cspell:disable-line
   },
 }
 

@@ -3,7 +3,7 @@ import { Add as AddIcon } from '@mui/icons-material'
 import { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Button, Loading, Skeleton } from '@/components'
+import { Button, ListItem, Loading, Skeleton } from '@/components'
 import { useBots, useBotTemplates, useCreateBot } from '@/hooks/useBots'
 import { LINKS } from '@/router'
 import { getLabels, Labels } from '@/utils/labels'
@@ -30,29 +30,39 @@ export const Bots: FC = () => {
         <>
           {bots
             .filter((bot) => bot.templateId)
-            .map((bot) => (
-              <div className="mb-2" key={bot.botId}>
+            .map((bot, i) => (
+              <ListItem key={bot.botId} index={i}>
                 <Bot bot={bot} />
-              </div>
+              </ListItem>
             ))}
 
           {botTemplates?.map(
-            (botTemplate) =>
+            (botTemplate, i) =>
               !bots
                 .map((b) => b.templateId)
                 .includes(botTemplate.templateId) && (
-                <div key={botTemplate.templateId} className="mb-2">
+                <ListItem
+                  key={botTemplate.templateId}
+                  index={bots.filter((b) => b.templateId).length + i}
+                >
                   <BotTemplate botTemplate={botTemplate} />
-                </div>
+                </ListItem>
               )
           )}
 
           {bots
             .filter((bot) => !bot.templateId)
             .map((bot, i) => (
-              <div className="mb-2" key={i}>
+              <ListItem
+                key={bot.botId}
+                index={
+                  bots.filter((b) => b.templateId).length +
+                  (botTemplates?.length || 0) +
+                  i
+                }
+              >
                 <Bot bot={bot} />
-              </div>
+              </ListItem>
             ))}
 
           {createBot.isPending ? (

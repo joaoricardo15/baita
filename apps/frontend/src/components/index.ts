@@ -7,6 +7,7 @@ import EmptyState from './emptyState'
 import Error from './error'
 import Highlight from './highlight'
 import InstallCard from './installCard'
+import ListItem from './listItem'
 import Loading from './loading'
 import Logo from './logo'
 import OptionsInput from './optionsInput'
@@ -30,6 +31,7 @@ export {
   Error,
   Highlight,
   InstallCard,
+  ListItem,
   Loading,
   Logo,
   OptionsInput,

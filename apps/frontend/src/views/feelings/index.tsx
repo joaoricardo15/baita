@@ -9,7 +9,7 @@ import {
 import { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Button, EmptyState, Loading, Skeleton } from '@/components'
+import { Button, EmptyState, ListItem, Loading, Skeleton } from '@/components'
 import { useDeleteFeeling, useFeelings } from '@/hooks/useFeelings'
 import { LINKS } from '@/router'
 import { getLabels, Labels } from '@/utils/labels'
@@ -92,17 +92,13 @@ export const Feelings: FC = () => {
           <div key={group.label}>
             <div className="feeling-date-header">{group.label}</div>
             {group.items.map((feeling, index) => (
-              <div
-                className="mb-2 feeling-card-enter"
-                key={feeling.feelingId}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
+              <ListItem key={feeling.feelingId} index={index}>
                 <FeelingCard
                   feeling={feeling}
                   onEdit={() => onEditFeeling(feeling)}
                   onDelete={() => onDeleteFeeling(feeling.feelingId)}
                 />
-              </div>
+              </ListItem>
             ))}
           </div>
         ))
