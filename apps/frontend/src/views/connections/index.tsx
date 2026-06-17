@@ -63,9 +63,9 @@ const LABELS: Labels = {
     addConnection: 'Add connection',
   },
   pt: {
-    empty: 'Nenhuma conexao ainda', // cspell:disable-line
-    emptyHint: 'Conecte seu primeiro app para comecar', // cspell:disable-line
-    addConnection: 'Adicionar conexao', // cspell:disable-line
+    empty: 'Nenhuma conexão ainda',
+    emptyHint: 'Conecte seu primeiro app para começar',
+    addConnection: 'Adicionar conexão',
   },
 }
 

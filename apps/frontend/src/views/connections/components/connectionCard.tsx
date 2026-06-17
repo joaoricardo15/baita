@@ -145,8 +145,8 @@ const LABELS: Labels = {
     expired: 'Expirado',
     error: 'Erro',
     delete: 'Excluir',
-    deleteSuccess: 'Conexao excluida',
-    deleteError: 'Nao foi possivel excluir a conexao',
+    deleteSuccess: 'Conexão excluída',
+    deleteError: 'Não foi possível excluir a conexão',
   },
 }
 

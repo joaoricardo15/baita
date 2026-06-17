@@ -17,6 +17,7 @@ import {
 
 import { executeTask } from '@/engine/executor'
 import { resolveTaskInputs } from '@/engine/resolver'
+import { isPauseSignal } from '@/engine/run'
 import {
   DISABLED_SCHEDULE_EXPRESSION,
   LOG_LOOKBACK_DAYS,
@@ -261,7 +262,8 @@ class Bot {
     const isTrigger =
       !task.service ||
       task.service.name === ServiceName.webhook ||
-      task.service.name === ServiceName.schedule
+      task.service.name === ServiceName.schedule ||
+      task.service.name === ServiceName.phoneEvent
     if (Number(taskIndex) === 0 && isTrigger) {
       const botData = await this.store(userId).read(botId)
       const lastSample = botData?.triggerSamples?.at(-1)
@@ -294,11 +296,22 @@ class Bot {
           serviceName: task.service?.name,
         })
 
-        sample = {
-          status: TaskExecutionStatus.success,
-          inputData: resolvedInputData,
-          outputData: data ?? null,
-          timestamp: Date.now(),
+        if (isPauseSignal(data)) {
+          sample = {
+            status: TaskExecutionStatus.success,
+            inputData: resolvedInputData,
+            outputData: {
+              message: `Would wait ${data.delayMinutes} minutes`,
+            },
+            timestamp: Date.now(),
+          }
+        } else {
+          sample = {
+            status: TaskExecutionStatus.success,
+            inputData: resolvedInputData,
+            outputData: data ?? null,
+            timestamp: Date.now(),
+          }
         }
       } catch (err: unknown) {
         sample = {

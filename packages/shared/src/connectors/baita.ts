@@ -24,6 +24,14 @@ export const baitaConnector: IConnectorManifest = {
     },
     {
       type: ServiceType.trigger,
+      name: ServiceName.phoneEvent,
+      label: 'iPhone Automation',
+      description:
+        'Trigger from iPhone Shortcuts (e.g., after stopping an alarm)',
+      config: {},
+    },
+    {
+      type: ServiceType.trigger,
       name: ServiceName.schedule,
       label: 'Schedule',
       config: {
@@ -148,6 +156,31 @@ export const baitaConnector: IConnectorManifest = {
             label: 'content',
             type: VariableType.output,
             required: true,
+          },
+        ],
+      },
+    },
+    {
+      type: ServiceType.invoke,
+      name: ServiceName.method,
+      label: 'Wait',
+      description: 'Pause execution for a specified duration',
+      config: {
+        methodName: MethodName.wait,
+        inputFields: [
+          {
+            name: 'delayMinutes',
+            label: 'Wait duration',
+            type: VariableType.options,
+            required: true,
+            options: [
+              { label: '1 minute', value: '1' },
+              { label: '5 minutes', value: '5' },
+              { label: '15 minutes', value: '15' },
+              { label: '30 minutes', value: '30' },
+              { label: '1 hour', value: '60' },
+              { label: '2 hours', value: '120' },
+            ],
           },
         ],
       },

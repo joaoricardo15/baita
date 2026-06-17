@@ -274,15 +274,35 @@ The engine is a separate Lambda (`bot-engine`) with NO HTTP entry point. It rece
 
 | File                         | Responsibility                                                                                                                            |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `engine/index.ts`            | Lambda handler. Validates event, loads bot, delegates to `runBot()`                                                                       |
-| `engine/run.ts`              | Orchestration loop. Iterates tasks, coordinates resolver/conditions/executor, handles retries, produces execution logs                    |
+| `engine/index.ts`            | Lambda handler. Validates event, loads bot, delegates to `runBot()`. Handles pause/resume scheduling.                                     |
+| `engine/run.ts`              | Orchestration loop. Iterates tasks, coordinates resolver/conditions/executor, handles retries, detects pause signals, supports resume     |
 | `engine/resolver.ts`         | Resolves task inputs. Maps output references (`outputIndex` + `outputPath`) to actual data from previous task outputs. Applies transforms |
 | `engine/conditions.ts`       | Evaluates OR-of-AND condition groups. Returns boolean (execute or skip)                                                                   |
 | `engine/data.ts`             | Data utilities. Path traversal (`getDataFromPath`), output mapping (`getMappedData`), pipes (base64url decode, email-body extraction)     |
 | `engine/executor/index.ts`   | Task dispatch. Routes to code or method executor based on service type                                                                    |
 | `engine/executor/code.ts`    | VM sandbox execution (Node.js `vm` module, 5s timeout)                                                                                    |
-| `engine/executor/methods.ts` | HTTP method execution. Builds requests, handles OAuth token refresh, calls external APIs                                                  |
+| `engine/executor/methods.ts` | Method execution. Built-in methods: getTodo, publishToFeed, sendNotification, httpRequest, oauth2Request, wait                            |
 | `engine/executor/utils.ts`   | Request helpers. Path param interpolation, body encoding                                                                                  |
+
+### Wait & Resume (Pause-and-Resume Execution)
+
+Bots can include a **Wait** step that pauses execution for a configurable duration:
+
+```
+Engine invoked → tasks[0..N] execute → Wait step returns pause signal
+  → engine handler creates one-time EventBridge schedule (at(now + delay))
+  → schedule auto-deletes after firing (ActionAfterCompletion: DELETE)
+  → schedule invokes engine with resumeData: { startStep, taskOutputs, logs, usage }
+  → engine resumes from paused step, continues remaining tasks
+```
+
+**Safety:**
+
+- Pause signals only accepted from `MethodName.wait` tasks (cannot be injected by user code)
+- Payload size validated (<200KB) before schedule creation
+- Bot edits during wait detected (startStep bounds check)
+- Bot deletion removes all pending wait schedules (deleteScheduleGroup)
+- Bot deactivation skips resumed execution (existing active check)
 
 ### Bot Execution Flows
 

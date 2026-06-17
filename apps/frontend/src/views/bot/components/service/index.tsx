@@ -16,6 +16,7 @@ import { AppsContext } from '@/providers/apps'
 import { AuthContext } from '@/providers/auth'
 import { getLabels, Labels } from '@/utils/labels'
 
+import IPhoneSetupGuide from './iphoneSetupGuide'
 import NewConnection from './newConnection'
 import PushNotificationService from './pushNotification'
 import WebhookService from './webhook'
@@ -184,8 +185,14 @@ const TaskService: FC<{
           )}
 
           {/***** Webhook specific display *****/}
-          {task.service?.name === ServiceName.webhook && (
+          {(task.service?.name === ServiceName.webhook ||
+            task.service?.name === ServiceName.phoneEvent) && (
             <WebhookService botId={bot.botId} userId={userId} />
+          )}
+
+          {/***** iPhone automation setup guide *****/}
+          {task.service?.name === ServiceName.phoneEvent && (
+            <IPhoneSetupGuide template="alarm-stopped" />
           )}
 
           {/***** Push notification specific display *****/}

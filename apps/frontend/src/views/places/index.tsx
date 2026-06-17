@@ -134,7 +134,7 @@ const LABELS: Labels = {
       'Salve seus lugares favoritos e eles aparecerão aqui no mapa.',
     addFirst: 'Adicione seu primeiro lugar',
     addPlace: 'Adicionar lugar',
-    loadError: 'Nao foi possivel carregar lugares',
+    loadError: 'Não foi possível carregar lugares',
   },
 }
 

@@ -144,7 +144,7 @@ const LABELS: Labels = {
     save: 'Save feeling',
   },
   pt: {
-    placeholder: 'O que voce esta sentindo?',
+    placeholder: 'O que você está sentindo?',
     save: 'Salvar sentimento',
   },
 }

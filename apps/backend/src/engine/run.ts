@@ -1,14 +1,38 @@
-import { DataType, ITask, ITaskLog, TaskExecutionStatus } from '@baita/shared'
+import {
+  DataType,
+  ITask,
+  ITaskLog,
+  MethodName,
+  TaskExecutionStatus,
+} from '@baita/shared'
 
 import { evaluateConditions } from './conditions'
 import { executeTask } from './executor'
 import { resolveTaskInputs } from './resolver'
+
+interface IPauseSignal {
+  __pause: true
+  delayMinutes: number
+}
+
+export function isPauseSignal(data: unknown): data is IPauseSignal {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    '__pause' in data &&
+    (data as IPauseSignal).__pause === true
+  )
+}
 
 export interface IBotExecutionParams {
   userId: string
   botId: string
   tasks: ITask[]
   payload: DataType
+  startStep?: number
+  initialTaskOutputs?: (DataType | null)[]
+  initialLogs?: ITaskLog[]
+  initialUsage?: number
 }
 
 export interface IBotExecutionResult {
@@ -16,28 +40,43 @@ export interface IBotExecutionResult {
   data?: DataType
   logs: ITaskLog[]
   usage: number
+  paused?: boolean
+  pauseStep?: number
+  pauseDelayMinutes?: number
+  taskOutputs?: (DataType | null)[]
 }
 
 export async function runBot(
   params: IBotExecutionParams
 ): Promise<IBotExecutionResult> {
-  const { userId, botId, tasks, payload } = params
-  const taskOutputs: (DataType | null)[] = [payload]
-  const logs: ITaskLog[] = []
-  let usage = 0
+  const {
+    userId,
+    botId,
+    tasks,
+    payload,
+    startStep = 1,
+    initialTaskOutputs,
+    initialLogs,
+    initialUsage,
+  } = params
+  const taskOutputs: (DataType | null)[] = initialTaskOutputs || [payload]
+  const logs: ITaskLog[] = initialLogs || []
+  let usage = initialUsage || 0
   let outputData: DataType | undefined
   let hasError = false
 
-  const triggerName = tasks[0]?.service?.name || 'trigger'
-  logs.push({
-    name: triggerName,
-    timestamp: Date.now(),
-    inputData: payload,
-    outputData: payload,
-    status: TaskExecutionStatus.success,
-  })
+  if (!initialTaskOutputs) {
+    const triggerName = tasks[0]?.service?.name || 'trigger'
+    logs.push({
+      name: triggerName,
+      timestamp: Date.now(),
+      inputData: payload,
+      outputData: payload,
+      status: TaskExecutionStatus.success,
+    })
+  }
 
-  for (let i = 1; i < tasks.length; i++) {
+  for (let i = startStep; i < tasks.length; i++) {
     const task = tasks[i]
     const taskName = task.service?.label || task.service?.name || `Task ${i}`
     const startTime = Date.now()
@@ -72,6 +111,30 @@ export async function runBot(
       taskOutputs[i] = result.success ? (result.data ?? null) : null
 
       if (result.success) {
+        const isWaitMethod =
+          task.service?.config?.methodName === MethodName.wait
+        if (isWaitMethod && isPauseSignal(result.data)) {
+          taskOutputs[i] = null
+          logs.push({
+            name: taskName,
+            timestamp: startTime,
+            inputData: resolvedInputData,
+            outputData: {
+              message: `Waiting ${result.data.delayMinutes} minutes...`,
+            } as DataType,
+            status: TaskExecutionStatus.success,
+          })
+          return {
+            success: true,
+            logs,
+            usage,
+            paused: true,
+            pauseStep: i + 1,
+            pauseDelayMinutes: result.data.delayMinutes,
+            taskOutputs,
+          }
+        }
+
         usage++
         if (task.returnData) outputData = result.data
       } else {

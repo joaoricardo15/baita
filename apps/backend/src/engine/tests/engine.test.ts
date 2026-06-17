@@ -1,5 +1,6 @@
 import {
   ITask,
+  MethodName,
   ServiceName,
   ServiceType,
   TaskExecutionStatus,
@@ -218,5 +219,148 @@ describe('runBot', () => {
     expect(mockExecuteTask).toHaveBeenCalledTimes(1)
     expect(result.logs).toHaveLength(2)
     expect(result.logs[1].status).toBe(TaskExecutionStatus.fail)
+  })
+
+  describe('pause and resume (Wait service)', () => {
+    const makeWaitTask = (taskId: number): ITask => ({
+      taskId,
+      inputData: [
+        {
+          type: VariableType.options,
+          name: 'delayMinutes',
+          label: 'Wait',
+          value: '15',
+        },
+      ],
+      service: {
+        name: ServiceName.method,
+        type: ServiceType.invoke,
+        label: 'Wait',
+        config: { methodName: MethodName.wait, inputFields: [] },
+      },
+    })
+
+    it('returns paused state when wait step is reached', async () => {
+      mockExecuteTask
+        .mockResolvedValueOnce({ message: 'step 1 done' })
+        .mockResolvedValueOnce({ __pause: true, delayMinutes: 15 })
+
+      const result = await runBot({
+        userId: 'user-1',
+        botId: 'bot-1',
+        tasks: [
+          makeTriggerTask(),
+          makeActionTask(1),
+          makeWaitTask(2),
+          makeActionTask(3),
+        ],
+        payload: { trigger: 'alarm' },
+      })
+
+      expect(result.paused).toBe(true)
+      expect(result.pauseStep).toBe(3)
+      expect(result.pauseDelayMinutes).toBe(15)
+      expect(result.success).toBe(true)
+      expect(result.taskOutputs).toBeDefined()
+      expect(result.taskOutputs![2]).toBeNull()
+      expect(mockExecuteTask).toHaveBeenCalledTimes(2)
+    })
+
+    it('does not pause for non-wait methods returning __pause-like data', async () => {
+      mockExecuteTask.mockResolvedValueOnce({ __pause: true, delayMinutes: 99 })
+
+      const result = await runBot({
+        userId: 'user-1',
+        botId: 'bot-1',
+        tasks: [makeTriggerTask(), makeActionTask(1)],
+        payload: {},
+      })
+
+      expect(result.paused).toBeUndefined()
+      expect(result.success).toBe(true)
+      expect(result.usage).toBe(1)
+    })
+
+    it('resumes execution from startStep with pre-populated outputs', async () => {
+      mockExecuteTask.mockResolvedValueOnce({ notified: true })
+
+      const result = await runBot({
+        userId: 'user-1',
+        botId: 'bot-1',
+        tasks: [
+          makeTriggerTask(),
+          makeActionTask(1),
+          makeWaitTask(2),
+          makeActionTask(3),
+        ],
+        payload: {},
+        startStep: 3,
+        initialTaskOutputs: [{ trigger: 'alarm' }, { message: 'step 1' }, null],
+        initialLogs: [
+          {
+            name: 'webhook',
+            timestamp: 1,
+            inputData: {},
+            outputData: {},
+            status: TaskExecutionStatus.success,
+          },
+          {
+            name: 'Action',
+            timestamp: 2,
+            inputData: {},
+            outputData: { message: 'step 1' },
+            status: TaskExecutionStatus.success,
+          },
+          {
+            name: 'Wait',
+            timestamp: 3,
+            inputData: {},
+            outputData: { message: 'Waiting 15 minutes...' },
+            status: TaskExecutionStatus.success,
+          },
+        ],
+        initialUsage: 1,
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.paused).toBeUndefined()
+      expect(result.usage).toBe(2)
+      expect(result.logs).toHaveLength(4)
+      expect(mockExecuteTask).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not add trigger log when resuming', async () => {
+      mockExecuteTask.mockResolvedValueOnce({ done: true })
+
+      const result = await runBot({
+        userId: 'user-1',
+        botId: 'bot-1',
+        tasks: [makeTriggerTask(), makeWaitTask(1), makeActionTask(2)],
+        payload: {},
+        startStep: 2,
+        initialTaskOutputs: [{ trigger: 'data' }, null],
+        initialLogs: [
+          {
+            name: 'webhook',
+            timestamp: 1,
+            inputData: {},
+            outputData: {},
+            status: TaskExecutionStatus.success,
+          },
+          {
+            name: 'Wait',
+            timestamp: 2,
+            inputData: {},
+            outputData: {},
+            status: TaskExecutionStatus.success,
+          },
+        ],
+        initialUsage: 0,
+      })
+
+      expect(result.logs).toHaveLength(3)
+      expect(result.logs[0].name).toBe('webhook')
+      expect(result.logs[2].name).toBe('Action')
+    })
   })
 })

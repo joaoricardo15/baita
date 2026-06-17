@@ -27,7 +27,12 @@ export enum ServiceType {
 }
 export const ServiceTypeSchema = z.nativeEnum(ServiceType)
 
-/** Maps to executor dispatch in backend — determines which code path runs */
+/**
+ * Service name identifies both executor dispatch (invoke services) and
+ * trigger type (trigger services). Invoke services route through the
+ * executor switch. Trigger services are handled externally (EventBridge
+ * for schedule, HTTP POST for webhook/phoneEvent) and never hit the executor.
+ */
 export enum ServiceName {
   code = 'code-execute',
   http = 'http-request',
@@ -36,6 +41,7 @@ export enum ServiceName {
   method = 'method-execute',
   webhook = 'webhook',
   schedule = 'schedule',
+  phoneEvent = 'phone-event',
 }
 export const ServiceNameSchema = z.nativeEnum(ServiceName)
 
@@ -46,6 +52,7 @@ export enum MethodName {
   sendNotification = 'sendNotification',
   httpRequest = 'httpRequest',
   oauth2Request = 'oauth2Request',
+  wait = 'wait',
 }
 export const MethodNameSchema = z.nativeEnum(MethodName)
 

@@ -1,3 +1,5 @@
+import { isInstalledPWA, isIOSDevice } from './device'
+
 const VAPID_PUBLIC_KEY =
   'BM2CDMNWEL_XeDj-iTASTb-Uxl5Yo-M7WCQvBFCNuI5DkH5TBNPupLcnfppxWqi2ViZIyr0NyFFOEcous8hCUNI'
 
@@ -17,29 +19,14 @@ export function canUsePushNotifications(): boolean {
     return false
   }
 
-  const isIOS =
-    /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window)
-
-  if (isIOS) {
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as unknown as { standalone?: boolean }).standalone === true
-    return isStandalone
+  if (isIOSDevice()) {
+    return isInstalledPWA()
   }
 
   return true
 }
 
-export function isIOSDevice(): boolean {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window)
-}
-
-export function isInstalledPWA(): boolean {
-  return (
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as unknown as { standalone?: boolean }).standalone === true
-  )
-}
+export { isInstalledPWA, isIOSDevice }
 
 export async function getExistingSubscription(): Promise<PushSubscription | null> {
   if (!('serviceWorker' in navigator)) return null

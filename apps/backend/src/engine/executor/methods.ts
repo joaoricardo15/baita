@@ -38,6 +38,7 @@ const METHODS: Record<
   sendNotification,
   httpRequest,
   oauth2Request,
+  wait,
 }
 
 export async function executeMethod(
@@ -306,4 +307,14 @@ const getAuthDataFromApp = (
   }
 
   return data
+}
+
+async function wait(
+  taskInput: ITaskExecutionInput<DataType>
+): Promise<DataType | undefined> {
+  const { inputData } = taskInput
+  const delayMinutes =
+    Number((inputData as Record<string, string>).delayMinutes) || 5
+
+  return { __pause: true, delayMinutes } as unknown as DataType
 }

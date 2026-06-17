@@ -66,6 +66,24 @@ The bot schema includes validation and integrity helpers that protect against co
 - **`RetryPolicySchema`** — Optional per-task retry config (`{ maxAttempts, backoffMs }`). Code generation emits retry loops with exponential backoff.
 - **`StepExecutionSchema`** — Structured per-step execution logging with timing (`duration`), status, input/output snapshots.
 
+### Bot Execution: Wait & Resume
+
+The engine supports a **pause-and-resume** mechanism via EventBridge Scheduler one-time schedules:
+
+- **Wait service** (`MethodName.wait`) — A Baita invoke service that pauses bot execution for a configurable duration (1min–2hr).
+- **Pause signal** — The `wait()` method returns `{ __pause: true, delayMinutes }`. The orchestration loop (`run.ts`) detects this, serializes execution state (`taskOutputs`, `logs`, `usage`), and the engine handler creates a one-time EventBridge schedule.
+- **Resume** — The schedule fires the same bot-engine Lambda with `resumeData` in the event. The engine resumes from the step after the wait with pre-populated state.
+- **Self-cleanup** — One-time schedules use `ActionAfterCompletion: 'DELETE'`. Bot deletion (`deleteScheduleGroup`) removes any pending waits.
+- **Safety** — Pause signals are only accepted from `MethodName.wait` tasks (user code cannot inject them). Payload size is validated (<200KB). Bot edits during wait are detected (step bounds check).
+
+### iPhone Event Trigger (`ServiceName.phoneEvent`)
+
+A trigger type for bots activated by iPhone Shortcuts automations. Functionally identical to a webhook (same `POST /bots/{id}/run/{token}` endpoint) but with:
+
+- **iOS-only visibility** — Filtered from the service picker on non-iOS devices (frontend-only check via `isIOSDevice()`)
+- **Guided setup UI** — The frontend renders step-by-step Shortcuts configuration instructions when this trigger is selected
+- **No backend changes** — The backend processes it exactly like any webhook trigger
+
 ### API Contract
 
 - Response format: `{ success: boolean, message?: string, data?: T }`

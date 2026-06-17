@@ -116,9 +116,9 @@ const LABELS: Labels = {
     errorDescription: 'This bot could not be loaded. It may have been deleted.',
   },
   pt: {
-    errorTitle: 'Bot nao encontrado',
+    errorTitle: 'Bot não encontrado',
     errorDescription:
-      'Nao foi possivel carregar este bot. Ele pode ter sido excluido.',
+      'Não foi possível carregar este bot. Ele pode ter sido excluído.',
   },
 }
 

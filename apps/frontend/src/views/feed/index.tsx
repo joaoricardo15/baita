@@ -169,10 +169,10 @@ const LABELS: Labels = {
     loadError: 'Could not load content',
   },
   pt: {
-    noContent: 'Nenhum conteudo ainda',
-    noContentHint: 'Seu feed mostrara conteudo dos seus servicos conectados.',
+    noContent: 'Nenhum conteúdo ainda',
+    noContentHint: 'Seu feed mostrará conteúdo dos seus serviços conectados.',
     refresh: 'Atualizar',
-    loadError: 'Nao foi possivel carregar conteudo',
+    loadError: 'Não foi possível carregar conteúdo',
   },
 }
 

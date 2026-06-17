@@ -132,10 +132,10 @@ const LABELS: Labels = {
     yesterday: 'Yesterday',
   },
   pt: {
-    emptyTitle: 'Como voce esta se sentindo?',
+    emptyTitle: 'Como você está se sentindo?',
     emptyDescription:
-      'Capture seus sentimentos, sonhos e momentos de gratidao.', // cspell:disable-line
-    addFeeling: 'Como voce esta?',
+      'Capture seus sentimentos, sonhos e momentos de gratidão.',
+    addFeeling: 'Como você está?',
     today: 'Hoje',
     yesterday: 'Ontem',
   },
