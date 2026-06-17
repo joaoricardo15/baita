@@ -46,7 +46,7 @@ export const handlers = [
     })
   }),
 
-  http.get(`${API_BASE}/data/note`, () => {
+  http.get(`${API_BASE}/data/feeling`, () => {
     return HttpResponse.json({ success: true, data: [] })
   }),
 

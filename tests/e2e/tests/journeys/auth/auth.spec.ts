@@ -21,7 +21,7 @@ test.describe('Authenticated Pages', () => {
     { path: '/todo', name: 'Todo' },
     { path: '/feed', name: 'Feed' },
     { path: '/bots', name: 'Bots' },
-    { path: '/notes', name: 'Notes' },
+    { path: '/feelings', name: 'Feelings' },
     { path: '/place', name: 'Places' },
     { path: '/profile', name: 'Profile' },
     { path: '/connections', name: 'Connections' },

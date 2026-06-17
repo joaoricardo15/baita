@@ -282,7 +282,7 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
     summary: 'List or read data',
     operationId: 'listData',
     description:
-      'For collection types (note, place, connection): returns all records as an array. For singleton types (todo, user): returns the single record directly.',
+      'For collection types (feeling, place, connection): returns all records as an array. For singleton types (todo, user): returns the single record directly.',
     parameterOverrides: {
       type: DATA_TYPE_PARAM,
     },
@@ -317,8 +317,8 @@ const OPERATION_DOCS: Record<string, OperationDoc> = {
       id: { description: 'Record ID (client-generated)' },
     },
     requestExample: {
-      noteId: 'note-abc123',
-      title: 'My new note',
+      feelingId: 'feeling-abc123',
+      content: 'Feeling great today',
       createdAt: 1718000000000,
       updatedAt: 1718000000000,
     },
@@ -572,7 +572,7 @@ const spec = {
     {
       name: 'Data',
       description:
-        'Generic CRUD storage for user data records (notes, places, todos, and any registered entity type)',
+        'Generic CRUD storage for user data records (feelings, places, todos, and any registered entity type)',
     },
     {
       name: 'User',

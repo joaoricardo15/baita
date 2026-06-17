@@ -47,7 +47,7 @@ All schemas are defined with [Zod](https://zod.dev) — providing both TypeScrip
 | `schemas/app.ts`        | `IApp`, `IAppConfig`                        | App value objects (embedded in Task)          |
 | `schemas/connection.ts` | `IConnection`, `ICredential`                | OAuth connection entity                       |
 | `schemas/connector.ts`  | `IConnectorManifest`, `IConnectorOperation` | Connector static definitions                  |
-| `schemas/note.ts`       | `INote`                                     | Note entity                                   |
+| `schemas/feeling.ts`    | `IFeeling`                                  | Feeling entity (mood + tags)                  |
 | `schemas/place.ts`      | `IPlace`                                    | Place entity                                  |
 | `schemas/api.ts`        | `ApiResponseSchema`                         | Standard API response envelope                |
 
@@ -83,7 +83,7 @@ entityRegistry = {
     idField: 'connectionId',
     singleton: false,
   },
-  note: { schema: NoteSchema, idField: 'noteId', singleton: false },
+  feeling: { schema: FeelingSchema, idField: 'feelingId', singleton: false },
   place: { schema: PlaceSchema, idField: 'placeId', singleton: false },
   todo: { schema: TodoSchema, idField: '', singleton: true },
   content: { schema: ContentSchema, idField: 'contentId', singleton: false },

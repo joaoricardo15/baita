@@ -70,9 +70,8 @@ tests/e2e/tests/journeys/
 │   ├── bots.spec.ts
 │   ├── bots.visual.ts
 │   └── README.md
-├── notes/          → Journey 5: Notes
-│   ├── notes.spec.ts
-│   ├── notes.visual.ts
+├── feelings/        → Journey 5: Feelings
+│   ├── feelings.spec.ts
 │   └── README.md
 ├── places/         → Journey 6: Places
 │   ├── places.visual.ts
@@ -93,12 +92,12 @@ tests/e2e/tests/journeys/
 ## Journey Map
 
 | #   | Journey           | E2E Test                          | Visual Test                         | Visual Checkpoints                                                                          |
-| --- | ----------------- | --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| --- | ----------------- | --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------- | --- |
 | 1   | Authentication    | `auth/auth.spec.ts`               | `auth/auth.visual.ts`               | Landing page (logged out)                                                                   |
 | 2   | To-Do Management  | `todo/todo.spec.ts`               | `todo/todo.visual.ts`               | Initial, after add, after complete                                                          |
 | 3   | Content Feed      | `feed/feed.spec.ts`               | `feed/feed.visual.ts`               | Feed with cards                                                                             |
 | 4   | Bot Automation    | `bots/bots.spec.ts`               | `bots/bots.visual.ts`               | List, editor empty, trigger expanded, webhook URL, action task, test result, deployed, logs |
-| 5   | Notes             | `notes/notes.spec.ts`             | `notes/notes.visual.ts`             | Initial, after creating note                                                                |
+| 5   | Feelings          | `feelings/feelings.spec.ts`       | —                                   | Initial, after creating feeling                                                             |     |
 | 6   | Places            | —                                 | `places/places.visual.ts`           | Map page (map masked)                                                                       |
 | 7   | OAuth Connections | `connections/connections.spec.ts` | `connections/connections.visual.ts` | Service list                                                                                |
 | 8   | Profile & Stats   | —                                 | `profile/profile.visual.ts`         | Profile page                                                                                |

@@ -4,7 +4,7 @@ import {
   IBotTemplate,
   IConnection,
   IContent,
-  INote,
+  IFeeling,
   IPlace,
   ITodo,
 } from '@baita/shared'
@@ -35,7 +35,8 @@ export const fetchConnectionHealth = (connectionId: string) =>
     `connections/${connectionId}/health`
   )
 
-export const fetchNotes = () => getApiResponse<INote[]>('get', 'data/note')
+export const fetchFeelings = () =>
+  getApiResponse<IFeeling[]>('get', 'data/feeling')
 
 export const fetchPlaces = () => getApiResponse<IPlace[]>('get', 'data/place')
 

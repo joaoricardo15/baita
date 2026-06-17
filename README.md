@@ -36,7 +36,7 @@ Users build **bots** — sequential workflows that trigger on events (webhooks, 
               │          www.baita.help             │
               │                                     │
               │  Visual Bot Builder │ Content Feed  │
-              │  AI Assistant       │ Todo / Notes  │
+              │  AI Assistant       │ Todo / Feelings │
               └───────────────┬─────────────────────┘
                               │ HTTPS (JWT)
 ┌─────────────────────────────▼────────────────────────────────────────┐
@@ -255,7 +255,7 @@ All domain data lives in a single DynamoDB table (user-scoped). Models are defin
 | `IConnection` | OAuth token pair for a third-party service           |
 | `IContent`    | Feed item published by a bot execution               |
 | `ITodo`       | User's todo list (singleton)                         |
-| `INote`       | Text note with optional file attachments             |
+| `IFeeling`    | Emotional journal entry with mood and tags           |
 | `IPlace`      | Location pin (Google Maps)                           |
 | `IUser`       | User profile + preferences                           |
 

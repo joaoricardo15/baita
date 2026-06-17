@@ -2,7 +2,7 @@ import {
   IBot,
   IBotTemplate,
   IContent,
-  INote,
+  IFeeling,
   IPlace,
   ITask,
   ITaskExecutionResult,
@@ -54,11 +54,11 @@ export const createConnection = (connectorId: string, apiKey: string) =>
 export const deleteConnection = (connectionId: string) =>
   getApiResponse<void>('delete', `connections/${connectionId}`)
 
-export const createNote = (noteId: string, note: INote) =>
-  getApiResponse<INote>('put', `data/note/${noteId}`, note)
+export const createFeeling = (feelingId: string, feeling: IFeeling) =>
+  getApiResponse<IFeeling>('put', `data/feeling/${feelingId}`, feeling)
 
-export const deleteNote = (noteId: string) =>
-  getApiResponse<INote>('delete', `data/note/${noteId}`)
+export const deleteFeeling = (feelingId: string) =>
+  getApiResponse<IFeeling>('delete', `data/feeling/${feelingId}`)
 
 export const createPlace = (placeId: string, place: IPlace) =>
   getApiResponse<IPlace>('put', `data/place/${placeId}`, place)

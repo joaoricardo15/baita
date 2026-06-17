@@ -349,7 +349,7 @@ cd tests/e2e && npm run test:prod  # Against production (same as CI)
 
 - Three-phase execution: `e2e:setup` → `e2e:test` → `e2e:cleanup` (npm scripts)
 - Setup (`user-lifecycle.spec.ts`): Clean slate (delete stale user), sign up fresh, provision resources, copy Google connection
-- Journeys: `google-gmail`, `todo-journey`, `bot-journey`, `connections`, `pages-security`, `notes-journey`, `content-feed`
+- Journeys: `google-gmail`, `todo-journey`, `bot-journey`, `connections`, `pages-security`, `feelings-journey`, `content-feed`
 - Cleanup (`scripts/cleanup.ts`): Delete account via API (pure Node, no browser)
 - Clean-state principle: nothing exists before tests, everything deleted after
 - Local: both servers auto-start (serverless offline + Vite)

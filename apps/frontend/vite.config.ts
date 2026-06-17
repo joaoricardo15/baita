@@ -56,8 +56,8 @@ export default defineConfig({
             respond({ tasks: data.exampleTodo })
           } else if (url.match(/\/data\/todos$/) && method === 'PATCH') {
             respond(null)
-          } else if (url.match(/\/data\/note$/) && method === 'GET') {
-            respond(data.exampleNoteList)
+          } else if (url.match(/\/data\/feeling$/) && method === 'GET') {
+            respond(data.exampleFeelingList)
           } else if (url.match(/\/data\/place$/) && method === 'GET') {
             respond(data.examplePlaceList)
           } else if (url.match(/\/connections$/) && method === 'GET') {

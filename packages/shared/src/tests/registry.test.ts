@@ -12,7 +12,7 @@ describe('Entity Type Registry', () => {
     expect(types).toContain('bot')
     expect(types).toContain('template')
     expect(types).toContain('connection')
-    expect(types).toContain('note')
+    expect(types).toContain('feeling')
     expect(types).toContain('place')
     expect(types).toContain('todo')
     expect(types).toContain('content')
@@ -21,15 +21,15 @@ describe('Entity Type Registry', () => {
   })
 
   it('getEntityConfig returns config for valid types', () => {
-    const noteConfig = getEntityConfig('note')
-    expect(noteConfig).toBeDefined()
-    expect(noteConfig!.idField).toBe('noteId')
-    expect(noteConfig!.singleton).toBe(false)
-    expect(noteConfig!.schema).not.toBeNull()
+    const feelingConfig = getEntityConfig('feeling')
+    expect(feelingConfig).toBeDefined()
+    expect(feelingConfig!.idField).toBe('feelingId')
+    expect(feelingConfig!.singleton).toBe(false)
+    expect(feelingConfig!.schema).not.toBeNull()
   })
 
   it('getEntityConfig is case-insensitive', () => {
-    expect(getEntityConfig('NOTE')).toEqual(getEntityConfig('note'))
+    expect(getEntityConfig('FEELING')).toEqual(getEntityConfig('feeling'))
     expect(getEntityConfig('Bot')).toEqual(getEntityConfig('bot'))
   })
 
@@ -68,16 +68,16 @@ describe('Entity Type Registry', () => {
   })
 
   it('validates data against schema for typed entities', () => {
-    const noteConfig = getEntityConfig('note')!
-    const validNote = {
-      noteId: 'test-1',
-      title: 'Test Note',
+    const feelingConfig = getEntityConfig('feeling')!
+    const validFeeling = {
+      feelingId: 'test-1',
+      content: 'Feeling great today',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }
-    expect(() => noteConfig.schema!.parse(validNote)).not.toThrow()
+    expect(() => feelingConfig.schema!.parse(validFeeling)).not.toThrow()
 
-    const invalidNote = { noteId: 123, title: null }
-    expect(() => noteConfig.schema!.parse(invalidNote)).toThrow()
+    const invalidFeeling = { feelingId: 123, content: null }
+    expect(() => feelingConfig.schema!.parse(invalidFeeling)).toThrow()
   })
 })

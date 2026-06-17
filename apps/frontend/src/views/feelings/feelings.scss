@@ -1,0 +1,387 @@
+.feeling-capture {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  background: #0a0a1a;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      ellipse at 80% 20%,
+      rgba(99, 102, 241, 0.08),
+      transparent 60%
+    );
+    pointer-events: none;
+  }
+
+  &--dream::before {
+    background: linear-gradient(
+      135deg,
+      #0a0a1a 0%,
+      #1a1040 30%,
+      #0f2060 60%,
+      #0a0a1a 100%
+    );
+    background-size: 400% 400%;
+    animation: dream-gradient 20s ease infinite;
+  }
+
+  &--gratitude::before {
+    background: radial-gradient(
+      ellipse at 50% 80%,
+      rgba(245, 158, 11, 0.06),
+      transparent 60%
+    );
+  }
+}
+
+.feeling-capture__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.feeling-capture__back {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: rgba(240, 240, 245, 0.5);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.9);
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.feeling-capture__time {
+  font-size: 0.8rem;
+  color: rgba(240, 240, 245, 0.3);
+  font-weight: 300;
+}
+
+.feeling-capture__textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f0f0f5;
+  font-size: 1.125rem;
+  font-weight: 300;
+  line-height: 1.7;
+  resize: none;
+  padding: 24px;
+  caret-color: #8b5cf6;
+  position: relative;
+  z-index: 1;
+
+  &::placeholder {
+    color: rgba(240, 240, 245, 0.3);
+  }
+}
+
+.feeling-capture__controls {
+  padding: 16px 24px 32px;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &--visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feeling-capture__save {
+  width: 100%;
+  height: 52px;
+  border: none;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f0f0f5;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 16px;
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+}
+
+// === LIST PAGE ===
+
+.feeling-card {
+  border-left: 3px solid var(--mood-color, #d1d5db);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &--dream {
+    animation: shimmer-border 3s ease infinite;
+  }
+}
+
+.feeling-card__content {
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.feeling-card__no-mood {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px dashed #d1d5db;
+  display: block;
+}
+
+.feeling-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding-left: 54px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.feeling-card__tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  background: rgba(139, 92, 246, 0.1);
+  color: #6b7280;
+  flex-shrink: 0;
+
+  &--dream {
+    background: linear-gradient(
+      135deg,
+      rgba(139, 92, 246, 0.15),
+      rgba(99, 102, 241, 0.15)
+    );
+    color: #8b5cf6;
+  }
+}
+
+.feeling-card__time {
+  font-size: 0.7rem;
+  font-weight: 300;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.feeling-date-header {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+  padding: 12px 0 4px;
+}
+
+// === MOOD PICKER ===
+
+.mood-picker {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.mood-picker__item {
+  width: 52px;
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 4px 2px;
+
+  &:active {
+    transform: scale(0.85);
+  }
+
+  &--selected {
+    opacity: 1;
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow:
+      0 0 0 2px var(--mood-color),
+      0 0 10px var(--mood-glow);
+  }
+}
+
+.mood-picker__emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.mood-picker__label {
+  font-size: 0.55rem;
+  color: rgba(240, 240, 245, 0.6);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+// === TAG INPUT ===
+
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.tag-input__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &--active {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+  }
+
+  &--suggested {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(240, 240, 245, 0.4);
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  &--dream {
+    background: linear-gradient(
+      135deg,
+      rgba(139, 92, 246, 0.25),
+      rgba(99, 102, 241, 0.2)
+    );
+    color: #c4b5fd;
+  }
+}
+
+.tag-input__chip-remove {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: inherit;
+  font-size: 0.6rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.tag-input__field {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: rgba(240, 240, 245, 0.6);
+  font-size: 0.8rem;
+  min-width: 60px;
+  padding: 4px 0;
+
+  &::placeholder {
+    color: rgba(240, 240, 245, 0.25);
+  }
+}
+
+// === ANIMATIONS ===
+
+@keyframes dream-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 100%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 0%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer-border {
+  0%,
+  100% {
+    border-left-color: #8b5cf6;
+  }
+  50% {
+    border-left-color: #6366f1;
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feeling-card-enter {
+  animation: fade-in-up 0.3s ease forwards;
+}

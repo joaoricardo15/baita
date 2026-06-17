@@ -20,7 +20,7 @@ This document defines the visual patterns and rules for the Baita frontend. It s
 
 ### Cards (List Items)
 
-Every list view (bots, connections, notes, todos) uses the same card structure:
+Every list view (bots, connections, feelings, todos) uses the same card structure:
 
 ```
 ┌─────────────────────────────────────────────────┐

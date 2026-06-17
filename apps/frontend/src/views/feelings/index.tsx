@@ -1,0 +1,148 @@
+import './feelings.scss'
+
+import { withAuthenticationRequired } from '@auth0/auth0-react'
+import { IFeeling } from '@baita/shared'
+import {
+  Add as AddIcon,
+  FavoriteBorder as FavoriteBorderIcon,
+} from '@mui/icons-material'
+import { FC } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+import { Button, EmptyState, Loading, Skeleton } from '@/components'
+import { useDeleteFeeling, useFeelings } from '@/hooks/useFeelings'
+import { LINKS } from '@/router'
+import { getLabels, Labels } from '@/utils/labels'
+
+import FeelingCard from './components/feelingCard'
+
+function groupByDay(
+  feelings: IFeeling[]
+): { label: string; items: IFeeling[] }[] {
+  const groups: Map<string, IFeeling[]> = new Map()
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86400000)
+
+  const sorted = [...feelings].sort((a, b) => b.createdAt - a.createdAt)
+
+  for (const feeling of sorted) {
+    const date = new Date(feeling.createdAt)
+    const dayStart = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    )
+
+    let label: string
+    if (dayStart.getTime() === today.getTime()) {
+      label = labels.today
+    } else if (dayStart.getTime() === yesterday.getTime()) {
+      label = labels.yesterday
+    } else {
+      label = date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+      })
+    }
+
+    if (!groups.has(label)) {
+      groups.set(label, [])
+    }
+    groups.get(label)!.push(feeling)
+  }
+
+  return Array.from(groups.entries()).map(([label, items]) => ({
+    label,
+    items,
+  }))
+}
+
+export const Feelings: FC = () => {
+  const navigate = useNavigate()
+  const { data: feelings, isLoading: loading } = useFeelings()
+  const deleteFeeling = useDeleteFeeling()
+
+  const onNewFeeling = () => {
+    navigate(LINKS.feelingNew)
+  }
+
+  const onEditFeeling = (feeling: IFeeling) => {
+    navigate(LINKS.feeling(feeling.feelingId))
+  }
+
+  const onDeleteFeeling = (feelingId: string) => {
+    deleteFeeling.mutate(feelingId)
+  }
+
+  const groups = feelings ? groupByDay(feelings) : []
+
+  return (
+    <>
+      {loading || !feelings ? (
+        <Skeleton elements={3} height={100} />
+      ) : feelings.length === 0 ? (
+        <EmptyState
+          icon={<FavoriteBorderIcon style={{ fontSize: 48 }} />}
+          title={labels.emptyTitle}
+          description={labels.emptyDescription}
+        />
+      ) : (
+        groups.map((group) => (
+          <div key={group.label}>
+            <div className="feeling-date-header">{group.label}</div>
+            {group.items.map((feeling, index) => (
+              <div
+                className="mb-2 feeling-card-enter"
+                key={feeling.feelingId}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <FeelingCard
+                  feeling={feeling}
+                  onEdit={() => onEditFeeling(feeling)}
+                  onDelete={() => onDeleteFeeling(feeling.feelingId)}
+                />
+              </div>
+            ))}
+          </div>
+        ))
+      )}
+
+      <div className="d-flex align-items-center justify-content-center mt-5">
+        <Button
+          type="text"
+          color="primary"
+          icon={<AddIcon />}
+          onClick={onNewFeeling}
+        >
+          {labels.addFeeling}
+        </Button>
+      </div>
+    </>
+  )
+}
+
+export default withAuthenticationRequired(Feelings, {
+  onRedirecting: () => <Loading />,
+})
+
+const LABELS: Labels = {
+  en: {
+    emptyTitle: 'How are you feeling?',
+    emptyDescription:
+      'Capture your feelings, dreams, and moments of gratitude.',
+    addFeeling: 'How are you?',
+    today: 'Today',
+    yesterday: 'Yesterday',
+  },
+  pt: {
+    emptyTitle: 'Como voce esta se sentindo?',
+    emptyDescription:
+      'Capture seus sentimentos, sonhos e momentos de gratidao.', // cspell:disable-line
+    addFeeling: 'Como voce esta?',
+    today: 'Hoje',
+    yesterday: 'Ontem',
+  },
+}
+
+const labels = getLabels(LABELS)

@@ -407,7 +407,7 @@ userId      | #TODO                           | Todo list (singleton)
 userId      | #{TYPE}#{id}                    | Generic data record
 userId      | #CONTENT#{contentId}            | Content item
 userId      | #CONNECTION#{connectionId}      | OAuth connection
-userId      | #NOTE#{noteId}                  | Note
+userId      | #FEELING#{feelingId}            | Feeling entry
 userId      | #PLACE#{placeId}                | Place
 ```
 

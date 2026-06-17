@@ -66,7 +66,7 @@ This document is the architectural reference for the data model. It explains wha
 | **Connection** | Standalone Entity   | connectionId           | DynamoDB `#CONNECTION#`    | Independent of bots      |
 | **Connector**  | Static Definition   | id (slug)              | Code (TypeScript files)    | Never changes at runtime |
 | **BotModel**   | Standalone Entity   | modelId                | DynamoDB `#MODEL#`         | Admin-managed templates  |
-| **Note**       | Standalone Entity   | noteId                 | DynamoDB `#NOTE#`          | User CRUD                |
+| **Feeling**    | Standalone Entity   | feelingId              | DynamoDB `#FEELING#`       | User CRUD                |
 | **Place**      | Standalone Entity   | placeId                | DynamoDB `#PLACE#`         | User CRUD                |
 
 ---
@@ -86,7 +86,7 @@ The project follows a consistent pattern: each domain concept has a schema file 
 | `connection.ts` | Connection, Credential                                               | Standalone entity            |
 | `connector.ts`  | ConnectorManifest, ConnectorOperation, ConnectorAuth                 | Static definitions           |
 | `user.ts`       | User, Content, Todo, TodoTask                                        | Root scope + user data       |
-| `note.ts`       | Note                                                                 | Simple entity                |
+| `feeling.ts`    | Feeling                                                              | Emotional journal entry      |
 | `place.ts`      | Place                                                                | Simple entity                |
 | `api.ts`        | ApiResponse                                                          | Infrastructure (transport)   |
 
@@ -104,16 +104,16 @@ The project follows a consistent pattern: each domain concept has a schema file 
 
 ### Backend Endpoints (`apps/backend/src/endpoints/`)
 
-| Folder         | Handles                            | Schema Counterpart                    |
-| -------------- | ---------------------------------- | ------------------------------------- |
-| `bots/`        | Bot CRUD + deploy + test + logs    | `schemas/bot.ts` + `schemas/task.ts`  |
-| `tasks/`       | Standalone task execution          | `schemas/task.ts`                     |
-| `connections/` | Connection CRUD + health + details | `schemas/connection.ts`               |
-| `user/`        | User create + delete               | `schemas/user.ts`                     |
-| `data/`        | Generic CRUD for Note, Place, etc. | `schemas/note.ts`, `schemas/place.ts` |
-| `content/`     | Content feed (GET only)            | `schemas/user.ts` (ContentSchema)     |
-| `models/`      | Bot model CRUD + deploy            | `schemas/bot.ts`                      |
-| `oauth/`       | OAuth callback                     | —                                     |
+| Folder         | Handles                               | Schema Counterpart                       |
+| -------------- | ------------------------------------- | ---------------------------------------- |
+| `bots/`        | Bot CRUD + deploy + test + logs       | `schemas/bot.ts` + `schemas/task.ts`     |
+| `tasks/`       | Standalone task execution             | `schemas/task.ts`                        |
+| `connections/` | Connection CRUD + health + details    | `schemas/connection.ts`                  |
+| `user/`        | User create + delete                  | `schemas/user.ts`                        |
+| `data/`        | Generic CRUD for Feeling, Place, etc. | `schemas/feeling.ts`, `schemas/place.ts` |
+| `content/`     | Content feed (GET only)               | `schemas/user.ts` (ContentSchema)        |
+| `models/`      | Bot model CRUD + deploy               | `schemas/bot.ts`                         |
+| `oauth/`       | OAuth callback                        | —                                        |
 
 ### Backend Controllers (`apps/backend/src/controllers/`)
 

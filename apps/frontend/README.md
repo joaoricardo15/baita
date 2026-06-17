@@ -19,7 +19,7 @@ React SPA for the Baita personal automation platform. Users build bots, manage c
 │                                    │                                        │
 │  ┌─────────────────────────────────▼─────────────────────────────────────┐  │
 │  │  Views (src/views/)                                                   │  │
-│  │  Page-level components: todo, bots, feed, notes, place, profile       │  │
+│  │  Page-level components: todo, bots, feed, feelings, place, profile       │  │
 │  │  Each view: index.tsx entry + components/ subfolder                   │  │
 │  └─────────────────────────────────┬─────────────────────────────────────┘  │
 │                                    │                                        │
@@ -72,7 +72,7 @@ React SPA for the Baita personal automation platform. Users build bots, manage c
 - Push notifications (VAPID-based, cross-platform including iOS PWA)
 - Content feed with auto-expiring items (DynamoDB TTL)
 - Todo list management
-- Notes with file attachments
+- Feelings journal with mood tracking
 - Places/maps integration
 - Centralized error handling (react-error-boundary)
 - Local mock server for offline development (Vite plugin)
@@ -123,17 +123,17 @@ src/
 
 ## Pages
 
-| Route               | Page    | Description                                     |
-| ------------------- | ------- | ----------------------------------------------- |
-| `/`                 | Landing | Welcome page for unauthenticated users          |
-| `/todo`             | Todo    | Task management (default page after login)      |
-| `/feed`             | Feed    | Content feed from bot executions                |
-| `/bots`             | Bots    | List and manage automation bots                 |
-| `/bots/:botId`      | Bot     | Visual builder + AI Assistant for editing a bot |
-| `/bots/:botId/logs` | Logs    | Bot execution history and logs                  |
-| `/notes`            | Notes   | Personal notes with file attachments            |
-| `/place`            | Places  | Location-based features (Google Maps)           |
-| `/profile`          | Profile | User info and daily progress                    |
+| Route               | Page     | Description                                     |
+| ------------------- | -------- | ----------------------------------------------- |
+| `/`                 | Landing  | Welcome page for unauthenticated users          |
+| `/todo`             | Todo     | Task management (default page after login)      |
+| `/feed`             | Feed     | Content feed from bot executions                |
+| `/bots`             | Bots     | List and manage automation bots                 |
+| `/bots/:botId`      | Bot      | Visual builder + AI Assistant for editing a bot |
+| `/bots/:botId/logs` | Logs     | Bot execution history and logs                  |
+| `/feelings`         | Feelings | Emotional journal with mood and dream capture   |
+| `/place`            | Places   | Location-based features (Google Maps)           |
+| `/profile`          | Profile  | User info and daily progress                    |
 
 ## Environment
 

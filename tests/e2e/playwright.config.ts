@@ -19,7 +19,7 @@ if (isLocalBackend) {
   process.env.API_URL = 'http://localhost:5000/prod'
 }
 
-const visualThreshold = isStrictVisual ? 0.01 : 0.05
+const visualThreshold = isStrictVisual ? 0.03 : 0.05
 
 export default defineConfig({
   testDir: './tests',

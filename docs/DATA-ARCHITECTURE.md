@@ -46,7 +46,7 @@ One table (`CORE_TABLE`), composite key: `userId` (PK) + `sortKey` (SK).
 | `#USER`            | User profile     |
 | `#BOT#{botId}`     | Bot definition   |
 | `#TODO#{id}`       | Todo list        |
-| `#NOTE#{id}`       | Note             |
+| `#FEELING#{id}`    | Feeling          |
 | `#PLACE#{id}`      | Place            |
 | `#CONNECTION#{id}` | OAuth connection |
 | `#CONTENT#{id}`    | Content item     |
@@ -109,7 +109,7 @@ src/hooks/use*.ts      — TanStack Query hooks per domain
 | `useTodo()`        | `['todo']`        | `useTodo.ts`        |
 | `useConnections()` | `['connections']` | `useConnections.ts` |
 | `useContent()`     | `['content']`     | `useContent.ts`     |
-| `useNotes()`       | `['notes']`       | `useNotes.ts`       |
+| `useFeelings()`    | `['feelings']`    | `useFeelings.ts`    |
 | `usePlaces()`      | `['places']`      | `usePlaces.ts`      |
 | `useLogs(botId)`   | `['logs', botId]` | `useLogs.ts`        |
 

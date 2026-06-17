@@ -13,9 +13,10 @@ import Bots from './views/bots'
 import Connections from './views/connections'
 import Document from './views/document'
 import Feed from './views/feed'
+import Feelings from './views/feelings'
+import FeelingCapture from './views/feelings/capture'
 import Landing from './views/landing'
 import Logs from './views/logs'
-import Notes from './views/notes'
 import NotFound from './views/notFound'
 import Places from './views/places'
 import Profile from './views/profile'
@@ -70,7 +71,15 @@ const Router: FC = () => {
                     <Route path={LINKS.feed} element={<Feed />} />
                     <Route path={LINKS.bots} element={<Bots />} />
                     <Route path={LINKS.connections} element={<Connections />} />
-                    <Route path={LINKS.notes} element={<Notes />} />
+                    <Route path={LINKS.feelings} element={<Feelings />} />
+                    <Route
+                      path={LINKS.feelingNew}
+                      element={<FeelingCapture />}
+                    />
+                    <Route
+                      path={LINKS.feeling(':feelingId')}
+                      element={<FeelingCapture />}
+                    />
                     <Route path={LINKS.place} element={<Places />} />
                     <Route path={LINKS.profile} element={<Profile />} />
                     <Route path={LINKS.notFound} element={<NotFound />} />
@@ -100,7 +109,9 @@ export const LINKS = {
   feed: '/feed',
   place: '/place',
   terms: '/terms',
-  notes: '/notes',
+  feelings: '/feelings',
+  feelingNew: '/feelings/new',
+  feeling: (feelingId: string) => `/feelings/${feelingId}`,
   notFound: '/404',
   profile: '/profile',
   privacy: '/privacy',

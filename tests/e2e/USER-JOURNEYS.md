@@ -125,27 +125,26 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 
 ---
 
-## Journey 5: Notes
+## Journey 5: Feelings
 
-**Who:** Authenticated user  
-**Goal:** Quickly capture and organize text notes
+**Priority:** Medium
+**Goal:** Capture feelings, dreams, and reflections with mood tracking
 
 ### Use Cases
 
-| #   | Use Case    | User Action                           | Expected Outcome               |
-| --- | ----------- | ------------------------------------- | ------------------------------ |
-| 5.1 | View notes  | Open /notes                           | See note list (or empty state) |
-| 5.2 | Create note | Type in editor, click "+" or navigate | Note saved and appears in list |
-| 5.3 | Edit note   | Click a note, modify text             | Changes saved on blur          |
-| 5.4 | Delete note | Click delete icon                     | Note removed from list         |
-| 5.5 | New note    | Click "+" button                      | Editor clears for fresh input  |
+| #   | Use Case       | Action                                            | Expected Result                     |
+| --- | -------------- | ------------------------------------------------- | ----------------------------------- |
+| 5.1 | View feelings  | Open /feelings                                    | See timeline list (or empty state)  |
+| 5.2 | Create feeling | Click "How are you?" or navigate to /feelings/new | Capture page opens, saves entry     |
+| 5.3 | Edit feeling   | Click a feeling card                              | Capture page opens with data loaded |
+| 5.4 | Delete feeling | Click 3-dot menu → Delete                         | Feeling removed from list           |
+| 5.5 | Dream capture  | Open /feelings/new?tag=dream                      | Dark theme, dream tag pre-applied   |
 
 ### Test Coverage
 
-- **Unit (Frontend):** `apps/frontend/src/views/notes/tests/index.test.tsx` — Rendering, editing, interactions
-- **Unit (Backend):** `apps/backend/src/controllers/tests/data.test.ts` — Generic CRUD (covers notes)
-- **E2E:** `tests/e2e/tests/notes-journey.spec.ts` — Full lifecycle (create → read → update → delete → verify)
-- **E2E:** `tests/e2e/tests/pages-security.spec.ts` — Notes page renders without errors
+- **Unit (Frontend):** `apps/frontend/src/views/feelings/tests/index.test.tsx` — Rendering, cards, empty state
+- **Unit (Backend):** `apps/backend/src/controllers/tests/data.test.ts` — Generic CRUD (covers feelings)
+- **E2E:** `tests/e2e/tests/journeys/feelings/feelings.spec.ts` — Full lifecycle (create → read → update → delete → verify)
 
 ---
 
@@ -308,7 +307,7 @@ Every new feature, bug fix, or refactoring should be reviewed against this map t
 | 2. To-Do               | ✅        | ✅        | —             | ✅         |
 | 3. Content Feed        | ✅        | ✅        | —             | ✅         |
 | 4. Bot Automation      | ✅        | ✅        | ✅            | ✅         |
-| 5. Notes               | ✅        | ✅        | —             | ✅         |
+| 5. Feelings            | ✅        | ✅        | —             | ✅         |
 | 6. Places              | —         | ✅        | —             | ✅ (smoke) |
 | 7. OAuth Connections   | ✅        | ✅        | —             | ✅         |
 | 8. Push Notifications  | ✅        | ✅        | —             | —          |
@@ -324,7 +323,7 @@ Tests execute in three phases via npm scripts:
 
 ```
 npm run e2e:setup   → user-lifecycle.spec.ts (Playwright — browser Auth0 signup)
-npm run e2e:test    → journeys (connectors/*, todo-journey, bot-journey, connections, pages-security, notes-journey, content-feed)
+npm run e2e:test    → journeys (connectors/*, todo-journey, bot-journey, connections, pages-security, feelings-journey, content-feed)
 npm run e2e:cleanup → scripts/cleanup.ts (pure Node — DELETE /user via saved token)
 ```
 

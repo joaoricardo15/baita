@@ -207,7 +207,7 @@ Billing: On-demand (PAY_PER_REQUEST)
 │  userId      │  #BOT#{botId}                │  Bot workflow definition   │
 │  userId      │  #CONNECTION#{connectionId}  │  OAuth token pair          │
 │  userId      │  #CONTENT#{contentId}        │  Feed item (7-day TTL)     │
-│  userId      │  #NOTE#{noteId}              │  Text note                 │
+│  userId      │  #FEELING#{feelingId}           │  Feeling entry             │
 │  userId      │  #PLACE#{placeId}            │  Location pin              │
 └──────────────┴──────────────────────────────┴────────────────────────────┘
 
