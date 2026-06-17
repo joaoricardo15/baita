@@ -2,13 +2,14 @@ import { DataType, decodeTriggerToken } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback } from 'aws-lambda'
 
 import Bot from '@/controllers/bot'
-import Api, { ApiRequestStatus } from '@/utils/api'
 
 export async function handleRun(
   event: APIGatewayProxyEvent,
-  api: Api,
   callback: Callback
 ): Promise<void> {
+  let success = true
+  let message = ''
+
   try {
     const botId = event.pathParameters?.botId
     if (!botId) throw new Error('Missing botId')
@@ -19,11 +20,20 @@ export async function handleRun(
     const userId = decodeTriggerToken(token)
     const bot = new Bot()
     await bot.triggerBot(userId, botId, parseBody(event))
-
-    api.httpResponse(callback, ApiRequestStatus.success)
   } catch (err: unknown) {
-    api.httpResponse(callback, ApiRequestStatus.fail, err)
+    success = false
+    message =
+      err instanceof Error ? err.message : typeof err === 'string' ? err : ''
   }
+
+  callback(null, {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    },
+    body: JSON.stringify({ success, message }),
+  })
 }
 
 function parseBody(event: APIGatewayProxyEvent): DataType {

@@ -19,7 +19,7 @@ export const handler = async (
   const path = event.resource || ''
 
   if (path.includes('/run/')) {
-    return handleRun(event, api, callback)
+    return handleRun(event, callback)
   }
 
   try {
