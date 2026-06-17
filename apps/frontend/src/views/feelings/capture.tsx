@@ -14,7 +14,15 @@ import { getLabels, Labels } from '@/utils/labels'
 import MoodPicker from './components/moodPicker'
 import TagInput from './components/tagInput'
 
-type Mood = 'peaceful' | 'joyful' | 'curious' | 'anxious' | 'scary' | 'sad'
+type Mood =
+  | 'calm'
+  | 'happy'
+  | 'excited'
+  | 'inspired'
+  | 'anxious'
+  | 'scared'
+  | 'drained'
+  | 'ashamed'
 
 const FeelingCapture: FC = () => {
   const navigate = useNavigate()

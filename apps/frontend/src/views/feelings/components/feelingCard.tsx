@@ -15,21 +15,25 @@ import { getTimeDiffLabel } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 
 const MOOD_COLORS: Record<string, string> = {
-  peaceful: '#6366f1',
-  joyful: '#10b981',
-  curious: '#8b5cf6',
+  calm: '#6366f1',
+  happy: '#10b981',
+  excited: '#ec4899',
+  inspired: '#8b5cf6',
   anxious: '#f59e0b',
-  scary: '#64748b',
-  sad: '#6b7280',
+  scared: '#64748b',
+  drained: '#78716c',
+  ashamed: '#e11d48',
 }
 
 const MOOD_EMOJIS: Record<string, string> = {
-  peaceful: '😌',
-  joyful: '😀',
-  curious: '🤩',
+  calm: '😌',
+  happy: '😀',
+  excited: '🤩',
+  inspired: '🤔',
   anxious: '😟',
-  scary: '😨',
-  sad: '😢',
+  scared: '😨',
+  drained: '😩',
+  ashamed: '🫣',
 }
 
 const FeelingCard: FC<{
@@ -62,7 +66,7 @@ const FeelingCard: FC<{
                 <span className="feeling-card__no-mood" />
               )}
             </div>
-            <Text className="mx-2 feeling-card__content">
+            <Text className="mx-1 feeling-card__content">
               {feeling.content}
             </Text>
           </div>

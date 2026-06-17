@@ -48,8 +48,8 @@ const PushNotificationService: FC<{
   )
 
   const requestPermission = async () => {
-    const regs = await navigator.serviceWorker.getRegistrations()
-    if (regs.length === 0) {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    if (registrations.length === 0) {
       showSnack(labels.noServiceWorker, 'warning')
       setState('not-supported')
       return
@@ -82,8 +82,8 @@ const PushNotificationService: FC<{
 
     navigator.serviceWorker
       .getRegistrations()
-      .then((regs) => {
-        if (regs.length === 0) {
+      .then((registrations) => {
+        if (registrations.length === 0) {
           setState('ready-to-ask')
           return
         }
@@ -220,8 +220,8 @@ const LABELS: Labels = {
     iosTitle: 'Install app first',
     iosDescription:
       'To receive notifications on iPhone, this app must be installed to your Home Screen.',
-    iosStep1: 'Tap the Share button at the bottom',
-    iosStep2: 'Tap "Add to Home Screen"',
+    iosStep1: 'Open this page in Safari, tap the Share button',
+    iosStep2: 'Scroll down and tap "Add to Home Screen"',
     iosStep3: 'Open the app from your Home Screen',
   },
   pt: {
@@ -244,8 +244,8 @@ const LABELS: Labels = {
     iosTitle: 'Instale o app primeiro',
     iosDescription:
       'Para receber notificações no iPhone, o app precisa estar instalado na sua Tela Inicial.',
-    iosStep1: 'Toque no botão Compartilhar na parte inferior',
-    iosStep2: 'Toque em "Adicionar à Tela Inicial"',
+    iosStep1: 'Abra esta página no Safari e toque em Compartilhar',
+    iosStep2: 'Role para baixo e toque em "Adicionar à Tela Inicial"',
     iosStep3: 'Abra o app pela sua Tela Inicial',
   },
 }

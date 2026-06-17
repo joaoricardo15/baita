@@ -2,14 +2,7 @@ import '../feelings.scss'
 
 import { FC, KeyboardEvent, useState } from 'react'
 
-const SUGGESTED_TAGS = [
-  'dream',
-  'lucid',
-  'recurring',
-  'nightmare',
-  'gratitude',
-  'reflection',
-]
+const SUGGESTED_TAGS = ['dream', 'recurring', 'gratitude', 'reflection']
 
 const TagInput: FC<{
   tags: string[]

@@ -2,7 +2,15 @@ import '../feelings.scss'
 
 import { FC } from 'react'
 
-type Mood = 'peaceful' | 'joyful' | 'curious' | 'anxious' | 'scary' | 'sad'
+type Mood =
+  | 'calm'
+  | 'happy'
+  | 'excited'
+  | 'inspired'
+  | 'anxious'
+  | 'scared'
+  | 'drained'
+  | 'ashamed'
 
 const MOODS: {
   value: Mood
@@ -12,23 +20,30 @@ const MOODS: {
   glow: string
 }[] = [
   {
-    value: 'peaceful',
+    value: 'calm',
     emoji: '😌',
     label: 'Calm',
     color: '#6366f1',
     glow: 'rgba(99, 102, 241, 0.3)',
   },
   {
-    value: 'joyful',
+    value: 'happy',
     emoji: '😀',
     label: 'Happy',
     color: '#10b981',
     glow: 'rgba(16, 185, 129, 0.3)',
   },
   {
-    value: 'curious',
+    value: 'excited',
     emoji: '🤩',
     label: 'Excited',
+    color: '#ec4899',
+    glow: 'rgba(236, 72, 153, 0.3)',
+  },
+  {
+    value: 'inspired',
+    emoji: '🤔',
+    label: 'Inspired',
     color: '#8b5cf6',
     glow: 'rgba(139, 92, 246, 0.3)',
   },
@@ -40,18 +55,25 @@ const MOODS: {
     glow: 'rgba(245, 158, 11, 0.3)',
   },
   {
-    value: 'scary',
+    value: 'scared',
     emoji: '😨',
     label: 'Scared',
     color: '#64748b',
     glow: 'rgba(100, 116, 139, 0.3)',
   },
   {
-    value: 'sad',
-    emoji: '😢',
-    label: 'Sad',
-    color: '#6b7280',
-    glow: 'rgba(107, 114, 128, 0.3)',
+    value: 'drained',
+    emoji: '😩',
+    label: 'Drained',
+    color: '#78716c',
+    glow: 'rgba(120, 113, 108, 0.3)',
+  },
+  {
+    value: 'ashamed',
+    emoji: '🫣',
+    label: 'Ashamed',
+    color: '#e11d48',
+    glow: 'rgba(225, 29, 72, 0.3)',
   },
 ]
 
