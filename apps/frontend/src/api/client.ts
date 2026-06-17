@@ -10,12 +10,18 @@ export const apiClient = Axios.create({
   },
 })
 
-export function setupAuthInterceptor(getToken: () => Promise<string>) {
-  apiClient.interceptors.request.use(async (config) => {
-    const token = await getToken()
+let tokenGetter: (() => Promise<string>) | null = null
+
+apiClient.interceptors.request.use(async (config) => {
+  if (tokenGetter) {
+    const token = await tokenGetter()
     config.headers.Authorization = `Bearer ${token}`
-    return config
-  })
+  }
+  return config
+})
+
+export function setupAuthInterceptor(getToken: () => Promise<string>) {
+  tokenGetter = getToken
 }
 
 export function getApiResponse<T>(method: string, url: string, data?: unknown) {

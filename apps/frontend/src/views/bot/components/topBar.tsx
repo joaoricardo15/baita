@@ -4,7 +4,6 @@ import {
   AutoFixHigh as AutoFixHighIcon,
   CloudDone as CloudDoneIcon,
   CloudOff as CloudOffIcon,
-  CloudSync as CloudSyncIcon,
   Delete as DeleteIcon,
   History as HistoryIcon,
   MoreVert as MoreVertIcon,
@@ -16,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { Button, TextInput } from '@/components'
 import Menu from '@/components/menu'
+import TriggerDialog from '@/components/triggerDialog'
 import {
   useBot,
   useDeleteBot,
@@ -47,21 +47,22 @@ const TopBar: FC<{
   const [botName, setBotName] = useState(name)
   const [botDescription, setBotDescription] = useState(description)
   const [botImage, setBotImage] = useState(image)
+  const [triggerOpen, setTriggerOpen] = useState(false)
 
   const onNameChange = (name: string) => {
-    if (bot) {
+    if (bot && name !== bot.name) {
       updateBot.mutate({ botId: bot.botId, bot: { ...bot, name } })
     }
   }
 
   const onDescriptionChange = (description?: string) => {
-    if (bot) {
+    if (bot && description !== bot.description) {
       updateBot.mutate({ botId: bot.botId, bot: { ...bot, description } })
     }
   }
 
   const onImageChange = (image?: string) => {
-    if (bot) {
+    if (bot && image !== bot.image) {
       updateBot.mutate({ botId: bot.botId, bot: { ...bot, image } })
     }
   }
@@ -100,7 +101,7 @@ const TopBar: FC<{
     {
       label: labels.triggerButton,
       icon: <TriggerIcon color="secondary" />,
-      onClick: () => {},
+      onClick: () => setTriggerOpen(true),
       condition: isActive,
     },
     {
@@ -143,15 +144,12 @@ const TopBar: FC<{
             className="d-flex align-items-center ms-1"
             style={{ width: 20, minWidth: 20 }}
           >
-            {saveStatus === 'saving' && (
-              <CloudSyncIcon
-                color="secondary"
-                style={{ fontSize: 18 }}
-                className="animate-pulse-once"
-              />
-            )}
             {saveStatus === 'saved' && (
-              <CloudDoneIcon color="success" style={{ fontSize: 18 }} />
+              <CloudDoneIcon
+                color="success"
+                style={{ fontSize: 18 }}
+                className="animate-fade-in-out"
+              />
             )}
             {saveStatus === 'error' && (
               <CloudOffIcon color="error" style={{ fontSize: 18 }} />
@@ -187,6 +185,15 @@ const TopBar: FC<{
           />
         </div>
       </div>
+
+      {bot && (
+        <TriggerDialog
+          open={triggerOpen}
+          botId={bot.botId}
+          initialPayload={bot.triggerSamples?.[0]?.inputData}
+          onClose={() => setTriggerOpen(false)}
+        />
+      )}
     </>
   )
 }

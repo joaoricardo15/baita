@@ -267,7 +267,7 @@ class Bot {
       const lastSample = botData?.triggerSamples?.at(-1)
       sample = lastSample ?? {
         status: TaskExecutionStatus.success,
-        inputData: null,
+        inputData: {},
         outputData: null,
         timestamp: Date.now(),
       }

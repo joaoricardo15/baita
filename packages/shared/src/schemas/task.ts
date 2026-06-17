@@ -203,7 +203,8 @@ export function validateBot(bot: { tasks: ITask[] }): IValidationResult {
         if (
           field.required &&
           field.type !== VariableType.constant &&
-          field.type !== VariableType.environment
+          field.type !== VariableType.environment &&
+          field.type !== VariableType.user
         ) {
           const stored = task.inputData.find((d) => d.name === field.name)
           const hasValue =

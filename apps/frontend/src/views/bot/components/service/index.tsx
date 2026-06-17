@@ -1,6 +1,7 @@
 import {
   IConnection,
   IServiceApp,
+  ITask,
   IVariable,
   MethodName,
   ServiceName,
@@ -34,14 +35,11 @@ const TaskService: FC<{
   const updateBotTask = (
     botId: string,
     taskIndex: number,
-    updatedTask: Partial<import('@baita/shared').ITask>
+    updatedTask: ITask
   ) => {
     if (bot) {
       const updatedTasks = [...bot.tasks]
-      updatedTasks[taskIndex] = {
-        ...updatedTasks[taskIndex],
-        ...updatedTask,
-      } as import('@baita/shared').ITask
+      updatedTasks[taskIndex] = updatedTask
       updateBot.mutate({ botId, bot: { ...bot, tasks: updatedTasks } })
     }
   }
@@ -49,51 +47,38 @@ const TaskService: FC<{
   const onSelectService = (appService: IServiceApp | null) => {
     if (bot && task) {
       if (appService) {
-        const updatedTask = {
-          ...task,
+        const sameApp = task.app?.appId === appService.app.appId
+        updateBotTask(bot.botId, taskIndex, {
+          taskId: task.taskId,
           app: appService.app,
           service: appService.service,
-          sampleResult: undefined,
-          inputData: appService.service.config.customFields
-            ? []
-            : task.inputData,
-        }
-
-        updateBotTask(bot.botId, taskIndex, updatedTask)
+          inputData: [],
+          connectionId: sameApp ? task.connectionId : undefined,
+        })
       } else {
-        const updatedTask = {
+        updateBotTask(bot.botId, taskIndex, {
           taskId: task.taskId,
           inputData: [],
-        }
-
-        updateBotTask(bot.botId, taskIndex, updatedTask)
+        })
       }
     }
   }
 
   const onSelectConnection = (appConnection: IConnection) => {
     if (bot && task) {
-      const updatedTask = {
+      updateBotTask(bot.botId, taskIndex, {
         ...task,
         connectionId: appConnection ? appConnection.connectionId : undefined,
-      }
-      updateBotTask(bot.botId, taskIndex, updatedTask)
+      })
     }
   }
 
   const updateBotInputField = (fieldName: string, inputField: IVariable) => {
     if (bot && task) {
       const updatedInputData = [...task.inputData]
-      const inputDataIndex = updatedInputData.findIndex(
-        (x) => x.name === fieldName
-      )
-
-      if (inputDataIndex >= 0) {
-        updatedInputData[inputDataIndex] = inputField
-      } else {
-        updatedInputData.push(inputField)
-      }
-
+      const idx = updatedInputData.findIndex((x) => x.name === fieldName)
+      if (idx >= 0) updatedInputData[idx] = inputField
+      else updatedInputData.push(inputField)
       updateBotTask(bot.botId, taskIndex, {
         ...task,
         inputData: updatedInputData,

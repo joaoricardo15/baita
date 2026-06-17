@@ -186,6 +186,7 @@ functions:
       - http:
           path: bots/{botId}/run/{token}
           method: post
+          cors: true
 
   # ─── Bot Templates (shared automation templates) ────────────
   endpoint-bot-templates:
