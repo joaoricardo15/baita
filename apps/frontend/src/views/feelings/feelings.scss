@@ -138,33 +138,18 @@
 // === LIST PAGE ===
 
 .feeling-card {
-  border-left: 3px solid var(--mood-color, #d1d5db);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-
-  &--dream {
-    animation: shimmer-border 3s ease infinite;
-  }
+  cursor: pointer;
 }
 
 .feeling-card__content {
   font-size: 0.9rem;
-  font-weight: 600;
-  line-height: 1.4;
+  font-weight: 500;
+  line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   word-break: break-word;
-}
-
-.feeling-card__no-mood {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px dashed #d1d5db;
-  display: block;
 }
 
 .feeling-card__meta {
@@ -172,7 +157,6 @@
   align-items: center;
   gap: 4px;
   margin-top: 4px;
-  padding-left: 54px;
   overflow: hidden;
   white-space: nowrap;
 }
@@ -202,15 +186,6 @@
   font-weight: 300;
   color: #9ca3af;
   flex-shrink: 0;
-}
-
-.feeling-date-header {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #6b7280;
-  padding: 12px 0 4px;
 }
 
 // === MOOD PICKER ===
@@ -359,16 +334,6 @@
   }
   100% {
     background-position: 0% 50%;
-  }
-}
-
-@keyframes shimmer-border {
-  0%,
-  100% {
-    border-left-color: #8b5cf6;
-  }
-  50% {
-    border-left-color: #6366f1;
   }
 }
 

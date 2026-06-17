@@ -23,11 +23,22 @@ const BotCard: FC<{
     <Card className="p-2">
       <div className="d-flex justify-content-between align-items-center">
         <div className="d-flex align-items-center overflow-hidden">
-          {image && (
-            <div style={{ width: 60, minWidth: 60 }} className="m-3">
+          <div style={{ width: 60, minWidth: 60 }} className="m-3">
+            {image ? (
               <img width={60} src={image} alt="Bot front image" />
-            </div>
-          )}
+            ) : (
+              <span
+                style={{
+                  display: 'block',
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  border: '2px dashed #d1d5db',
+                  margin: '0 auto',
+                }}
+              />
+            )}
+          </div>
           <div className="mx-2" style={{ minWidth: 0 }}>
             <div className="d-flex align-items-center">
               {name ? (

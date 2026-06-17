@@ -1,41 +1,27 @@
-import { PhoneIphone as PhoneIcon } from '@mui/icons-material'
-import { FC } from 'react'
+import {
+  ContentCopy as CopyIcon,
+  PhoneIphone as PhoneIcon,
+} from '@mui/icons-material'
+import { FC, useContext } from 'react'
+import { CopyToClipboard } from 'react-copy-to-clipboard'
 
+import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
-
-const TEMPLATES: Record<string, { steps: string[]; stepsPt: string[] }> = {
-  'alarm-stopped': {
-    steps: [
-      'Open the Shortcuts app on your iPhone',
-      'Tap the Automation tab at the bottom',
-      'Tap "+" then choose "Alarm"',
-      'Select "Is Stopped" → "Any Alarm" → Next',
-      'Tap "New Blank Automation" → search "Get Contents of URL"',
-      'Paste the webhook URL shown above',
-      'Tap "Method" → change to "POST"',
-      'Go back → turn OFF "Ask Before Running" → Done',
-    ],
-    stepsPt: [
-      'Abra o app Atalhos no seu iPhone',
-      'Toque na aba Automação na parte inferior',
-      'Toque em "+" e escolha "Alarme"',
-      'Selecione "É Parado" → "Qualquer Alarme" → Seguinte',
-      'Toque "Nova Automação em Branco" → busque "Obter Conteúdo do URL"',
-      'Cole a URL do webhook mostrada acima',
-      'Toque em "Método" → mude para "POST"',
-      'Volte → desative "Perguntar Antes de Executar" → OK',
-    ],
-  },
-}
 
 const IPhoneSetupGuide: FC<{
   template: string
-}> = ({ template }) => {
+  webhookUrl?: string
+}> = ({ template, webhookUrl }) => {
+  const { showSnack } = useContext(NotificationContext)
   const templateData = TEMPLATES[template]
   if (!templateData) return null
 
   const steps =
     labels._lang === 'pt' ? templateData.stepsPt : templateData.steps
+  const urlStepIndex =
+    labels._lang === 'pt'
+      ? templateData.urlStepIndexPt
+      : templateData.urlStepIndex
 
   return (
     <div className="mt-3 p-3 rounded" style={{ background: '#f8f9fa' }}>
@@ -55,6 +41,24 @@ const IPhoneSetupGuide: FC<{
         {steps.map((step, i) => (
           <li key={i} className="mb-1" style={{ color: '#444' }}>
             {step}
+            {i === urlStepIndex && webhookUrl && (
+              <CopyToClipboard
+                text={webhookUrl}
+                onCopy={() => showSnack(labels.copied, 'success')}
+              >
+                <span
+                  className="text-primary fw-bold d-inline-flex align-items-center"
+                  style={{
+                    cursor: 'pointer',
+                    marginLeft: 4,
+                    gap: 3,
+                  }}
+                >
+                  <CopyIcon style={{ fontSize: 13 }} />
+                  {labels.tapToCopy}
+                </span>
+              </CopyToClipboard>
+            )}
           </li>
         ))}
       </ol>
@@ -64,17 +68,54 @@ const IPhoneSetupGuide: FC<{
 
 export default IPhoneSetupGuide
 
+const TEMPLATES: Record<
+  string,
+  {
+    steps: string[]
+    stepsPt: string[]
+    urlStepIndex: number
+    urlStepIndexPt: number
+  }
+> = {
+  'alarm-stopped': {
+    steps: [
+      'Open the Shortcuts app → Automation tab',
+      'Tap "+" → choose "Alarm" → select "Is Stopped" → pick your alarm → Next',
+      'Tap "Create New Shortcut" → search "Get Contents of URL"',
+      'Paste this webhook URL into the URL field:',
+      'Tap the chevron (>) on the action to expand it → change Method to "POST"',
+      'Tap Done to save the automation',
+      'Back in Automation list: tap your new automation → select "Run Immediately"',
+    ],
+    urlStepIndex: 3,
+    stepsPt: [
+      'Abra Atalhos → aba Automação',
+      'Toque "+" → escolha "Alarme" → selecione "É Parado" → escolha o alarme → Seguinte',
+      'Toque "Criar Novo Atalho" → busque "Obter Conteúdo do URL"',
+      'Cole esta URL do webhook no campo URL:',
+      'Toque no chevron (>) da ação para expandir → mude o Método para "POST"',
+      'Toque OK para salvar a automação',
+      'Na lista de Automações: toque na automação criada → selecione "Executar Imediatamente"',
+    ],
+    urlStepIndexPt: 3,
+  },
+}
+
 const LABELS: Labels = {
   en: {
     title: 'iPhone Shortcuts setup',
     description:
       'Create a personal automation in the Shortcuts app to connect your alarm:',
+    copied: 'URL copied',
+    tapToCopy: 'Tap here to copy',
     _lang: 'en',
   },
   pt: {
     title: 'Configuração de Atalhos do iPhone',
     description:
       'Crie uma automação pessoal no app Atalhos para conectar seu alarme:',
+    copied: 'URL copiada',
+    tapToCopy: 'Toque aqui para copiar',
     _lang: 'pt',
   },
 }

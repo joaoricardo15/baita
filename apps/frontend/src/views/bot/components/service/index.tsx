@@ -14,6 +14,7 @@ import { OptionsInput } from '@/components'
 import { useBot, useUpdateBot } from '@/hooks/useBots'
 import { AppsContext } from '@/providers/apps'
 import { AuthContext } from '@/providers/auth'
+import { computeRunUrl } from '@/utils/bot'
 import { getLabels, Labels } from '@/utils/labels'
 
 import IPhoneSetupGuide from './iphoneSetupGuide'
@@ -184,15 +185,17 @@ const TaskService: FC<{
             />
           )}
 
-          {/***** Webhook specific display *****/}
-          {(task.service?.name === ServiceName.webhook ||
-            task.service?.name === ServiceName.phoneEvent) && (
+          {/***** Webhook specific display (not for phoneEvent — URL is in the guide) *****/}
+          {task.service?.name === ServiceName.webhook && (
             <WebhookService botId={bot.botId} userId={userId} />
           )}
 
           {/***** iPhone automation setup guide *****/}
           {task.service?.name === ServiceName.phoneEvent && (
-            <IPhoneSetupGuide template="alarm-stopped" />
+            <IPhoneSetupGuide
+              template="alarm-stopped"
+              webhookUrl={computeRunUrl(bot.botId, userId)}
+            />
           )}
 
           {/***** Push notification specific display *****/}
