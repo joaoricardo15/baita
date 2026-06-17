@@ -35,7 +35,7 @@ const BotCard: FC<{
               ) : (
                 <Text>{labels.noName}</Text>
               )}
-              <Switch checked={active} onChange={onToggleBot} />
+              <Switch checked={active} onChange={onToggleBot} size="small" />
             </div>
             {description && (
               <Text className="fw-light fs-6 text-truncate">{description}</Text>

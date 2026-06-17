@@ -500,8 +500,8 @@ test.describe('Bot Journey', () => {
     await page.goto(`/bots/${botId}`)
     await waitForPageReady(page)
 
-    // Assert: bot is active (Turn off button visible = bot is on)
-    await expect(page.getByRole('button', { name: 'Turn off' })).toBeVisible()
+    // Assert: bot is active (switch is checked = bot is on)
+    await expect(page.getByRole('checkbox')).toBeChecked()
 
     await expect(page).toHaveScreenshot('bot-deployed-active.png', {
       fullPage: true,
