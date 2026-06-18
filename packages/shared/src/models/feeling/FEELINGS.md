@@ -47,7 +47,7 @@ convention (Marc Brackett's RULER framework), used by the How We Feel app
   ENERGY │                      │                      │
          │    😟 Anxious        │    😄 Joyful         │
          │    😤 Frustrated     │    🤩 Excited        │
-         │                      │    🤗 Inspired       │
+         │    😵‍💫 Overwhelmed   │    🤗 Inspired       │
          │                      │                      │
          │    Color: Red/Coral  │    Color: Yellow/Gold│
          ├──────────────────────┼──────────────────────┤
@@ -57,7 +57,7 @@ convention (Marc Brackett's RULER framework), used by the How We Feel app
   ENERGY │                      │                      │
          │    😢 Sad            │    😌 Calm           │
          │    😩 Drained        │    🥰 Grateful       │
-         │    🫥 Lonely         │                      │
+         │    🫥 Lonely         │    😊 Content        │
          │                      │                      │
          │    Color: Blue/Slate │    Color: Green/Teal │
          └──────────────────────┴──────────────────────┘
@@ -74,7 +74,7 @@ discrete lists lose the relational structure between emotions.
 
 ---
 
-## Why 10 Moods?
+## Why 12 Moods?
 
 ### Research Finding: 8–16 is the safe range
 
@@ -97,12 +97,17 @@ compared to 10-item versions.
 > **Source:** Hall et al. (2021). "PANAS as dominant EMA measure."
 > https://pmc.ncbi.nlm.nih.gov/articles/PMC10213137/
 
-### Our decision
+### Our decision: 12 moods, perfectly balanced (3-3-3-3)
 
-**10 moods** — 5 positive (3 high-energy + 2 low-energy) and 5 negative
-(2 high-energy + 3 low-energy). The slight asymmetry toward negative
-low-energy options reflects research showing negative emotions are more
-differentiated in self-report measures and daily experience.
+**12 moods** — 6 positive (3 high-energy + 3 low-energy) and 6 negative
+(3 high-energy + 3 low-energy). Each quadrant has exactly 3 options.
+
+**Why balanced?** An unequal distribution (e.g., 3-2-2-3) introduces
+**selection bias** — quadrants with more options are easier to match,
+nudging users toward those states regardless of their actual experience.
+For a personal wellbeing journal (not a clinical tool), equal quadrant
+representation prevents subtle biases like "good always = energized" or
+"bad always = depleted."
 
 ---
 
@@ -160,6 +165,16 @@ involves outward appreciation toward people, circumstances, or experiences.
 
 ---
 
+### 😊 Content (Low Energy + Pleasant)
+
+A satisfied, at-peace-with-life state. Distinct from Calm (absence of stress)
+and Grateful (relational warmth directed outward). Content is about internal
+satisfaction — "things are good as they are." Research on subjective wellbeing
+distinguishes life satisfaction (cognitive evaluation) from momentary affect —
+"content" captures the affective component of feeling satisfied in the moment.
+
+---
+
 ### 😟 Anxious (High Energy + Unpleasant)
 
 The most common high-energy negative emotion in daily life. Factor analysis of
@@ -184,6 +199,17 @@ Including both ensures users can distinguish "worried about the future"
 > **Source:** Factor analysis supports separating anxious vs. hostile negative
 > affect in daily mood measurement.
 > https://pmc.ncbi.nlm.nih.gov/articles/PMC10213137/
+
+---
+
+### 😵‍💫 Overwhelmed (High Energy + Unpleasant)
+
+Exceeding capacity — too much input, too many demands, sensory or cognitive
+overload. Distinct from Anxious (which is future-focused worry) and Frustrated
+(which is blocked goals). Overwhelmed is about **present-moment excess** —
+"too much right now." A common daily experience in modern life (information
+overload, multitasking demands, sensory saturation) that is high-energy
+(the system is activated/buzzing) but deeply unpleasant.
 
 ---
 
@@ -227,7 +253,7 @@ non-clinical daily use.
 
 ## Emoji Design Principle
 
-All 10 moods use **face emojis** exclusively. This creates:
+All 12 moods use **face emojis** exclusively. This creates:
 
 1. **Visual consistency** — every mood option looks and feels the same "type"
 2. **Instant recognition** — facial expressions are universally understood
@@ -255,18 +281,20 @@ clinical settings worldwide:
 Sub-moods within a quadrant use **lighter shades** of the family color to
 maintain visual cohesion while remaining individually distinguishable:
 
-| Mood       | Hex       | Shade level     |
-| ---------- | --------- | --------------- |
-| Joyful     | `#F2C94C` | Primary         |
-| Excited    | `#FFDD67` | Light           |
-| Inspired   | `#FFE99A` | Lighter         |
-| Calm       | `#43C59E` | Primary         |
-| Grateful   | `#6EE7B7` | Light           |
-| Anxious    | `#E85D5D` | Primary         |
-| Frustrated | `#F87171` | Light           |
-| Sad        | `#4D8DFF` | Primary         |
-| Drained    | `#7BA3E8` | Light           |
-| Lonely     | `#94A3B8` | Lighter (faded) |
+| Mood        | Hex       | Shade level     |
+| ----------- | --------- | --------------- |
+| Joyful      | `#F2C94C` | Primary         |
+| Excited     | `#FFDD67` | Light           |
+| Inspired    | `#FFE99A` | Lighter         |
+| Calm        | `#43C59E` | Primary         |
+| Grateful    | `#6EE7B7` | Light           |
+| Content     | `#A7F3D0` | Lighter         |
+| Anxious     | `#E85D5D` | Primary         |
+| Frustrated  | `#F87171` | Light           |
+| Overwhelmed | `#FCA5A5` | Lighter         |
+| Sad         | `#4D8DFF` | Primary         |
+| Drained     | `#7BA3E8` | Light           |
+| Lonely      | `#94A3B8` | Lighter (faded) |
 
 > **Source:** Brackett, M. A. (2019). _Permission to Feel._ The Mood Meter
 > uses red/blue/green/yellow as canonical quadrant colors in educational
@@ -301,10 +329,27 @@ not "What subtype of sadness is this?"
 
 ### Tag Categories
 
-| Category             | Tags                                                        | Purpose                    |
-| -------------------- | ----------------------------------------------------------- | -------------------------- |
-| **Journaling mode**  | dream, gratitude, reflection, milestone                     | What kind of entry this is |
-| **Context triggers** | work, relationship, health, social, family, creative, money | What prompted the feeling  |
+| Category             | Tags                                                                         | Purpose                    |
+| -------------------- | ---------------------------------------------------------------------------- | -------------------------- |
+| **Journaling mode**  | dream, gratitude, reflection, milestone                                      | What kind of entry this is |
+| **Context triggers** | work, relationship, health, exercise, social, family, creative, money, shame | What prompted the feeling  |
+
+**Exercise** — EMA studies consistently track physical activity as context
+alongside mood. The bidirectional relationship between exercise and mood is
+one of the most replicated findings in health psychology. Distinct from
+"health" (which covers illness, doctors, health anxiety).
+
+> **Source:** "EMA of physical activity and affective responses: a scoping
+> review" — https://www.sciencedirect.com/science/article/pii/S1755296625000596
+
+**Shame** — A self-conscious emotion that occurs in meaningful "bursts" in
+daily life. As a tag (not a mood), it describes a trigger/nuance alongside
+the primary mood — e.g., feeling "anxious" + tagged "shame," or "sad" +
+tagged "shame." More psychologically aversive than guilt, and linked to
+health-relevant outcomes in EMA studies.
+
+> **Source:** "Bursts of Self-Conscious Emotions in the Daily Lives of
+> Emerging Adults" — https://pmc.ncbi.nlm.nih.gov/articles/PMC4386286/
 
 Tags are shown as suggestions but users can always type custom tags freely.
 This ensures the system grows with the user's vocabulary while providing
@@ -322,10 +367,10 @@ cell, not a flat list:
 ```
 ┌─────────────────┬─────────────────┐
 │  (red tint)     │  (yellow tint)  │
-│  😟 😤          │  😄 🤩 🤗       │
+│  😟 😤 😵‍💫      │  😄 🤩 🤗       │
 ├─────────────────┼─────────────────┤
 │  (blue tint)    │  (green tint)   │
-│  😢 😩 🫥       │  😌 🥰          │
+│  😢 😩 🫥       │  😌 🥰 😊       │
 └─────────────────┴─────────────────┘
 ```
 
@@ -342,7 +387,7 @@ cell, not a flat list:
 
 ### The Feelings List (Color Accent Borders)
 
-Each feeling card has a **4px colored left border** matching its mood's
+Each feeling card has a **5px colored left border** matching its mood's
 quadrant color. This creates a visual "emotional timeline" when scrolling:
 
 - Streak of red borders → stressful, activated period
@@ -371,6 +416,9 @@ recognizing patterns over time.
 | 8   | Barrett (2017) — "The theory of constructed emotion"                             | https://www.sciencedirect.com/science/article/pii/S2352250X15000986                                     |
 | 9   | EMA mood set validation (preprint, N=93)                                         | https://sciety.org/articles/activity/10.31234/osf.io/q4e9b_v1                                           |
 | 10  | Trampe et al. (2015) — "Emotions in everyday life"                               | https://pmc.ncbi.nlm.nih.gov/articles/PMC8751584/                                                       |
+| 11  | "EMA of physical activity and affective responses" (scoping review)              | https://www.sciencedirect.com/science/article/pii/S1755296625000596                                     |
+| 12  | "Bursts of Self-Conscious Emotions in Daily Lives" (shame EMA)                   | https://pmc.ncbi.nlm.nih.gov/articles/PMC4386286/                                                       |
+| 13  | "Smartphone-Based EMA of Well-Being" (systematic review)                         | https://pmc.ncbi.nlm.nih.gov/articles/PMC8550316/                                                       |
 
 ---
 

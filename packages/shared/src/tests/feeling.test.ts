@@ -12,8 +12,8 @@ import {
 
 describe('Feeling Constants', () => {
   describe('MOOD_VALUES', () => {
-    it('has 10 moods', () => {
-      expect(MOOD_VALUES).toHaveLength(10)
+    it('has 12 moods', () => {
+      expect(MOOD_VALUES).toHaveLength(12)
     })
 
     it('contains expected moods', () => {
@@ -22,8 +22,10 @@ describe('Feeling Constants', () => {
       expect(MOOD_VALUES).toContain('inspired')
       expect(MOOD_VALUES).toContain('calm')
       expect(MOOD_VALUES).toContain('grateful')
+      expect(MOOD_VALUES).toContain('content')
       expect(MOOD_VALUES).toContain('anxious')
       expect(MOOD_VALUES).toContain('frustrated')
+      expect(MOOD_VALUES).toContain('overwhelmed')
       expect(MOOD_VALUES).toContain('sad')
       expect(MOOD_VALUES).toContain('drained')
       expect(MOOD_VALUES).toContain('lonely')
@@ -55,9 +57,15 @@ describe('Feeling Constants', () => {
       }
     })
 
-    it('covers all 4 quadrants', () => {
-      const coveredQuadrants = new Set(MOODS.map((m) => m.quadrant))
-      expect(coveredQuadrants.size).toBe(4)
+    it('has 3 moods per quadrant (balanced)', () => {
+      const counts: Record<string, number> = {}
+      for (const mood of MOODS) {
+        counts[mood.quadrant] = (counts[mood.quadrant] || 0) + 1
+      }
+      expect(counts.highPositive).toBe(3)
+      expect(counts.lowPositive).toBe(3)
+      expect(counts.highNegative).toBe(3)
+      expect(counts.lowNegative).toBe(3)
     })
   })
 

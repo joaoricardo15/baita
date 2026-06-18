@@ -29,8 +29,10 @@ export const MOOD_VALUES = [
   'inspired',
   'calm',
   'grateful',
+  'content',
   'anxious',
   'frustrated',
+  'overwhelmed',
   'sad',
   'drained',
   'lonely',
@@ -92,6 +94,14 @@ export const MOODS: MoodDefinition[] = [
     labels: { en: 'Grateful', pt: 'Grato' },
   },
   {
+    value: 'content',
+    emoji: '😊',
+    quadrant: 'lowPositive',
+    color: '#A7F3D0',
+    glow: 'rgba(167, 243, 208, 0.3)',
+    labels: { en: 'Content', pt: 'Satisfeito' },
+  },
+  {
     value: 'anxious',
     emoji: '😟',
     quadrant: 'highNegative',
@@ -106,6 +116,14 @@ export const MOODS: MoodDefinition[] = [
     color: '#F87171',
     glow: 'rgba(248, 113, 113, 0.3)',
     labels: { en: 'Frustrated', pt: 'Frustrado' },
+  },
+  {
+    value: 'overwhelmed',
+    emoji: '😵‍💫',
+    quadrant: 'highNegative',
+    color: '#FCA5A5',
+    glow: 'rgba(252, 165, 165, 0.3)',
+    labels: { en: 'Overwhelmed', pt: 'Sobrecarregado' },
   },
   {
     value: 'sad',
@@ -155,10 +173,12 @@ export const TAG_CATEGORIES = {
     'work',
     'relationship',
     'health',
+    'exercise',
     'social',
     'family',
     'creative',
     'money',
+    'shame',
   ],
 } as const
 
@@ -172,4 +192,6 @@ export const SUGGESTED_TAGS: string[] = [
 export const SPECIAL_TAGS: Record<string, { emoji: string }> = {
   dream: { emoji: '✨' },
   gratitude: { emoji: '🙏' },
+  exercise: { emoji: '💪' },
+  shame: { emoji: '🫣' },
 }

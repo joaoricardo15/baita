@@ -61,9 +61,6 @@ const MoodPicker: FC<{
           aria-label={mood.labels[lang] || mood.labels.en}
         >
           <span className="mood-picker__emoji">{mood.emoji}</span>
-          <span className="mood-picker__label">
-            {mood.labels[lang] || mood.labels.en}
-          </span>
         </button>
       ))}
     </div>
