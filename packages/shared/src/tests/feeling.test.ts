@@ -81,8 +81,8 @@ describe('Feeling Constants', () => {
   describe('getMoodEmoji', () => {
     it('returns emoji for valid moods', () => {
       expect(getMoodEmoji('joyful')).toBe('😄')
-      expect(getMoodEmoji('anxious')).toBe('😟')
-      expect(getMoodEmoji('lonely')).toBe('🫥')
+      expect(getMoodEmoji('anxious')).toBe('😰')
+      expect(getMoodEmoji('lonely')).toBe('😔')
     })
 
     it('returns undefined for invalid moods', () => {
