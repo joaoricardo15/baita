@@ -1,89 +1,48 @@
 import '../feelings.scss'
 
+import {
+  Mood,
+  MOOD_QUADRANTS,
+  MoodDefinition,
+  MoodQuadrant,
+  MOODS,
+} from '@baita/shared'
 import { FC } from 'react'
 
-type Mood =
-  | 'calm'
-  | 'happy'
-  | 'excited'
-  | 'inspired'
-  | 'anxious'
-  | 'scared'
-  | 'drained'
-  | 'ashamed'
+import appConfig from '@/utils/config'
 
-const MOODS: {
-  value: Mood
-  emoji: string
-  label: string
-  color: string
-  glow: string
-}[] = [
-  {
-    value: 'calm',
-    emoji: '😌',
-    label: 'Calm',
-    color: '#6366f1',
-    glow: 'rgba(99, 102, 241, 0.3)',
-  },
-  {
-    value: 'happy',
-    emoji: '😀',
-    label: 'Happy',
-    color: '#10b981',
-    glow: 'rgba(16, 185, 129, 0.3)',
-  },
-  {
-    value: 'excited',
-    emoji: '🤩',
-    label: 'Excited',
-    color: '#ec4899',
-    glow: 'rgba(236, 72, 153, 0.3)',
-  },
-  {
-    value: 'inspired',
-    emoji: '🤔',
-    label: 'Inspired',
-    color: '#8b5cf6',
-    glow: 'rgba(139, 92, 246, 0.3)',
-  },
-  {
-    value: 'anxious',
-    emoji: '😟',
-    label: 'Anxious',
-    color: '#f59e0b',
-    glow: 'rgba(245, 158, 11, 0.3)',
-  },
-  {
-    value: 'scared',
-    emoji: '😨',
-    label: 'Scared',
-    color: '#64748b',
-    glow: 'rgba(100, 116, 139, 0.3)',
-  },
-  {
-    value: 'drained',
-    emoji: '😩',
-    label: 'Drained',
-    color: '#78716c',
-    glow: 'rgba(120, 113, 108, 0.3)',
-  },
-  {
-    value: 'ashamed',
-    emoji: '🫣',
-    label: 'Ashamed',
-    color: '#e11d48',
-    glow: 'rgba(225, 29, 72, 0.3)',
-  },
-]
+const groupByQuadrant = (moods: MoodDefinition[]) => {
+  const groups: Record<MoodQuadrant, MoodDefinition[]> = {
+    highPositive: [],
+    lowPositive: [],
+    highNegative: [],
+    lowNegative: [],
+  }
+  for (const mood of moods) {
+    groups[mood.quadrant].push(mood)
+  }
+  return groups
+}
+
+const quadrantGroups = groupByQuadrant(MOODS)
 
 const MoodPicker: FC<{
   value?: Mood
   onChange: (mood: Mood | undefined) => void
 }> = ({ value, onChange }) => {
-  return (
-    <div className="mood-picker">
-      {MOODS.map((mood) => (
+  const lang = appConfig.language
+
+  const renderQuadrant = (quadrant: MoodQuadrant, moods: MoodDefinition[]) => (
+    <div
+      className={`mood-picker__quadrant mood-picker__quadrant--${quadrant}`}
+      style={
+        {
+          '--quadrant-color': MOOD_QUADRANTS[quadrant].color,
+          '--quadrant-glow': MOOD_QUADRANTS[quadrant].glow,
+        } as React.CSSProperties
+      }
+    >
+      {moods.map((mood) => (
         <button
           key={mood.value}
           type="button"
@@ -99,12 +58,23 @@ const MoodPicker: FC<{
           onClick={() =>
             onChange(value === mood.value ? undefined : mood.value)
           }
-          aria-label={mood.label}
+          aria-label={mood.labels[lang] || mood.labels.en}
         >
           <span className="mood-picker__emoji">{mood.emoji}</span>
-          <span className="mood-picker__label">{mood.label}</span>
+          <span className="mood-picker__label">
+            {mood.labels[lang] || mood.labels.en}
+          </span>
         </button>
       ))}
+    </div>
+  )
+
+  return (
+    <div className="mood-picker">
+      {renderQuadrant('highNegative', quadrantGroups.highNegative)}
+      {renderQuadrant('highPositive', quadrantGroups.highPositive)}
+      {renderQuadrant('lowNegative', quadrantGroups.lowNegative)}
+      {renderQuadrant('lowPositive', quadrantGroups.lowPositive)}
     </div>
   )
 }

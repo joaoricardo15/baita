@@ -52,7 +52,7 @@ test.describe('Feelings Lifecycle', () => {
       data: {
         feelingId,
         content: 'E2E Test Feeling — had a vivid dream about flying',
-        mood: 'happy',
+        mood: 'joyful',
         tags: ['dream'],
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -73,7 +73,7 @@ test.describe('Feelings Lifecycle', () => {
     expect(body.data.content).toBe(
       'E2E Test Feeling — had a vivid dream about flying'
     )
-    expect(body.data.mood).toBe('happy')
+    expect(body.data.mood).toBe('joyful')
     expect(body.data.tags).toEqual(['dream'])
     logResult('Feeling read', { content: body.data.content })
   })

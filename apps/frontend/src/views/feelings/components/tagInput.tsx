@@ -1,8 +1,9 @@
 import '../feelings.scss'
 
+import { SPECIAL_TAGS, SUGGESTED_TAGS } from '@baita/shared'
 import { FC, KeyboardEvent, useState } from 'react'
 
-const SUGGESTED_TAGS = ['dream', 'recurring', 'gratitude', 'reflection']
+const MAX_SUGGESTIONS = 6
 
 const TagInput: FC<{
   tags: string[]
@@ -29,27 +30,32 @@ const TagInput: FC<{
     }
   }
 
-  const suggestionsToShow = SUGGESTED_TAGS.filter((t) => !tags.includes(t))
+  const suggestionsToShow = SUGGESTED_TAGS.filter(
+    (t) => !tags.includes(t)
+  ).slice(0, MAX_SUGGESTIONS)
 
   return (
     <div className="tag-input">
-      {tags.map((tag) => (
-        <span
-          key={tag}
-          className={`tag-input__chip tag-input__chip--active${tag === 'dream' ? ' tag-input__chip--dream' : ''}`}
-        >
-          {tag === 'dream' && '✨ '}
-          {tag}
-          <button
-            type="button"
-            className="tag-input__chip-remove"
-            onClick={() => removeTag(tag)}
-            aria-label={`Remove ${tag}`}
+      {tags.map((tag) => {
+        const special = SPECIAL_TAGS[tag]
+        return (
+          <span
+            key={tag}
+            className={`tag-input__chip tag-input__chip--active${special ? ` tag-input__chip--${tag}` : ''}`}
           >
-            &times;
-          </button>
-        </span>
-      ))}
+            {special && `${special.emoji} `}
+            {tag}
+            <button
+              type="button"
+              className="tag-input__chip-remove"
+              onClick={() => removeTag(tag)}
+              aria-label={`Remove ${tag}`}
+            >
+              &times;
+            </button>
+          </span>
+        )
+      })}
       {suggestionsToShow.map((tag) => (
         <button
           key={tag}

@@ -1,6 +1,11 @@
 import '../feelings.scss'
 
-import { IFeeling } from '@baita/shared'
+import {
+  getMoodDefinition,
+  getMoodEmoji,
+  IFeeling,
+  SPECIAL_TAGS,
+} from '@baita/shared'
 import {
   Delete as DeleteIcon,
   Edit as EditIcon,
@@ -13,26 +18,27 @@ import Menu from '@/components/menu'
 import { getTimeDiffLabel } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 
-const MOOD_EMOJIS: Record<string, string> = {
-  calm: '😌',
-  happy: '😀',
-  excited: '🤩',
-  inspired: '🤔',
-  anxious: '😟',
-  scared: '😨',
-  drained: '😩',
-  ashamed: '🫣',
-}
-
 const FeelingCard: FC<{
   feeling: IFeeling
   onEdit: () => void
   onDelete: () => void
 }> = ({ feeling, onEdit, onDelete }) => {
-  const moodEmoji = feeling.mood ? MOOD_EMOJIS[feeling.mood] : undefined
+  const moodEmoji = feeling.mood ? getMoodEmoji(feeling.mood) : undefined
+  const moodDef = feeling.mood ? getMoodDefinition(feeling.mood) : undefined
 
   return (
-    <Card className="feeling-card" elevation={0} onClick={onEdit}>
+    <Card
+      className="feeling-card"
+      elevation={0}
+      onClick={onEdit}
+      style={
+        moodDef
+          ? ({
+              '--card-accent': moodDef.color,
+            } as React.CSSProperties)
+          : undefined
+      }
+    >
       <div className="feeling-card__body">
         <div className="d-flex align-items-start">
           <div style={{ minWidth: 0, flex: 1 }}>
@@ -42,15 +48,18 @@ const FeelingCard: FC<{
             </p>
             <div className="feeling-card__meta">
               <div className="feeling-card__tags">
-                {feeling.tags?.map((tag) => (
-                  <span
-                    key={tag}
-                    className={`feeling-card__tag${tag === 'dream' ? ' feeling-card__tag--dream' : ''}`}
-                  >
-                    {tag === 'dream' && '✨ '}
-                    {tag}
-                  </span>
-                ))}
+                {feeling.tags?.map((tag) => {
+                  const special = SPECIAL_TAGS[tag]
+                  return (
+                    <span
+                      key={tag}
+                      className={`feeling-card__tag${special ? ` feeling-card__tag--${tag}` : ''}`}
+                    >
+                      {special && `${special.emoji} `}
+                      {tag}
+                    </span>
+                  )
+                })}
               </div>
               <span className="feeling-card__time">
                 {getTimeDiffLabel(feeling.updatedAt)}

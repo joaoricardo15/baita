@@ -1,20 +1,11 @@
 import { z } from 'zod'
 
+import { MOOD_VALUES } from './feeling.constants'
+
 export const FeelingSchema = z.object({
   feelingId: z.string(),
   content: z.string(),
-  mood: z
-    .enum([
-      'calm',
-      'happy',
-      'excited',
-      'inspired',
-      'anxious',
-      'scared',
-      'drained',
-      'ashamed',
-    ])
-    .optional(),
+  mood: z.enum(MOOD_VALUES).optional(),
   tags: z.array(z.string()).optional(),
   createdAt: z.number(),
   updatedAt: z.number(),

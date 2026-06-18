@@ -168,6 +168,7 @@
   border-radius: 14px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: none;
+  border-left: 4px solid var(--card-accent, transparent);
   transition:
     background 0.15s ease,
     transform 0.15s ease;
@@ -230,6 +231,11 @@
     );
     color: #7c3aed;
   }
+
+  &--gratitude {
+    background: rgba(67, 197, 158, 0.1);
+    color: #059669;
+  }
 }
 
 .feeling-card__time {
@@ -246,14 +252,48 @@
   flex-shrink: 0;
 }
 
-// === MOOD PICKER ===
+// === MOOD PICKER (2x2 Quadrant Grid) ===
 
 .mood-picker {
-  display: flex;
-  gap: 2px;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 1px;
   padding: 8px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.mood-picker__quadrant {
+  display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  background: rgba(255, 255, 255, 0.01);
+  transition: background 0.2s ease;
+
+  &--highNegative {
+    background: rgba(232, 93, 93, 0.04);
+    border-radius: 12px 0 0 0;
+  }
+
+  &--highPositive {
+    background: rgba(242, 201, 76, 0.04);
+    border-radius: 0 12px 0 0;
+  }
+
+  &--lowNegative {
+    background: rgba(77, 141, 255, 0.04);
+    border-radius: 0 0 0 12px;
+  }
+
+  &--lowPositive {
+    background: rgba(67, 197, 158, 0.04);
+    border-radius: 0 0 12px 0;
+  }
 }
 
 .mood-picker__item {
@@ -342,6 +382,11 @@
       rgba(99, 102, 241, 0.2)
     );
     color: #c4b5fd;
+  }
+
+  &--gratitude {
+    background: rgba(67, 197, 158, 0.2);
+    color: #6ee7b7;
   }
 }
 

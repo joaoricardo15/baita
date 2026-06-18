@@ -73,7 +73,7 @@ describe('Feelings Page', () => {
             {
               feelingId: '1',
               content: 'Vivid dream about flying',
-              mood: 'happy',
+              mood: 'joyful',
               tags: ['dream'],
               createdAt: Date.now(),
               updatedAt: Date.now(),

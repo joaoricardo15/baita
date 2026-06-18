@@ -1,7 +1,7 @@
 import './feelings.scss'
 
 import { withAuthenticationRequired } from '@auth0/auth0-react'
-import { IFeeling } from '@baita/shared'
+import { IFeeling, Mood, SPECIAL_TAGS } from '@baita/shared'
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material'
 import { FC, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -13,16 +13,6 @@ import { getLabels, Labels } from '@/utils/labels'
 
 import MoodPicker from './components/moodPicker'
 import TagInput from './components/tagInput'
-
-type Mood =
-  | 'calm'
-  | 'happy'
-  | 'excited'
-  | 'inspired'
-  | 'anxious'
-  | 'scared'
-  | 'drained'
-  | 'ashamed'
 
 const FeelingCapture: FC = () => {
   const navigate = useNavigate()
@@ -87,7 +77,7 @@ const FeelingCapture: FC = () => {
   }
 
   const isDream = tags.includes('dream')
-  const isGratitude = tags.includes('gratitude')
+  const hasSpecialTag = Object.keys(SPECIAL_TAGS).find((t) => tags.includes(t))
   const now = new Date()
   const timeStr = now.toLocaleTimeString([], {
     hour: 'numeric',
@@ -97,7 +87,7 @@ const FeelingCapture: FC = () => {
   const captureClass = [
     'feeling-capture',
     isDream && 'feeling-capture--dream',
-    isGratitude && !isDream && 'feeling-capture--gratitude',
+    !isDream && hasSpecialTag === 'gratitude' && 'feeling-capture--gratitude',
   ]
     .filter(Boolean)
     .join(' ')
