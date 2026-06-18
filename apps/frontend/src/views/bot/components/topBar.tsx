@@ -79,6 +79,12 @@ const TopBar: FC<{
       showLoading(true)
       deployBot
         .mutateAsync({ ...bot, active: !bot.active })
+        .then(() => {
+          showSnack(
+            bot.active ? labels.botPaused : labels.botActive,
+            bot.active ? 'info' : 'success'
+          )
+        })
         .catch((err: { message?: string }) => {
           const message = err?.message || labels.toggleError
           showSnack(message, 'error')
@@ -125,7 +131,10 @@ const TopBar: FC<{
   return (
     <>
       <div className="d-flex justify-content-between align-items-center mx-2">
-        <div className="d-flex align-items-center overflow-hidden">
+        <div
+          className="d-flex align-items-center overflow-hidden"
+          style={{ gap: 8 }}
+        >
           <Button
             iconButton
             onClick={() => navigate(LINKS.bots)}
@@ -144,7 +153,15 @@ const TopBar: FC<{
             className="d-flex align-items-center ms-1"
             style={{ width: 20, minWidth: 20 }}
           >
-            {saveStatus === 'saved' && (
+            {isActive && saveStatus === 'saved' && (
+              <CloudDoneIcon
+                color="success"
+                style={{ fontSize: 18 }}
+                className="animate-fade-in-out"
+                titleAccess={labels.savedHint}
+              />
+            )}
+            {!isActive && saveStatus === 'saved' && (
               <CloudDoneIcon
                 color="success"
                 style={{ fontSize: 18 }}
@@ -210,6 +227,9 @@ const LABELS: Labels = {
     logsButton: 'Logs',
     deleteButton: 'Delete',
     publishButton: 'Publish',
+    botActive: 'Bot is now active',
+    botPaused: 'Bot paused',
+    savedHint: 'Saved — applies on next run',
   },
   pt: {
     namePlaceholder: 'Nome do bot',
@@ -220,6 +240,9 @@ const LABELS: Labels = {
     logsButton: 'Logs',
     deleteButton: 'Deletar',
     publishButton: 'Publicar',
+    botActive: 'Bot ativado',
+    botPaused: 'Bot pausado',
+    savedHint: 'Salvo — aplica na próxima execução',
   },
 }
 

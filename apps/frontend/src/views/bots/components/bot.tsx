@@ -68,6 +68,12 @@ const Bot: FC<{
     showLoading(true)
     deployBot
       .mutateAsync({ ...bot, active: !bot.active })
+      .then(() => {
+        showSnack(
+          bot.active ? labels.botPaused : labels.botActive,
+          bot.active ? 'info' : 'success'
+        )
+      })
       .catch((err: { message?: string }) => {
         const message = err?.message || labels.toggleError
         showSnack(message, 'error')
@@ -173,6 +179,8 @@ const LABELS: Labels = {
     publishButton: 'Publish',
     publishSuccess: 'Model published successfully',
     publishFail: 'Model not published',
+    botActive: 'Bot is now active',
+    botPaused: 'Bot paused',
   },
   pt: {
     triggerButton: 'Disparar',
@@ -183,6 +191,8 @@ const LABELS: Labels = {
     publishButton: 'Publicar',
     publishSuccess: 'Modelo publicado com sucesso',
     publishFail: 'Modelo publicado com falha',
+    botActive: 'Bot ativado',
+    botPaused: 'Bot pausado',
   },
 }
 

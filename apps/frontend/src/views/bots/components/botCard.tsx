@@ -40,7 +40,7 @@ const BotCard: FC<{
             )}
           </div>
           <div className="mx-2" style={{ minWidth: 0 }}>
-            <div className="d-flex align-items-center">
+            <div className="d-flex align-items-center" style={{ gap: 8 }}>
               {name ? (
                 <Text className="fw-bold text-truncate">{name}</Text>
               ) : (
