@@ -16,6 +16,55 @@ import { getLabels, Labels } from '@/utils/labels'
 
 import FeelingCard from './components/feelingCard'
 
+interface DateGroup {
+  label: string
+  feelings: IFeeling[]
+}
+
+function groupByDate(
+  feelings: IFeeling[],
+  labels: Record<string, string>
+): DateGroup[] {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86400000)
+
+  const groups: Map<string, IFeeling[]> = new Map()
+
+  for (const feeling of feelings) {
+    const date = new Date(feeling.createdAt)
+    const dayStart = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    )
+
+    let label: string
+    if (dayStart.getTime() === today.getTime()) {
+      label = labels.today
+    } else if (dayStart.getTime() === yesterday.getTime()) {
+      label = labels.yesterday
+    } else {
+      label = date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+      })
+    }
+
+    const existing = groups.get(label)
+    if (existing) {
+      existing.push(feeling)
+    } else {
+      groups.set(label, [feeling])
+    }
+  }
+
+  return Array.from(groups.entries()).map(([label, items]) => ({
+    label,
+    feelings: items,
+  }))
+}
+
 export const Feelings: FC = () => {
   const navigate = useNavigate()
   const { data: feelings, isLoading: loading } = useFeelings()
@@ -37,6 +86,8 @@ export const Feelings: FC = () => {
     ? [...feelings].sort((a, b) => b.createdAt - a.createdAt)
     : []
 
+  const dateGroups = groupByDate(sorted, labels)
+
   return (
     <>
       {loading || !feelings ? (
@@ -48,15 +99,22 @@ export const Feelings: FC = () => {
           description={labels.emptyDescription}
         />
       ) : (
-        sorted.map((feeling, index) => (
-          <ListItem key={feeling.feelingId} index={index}>
-            <FeelingCard
-              feeling={feeling}
-              onEdit={() => onEditFeeling(feeling)}
-              onDelete={() => onDeleteFeeling(feeling.feelingId)}
-            />
-          </ListItem>
-        ))
+        <div className="feelings-list">
+          {dateGroups.map((group) => (
+            <div key={group.label} className="feelings-section">
+              <div className="feelings-section__header">{group.label}</div>
+              {group.feelings.map((feeling, index) => (
+                <ListItem key={feeling.feelingId} index={index}>
+                  <FeelingCard
+                    feeling={feeling}
+                    onEdit={() => onEditFeeling(feeling)}
+                    onDelete={() => onDeleteFeeling(feeling.feelingId)}
+                  />
+                </ListItem>
+              ))}
+            </div>
+          ))}
+        </div>
       )}
 
       <div className="d-flex align-items-center justify-content-center mt-5">
@@ -83,12 +141,16 @@ const LABELS: Labels = {
     emptyDescription:
       'Capture your feelings, dreams, and moments of gratitude.',
     addFeeling: 'How are you?',
+    today: 'Today',
+    yesterday: 'Yesterday',
   },
   pt: {
     emptyTitle: 'Como você está se sentindo?',
     emptyDescription:
       'Capture seus sentimentos, sonhos e momentos de gratidão.',
     addFeeling: 'Como você está?',
+    today: 'Hoje',
+    yesterday: 'Ontem',
   },
 }
 

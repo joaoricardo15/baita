@@ -94,8 +94,20 @@ describe('Feelings Page', () => {
     renderWithProviders(<Feelings />)
 
     await waitFor(() => {
-      expect(screen.getByText('Vivid dream about flying')).toBeDefined()
-      expect(screen.getByText('Grateful for a quiet morning')).toBeDefined()
+      expect(
+        screen.getByText(
+          (_, el) =>
+            el?.tagName === 'P' &&
+            (el?.textContent?.includes('Vivid dream about flying') ?? false)
+        )
+      ).toBeDefined()
+      expect(
+        screen.getByText(
+          (_, el) =>
+            el?.tagName === 'P' &&
+            (el?.textContent?.includes('Grateful for a quiet morning') ?? false)
+        )
+      ).toBeDefined()
     })
   })
 

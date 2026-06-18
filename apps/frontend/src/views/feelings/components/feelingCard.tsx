@@ -9,7 +9,6 @@ import {
 import { Card } from '@mui/material'
 import { FC } from 'react'
 
-import { Text } from '@/components'
 import Menu from '@/components/menu'
 import { getTimeDiffLabel } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
@@ -33,46 +32,53 @@ const FeelingCard: FC<{
   const moodEmoji = feeling.mood ? MOOD_EMOJIS[feeling.mood] : undefined
 
   return (
-    <Card className="p-2 feeling-card" onClick={onEdit}>
-      <div className="d-flex justify-content-between align-items-center">
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <Text className="feeling-card__content">
-            {moodEmoji && `${moodEmoji} `}
-            {feeling.content}
-          </Text>
-          <div className="feeling-card__meta">
-            {feeling.tags?.map((tag) => (
-              <span
-                key={tag}
-                className={`feeling-card__tag${tag === 'dream' ? ' feeling-card__tag--dream' : ''}`}
-              >
-                {tag === 'dream' && '✨ '}
-                {tag}
+    <Card className="feeling-card" elevation={0} onClick={onEdit}>
+      <div className="feeling-card__body">
+        <div className="d-flex align-items-start">
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <p className="feeling-card__content">
+              {moodEmoji && `${moodEmoji} `}
+              {feeling.content}
+            </p>
+            <div className="feeling-card__meta">
+              <div className="feeling-card__tags">
+                {feeling.tags?.map((tag) => (
+                  <span
+                    key={tag}
+                    className={`feeling-card__tag${tag === 'dream' ? ' feeling-card__tag--dream' : ''}`}
+                  >
+                    {tag === 'dream' && '✨ '}
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <span className="feeling-card__time">
+                {getTimeDiffLabel(feeling.updatedAt)}
               </span>
-            ))}
-            <span className="feeling-card__time">
-              {getTimeDiffLabel(feeling.updatedAt)}
-            </span>
+            </div>
           </div>
-        </div>
 
-        <div onClick={(e) => e.stopPropagation()}>
-          <Menu
-            links={[
-              {
-                label: labels.edit,
-                icon: <EditIcon color="secondary" />,
-                onClick: onEdit,
-              },
-              {
-                label: labels.delete,
-                icon: <DeleteIcon color="secondary" />,
-                onClick: onDelete,
-              },
-            ]}
+          <div
+            className="feeling-card__menu"
+            onClick={(e) => e.stopPropagation()}
           >
-            <MoreVertIcon />
-          </Menu>
+            <Menu
+              links={[
+                {
+                  label: labels.edit,
+                  icon: <EditIcon color="secondary" />,
+                  onClick: onEdit,
+                },
+                {
+                  label: labels.delete,
+                  icon: <DeleteIcon color="secondary" />,
+                  onClick: onDelete,
+                },
+              ]}
+            >
+              <MoreVertIcon style={{ fontSize: 18 }} />
+            </Menu>
+          </div>
         </div>
       </div>
     </Card>
