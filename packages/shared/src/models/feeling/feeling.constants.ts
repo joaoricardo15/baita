@@ -168,7 +168,7 @@ export function getMoodDefinition(mood: string): MoodDefinition | undefined {
 }
 
 export const TAG_CATEGORIES = {
-  journaling: ['dream', 'gratitude', 'reflection', 'milestone'],
+  journaling: ['dream', 'gratitude', 'shame', 'reflection'],
   context: [
     'work',
     'relationship',
@@ -178,7 +178,6 @@ export const TAG_CATEGORIES = {
     'family',
     'creative',
     'money',
-    'shame',
   ],
 } as const
 

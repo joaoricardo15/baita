@@ -265,71 +265,130 @@
   flex-shrink: 0;
 }
 
-// === MOOD PICKER (2x2 Quadrant Grid) ===
+// === MOOD PICKER (Circular Layout with Progressive Disclosure) ===
 
 .mood-picker {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto;
-  gap: 1px;
-  padding: 12px 0;
-  border-radius: 16px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &--collapsed {
+    width: 100%;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:active {
+      transform: scale(0.97);
+      background: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  &--has-value {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--mood-color, rgba(255, 255, 255, 0.08));
+    box-shadow: 0 0 12px var(--mood-glow, transparent);
+  }
+
+  &--expanded {
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 0 8px;
+    animation: picker-expand 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
-.mood-picker__quadrant {
+.mood-picker__preview {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   align-items: center;
-  gap: 6px;
-  padding: 16px 12px;
-  background: rgba(255, 255, 255, 0.01);
-  transition: background 0.2s ease;
+  justify-content: center;
+  gap: 12px;
+}
 
-  &--highNegative {
-    background: rgba(232, 93, 93, 0.06);
-    border-radius: 16px 0 0 0;
-  }
+.mood-picker__preview-emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
 
-  &--highPositive {
-    background: rgba(242, 201, 76, 0.06);
-    border-radius: 0 16px 0 0;
+  .mood-picker--collapsed:active & {
+    opacity: 0.7;
   }
+}
 
-  &--lowNegative {
-    background: rgba(77, 141, 255, 0.06);
-    border-radius: 0 0 0 16px;
-  }
+.mood-picker__selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
 
-  &--lowPositive {
-    background: rgba(67, 197, 158, 0.06);
-    border-radius: 0 0 16px 0;
-  }
+.mood-picker__selected-emoji {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.mood-picker__selected-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(240, 240, 245, 0.7);
+}
+
+.mood-picker__ring {
+  position: relative;
+  width: 256px;
+  height: 256px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg at 50% 50%,
+    rgba(242, 201, 76, 0.06) 0deg,
+    rgba(242, 201, 76, 0.06) 45deg,
+    rgba(67, 197, 158, 0.06) 90deg,
+    rgba(67, 197, 158, 0.06) 135deg,
+    rgba(77, 141, 255, 0.06) 180deg,
+    rgba(77, 141, 255, 0.06) 225deg,
+    rgba(232, 93, 93, 0.06) 270deg,
+    rgba(232, 93, 93, 0.06) 315deg,
+    rgba(242, 201, 76, 0.06) 360deg
+  );
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .mood-picker__item {
-  width: 48px;
-  height: 48px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   background: transparent;
-  border-radius: 12px;
+  border-radius: 50%;
   cursor: pointer;
-  opacity: 0.55;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.6;
+  transform: rotate(var(--angle)) translateY(-96px)
+    rotate(calc(-1 * var(--angle)));
+  transition:
+    opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0;
 
   &:active {
-    transform: scale(0.85);
+    transform: rotate(var(--angle)) translateY(-96px)
+      rotate(calc(-1 * var(--angle))) scale(0.85);
   }
 
   &--selected {
     opacity: 1;
-    transform: scale(1.15);
+    transform: rotate(var(--angle)) translateY(-96px)
+      rotate(calc(-1 * var(--angle))) scale(1.2);
     background: rgba(255, 255, 255, 0.08);
     box-shadow:
       0 0 0 2px var(--mood-color),
@@ -344,8 +403,30 @@
   line-height: 1;
 }
 
-.mood-picker__label {
-  display: none;
+.mood-picker__collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+
+  &:active {
+    transform: scale(0.9);
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.mood-picker__collapse-chevron {
+  font-size: 1.1rem;
+  color: rgba(240, 240, 245, 0.4);
+  transform: rotate(-90deg);
+  line-height: 1;
 }
 
 // === TAG INPUT ===
@@ -474,6 +555,17 @@
       0 0 0 2px var(--mood-color),
       0 0 22px var(--mood-glow),
       0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+@keyframes picker-expand {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 

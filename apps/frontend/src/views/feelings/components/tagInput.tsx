@@ -3,7 +3,7 @@ import '../feelings.scss'
 import { SPECIAL_TAGS, SUGGESTED_TAGS } from '@baita/shared'
 import { FC, KeyboardEvent, useState } from 'react'
 
-const MAX_SUGGESTIONS = 6
+const MAX_SUGGESTIONS = 12
 
 const TagInput: FC<{
   tags: string[]

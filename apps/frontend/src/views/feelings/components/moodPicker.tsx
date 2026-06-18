@@ -1,77 +1,131 @@
 import '../feelings.scss'
 
-import {
-  Mood,
-  MOOD_QUADRANTS,
-  MoodDefinition,
-  MoodQuadrant,
-  MOODS,
-} from '@baita/shared'
-import { FC } from 'react'
+import { Mood, MoodDefinition, MoodQuadrant, MOODS } from '@baita/shared'
+import { FC, useCallback, useEffect, useRef, useState } from 'react'
 
 import appConfig from '@/utils/config'
 
-const groupByQuadrant = (moods: MoodDefinition[]) => {
-  const groups: Record<MoodQuadrant, MoodDefinition[]> = {
-    highPositive: [],
-    lowPositive: [],
-    highNegative: [],
-    lowNegative: [],
-  }
-  for (const mood of moods) {
-    groups[mood.quadrant].push(mood)
-  }
-  return groups
-}
+const CIRCLE_ORDER: MoodQuadrant[] = [
+  'highPositive',
+  'lowPositive',
+  'lowNegative',
+  'highNegative',
+]
 
-const quadrantGroups = groupByQuadrant(MOODS)
+const circleItems: MoodDefinition[] = CIRCLE_ORDER.flatMap((quadrant) =>
+  MOODS.filter((m) => m.quadrant === quadrant)
+)
+
+const PREVIEW_MOODS = [
+  MOODS.find((m) => m.value === 'joyful')!,
+  MOODS.find((m) => m.value === 'calm')!,
+  MOODS.find((m) => m.value === 'anxious')!,
+  MOODS.find((m) => m.value === 'sad')!,
+]
 
 const MoodPicker: FC<{
   value?: Mood
   onChange: (mood: Mood | undefined) => void
 }> = ({ value, onChange }) => {
   const lang = appConfig.language
+  const [expanded, setExpanded] = useState(false)
+  const collapseTimer = useRef<ReturnType<typeof setTimeout>>()
 
-  const renderQuadrant = (quadrant: MoodQuadrant, moods: MoodDefinition[]) => (
-    <div
-      className={`mood-picker__quadrant mood-picker__quadrant--${quadrant}`}
-      style={
-        {
-          '--quadrant-color': MOOD_QUADRANTS[quadrant].color,
-          '--quadrant-glow': MOOD_QUADRANTS[quadrant].glow,
-        } as React.CSSProperties
+  const selectedDef = value ? MOODS.find((m) => m.value === value) : undefined
+
+  useEffect(() => {
+    return () => {
+      if (collapseTimer.current) clearTimeout(collapseTimer.current)
+    }
+  }, [])
+
+  const handleSelect = useCallback(
+    (mood: Mood | undefined) => {
+      onChange(mood)
+      if (mood) {
+        if (collapseTimer.current) clearTimeout(collapseTimer.current)
+        collapseTimer.current = setTimeout(() => setExpanded(false), 450)
       }
-    >
-      {moods.map((mood) => (
-        <button
-          key={mood.value}
-          type="button"
-          className={`mood-picker__item${value === mood.value ? ' mood-picker__item--selected' : ''}`}
-          style={
-            value === mood.value
-              ? ({
-                  '--mood-color': mood.color,
-                  '--mood-glow': mood.glow,
-                } as React.CSSProperties)
-              : undefined
-          }
-          onClick={() =>
-            onChange(value === mood.value ? undefined : mood.value)
-          }
-          aria-label={mood.labels[lang] || mood.labels.en}
-        >
-          <span className="mood-picker__emoji">{mood.emoji}</span>
-        </button>
-      ))}
-    </div>
+    },
+    [onChange]
   )
 
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        className={`mood-picker mood-picker--collapsed${selectedDef ? ' mood-picker--has-value' : ''}`}
+        onClick={() => setExpanded(true)}
+        aria-expanded={false}
+        aria-label="Choose mood"
+        style={
+          selectedDef
+            ? ({
+                '--mood-color': selectedDef.color,
+                '--mood-glow': selectedDef.glow,
+              } as React.CSSProperties)
+            : undefined
+        }
+      >
+        {selectedDef ? (
+          <span className="mood-picker__selected">
+            <span className="mood-picker__selected-emoji">
+              {selectedDef.emoji}
+            </span>
+            <span className="mood-picker__selected-label">
+              {selectedDef.labels[lang] || selectedDef.labels.en}
+            </span>
+          </span>
+        ) : (
+          <span className="mood-picker__preview">
+            {PREVIEW_MOODS.map((m) => (
+              <span key={m.value} className="mood-picker__preview-emoji">
+                {m.emoji}
+              </span>
+            ))}
+          </span>
+        )}
+      </button>
+    )
+  }
+
   return (
-    <div className="mood-picker">
-      {renderQuadrant('highNegative', quadrantGroups.highNegative)}
-      {renderQuadrant('highPositive', quadrantGroups.highPositive)}
-      {renderQuadrant('lowNegative', quadrantGroups.lowNegative)}
-      {renderQuadrant('lowPositive', quadrantGroups.lowPositive)}
+    <div className="mood-picker mood-picker--expanded" aria-expanded={true}>
+      <div className="mood-picker__ring">
+        {circleItems.map((mood, i) => {
+          const isSelected = value === mood.value
+          return (
+            <button
+              key={mood.value}
+              type="button"
+              className={`mood-picker__item${isSelected ? ' mood-picker__item--selected' : ''}`}
+              style={
+                {
+                  '--angle': `${i * 30 + 15}deg`,
+                  ...(isSelected
+                    ? {
+                        '--mood-color': mood.color,
+                        '--mood-glow': mood.glow,
+                      }
+                    : {}),
+                } as React.CSSProperties
+              }
+              onClick={() => handleSelect(isSelected ? undefined : mood.value)}
+              aria-label={mood.labels[lang] || mood.labels.en}
+            >
+              <span className="mood-picker__emoji">{mood.emoji}</span>
+            </button>
+          )
+        })}
+      </div>
+      <button
+        type="button"
+        className="mood-picker__collapse"
+        onClick={() => setExpanded(false)}
+        aria-label="Collapse mood picker"
+      >
+        <span className="mood-picker__collapse-chevron">‹</span>
+      </button>
     </div>
   )
 }
