@@ -1,7 +1,7 @@
 import './feelings.scss'
 
 import { withAuthenticationRequired } from '@auth0/auth0-react'
-import { IFeeling, Mood, SPECIAL_TAGS } from '@baita/shared'
+import { IFeeling, Mood, TAG_ICONS } from '@baita/shared'
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material'
 import { FC, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -77,7 +77,7 @@ const FeelingCapture: FC = () => {
   }
 
   const isDream = tags.includes('dream')
-  const hasSpecialTag = Object.keys(SPECIAL_TAGS).find((t) => tags.includes(t))
+  const hasSpecialTag = Object.keys(TAG_ICONS).find((t) => tags.includes(t))
   const now = new Date()
   const timeStr = now.toLocaleTimeString([], {
     hour: 'numeric',

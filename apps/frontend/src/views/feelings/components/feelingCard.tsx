@@ -4,7 +4,7 @@ import {
   getMoodDefinition,
   getMoodEmoji,
   IFeeling,
-  SPECIAL_TAGS,
+  TAG_ICONS,
 } from '@baita/shared'
 import {
   Delete as DeleteIcon,
@@ -49,13 +49,13 @@ const FeelingCard: FC<{
             <div className="feeling-card__meta">
               <div className="feeling-card__tags">
                 {feeling.tags?.map((tag) => {
-                  const special = SPECIAL_TAGS[tag]
+                  const icon = TAG_ICONS[tag]
                   return (
                     <span
                       key={tag}
-                      className={`feeling-card__tag${special ? ` feeling-card__tag--${tag}` : ''}`}
+                      className={`feeling-card__tag${icon ? ` feeling-card__tag--${tag}` : ''}`}
                     >
-                      {special && `${special.emoji} `}
+                      {icon && `${icon.emoji} `}
                       {tag}
                     </span>
                   )

@@ -358,6 +358,30 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.mood-picker__ring-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(240, 240, 245, 0.55);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  animation: label-fade-in 0.3s ease;
+}
+
+@keyframes label-fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 .mood-picker__item {
   position: absolute;
   top: 50%;
@@ -423,10 +447,8 @@
 }
 
 .mood-picker__collapse-chevron {
-  font-size: 1.1rem;
   color: rgba(240, 240, 245, 0.4);
-  transform: rotate(-90deg);
-  line-height: 1;
+  display: block;
 }
 
 // === TAG INPUT ===
@@ -502,10 +524,8 @@
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
   color: inherit;
-  font-size: 0.6rem;
   cursor: pointer;
   padding: 0;
-  line-height: 1;
 }
 
 .tag-input__field {

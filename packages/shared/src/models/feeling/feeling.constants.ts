@@ -24,18 +24,18 @@ export const MOOD_QUADRANTS = {
 export type MoodQuadrant = keyof typeof MOOD_QUADRANTS
 
 export const MOOD_VALUES = [
-  'joyful',
   'excited',
+  'joyful',
   'inspired',
-  'calm',
-  'grateful',
   'content',
+  'grateful',
+  'calm',
+  'lonely',
+  'sad',
+  'drained',
   'anxious',
   'frustrated',
   'overwhelmed',
-  'sad',
-  'drained',
-  'lonely',
 ] as const
 
 export type Mood = (typeof MOOD_VALUES)[number]
@@ -54,14 +54,6 @@ export interface MoodDefinition {
 
 export const MOODS: MoodDefinition[] = [
   {
-    value: 'joyful',
-    emoji: '😄',
-    quadrant: 'highPositive',
-    color: '#F2C94C',
-    glow: 'rgba(242, 201, 76, 0.3)',
-    labels: { en: 'Joyful', pt: 'Alegre' },
-  },
-  {
     value: 'excited',
     emoji: '🤩',
     quadrant: 'highPositive',
@@ -70,28 +62,20 @@ export const MOODS: MoodDefinition[] = [
     labels: { en: 'Excited', pt: 'Empolgado' },
   },
   {
+    value: 'joyful',
+    emoji: '😄',
+    quadrant: 'highPositive',
+    color: '#F2C94C',
+    glow: 'rgba(242, 201, 76, 0.3)',
+    labels: { en: 'Joyful', pt: 'Alegre' },
+  },
+  {
     value: 'inspired',
-    emoji: '🤗',
+    emoji: '🤔',
     quadrant: 'highPositive',
     color: '#FFE99A',
     glow: 'rgba(255, 233, 154, 0.3)',
     labels: { en: 'Inspired', pt: 'Inspirado' },
-  },
-  {
-    value: 'calm',
-    emoji: '😌',
-    quadrant: 'lowPositive',
-    color: '#43C59E',
-    glow: 'rgba(67, 197, 158, 0.3)',
-    labels: { en: 'Calm', pt: 'Calmo' },
-  },
-  {
-    value: 'grateful',
-    emoji: '🥰',
-    quadrant: 'lowPositive',
-    color: '#6EE7B7',
-    glow: 'rgba(110, 231, 183, 0.3)',
-    labels: { en: 'Grateful', pt: 'Grato' },
   },
   {
     value: 'content',
@@ -102,8 +86,48 @@ export const MOODS: MoodDefinition[] = [
     labels: { en: 'Content', pt: 'Satisfeito' },
   },
   {
+    value: 'grateful',
+    emoji: '🥰',
+    quadrant: 'lowPositive',
+    color: '#6EE7B7',
+    glow: 'rgba(110, 231, 183, 0.3)',
+    labels: { en: 'Grateful', pt: 'Grato' },
+  },
+  {
+    value: 'calm',
+    emoji: '😌',
+    quadrant: 'lowPositive',
+    color: '#43C59E',
+    glow: 'rgba(67, 197, 158, 0.3)',
+    labels: { en: 'Calm', pt: 'Calmo' },
+  },
+  {
+    value: 'lonely',
+    emoji: '😔',
+    quadrant: 'lowNegative',
+    color: '#94A3B8',
+    glow: 'rgba(148, 163, 184, 0.3)',
+    labels: { en: 'Lonely', pt: 'Solitário' },
+  },
+  {
+    value: 'sad',
+    emoji: '😢',
+    quadrant: 'lowNegative',
+    color: '#4D8DFF',
+    glow: 'rgba(77, 141, 255, 0.3)',
+    labels: { en: 'Sad', pt: 'Triste' },
+  },
+  {
+    value: 'drained',
+    emoji: '🫩',
+    quadrant: 'lowNegative',
+    color: '#7BA3E8',
+    glow: 'rgba(123, 163, 232, 0.3)',
+    labels: { en: 'Drained', pt: 'Esgotado' },
+  },
+  {
     value: 'anxious',
-    emoji: '😟',
+    emoji: '😰',
     quadrant: 'highNegative',
     color: '#E85D5D',
     glow: 'rgba(232, 93, 93, 0.3)',
@@ -124,30 +148,6 @@ export const MOODS: MoodDefinition[] = [
     color: '#FCA5A5',
     glow: 'rgba(252, 165, 165, 0.3)',
     labels: { en: 'Overwhelmed', pt: 'Sobrecarregado' },
-  },
-  {
-    value: 'sad',
-    emoji: '😢',
-    quadrant: 'lowNegative',
-    color: '#4D8DFF',
-    glow: 'rgba(77, 141, 255, 0.3)',
-    labels: { en: 'Sad', pt: 'Triste' },
-  },
-  {
-    value: 'drained',
-    emoji: '😩',
-    quadrant: 'lowNegative',
-    color: '#7BA3E8',
-    glow: 'rgba(123, 163, 232, 0.3)',
-    labels: { en: 'Drained', pt: 'Esgotado' },
-  },
-  {
-    value: 'lonely',
-    emoji: '🫥',
-    quadrant: 'lowNegative',
-    color: '#94A3B8',
-    glow: 'rgba(148, 163, 184, 0.3)',
-    labels: { en: 'Lonely', pt: 'Solitário' },
   },
 ]
 
@@ -188,9 +188,20 @@ export const SUGGESTED_TAGS: string[] = [
   ...TAG_CATEGORIES.context,
 ]
 
-export const SPECIAL_TAGS: Record<string, { emoji: string }> = {
-  dream: { emoji: '✨' },
+export const TAG_ICONS: Record<string, { emoji: string }> = {
+  dream: { emoji: '🌙' },
   gratitude: { emoji: '🙏' },
+  shame: { emoji: '☁️' },
+  reflection: { emoji: '🪞' },
+  work: { emoji: '💼' },
+  relationship: { emoji: '💞' },
+  health: { emoji: '🌿' },
   exercise: { emoji: '💪' },
-  shame: { emoji: '🫣' },
+  social: { emoji: '👥' },
+  family: { emoji: '🏠' },
+  creative: { emoji: '🎨' },
+  money: { emoji: '💰' },
 }
+
+/** @deprecated Use TAG_ICONS instead */
+export const SPECIAL_TAGS = TAG_ICONS

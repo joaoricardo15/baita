@@ -1,6 +1,6 @@
 import '../feelings.scss'
 
-import { SPECIAL_TAGS, SUGGESTED_TAGS } from '@baita/shared'
+import { SUGGESTED_TAGS, TAG_ICONS } from '@baita/shared'
 import { FC, KeyboardEvent, useState } from 'react'
 
 const MAX_SUGGESTIONS = 12
@@ -37,13 +37,13 @@ const TagInput: FC<{
   return (
     <div className="tag-input">
       {tags.map((tag) => {
-        const special = SPECIAL_TAGS[tag]
+        const icon = TAG_ICONS[tag]
         return (
           <span
             key={tag}
-            className={`tag-input__chip tag-input__chip--active${special ? ` tag-input__chip--${tag}` : ''}`}
+            className={`tag-input__chip tag-input__chip--active${icon ? ` tag-input__chip--${tag}` : ''}`}
           >
-            {special && `${special.emoji} `}
+            {icon && `${icon.emoji} `}
             {tag}
             <button
               type="button"
@@ -51,21 +51,36 @@ const TagInput: FC<{
               onClick={() => removeTag(tag)}
               aria-label={`Remove ${tag}`}
             >
-              &times;
+              <svg
+                width="8"
+                height="8"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              >
+                <line x1="4" y1="4" x2="20" y2="20" />
+                <line x1="20" y1="4" x2="4" y2="20" />
+              </svg>
             </button>
           </span>
         )
       })}
-      {suggestionsToShow.map((tag) => (
-        <button
-          key={tag}
-          type="button"
-          className="tag-input__chip tag-input__chip--suggested"
-          onClick={() => addTag(tag)}
-        >
-          {tag}
-        </button>
-      ))}
+      {suggestionsToShow.map((tag) => {
+        const icon = TAG_ICONS[tag]
+        return (
+          <button
+            key={tag}
+            type="button"
+            className="tag-input__chip tag-input__chip--suggested"
+            onClick={() => addTag(tag)}
+          >
+            {icon && `${icon.emoji} `}
+            {tag}
+          </button>
+        )
+      })}
       <input
         className="tag-input__field"
         value={input}
