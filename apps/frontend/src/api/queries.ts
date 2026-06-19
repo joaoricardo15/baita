@@ -5,6 +5,7 @@ import {
   IConnection,
   IContent,
   IFeeling,
+  IGuide,
   IPlace,
   ITodo,
 } from '@baita/shared'
@@ -39,6 +40,8 @@ export const fetchFeelings = () =>
   getApiResponse<IFeeling[]>('get', 'data/feeling')
 
 export const fetchPlaces = () => getApiResponse<IPlace[]>('get', 'data/place')
+
+export const fetchGuides = () => getApiResponse<IGuide[]>('get', 'data/guide')
 
 export const fetchImageUploadUrl = (imageId: string) =>
   getApiResponse<string>('post', `data/image/${imageId}/upload`)

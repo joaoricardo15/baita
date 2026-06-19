@@ -3,6 +3,7 @@ import {
   IBotTemplate,
   IContent,
   IFeeling,
+  IGuide,
   IPlace,
   ITask,
   ITaskExecutionResult,
@@ -74,6 +75,15 @@ export const removeImage = (imageId: string) =>
     'delete',
     `data/image/_/files/${encodeURIComponent(imageId)}`
   )
+
+export const createGuide = (guideId: string, guide: IGuide) =>
+  getApiResponse<IGuide>('put', `data/guide/${guideId}`, guide)
+
+export const updateGuide = (guideId: string, guide: IGuide) =>
+  getApiResponse<IGuide>('put', `data/guide/${guideId}`, guide)
+
+export const deleteGuide = (guideId: string) =>
+  getApiResponse<IGuide>('delete', `data/guide/${guideId}`)
 
 export const publishBotTemplate = (template: IBotTemplate) =>
   getApiResponse<IBotTemplate>(
