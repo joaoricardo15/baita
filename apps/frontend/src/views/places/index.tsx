@@ -36,28 +36,8 @@ const MapBounds: FC<{ places: IPlace[] }> = ({ places }) => {
 
   useEffect(() => {
     if (!map || places.length === 0) return
-    if (places.length === 1) {
-      map.setCenter(places[0].position)
-      map.setZoom(14)
-      return
-    }
-    let minLat = Infinity,
-      maxLat = -Infinity,
-      minLng = Infinity,
-      maxLng = -Infinity
-    places.forEach((p) => {
-      minLat = Math.min(minLat, p.position.lat)
-      maxLat = Math.max(maxLat, p.position.lat)
-      minLng = Math.min(minLng, p.position.lng)
-      maxLng = Math.max(maxLng, p.position.lng)
-    })
-    const center = { lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2 }
-    map.setCenter(center)
-    const latDiff = maxLat - minLat
-    const lngDiff = maxLng - minLng
-    const maxDiff = Math.max(latDiff, lngDiff)
-    const zoom = maxDiff > 10 ? 4 : maxDiff > 1 ? 8 : maxDiff > 0.1 ? 12 : 14
-    map.setZoom(zoom)
+    map.setCenter(places[0].position)
+    map.setZoom(13)
   }, [map, places])
 
   return null
@@ -129,7 +109,7 @@ export const Places: FC = () => {
       >
         <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
           <Map
-            defaultZoom={14}
+            defaultZoom={13}
             disableDefaultUI={true}
             mapId={GOOGLE_MAPS_MAP_ID}
             defaultCenter={sorted[0].position}
@@ -154,31 +134,49 @@ export const Places: FC = () => {
                 >
                   <div
                     style={{
-                      background: '#1a1a2e',
-                      color: 'white',
-                      padding: '6px 12px',
-                      borderRadius: 20,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      maxWidth: 140,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      background: 'white',
+                      padding: '7px 14px',
+                      borderRadius: 24,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: '#1a1a2e',
+                      maxWidth: 150,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                      border: '2px solid white',
+                      boxShadow:
+                        '0 2px 12px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
                     }}
                   >
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: '#6366f1',
+                        flexShrink: 0,
+                      }}
+                    />
                     {p.name}
                   </div>
                   <div
                     style={{
-                      width: 8,
-                      height: 8,
-                      background: '#1a1a2e',
-                      transform: 'rotate(45deg)',
-                      marginTop: -5,
-                      borderRight: '2px solid white',
-                      borderBottom: '2px solid white',
+                      width: 2,
+                      height: 10,
+                      background: 'rgba(99,102,241,0.4)',
+                      borderRadius: 1,
+                    }}
+                  />
+                  <div
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: '#6366f1',
+                      boxShadow: '0 0 0 3px rgba(99,102,241,0.2)',
                     }}
                   />
                 </div>
