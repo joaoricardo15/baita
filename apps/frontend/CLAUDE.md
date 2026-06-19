@@ -333,7 +333,7 @@ When the user provides an instruction or rule that is clearly valuable and appli
 | `/feed`             | Feed           | UserContext       | `retrieveContent()`                    | —                                            |
 | `/feelings`         | Feelings       | Direct ApiRequest | `getFeelings()`                        | `src/views/feelings/tests/index.test.tsx`    |
 | `/feelings/new`     | FeelingCapture | Direct ApiRequest | None (creates on save)                 | —                                            |
-| `/place`            | Places         | Direct ApiRequest | `listPlaces()`                         | `src/views/places/tests/index.test.tsx`      |
+| `/place`            | Places         | Direct ApiRequest | `listPlaces()` + `listGuides()`        | `src/views/places/tests/index.test.tsx`      |
 | `/profile`          | Profile        | AuthContext       | None (relies on UserContext pre-fetch) | `src/views/profile/index.test.tsx`           |
 
 **Provider-level data fetching (on auth):**
@@ -441,5 +441,59 @@ Uses the shared `EmptyState` component from `src/components/emptyState.tsx`.
 - **Cards for list items** — wrap every list item in `<Card className="p-2">`
 - **3-dot menu for actions** — use `<Menu>` with `<MoreVertIcon />`
 - **Consistent spacing** — `mb-2` between cards
-- **Modals for creation/editing** — use MUI `<Dialog>` for forms, not separate routes
+- **Modals for creation/editing** — use MUI `<Dialog fullScreen>` for forms, not separate routes
 - **Places uses map-first layout** — full-screen map with SwipeableDrawer bottom sheet for the list
+
+## Places & Guides Architecture
+
+The Places page (`/place`) is a **map-first** view with a **bottom sheet** containing two tabs:
+
+```
+Full-screen map (markers for all places)
+├── SwipeableDrawer (bottom sheet, 70dvh)
+│   ├── Drag handle
+│   ├── Tabs: [Places] [Guides]
+│   ├── Places tab → PlaceCard list (sorted by recency)
+│   └── Guides tab → GuideCard list (sorted by recency)
+└── FAB (creates place or guide depending on active tab)
+```
+
+### Place
+
+A saved location with photos. Schema: `placeId`, `name`, `description?`, `pictures[]`, `position{lat,lng}`, `createdAt?`.
+
+- **PlaceModal** — fullScreen dialog, AppBar pattern (← Back + Save top), hero photo + thumbnail strip, name/notes/location fields, delete at bottom
+- **S3 keys** — format: `{placeId}-{uuid}.{ext}` (flat, no `/` in key to avoid routing issues)
+- **Image upload** — presigned URL via `POST /data/image/{key}/upload`, direct PUT to S3
+- **Image deletion** — `DELETE /data/image/_/files/{key}` (the `_` is a placeholder for the unused `{id}` segment)
+
+### Guide
+
+A curated, ordered collection of places meant to be shared as a walking route. Schema: `guideId`, `name`, `description?`, `placeIds[]`, `createdAt?`.
+
+- **GuideModal** — fullScreen dialog, AppBar pattern with Share button, drag-to-reorder place list (@dnd-kit), place picker dialog
+- **Share** — builds Google Maps directions URL (`/maps/dir/?api=1&origin=...&destination=...&waypoints=...&travelmode=walking`), uses Web Share API with clipboard fallback
+- **Limits** — max 11 places in a shared route (1 origin + 9 waypoints + 1 destination, Google Maps limit)
+- **Place picker** — MUI Dialog with checkbox list of user's places
+
+### Key Files
+
+```
+src/views/places/
+├── index.tsx                    # Map + bottom sheet + tabs
+├── components/
+│   ├── placeModal.tsx           # Place create/edit (fullScreen)
+│   ├── placeCard.tsx            # Place card (60px image, name, menu)
+│   ├── guideModal.tsx           # Guide create/edit (fullScreen, drag-to-reorder)
+│   ├── guideCard.tsx            # Guide card (gradient icon, place count, menu)
+│   └── placePicker.tsx          # Checkbox dialog for selecting places
+├── tests/
+│   └── index.test.tsx           # Page smoke tests
+
+src/hooks/
+├── usePlaces.ts                 # usePlaces, useSavePlace, useDeletePlace
+└── useGuides.ts                 # useGuides, useSaveGuide, useDeleteGuide
+
+src/utils/
+└── maps.ts                      # buildGoogleMapsUrl(), shareGuide()
+```

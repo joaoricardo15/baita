@@ -428,6 +428,7 @@ userId      | #{TYPE}#{id}                    | Generic data record
 userId      | #CONTENT#{contentId}            | Content item
 userId      | #CONNECTION#{connectionId}      | OAuth connection
 userId      | #FEELING#{feelingId}            | Feeling entry
+userId      | #GUIDE#{guideId}                | Place guide (ordered collection)
 userId      | #PLACE#{placeId}                | Place
 ```
 

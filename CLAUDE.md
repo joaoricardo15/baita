@@ -47,7 +47,7 @@ Before EVERY commit, verify ALL of these automatically:
 
 ## Shared Schemas (`@baita/shared`)
 
-All domain models are defined ONCE in `packages/shared/src/schemas/` using Zod. Both apps import from `@baita/shared`:
+All domain models are defined ONCE in `packages/shared/src/models/` using Zod. Both apps import from `@baita/shared`:
 
 ```typescript
 import { IBot, ITask, TaskSchema, BotSchema, validateBot } from '@baita/shared'
@@ -216,9 +216,9 @@ All domain data is user-scoped and stored in a single DynamoDB table (`baita-bac
 
 ### Adding a New Entity Type
 
-1. Create schema in `packages/shared/src/schemas/{type}.ts`
+1. Create schema in `packages/shared/src/models/{type}/{type}.schema.ts`
 2. Add entry to `entityRegistry` in `packages/shared/src/registry.ts`
-3. Export from `packages/shared/src/index.ts`
+3. Export from `packages/shared/src/models/index.ts`
 4. Done — CRUD endpoints (`/data/{type}`) work automatically
 
 ## AWS Context
