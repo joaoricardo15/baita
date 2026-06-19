@@ -1,18 +1,20 @@
 import { IPlace } from '@baita/shared'
 import {
   AddAPhoto as AddAPhotoIcon,
-  AddLocationAltOutlined as AddLocationAltOutlinedIcon,
+  ArrowBack as ArrowBackIcon,
   Close as CloseIcon,
   DeleteOutline as DeleteOutlineIcon,
   MyLocation as MyLocationIcon,
 } from '@mui/icons-material'
 import {
+  AppBar,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   IconButton,
+  Toolbar,
 } from '@mui/material'
 import axios from 'axios'
 import { FC, useEffect, useState } from 'react'
@@ -150,6 +152,37 @@ const PlaceModal: FC<{
   return (
     <>
       <Dialog open={open} onClose={onClose} fullScreen>
+        {/* Top App Bar */}
+        <AppBar
+          position="sticky"
+          color="transparent"
+          elevation={0}
+          sx={{ borderBottom: '1px solid #eee' }}
+        >
+          <Toolbar sx={{ justifyContent: 'space-between', minHeight: 56 }}>
+            <IconButton
+              aria-label={labels.cancel}
+              onClick={onClose}
+              edge="start"
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Button
+              type="contained"
+              color="primary"
+              onClick={onSave}
+              disabled={isBusy || !localPlace.name}
+            >
+              {savePlace.isPending ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : isNew ? (
+                labels.save
+              ) : (
+                labels.update
+              )}
+            </Button>
+          </Toolbar>
+        </AppBar>
         {/* Photo Gallery */}
         <div
           style={{
@@ -295,12 +328,10 @@ const PlaceModal: FC<{
               {hasLocation ? labels.updateLocation : labels.addLocation}
             </Button>
           </div>
-        </DialogContent>
 
-        {/* Action Footer */}
-        <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
-          <div>
-            {!isNew && (
+          {/* Delete Action (existing places only) */}
+          {!isNew && (
+            <div className="mt-5 d-flex justify-content-center">
               <Button
                 type="text"
                 color="error"
@@ -316,27 +347,9 @@ const PlaceModal: FC<{
               >
                 {labels.delete}
               </Button>
-            )}
-          </div>
-          <div className="d-flex gap-2">
-            <Button onClick={onClose}>{labels.cancel}</Button>
-            <Button
-              type="contained"
-              color="primary"
-              icon={
-                savePlace.isPending ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : (
-                  <AddLocationAltOutlinedIcon style={{ fontSize: 18 }} />
-                )
-              }
-              onClick={onSave}
-              disabled={isBusy || !localPlace.name}
-            >
-              {isNew ? labels.save : labels.update}
-            </Button>
-          </div>
-        </DialogActions>
+            </div>
+          )}
+        </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation */}
