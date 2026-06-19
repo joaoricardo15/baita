@@ -13,14 +13,7 @@ import {
 } from '@vis.gl/react-google-maps'
 import { FC, useEffect, useState } from 'react'
 
-import {
-  EmptyState,
-  ListItem,
-  Loading,
-  Logo,
-  Skeleton,
-  Text,
-} from '@/components'
+import { EmptyState, ListItem, Loading, Skeleton, Text } from '@/components'
 import { useDeletePlace, usePlaces } from '@/hooks/usePlaces'
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_MAP_ID } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'
@@ -151,18 +144,44 @@ export const Places: FC = () => {
                 position={p.position}
                 title={p.name}
               >
-                <Logo size={60} />
-                <Text
-                  className="position-absolute bg-secondary px-1 rounded-3 text-white text-truncate"
+                <div
                   style={{
-                    top: 6,
-                    left: 4,
-                    maxWidth: 120,
-                    fontSize: 11,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    transform: 'translate(0, -100%)',
                   }}
                 >
-                  {p.name}
-                </Text>
+                  <div
+                    style={{
+                      background: '#1a1a2e',
+                      color: 'white',
+                      padding: '6px 12px',
+                      borderRadius: 20,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      maxWidth: 140,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                      border: '2px solid white',
+                    }}
+                  >
+                    {p.name}
+                  </div>
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      background: '#1a1a2e',
+                      transform: 'rotate(45deg)',
+                      marginTop: -5,
+                      borderRight: '2px solid white',
+                      borderBottom: '2px solid white',
+                    }}
+                  />
+                </div>
               </AdvancedMarker>
             ))}
           </Map>
