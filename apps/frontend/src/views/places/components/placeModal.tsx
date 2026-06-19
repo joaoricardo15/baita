@@ -171,7 +171,7 @@ const PlaceModal: FC<{
                   }}
                 >
                   <img
-                    src={`${FILES_BASE_URL}/${encodeURIComponent(picture)}`}
+                    src={`${FILES_BASE_URL}/${picture.split('/').map(encodeURIComponent).join('/')}`}
                     alt={`${localPlace.name} photo ${index + 1}`}
                     style={{
                       width: '100%',

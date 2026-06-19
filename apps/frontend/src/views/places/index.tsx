@@ -129,7 +129,6 @@ export const Places: FC = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    transform: 'translate(0, -100%)',
                   }}
                 >
                   <div
