@@ -78,7 +78,7 @@ const SortablePlace: FC<{
       <IconButton
         onClick={onRemove}
         size="small"
-        aria-label="Remove"
+        aria-label={`Remove ${name}`}
         sx={{ width: 44, height: 44 }}
       >
         <CloseIcon style={{ fontSize: 18 }} />

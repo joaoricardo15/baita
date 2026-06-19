@@ -17,11 +17,12 @@ import {
   Toolbar,
 } from '@mui/material'
 import axios from 'axios'
-import { FC, useEffect, useState } from 'react'
+import { FC, useContext, useEffect, useState } from 'react'
 
 import * as queries from '@/api/queries'
 import { Button, Text, TextInput } from '@/components'
 import { useDeletePlace, useSavePlace } from '@/hooks/usePlaces'
+import { NotificationContext } from '@/providers/notification'
 import { FILES_BASE_URL } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'
 
@@ -36,6 +37,7 @@ const PlaceModal: FC<{
   const [activePhoto, setActivePhoto] = useState(0)
   const savePlace = useSavePlace()
   const deletePlace = useDeletePlace()
+  const { showSnack } = useContext(NotificationContext)
 
   const isNew = !place.placeId
   const isBusy = savePlace.isPending || deletePlace.isPending || uploading
@@ -102,6 +104,7 @@ const PlaceModal: FC<{
             await axios.put(presignedUrl, file)
             newPictures.push(fileKey)
           } catch {
+            showSnack(labels.uploadError, 'error')
             break
           }
         }
@@ -231,7 +234,7 @@ const PlaceModal: FC<{
                 >
                   {localPlace.pictures.map((pic, index) => (
                     <img
-                      key={index}
+                      key={pic}
                       src={`${FILES_BASE_URL}/${encodeURIComponent(pic)}`}
                       alt={`Thumbnail ${index + 1}`}
                       onClick={() => setActivePhoto(index)}
@@ -383,6 +386,7 @@ const LABELS: Labels = {
     noPhotos: 'Add photos to remember this place',
     addPhoto: 'Add photo',
     removePhoto: 'Remove photo',
+    uploadError: 'Failed to upload photo',
     noLocation: 'No location set',
     updateLocation: 'Update location',
     save: 'Save place',
@@ -401,6 +405,7 @@ const LABELS: Labels = {
     noPhotos: 'Adicione fotos para lembrar deste lugar',
     addPhoto: 'Adicionar foto',
     removePhoto: 'Remover foto',
+    uploadError: 'Falha ao enviar foto',
     noLocation: 'Localização não definida',
     updateLocation: 'Atualizar localização',
     save: 'Salvar lugar',
