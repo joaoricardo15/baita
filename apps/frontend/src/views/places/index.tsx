@@ -136,7 +136,6 @@ export const Places: FC = () => {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 6,
                       background: 'white',
                       padding: '7px 14px',
                       borderRadius: 24,
@@ -151,15 +150,6 @@ export const Places: FC = () => {
                         '0 2px 12px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
                     }}
                   >
-                    <span
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: '#6366f1',
-                        flexShrink: 0,
-                      }}
-                    />
                     {p.name}
                   </div>
                   <div
