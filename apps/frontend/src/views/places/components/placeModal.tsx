@@ -31,6 +31,7 @@ const PlaceModal: FC<{
   const [localPlace, setPlace] = useState<IPlace>(place)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [activePhoto, setActivePhoto] = useState(0)
   const savePlace = useSavePlace()
   const deletePlace = useDeletePlace()
 
@@ -111,10 +112,13 @@ const PlaceModal: FC<{
   }
 
   const onRemovePhoto = (index: number) => {
-    setPlace({
-      ...localPlace,
-      pictures: localPlace.pictures.filter((_, i) => i !== index),
-    })
+    const newPictures = localPlace.pictures.filter((_, i) => i !== index)
+    setPlace({ ...localPlace, pictures: newPictures })
+    if (activePhoto >= newPictures.length && newPictures.length > 0) {
+      setActivePhoto(newPictures.length - 1)
+    } else if (newPictures.length === 0) {
+      setActivePhoto(0)
+    }
   }
 
   const onSave = () => {
@@ -146,60 +150,77 @@ const PlaceModal: FC<{
   return (
     <>
       <Dialog open={open} onClose={onClose} fullScreen>
-        {/* Hero Photo Area */}
+        {/* Photo Gallery */}
         <div
           style={{
             background: '#f5f5f5',
-            minHeight: localPlace.pictures.length > 0 ? 200 : 120,
             position: 'relative',
           }}
         >
           {localPlace.pictures.length > 0 ? (
-            <div
-              className="d-flex overflow-auto"
-              style={{ scrollSnapType: 'x mandatory' }}
-              role="region"
-              aria-label={labels.photosCarousel}
-            >
-              {localPlace.pictures.map((picture, index) => (
-                <div
-                  key={index}
+            <>
+              {/* Active Photo (hero) */}
+              <div style={{ position: 'relative' }}>
+                <img
+                  src={`${FILES_BASE_URL}/${localPlace.pictures[activePhoto].split('/').map(encodeURIComponent).join('/')}`}
+                  alt={`${localPlace.name} photo ${activePhoto + 1}`}
                   style={{
-                    minWidth: '100%',
-                    scrollSnapAlign: 'start',
-                    position: 'relative',
+                    width: '100%',
+                    height: 240,
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+                <IconButton
+                  aria-label={labels.removePhoto}
+                  onClick={() => onRemovePhoto(activePhoto)}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    width: 44,
+                    height: 44,
+                    background: 'rgba(0,0,0,0.5)',
+                    color: 'white',
+                    '&:hover': { background: 'rgba(0,0,0,0.7)' },
+                    '&:active': { background: 'rgba(0,0,0,0.8)' },
                   }}
                 >
-                  <img
-                    src={`${FILES_BASE_URL}/${picture.split('/').map(encodeURIComponent).join('/')}`}
-                    alt={`${localPlace.name} photo ${index + 1}`}
-                    style={{
-                      width: '100%',
-                      height: 200,
-                      objectFit: 'cover',
-                      display: 'block',
-                    }}
-                  />
-                  <IconButton
-                    aria-label={labels.removePhoto}
-                    onClick={() => onRemovePhoto(index)}
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      width: 44,
-                      height: 44,
-                      background: 'rgba(0,0,0,0.5)',
-                      color: 'white',
-                      '&:hover': { background: 'rgba(0,0,0,0.7)' },
-                      '&:active': { background: 'rgba(0,0,0,0.8)' },
-                    }}
-                  >
-                    <CloseIcon style={{ fontSize: 20 }} />
-                  </IconButton>
+                  <CloseIcon style={{ fontSize: 20 }} />
+                </IconButton>
+              </div>
+
+              {/* Thumbnail Strip */}
+              {localPlace.pictures.length > 1 && (
+                <div
+                  className="d-flex overflow-auto"
+                  style={{ padding: '8px 8px', gap: 6 }}
+                >
+                  {localPlace.pictures.map((pic, index) => (
+                    <img
+                      key={index}
+                      src={`${FILES_BASE_URL}/${pic.split('/').map(encodeURIComponent).join('/')}`}
+                      alt={`Thumbnail ${index + 1}`}
+                      onClick={() => setActivePhoto(index)}
+                      style={{
+                        width: 52,
+                        height: 52,
+                        objectFit: 'cover',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        opacity: index === activePhoto ? 1 : 0.5,
+                        border:
+                          index === activePhoto
+                            ? '2px solid #6366f1'
+                            : '2px solid transparent',
+                        transition: 'opacity 0.2s, border-color 0.2s',
+                      }}
+                    />
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <div
               className="d-flex flex-column align-items-center justify-content-center"
@@ -219,7 +240,7 @@ const PlaceModal: FC<{
             disabled={uploading}
             sx={{
               position: 'absolute',
-              bottom: 8,
+              bottom: localPlace.pictures.length > 1 ? 72 : 8,
               right: 8,
               width: 44,
               height: 44,
@@ -235,24 +256,6 @@ const PlaceModal: FC<{
               <AddAPhotoIcon style={{ fontSize: 20 }} />
             )}
           </IconButton>
-
-          {/* Photo Counter */}
-          {localPlace.pictures.length > 1 && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 8,
-                left: 8,
-                background: 'rgba(0,0,0,0.5)',
-                color: 'white',
-                borderRadius: 12,
-                padding: '2px 8px',
-                fontSize: 12,
-              }}
-            >
-              {localPlace.pictures.length} {labels.photos}
-            </div>
-          )}
         </div>
 
         {/* Form Content */}
@@ -365,8 +368,6 @@ const LABELS: Labels = {
     notes: 'Notes',
     notesPlaceholder: 'What makes this place special?',
     noPhotos: 'Add photos to remember this place',
-    photos: 'photos',
-    photosCarousel: 'Place photos',
     addPhoto: 'Add photo',
     removePhoto: 'Remove photo',
     noLocation: 'No location set',
@@ -386,8 +387,6 @@ const LABELS: Labels = {
     notes: 'Notas',
     notesPlaceholder: 'O que torna este lugar especial?',
     noPhotos: 'Adicione fotos para lembrar deste lugar',
-    photos: 'fotos',
-    photosCarousel: 'Fotos do lugar',
     addPhoto: 'Adicionar foto',
     removePhoto: 'Remover foto',
     noLocation: 'Localização não definida',

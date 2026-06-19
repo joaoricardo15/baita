@@ -5,6 +5,7 @@ import { BotTemplateSchema } from './models/bot/template/template.schema'
 import { ConnectionSchema } from './models/connection/connection.schema'
 import { ContentSchema } from './models/content/content.schema'
 import { FeelingSchema } from './models/feeling/feeling.schema'
+import { GuideSchema } from './models/guide/guide.schema'
 import { PlaceSchema } from './models/place/place.schema'
 import { TodoSchema } from './models/todo/todo.schema'
 import { UserSchema } from './models/user/user.schema'
@@ -29,6 +30,7 @@ export const entityRegistry: Record<string, IEntityTypeConfig> = {
     singleton: false,
   },
   feeling: { schema: FeelingSchema, idField: 'feelingId', singleton: false },
+  guide: { schema: GuideSchema, idField: 'guideId', singleton: false },
   place: { schema: PlaceSchema, idField: 'placeId', singleton: false },
   todo: { schema: TodoSchema, idField: '', singleton: true },
   content: { schema: ContentSchema, idField: 'contentId', singleton: false },
