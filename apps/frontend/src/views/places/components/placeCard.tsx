@@ -33,23 +33,37 @@ const PlaceCard: FC<{
                 src={`${FILES_BASE_URL}/${encodeURIComponent(thumbnail)}`}
                 alt={place.name}
                 style={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: 8,
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
                   objectFit: 'cover',
                 }}
               />
             ) : (
-              <LocationOnIcon style={{ fontSize: 32, color: '#bbb' }} />
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, #f0fdf4, #e0f2fe)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <LocationOnIcon style={{ fontSize: 24, color: '#22c55e' }} />
+              </div>
             )}
           </div>
           <div className="mx-2" style={{ minWidth: 0 }}>
             <Text className="fw-bold text-truncate">{place.name}</Text>
-            {place.description && (
-              <Text className="fw-light fs-6 text-truncate">
-                {place.description}
-              </Text>
-            )}
+            <Text
+              className="fw-light fs-6 text-truncate"
+              style={{ color: '#666' }}
+            >
+              {place.description ||
+                `${place.position.lat.toFixed(2)}, ${place.position.lng.toFixed(2)}`}
+            </Text>
           </div>
         </div>
         <div onClick={(e) => e.stopPropagation()}>
