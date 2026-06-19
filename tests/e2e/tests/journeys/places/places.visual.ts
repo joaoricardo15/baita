@@ -4,9 +4,9 @@
  * Journey: #6 Places (USER-JOURNEYS.md)
  *
  * Captures:
- * 1. Places page with map (masked — tile loading non-deterministic)
- * 2. Empty state (no saved places)
- * 3. With a saved place visible
+ * 1. Places page — empty state
+ * 2. Places page — list view with saved places
+ * 3. Places page — map view with markers
  */
 import { expect, test } from '@playwright/test'
 
@@ -32,12 +32,10 @@ test.describe('Places Journey', () => {
     }
   })
 
-  test('places page — map view', async ({ page }) => {
+  test('places page — empty state', async ({ page }) => {
     await page.goto('/place')
     await waitForPageReady(page)
 
-    // Assert: page rendered (map or placeholder)
-    // Note: map may not render without Google Maps API key
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
     expect(bodyWidth).toBeLessThanOrEqual(375)
 
@@ -47,7 +45,10 @@ test.describe('Places Journey', () => {
     })
   })
 
-  test('places page — with saved place', async ({ page, request }) => {
+  test('places page — list view with saved place', async ({
+    page,
+    request,
+  }) => {
     const placeId = `visual-place-${Date.now()}`
     placeIds.push(placeId)
 
@@ -56,8 +57,10 @@ test.describe('Places Journey', () => {
       data: {
         placeId,
         name: 'Coffee Shop',
+        description: 'Best espresso in town',
         pictures: [],
         position: { lat: 52.37, lng: 4.89 },
+        createdAt: new Date().toISOString(),
       },
     })
     const body = await res.json()
@@ -66,13 +69,8 @@ test.describe('Places Journey', () => {
     await page.goto('/place')
     await waitForPageReady(page)
 
-    // Assert: place name is visible (as marker label or in list)
-    const placeName = page.locator('text=Coffee Shop')
-    // The place may appear as a marker on the map or in a sidebar
-    // Give it time to render since map loads async
-    await page.waitForTimeout(2000)
+    await page.waitForSelector('text=Coffee Shop', { timeout: 5000 })
 
-    // Assert: page renders without overflow regardless of marker visibility
     const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
     expect(bodyWidth).toBeLessThanOrEqual(375)
 

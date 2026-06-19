@@ -3,9 +3,10 @@ import {
   Add as AddIcon,
   CableOutlined as CableOutlinedIcon,
 } from '@mui/icons-material'
+import { Fab } from '@mui/material'
 import { FC, useState } from 'react'
 
-import { Button, EmptyState, ListItem, Loading, Skeleton } from '@/components'
+import { EmptyState, ListItem, Loading, Skeleton } from '@/components'
 import { useConnections } from '@/hooks/useConnections'
 import { getLabels, Labels } from '@/utils/labels'
 
@@ -36,16 +37,13 @@ export const Connections: FC = () => {
         ))
       )}
 
-      <div className="d-flex align-items-center justify-content-center mt-5">
-        <Button
-          type="text"
-          color="primary"
-          icon={<AddIcon />}
-          onClick={() => setShowAdd(true)}
-        >
-          {labels.addConnection}
-        </Button>
-      </div>
+      <Fab
+        color="primary"
+        onClick={() => setShowAdd(true)}
+        sx={{ position: 'fixed', bottom: 24, right: 24 }}
+      >
+        <AddIcon />
+      </Fab>
 
       <AddConnection open={showAdd} onClose={() => setShowAdd(false)} />
     </>

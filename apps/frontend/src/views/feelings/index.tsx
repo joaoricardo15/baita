@@ -6,10 +6,11 @@ import {
   Add as AddIcon,
   FavoriteBorder as FavoriteBorderIcon,
 } from '@mui/icons-material'
+import { Fab } from '@mui/material'
 import { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Button, EmptyState, ListItem, Loading, Skeleton } from '@/components'
+import { EmptyState, ListItem, Loading, Skeleton } from '@/components'
 import { useDeleteFeeling, useFeelings } from '@/hooks/useFeelings'
 import { LINKS } from '@/router'
 import { getLabels, Labels } from '@/utils/labels'
@@ -117,16 +118,13 @@ export const Feelings: FC = () => {
         </div>
       )}
 
-      <div className="d-flex align-items-center justify-content-center mt-5">
-        <Button
-          type="text"
-          color="primary"
-          icon={<AddIcon />}
-          onClick={onNewFeeling}
-        >
-          {labels.addFeeling}
-        </Button>
-      </div>
+      <Fab
+        color="primary"
+        onClick={onNewFeeling}
+        sx={{ position: 'fixed', bottom: 24, right: 24 }}
+      >
+        <AddIcon />
+      </Fab>
     </>
   )
 }

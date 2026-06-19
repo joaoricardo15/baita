@@ -111,11 +111,11 @@ describe('Feelings Page', () => {
     })
   })
 
-  it('shows add button', async () => {
+  it('shows add button (FAB)', async () => {
     renderWithProviders(<Feelings />)
 
     await waitFor(() => {
-      expect(screen.getByText('How are you?')).toBeDefined()
+      expect(screen.getByRole('button', { name: '' })).toBeDefined()
     })
   })
 

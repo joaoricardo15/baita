@@ -88,11 +88,11 @@ describe('Bots Page', () => {
     })
   })
 
-  it('shows Add bot button when loaded', async () => {
+  it('shows Add bot FAB when loaded', async () => {
     renderWithProviders(<Bots />)
 
     await waitFor(() => {
-      expect(screen.getByText('Add bot')).toBeDefined()
+      expect(screen.getByRole('button', { name: '' })).toBeDefined()
     })
   })
 

@@ -92,11 +92,11 @@ describe('Connections page', () => {
     })
   })
 
-  it('renders add connection button', async () => {
+  it('renders add connection FAB', async () => {
     renderWithProviders(<Connections />)
 
     await waitFor(() => {
-      expect(screen.getByText('Add connection')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '' })).toBeDefined()
     })
   })
 

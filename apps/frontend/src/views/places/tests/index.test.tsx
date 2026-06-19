@@ -2,12 +2,12 @@
  * Places Page Tests
  *
  * User Journey: Places
- * Tests the places map feature — users saving and viewing geolocated memories.
+ * Tests the places feature — map-first view with bottom sheet list.
  *
  * Covers:
  * - Page shows loading skeleton initially
  * - Page shows empty state when no places exist
- * - Page shows map with markers after data loads
+ * - Page shows map and bottom sheet with place cards after data loads
  * - API failures don't crash the page
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -22,17 +22,24 @@ import { server } from '@/test/mswSetup'
 import { Places } from '@/views/places/index'
 
 vi.mock('@auth0/auth0-react', () => ({
-  withAuthenticationRequired: (component: any) => component,
+  withAuthenticationRequired: (component: unknown) => component,
 }))
 
 vi.mock('@vis.gl/react-google-maps', () => ({
-  APIProvider: ({ children }: any) => <div>{children}</div>,
-  Map: ({ children }: any) => <div data-testid="google-map">{children}</div>,
-  AdvancedMarker: ({ children }: any) => <div>{children}</div>,
+  APIProvider: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  Map: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="google-map">{children}</div>
+  ),
+  AdvancedMarker: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  useMap: () => null,
 }))
 
 vi.mock('../../../utils/labels', () => ({
-  getLabels: (labels: any) => labels.en,
+  getLabels: (labels: { en: Record<string, string> }) => labels.en,
   Labels: {},
 }))
 
@@ -67,7 +74,9 @@ const renderPlaces = () => {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <AuthContext.Provider value={mockAuthValue}>
-          <NotificationContext.Provider value={mockNotification as any}>
+          <NotificationContext.Provider
+            value={mockNotification as unknown as never}
+          >
             <Places />
           </NotificationContext.Provider>
         </AuthContext.Provider>
@@ -109,7 +118,7 @@ describe('Places Page', () => {
     })
   })
 
-  it('shows map after data loads', async () => {
+  it('shows map and place cards after data loads', async () => {
     server.use(
       http.get(`${API_BASE}/data/place`, () => {
         return HttpResponse.json({
@@ -118,8 +127,16 @@ describe('Places Page', () => {
             {
               placeId: 'abc',
               name: 'My Cafe',
+              description: 'Best coffee',
               pictures: [],
               position: { lat: 40.7128, lng: -74.006 },
+              createdAt: '2025-01-01T00:00:00Z',
+            },
+            {
+              placeId: 'def',
+              name: 'The Park',
+              pictures: [],
+              position: { lat: 40.78, lng: -73.96 },
             },
           ],
         })
@@ -130,7 +147,8 @@ describe('Places Page', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('google-map')).toBeInTheDocument()
-      expect(screen.getByText('My Cafe')).toBeInTheDocument()
+      expect(screen.getAllByText('My Cafe').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('The Park').length).toBeGreaterThan(0)
     })
   })
 

@@ -1,12 +1,12 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
 import { Add as AddIcon } from '@mui/icons-material'
+import { Fab } from '@mui/material'
 import { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { Button, ListItem, Loading, Skeleton } from '@/components'
+import { ListItem, Loading, Skeleton } from '@/components'
 import { useBots, useBotTemplates, useCreateBot } from '@/hooks/useBots'
 import { LINKS } from '@/router'
-import { getLabels, Labels } from '@/utils/labels'
 
 import Bot from './components/bot'
 import BotTemplate from './components/botTemplate'
@@ -65,22 +65,18 @@ export const Bots: FC = () => {
               </ListItem>
             ))}
 
-          {createBot.isPending ? (
-            <Skeleton elements={1} height={100} />
-          ) : (
-            <div className="d-flex align-items-center justify-content-center mt-5">
-              <Button
-                type="text"
-                color="primary"
-                icon={<AddIcon />}
-                onClick={onCreateBot}
-              >
-                {labels.addBot}
-              </Button>
-            </div>
-          )}
+          {createBot.isPending && <Skeleton elements={1} height={100} />}
         </>
       )}
+
+      <Fab
+        color="primary"
+        onClick={onCreateBot}
+        disabled={createBot.isPending}
+        sx={{ position: 'fixed', bottom: 24, right: 24 }}
+      >
+        <AddIcon />
+      </Fab>
     </>
   )
 }
@@ -88,14 +84,3 @@ export const Bots: FC = () => {
 export default withAuthenticationRequired(Bots, {
   onRedirecting: () => <Loading />,
 })
-
-const LABELS: Labels = {
-  en: {
-    addBot: 'Add bot',
-  },
-  pt: {
-    addBot: 'Adicionar bot',
-  },
-}
-
-const labels = getLabels(LABELS)

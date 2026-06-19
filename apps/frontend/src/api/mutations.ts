@@ -72,7 +72,7 @@ export const deletePlace = (placeId: string) =>
 export const removeImage = (imageId: string) =>
   getApiResponse<void>(
     'delete',
-    `data/image/files/${encodeURIComponent(imageId)}`
+    `data/image/_/files/${encodeURIComponent(imageId)}`
   )
 
 export const publishBotTemplate = (template: IBotTemplate) =>

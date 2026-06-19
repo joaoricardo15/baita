@@ -18,16 +18,13 @@ export function usePlaces() {
 export function useSavePlace() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (place: IPlace) =>
-      place.placeId
-        ? mutations.updatePlace(place.placeId, place)
-        : mutations.createPlace(
-            btoa(`${place.position.lat}:${place.position.lng}`),
-            {
-              ...place,
-              placeId: btoa(`${place.position.lat}:${place.position.lng}`),
-            }
-          ),
+    mutationFn: (place: IPlace) => {
+      if (place.placeId) {
+        return mutations.updatePlace(place.placeId, place)
+      }
+      const placeId = crypto.randomUUID()
+      return mutations.createPlace(placeId, { ...place, placeId })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['places'] })
     },
@@ -38,9 +35,15 @@ export function useDeletePlace() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (place: IPlace) => {
-      await Promise.all(
-        place.pictures.map((pictureId) => mutations.removeImage(pictureId))
-      )
+      if (place.pictures.length > 0) {
+        const results = await Promise.allSettled(
+          place.pictures.map((pictureId) => mutations.removeImage(pictureId))
+        )
+        const failed = results.filter((r) => r.status === 'rejected')
+        if (failed.length > 0) {
+          throw new Error(`Failed to delete ${failed.length} image(s)`)
+        }
+      }
       await mutations.deletePlace(place.placeId)
     },
     onMutate: async (place) => {

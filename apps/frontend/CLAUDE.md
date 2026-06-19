@@ -333,7 +333,7 @@ When the user provides an instruction or rule that is clearly valuable and appli
 | `/feed`             | Feed           | UserContext       | `retrieveContent()`                    | —                                            |
 | `/feelings`         | Feelings       | Direct ApiRequest | `getFeelings()`                        | `src/views/feelings/tests/index.test.tsx`    |
 | `/feelings/new`     | FeelingCapture | Direct ApiRequest | None (creates on save)                 | —                                            |
-| `/place`            | Places         | Direct ApiRequest | `listPlaces()`                         | —                                            |
+| `/place`            | Places         | Direct ApiRequest | `listPlaces()`                         | `src/views/places/tests/index.test.tsx`      |
 | `/profile`          | Profile        | AuthContext       | None (relies on UserContext pre-fetch) | `src/views/profile/index.test.tsx`           |
 
 **Provider-level data fetching (on auth):**
@@ -408,13 +408,13 @@ Uses the shared `EmptyState` component from `src/components/emptyState.tsx`.
 ```tsx
 <Card className="p-2">
   <div className="d-flex justify-content-between align-items-center">
-    <div className="d-flex align-items-center">
-      <div style={{ width: 30 }} className="m-2 d-flex align-items-center">
-        <Icon style={{ width: 30, height: 30 }} color="secondary" />
+    <div className="d-flex align-items-center overflow-hidden">
+      <div style={{ width: 60, minWidth: 60 }} className="m-3">
+        <img width={60} src={image} alt="Item" />
       </div>
-      <div className="mx-2">
-        <Text className="fw-bold">{name}</Text>
-        <Text className="fw-light fs-6">{subtitle}</Text>
+      <div className="mx-2" style={{ minWidth: 0 }}>
+        <Text className="fw-bold text-truncate">{name}</Text>
+        <Text className="fw-light fs-6 text-truncate">{subtitle}</Text>
       </div>
     </div>
     <Menu links={[...]}><MoreVertIcon /></Menu>
@@ -422,21 +422,24 @@ Uses the shared `EmptyState` component from `src/components/emptyState.tsx`.
 </Card>
 ```
 
-### Add Action (centered at bottom)
+### Add Action (floating action button)
 
 ```tsx
-<div className="d-flex align-items-center justify-content-center mt-5">
-  <Button type="text" color="primary" icon={<AddIcon />}>
-    {label}
-  </Button>
-</div>
+<Fab
+  color="primary"
+  onClick={onAdd}
+  sx={{ position: 'fixed', bottom: 24, right: 24 }}
+>
+  <AddIcon />
+</Fab>
 ```
 
 ### Rules
 
-- **No FABs** — always use centered `<Button>` instead
+- **FAB for add actions** — use MUI `<Fab>` fixed at bottom-right (24px inset)
 - **No page titles** — the nav tells users where they are
 - **Cards for list items** — wrap every list item in `<Card className="p-2">`
 - **3-dot menu for actions** — use `<Menu>` with `<MoreVertIcon />`
-- **Consistent spacing** — `mb-2` between cards, `mt-5` before add button
+- **Consistent spacing** — `mb-2` between cards
 - **Modals for creation/editing** — use MUI `<Dialog>` for forms, not separate routes
+- **Places uses map-first layout** — full-screen map with SwipeableDrawer bottom sheet for the list
