@@ -96,7 +96,7 @@ const PlaceModal: FC<{
         for (let i = 0; i < files.length; i++) {
           const file = files[i]
           const ext = file.name.split('.').pop() || 'jpg'
-          const fileKey = `${localPlace.placeId || '_new'}/${crypto.randomUUID()}.${ext}`
+          const fileKey = `${localPlace.placeId || '_new'}-${crypto.randomUUID()}.${ext}`
           try {
             const presignedUrl = await queries.fetchImageUploadUrl(fileKey)
             await axios.put(presignedUrl, file)
@@ -195,7 +195,7 @@ const PlaceModal: FC<{
               {/* Active Photo (hero) */}
               <div style={{ position: 'relative' }}>
                 <img
-                  src={`${FILES_BASE_URL}/${localPlace.pictures[activePhoto].split('/').map(encodeURIComponent).join('/')}`}
+                  src={`${FILES_BASE_URL}/${encodeURIComponent(localPlace.pictures[activePhoto])}`}
                   alt={`${localPlace.name} photo ${activePhoto + 1}`}
                   style={{
                     width: '100%',
@@ -232,7 +232,7 @@ const PlaceModal: FC<{
                   {localPlace.pictures.map((pic, index) => (
                     <img
                       key={index}
-                      src={`${FILES_BASE_URL}/${pic.split('/').map(encodeURIComponent).join('/')}`}
+                      src={`${FILES_BASE_URL}/${encodeURIComponent(pic)}`}
                       alt={`Thumbnail ${index + 1}`}
                       onClick={() => setActivePhoto(index)}
                       style={{
@@ -310,23 +310,23 @@ const PlaceModal: FC<{
             className="mt-3"
           />
 
-          {/* Location Section */}
-          <div className="mt-3 d-flex align-items-center justify-content-between">
-            <div>
-              <Text className="fw-light fs-6" style={{ color: '#666' }}>
-                {hasLocation
-                  ? `${localPlace.position.lat.toFixed(4)}, ${localPlace.position.lng.toFixed(4)}`
-                  : labels.noLocation}
-              </Text>
-            </div>
-            <Button
-              type="text"
-              icon={<MyLocationIcon style={{ fontSize: 18 }} />}
+          {/* Location */}
+          <div className="mt-3 d-flex align-items-center" style={{ gap: 8 }}>
+            <MyLocationIcon style={{ fontSize: 16, color: '#999' }} />
+            <Text className="fw-light fs-6" style={{ color: '#666' }}>
+              {hasLocation
+                ? `${localPlace.position.lat.toFixed(4)}, ${localPlace.position.lng.toFixed(4)}`
+                : labels.noLocation}
+            </Text>
+            <IconButton
+              aria-label={labels.updateLocation}
               onClick={onUpdateLocation}
               disabled={isBusy}
+              size="small"
+              sx={{ ml: 'auto' }}
             >
-              {hasLocation ? labels.updateLocation : labels.addLocation}
-            </Button>
+              <MyLocationIcon style={{ fontSize: 18 }} />
+            </IconButton>
           </div>
 
           {/* Delete Action (existing places only) */}
@@ -384,8 +384,7 @@ const LABELS: Labels = {
     addPhoto: 'Add photo',
     removePhoto: 'Remove photo',
     noLocation: 'No location set',
-    addLocation: 'Set location',
-    updateLocation: 'Update',
+    updateLocation: 'Update location',
     save: 'Save place',
     update: 'Update',
     cancel: 'Cancel',
@@ -403,8 +402,7 @@ const LABELS: Labels = {
     addPhoto: 'Adicionar foto',
     removePhoto: 'Remover foto',
     noLocation: 'Localização não definida',
-    addLocation: 'Definir localização',
-    updateLocation: 'Atualizar',
+    updateLocation: 'Atualizar localização',
     save: 'Salvar lugar',
     update: 'Atualizar',
     cancel: 'Cancelar',

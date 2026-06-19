@@ -30,7 +30,7 @@ const PlaceCard: FC<{
           >
             {thumbnail ? (
               <img
-                src={`${FILES_BASE_URL}/${thumbnail.split('/').map(encodeURIComponent).join('/')}`}
+                src={`${FILES_BASE_URL}/${encodeURIComponent(thumbnail)}`}
                 alt={place.name}
                 style={{
                   width: 60,
