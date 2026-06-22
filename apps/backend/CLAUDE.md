@@ -573,6 +573,109 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 
 - `GET /oauth/callback` — Generic OAuth provider callback (public, no auth)
 
+### Location (Track Mode)
+
+- `POST /location/ingest/{token}` — Ingest GPS location points (public, token-based auth)
+
+## Track Mode Architecture
+
+Location intelligence feature: background GPS tracking → place detection → activity recognition → bot triggers.
+
+### Endpoint: `POST /location/ingest/{token}`
+
+**Auth**: Token-based (same `decodeTriggerToken` as bot run endpoint). No Lambda authorizer — the token IS the secret.
+
+**Payload**:
+
+```json
+{
+  "points": [
+    {
+      "lat": 38.7223,
+      "lng": -9.1393,
+      "timestamp": 1719043200000,
+      "accuracy": 10,
+      "speed": 1.2
+    }
+  ],
+  "source": "shortcuts"
+}
+```
+
+**Sources**: iPhone Shortcuts (arrive/leave automations), OwnTracks (HTTP mode), Overland app, or custom native app.
+
+**Response**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "pointsStored": 5,
+    "source": "shortcuts",
+    "staysDetected": 1,
+    "activitiesDetected": 1,
+    "newPlacesDetected": 0,
+    "visitsRecorded": 1
+  }
+}
+```
+
+### Processing Pipeline (`src/endpoints/location/processor.ts`)
+
+Runs synchronously within the endpoint Lambda:
+
+```
+1. Noise filter → reject points with accuracy > 65m or speed > 200 km/h
+2. Stay-point detection (Li et al. 2008) → radius=50m, dwell=5min
+3. For each detected stay:
+   a. Load user's usual-places
+   b. Haversine match to known places (within place.radiusM)
+   c. If matched → record visit + update place stats + trigger 'arrive' bots
+   d. If new (>150m from all known) → create usual-place + trigger 'new_place' bots + send push
+4. Detect activities between stays (speed-based: walk/cycle/drive/run/transit)
+5. Store activity records
+```
+
+### Geo Utilities (`src/lib/geo.ts`)
+
+Core algorithms (22 unit tests):
+
+| Function                                                 | Purpose                                      |
+| -------------------------------------------------------- | -------------------------------------------- |
+| `haversineMeters(lat1, lng1, lat2, lng2)`                | Great-circle distance between two points     |
+| `filterNoise(points, maxAccuracy, maxSpeed)`             | Remove GPS outliers                          |
+| `detectStayPoints(points, distThreshold, timeThreshold)` | Li et al. 2008 algorithm                     |
+| `classifyActivity(points)`                               | Speed-based: walking/running/cycling/driving |
+| `segmentActivities(points, windowSize)`                  | Split trace into activity legs               |
+| `matchToPlace(lat, lng, places)`                         | Find nearest known place within radius       |
+| `isNewPlace(lat, lng, places, threshold)`                | Check if >150m from all known                |
+| `computePlaceScore(visits, daysSince, avgDwell)`         | Importance score (0-1)                       |
+
+### Entity Types (DynamoDB)
+
+| Sort Key Pattern    | Entity      | Description                           |
+| ------------------- | ----------- | ------------------------------------- |
+| `#USUAL-PLACE#{id}` | IUsualPlace | Auto-detected places with visit stats |
+| `#VISIT#{id}`       | IVisit      | Individual visit records              |
+| `#ACTIVITY#{id}`    | IActivity   | Detected movement segments            |
+
+### Bot Trigger Integration
+
+When the processor detects a location event, it:
+
+1. Queries all user's active bots
+2. Filters for bots with `ServiceName.locationEvent` trigger
+3. Matches the configured `eventType` (arrive/leave/new_place)
+4. Invokes the bot engine async (same path as webhooks/schedules)
+
+### Push Notification
+
+On new place detection:
+
+- Reads user's push subscription from `#USER` record
+- Sends Web Push with title "Novo local detectado" + deep link to Places page
+- Silently catches expired subscriptions
+
 ## Feature Development Methodology
 
 When developing or reviewing a feature, follow this use-case-driven approach:

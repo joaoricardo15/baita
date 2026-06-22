@@ -14,10 +14,11 @@ import { OptionsInput } from '@/components'
 import { useBot, useUpdateBot } from '@/hooks/useBots'
 import { AppsContext } from '@/providers/apps'
 import { AuthContext } from '@/providers/auth'
-import { computeRunUrl } from '@/utils/bot'
+import { computeIngestUrl, computeRunUrl } from '@/utils/bot'
 import { getLabels, Labels } from '@/utils/labels'
 
 import IPhoneSetupGuide from './iphoneSetupGuide'
+import LocationSetupGuide from './locationSetupGuide'
 import NewConnection from './newConnection'
 import PushNotificationService from './pushNotification'
 import WebhookService from './webhook'
@@ -196,6 +197,11 @@ const TaskService: FC<{
               template="alarm-stopped"
               webhookUrl={computeRunUrl(bot.botId, userId)}
             />
+          )}
+
+          {/***** Location event setup guide *****/}
+          {task.service?.name === ServiceName.locationEvent && (
+            <LocationSetupGuide ingestUrl={computeIngestUrl(userId)} />
           )}
 
           {/***** Push notification specific display *****/}

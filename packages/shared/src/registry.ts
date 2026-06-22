@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { ActivitySchema } from './models/activity/activity.schema'
 import { BotSchema } from './models/bot/bot.schema'
 import { BotTemplateSchema } from './models/bot/template/template.schema'
 import { ConnectionSchema } from './models/connection/connection.schema'
@@ -9,6 +10,8 @@ import { GuideSchema } from './models/guide/guide.schema'
 import { PlaceSchema } from './models/place/place.schema'
 import { TodoSchema } from './models/todo/todo.schema'
 import { UserSchema } from './models/user/user.schema'
+import { UsualPlaceSchema } from './models/usual-place/usual-place.schema'
+import { VisitSchema } from './models/visit/visit.schema'
 
 export interface IEntityTypeConfig {
   schema: z.ZodSchema | null
@@ -35,6 +38,17 @@ export const entityRegistry: Record<string, IEntityTypeConfig> = {
   todo: { schema: TodoSchema, idField: '', singleton: true },
   content: { schema: ContentSchema, idField: 'contentId', singleton: false },
   image: { schema: null, idField: '', singleton: false },
+  'usual-place': {
+    schema: UsualPlaceSchema,
+    idField: 'usualPlaceId',
+    singleton: false,
+  },
+  visit: { schema: VisitSchema, idField: 'visitId', singleton: false },
+  activity: {
+    schema: ActivitySchema,
+    idField: 'activityId',
+    singleton: false,
+  },
 }
 
 export type EntityType = keyof typeof entityRegistry

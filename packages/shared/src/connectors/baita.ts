@@ -32,6 +32,28 @@ export const baitaConnector: IConnectorManifest = {
     },
     {
       type: ServiceType.trigger,
+      name: ServiceName.locationEvent,
+      label: 'Location Event',
+      description:
+        'Trigger when arriving at or leaving a place (via Track Mode)',
+      config: {
+        inputFields: [
+          {
+            name: 'eventType',
+            label: 'Event Type',
+            type: VariableType.options,
+            required: true,
+            options: [
+              { label: 'Arrive at new place', value: 'new_place' },
+              { label: 'Arrive at known place', value: 'arrive' },
+              { label: 'Leave a place', value: 'leave' },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      type: ServiceType.trigger,
       name: ServiceName.schedule,
       label: 'Schedule',
       config: {

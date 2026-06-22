@@ -4,8 +4,17 @@ import {
   Add as AddIcon,
   AddLocationAltOutlined as AddLocationAltOutlinedIcon,
   Map as MapOutlinedIcon,
+  MyLocation as MyLocationIcon,
+  Send as SendIcon,
 } from '@mui/icons-material'
-import { Fab, SwipeableDrawer, Tab, Tabs } from '@mui/material'
+import {
+  Button,
+  CircularProgress,
+  Fab,
+  SwipeableDrawer,
+  Tab,
+  Tabs,
+} from '@mui/material'
 import {
   AdvancedMarker,
   APIProvider,
@@ -13,23 +22,29 @@ import {
   useMap,
 } from '@vis.gl/react-google-maps'
 import { FC, useContext, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 
 import { EmptyState, ListItem, Loading, Skeleton } from '@/components'
 import { useDeleteGuide, useGuides } from '@/hooks/useGuides'
 import { useDeletePlace, usePlaces } from '@/hooks/usePlaces'
+import { useDeleteUsualPlace, useUsualPlaces } from '@/hooks/useUsualPlaces'
+import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_MAP_ID } from '@/utils/config'
 import { getLabels, Labels } from '@/utils/labels'
+import { getIngestUrl, testLocationConnection } from '@/utils/location'
 import { buildGoogleMapsUrl, shareGuide } from '@/utils/maps'
 
 import GuideCard from './components/guideCard'
 import GuideModal from './components/guideModal'
 import PlaceCard from './components/placeCard'
 import PlaceModal from './components/placeModal'
+import TrackModeSetup from './components/trackModeSetup'
+import UsualPlaceCard from './components/usualPlaceCard'
 
 const SHEET_HANDLE = 32
 
-type SheetTab = 'places' | 'guides'
+type SheetTab = 'places' | 'guides' | 'usual'
 
 const newPlace: () => IPlace = () => ({
   placeId: '',
@@ -61,16 +76,34 @@ const MapBounds: FC<{ places: IPlace[] }> = ({ places }) => {
 export const Places: FC = () => {
   const { data: places, isLoading: placesLoading } = usePlaces()
   const { data: guides, isLoading: guidesLoading } = useGuides()
+  const { data: usualPlaces, isLoading: usualLoading } = useUsualPlaces()
   const deletePlace = useDeletePlace()
   const deleteGuide = useDeleteGuide()
+  const deleteUsualPlace = useDeleteUsualPlace()
+  const { user } = useContext(AuthContext)
   const { showSnack } = useContext(NotificationContext)
+  const [sending, setSending] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      const lat = parseFloat(searchParams.get('lat') || '0')
+      const lng = parseFloat(searchParams.get('lng') || '0')
+      if (lat && lng) {
+        setPlace({ ...newPlace(), position: { lat, lng } })
+        setTab('usual')
+      }
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const [place, setPlace] = useState<IPlace>()
   const [guide, setGuide] = useState<IGuide>()
   const [sheetOpen, setSheetOpen] = useState(true)
   const [tab, setTab] = useState<SheetTab>('places')
+  const [trackSetupOpen, setTrackSetupOpen] = useState(false)
 
-  const loading = placesLoading || guidesLoading
+  const loading = placesLoading || guidesLoading || usualLoading
 
   const sorted = places
     ? [...places].sort(
@@ -86,6 +119,10 @@ export const Places: FC = () => {
           new Date(b.createdAt || 0).getTime() -
           new Date(a.createdAt || 0).getTime()
       )
+    : []
+
+  const sortedUsual = usualPlaces
+    ? [...usualPlaces].sort((a, b) => b.score - a.score)
     : []
 
   const onDeletePlace = (p: IPlace) => {
@@ -116,6 +153,19 @@ export const Places: FC = () => {
       setGuide(newGuide())
     } else {
       setPlace(newPlace())
+    }
+  }
+
+  const handleSendLocation = async () => {
+    const userId = user?.userId || ''
+    if (!userId) return
+    setSending(true)
+    const result = await testLocationConnection(getIngestUrl(userId))
+    setSending(false)
+    if (result.success) {
+      showSnack(labels.locationSent, 'success')
+    } else {
+      showSnack(labels.locationFailed, 'error')
     }
   }
 
@@ -285,6 +335,7 @@ export const Places: FC = () => {
         >
           <Tab label={labels.tabPlaces} value="places" sx={{ minHeight: 40 }} />
           <Tab label={labels.tabGuides} value="guides" sx={{ minHeight: 40 }} />
+          <Tab label={labels.tabUsual} value="usual" sx={{ minHeight: 40 }} />
         </Tabs>
 
         {/* Scrollable Content */}
@@ -305,23 +356,77 @@ export const Places: FC = () => {
                 />
               </ListItem>
             ))
-          ) : sortedGuides.length === 0 ? (
-            <EmptyState
-              icon={<MapOutlinedIcon style={{ fontSize: 48 }} />}
-              title={labels.guidesEmpty}
-              description={labels.guidesEmptyDesc}
-            />
+          ) : tab === 'guides' ? (
+            sortedGuides.length === 0 ? (
+              <EmptyState
+                icon={<MapOutlinedIcon style={{ fontSize: 48 }} />}
+                title={labels.guidesEmpty}
+                description={labels.guidesEmptyDesc}
+              />
+            ) : (
+              sortedGuides.map((g, index) => (
+                <ListItem key={g.guideId} index={index}>
+                  <GuideCard
+                    guide={g}
+                    onEdit={() => setGuide(g)}
+                    onShare={() => onShareGuide(g)}
+                    onDelete={() => onDeleteGuide(g)}
+                  />
+                </ListItem>
+              ))
+            )
+          ) : sortedUsual.length === 0 ? (
+            <div>
+              <EmptyState
+                icon={<MyLocationIcon style={{ fontSize: 48 }} />}
+                title={labels.usualEmpty}
+                description={labels.usualEmptyDesc}
+              />
+              <div className="text-center mt-3">
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<MyLocationIcon />}
+                  onClick={() => setTrackSetupOpen(true)}
+                >
+                  {labels.setupButton}
+                </Button>
+              </div>
+            </div>
           ) : (
-            sortedGuides.map((g, index) => (
-              <ListItem key={g.guideId} index={index}>
-                <GuideCard
-                  guide={g}
-                  onEdit={() => setGuide(g)}
-                  onShare={() => onShareGuide(g)}
-                  onDelete={() => onDeleteGuide(g)}
-                />
-              </ListItem>
-            ))
+            <>
+              <div
+                className="d-flex align-items-center justify-content-between mb-2 px-1"
+                style={{ fontSize: '0.75rem', color: '#888' }}
+              >
+                <span>
+                  {sortedUsual.length} {labels.placesTracked}
+                </span>
+                <Button
+                  size="small"
+                  startIcon={
+                    sending ? (
+                      <CircularProgress size={12} />
+                    ) : (
+                      <SendIcon style={{ fontSize: 14 }} />
+                    )
+                  }
+                  onClick={handleSendLocation}
+                  disabled={sending}
+                  sx={{ fontSize: '0.7rem', textTransform: 'none' }}
+                >
+                  {labels.sendNow}
+                </Button>
+              </div>
+              {sortedUsual.map((up, index) => (
+                <ListItem key={up.usualPlaceId} index={index}>
+                  <UsualPlaceCard
+                    place={up}
+                    onDelete={() => deleteUsualPlace.mutate(up.usualPlaceId)}
+                  />
+                </ListItem>
+              ))}
+            </>
           )}
         </div>
       </SwipeableDrawer>
@@ -350,6 +455,10 @@ export const Places: FC = () => {
           onClose={() => setGuide(undefined)}
         />
       )}
+      <TrackModeSetup
+        open={trackSetupOpen}
+        onClose={() => setTrackSetupOpen(false)}
+      />
     </>
   )
 }
@@ -365,11 +474,20 @@ const LABELS: Labels = {
       'Save your favorite spots and they will appear here on the map.',
     tabPlaces: 'Places',
     tabGuides: 'Guides',
+    tabUsual: 'Usual',
     place: 'place',
     places: 'places',
     guidesEmpty: 'Create your first guide',
     guidesEmptyDesc:
       'Pick your favorite spots and share them as a walking route.',
+    usualEmpty: 'No usual places yet',
+    usualEmptyDesc:
+      'Enable Track Mode to automatically detect places you visit frequently.',
+    setupButton: 'Set up Track Mode',
+    sendNow: 'Send now',
+    placesTracked: 'places tracked',
+    locationSent: 'Location sent!',
+    locationFailed: 'Could not send location',
     linkCopied: 'Link copied!',
   },
   pt: {
@@ -378,11 +496,20 @@ const LABELS: Labels = {
       'Salve seus lugares favoritos e eles aparecerão aqui no mapa.',
     tabPlaces: 'Lugares',
     tabGuides: 'Guias',
+    tabUsual: 'Habituais',
     place: 'lugar',
     places: 'lugares',
     guidesEmpty: 'Crie seu primeiro guia',
     guidesEmptyDesc:
       'Escolha seus lugares favoritos e compartilhe como uma rota a pé.',
+    usualEmpty: 'Nenhum lugar habitual',
+    usualEmptyDesc:
+      'Ative o Track Mode para detectar automaticamente os lugares que frequenta.',
+    setupButton: 'Configurar Track Mode',
+    sendNow: 'Enviar agora',
+    placesTracked: 'lugares rastreados',
+    locationSent: 'Localização enviada!',
+    locationFailed: 'Não foi possível enviar',
     linkCopied: 'Link copiado!',
   },
 }

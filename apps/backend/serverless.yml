@@ -308,6 +308,15 @@ functions:
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
+  # ─── Location (Track Mode) ────────────────────────────────
+  endpoint-location:
+    handler: src/endpoints/location/index.handler
+    events:
+      - http:
+          path: location/ingest/{token}
+          method: post
+          cors: true
+
   # ─── Bot Engine (direct invoke only — no HTTP) ─────────────
   bot-engine:
     handler: src/engine/index.handler

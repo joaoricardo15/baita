@@ -17,7 +17,10 @@ describe('Entity Type Registry', () => {
     expect(types).toContain('todo')
     expect(types).toContain('content')
     expect(types).toContain('image')
-    expect(types).toHaveLength(10)
+    expect(types).toContain('usual-place')
+    expect(types).toContain('visit')
+    expect(types).toContain('activity')
+    expect(types).toHaveLength(13)
   })
 
   it('getEntityConfig returns config for valid types', () => {

@@ -42,6 +42,7 @@ export enum ServiceName {
   webhook = 'webhook',
   schedule = 'schedule',
   phoneEvent = 'phone-event',
+  locationEvent = 'location-event',
 }
 export const ServiceNameSchema = z.nativeEnum(ServiceName)
 
