@@ -20,6 +20,7 @@ export const baitaConnector: IConnectorManifest = {
       type: ServiceType.trigger,
       name: ServiceName.webhook,
       label: 'Webhook',
+      description: 'Trigger from any external service via HTTP POST',
       config: {},
     },
     {
@@ -56,6 +57,7 @@ export const baitaConnector: IConnectorManifest = {
       type: ServiceType.trigger,
       name: ServiceName.schedule,
       label: 'Schedule',
+      description: 'Run automatically on a recurring schedule',
       config: {
         inputFields: [
           {
@@ -96,6 +98,8 @@ export const baitaConnector: IConnectorManifest = {
       type: ServiceType.invoke,
       name: ServiceName.code,
       label: 'Run Javascript',
+      description:
+        'Execute custom JavaScript code with access to previous step outputs',
       config: {
         customFields: true,
         inputFields: [
@@ -114,6 +118,7 @@ export const baitaConnector: IConnectorManifest = {
       type: ServiceType.invoke,
       name: ServiceName.method,
       label: 'Get my "To Do" list',
+      description: 'Fetch your current to-do items',
       config: {
         methodName: MethodName.getTodo,
       },
@@ -122,6 +127,7 @@ export const baitaConnector: IConnectorManifest = {
       type: ServiceType.invoke,
       name: ServiceName.method,
       label: 'Send me a notification',
+      description: 'Send a push notification to your device',
       config: {
         methodName: MethodName.sendNotification,
         inputFields: [
@@ -170,6 +176,7 @@ export const baitaConnector: IConnectorManifest = {
       type: ServiceType.invoke,
       name: ServiceName.method,
       label: 'Publish content to feed',
+      description: 'Add items to your personal content feed',
       config: {
         methodName: MethodName.publishToFeed,
         inputFields: [
