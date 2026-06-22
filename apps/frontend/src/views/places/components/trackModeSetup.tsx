@@ -35,7 +35,6 @@ const TrackModeSetup: FC<{
 
   const userId = user?.userId || ''
   const ingestUrl = userId ? getIngestUrl(userId) : ''
-  const steps = labels._lang === 'pt' ? STEPS_PT : STEPS_EN
 
   const handleTest = async () => {
     setTestStatus('testing')
@@ -119,7 +118,7 @@ const TrackModeSetup: FC<{
           {labels.stepsTitle}
         </Typography>
         <ol className="ps-3 mb-4" style={{ fontSize: '0.85rem' }}>
-          {steps.map((step, i) => (
+          {(labels._lang === 'pt' ? STEPS_PT : STEPS_EN).map((step, i) => (
             <li
               key={i}
               className="mb-2"
@@ -198,25 +197,27 @@ const TrackModeSetup: FC<{
 export default TrackModeSetup
 
 const STEPS_EN = [
-  'Open the iPhone Shortcuts app → go to the Automation tab',
-  'Tap "+" → choose "Arrive" (or "Leave") → pick a location on the map',
-  'Adjust the blue circle to set how close you need to be',
-  'Tap "New Blank Automation" → add action "Get Current Location"',
-  'Add a second action: "Get Contents of URL" → paste the URL shown above',
-  'Tap the chevron (>) to expand → set Method to "POST" → add Request Body as "JSON"',
-  'In the JSON body, type: {"points":[{"lat": then insert the Latitude variable, "lng": insert Longitude, "timestamp": insert Current Date as Unix timestamp}],"source":"shortcuts"}',
-  'Tap "Done" → back in the list, tap your automation → choose "Run Immediately"',
+  'Open iPhone Shortcuts → Automation tab',
+  'Tap "+" → choose "Arrive" (or "Leave") → pick a location',
+  'Select "Run Immediately" → "New Blank Automation"',
+  'Add action: "Get Current Location"',
+  'Add action: "Get Contents of URL" → paste the URL above',
+  'Tap ▸ to expand → Method: "POST" → Request Body: "JSON"',
+  'Tap "Add new field" → Key: lat → tap the Value field → select "Current Location" from the variable bar above the keyboard → choose "Latitude"',
+  'Tap "Add new field" → Key: lng → Value: select "Current Location" → "Longitude"',
+  'Done!',
 ]
 
 const STEPS_PT = [
-  'Abra o app Atalhos do iPhone → vá para a aba Automação',
-  'Toque "+" → escolha "Chegar" (ou "Sair") → escolha um local no mapa',
-  'Ajuste o círculo azul para definir a proximidade',
-  'Toque "Nova Automação" → adicione a ação "Obter Localização Atual"',
-  'Adicione segunda ação: "Obter Conteúdo do URL" → cole a URL acima',
-  'Toque no chevron (>) → mude Método para "POST" → adicione Corpo como "JSON"',
-  'No corpo JSON, escreva: {"points":[{"lat": insira a variável Latitude, "lng": insira Longitude, "timestamp": insira Data Atual como Unix}],"source":"shortcuts"}',
-  'Toque "OK" → na lista, toque na automação → escolha "Executar Imediatamente"',
+  'Abra Atalhos do iPhone → aba Automação',
+  'Toque "+" → "Chegar" (ou "Sair") → escolha um local',
+  'Selecione "Executar Imediatamente" → "Nova Automação"',
+  'Adicione ação: "Obter Localização Atual"',
+  'Adicione ação: "Obter Conteúdo do URL" → cole a URL acima',
+  'Toque ▸ para expandir → Método: "POST" → Corpo: "JSON"',
+  'Toque "Adicionar campo" → Chave: lat → toque no campo Valor → selecione "Localização Atual" na barra de variáveis acima do teclado → escolha "Latitude"',
+  'Toque "Adicionar campo" → Chave: lng → Valor: selecione "Localização Atual" → "Longitude"',
+  'Pronto!',
 ]
 
 const ERROR_MESSAGES_EN: Record<string, string> = {
@@ -243,40 +244,40 @@ const LABELS: Labels = {
   en: {
     title: 'Track Mode',
     valueProp:
-      'Automatically detect places you visit, how you move between them, and trigger automations on arrival or departure.',
+      'Automatically detect places you visit and trigger automations on arrival or departure.',
     urlLabel: 'Your tracking URL (keep this private):',
-    copied: 'URL copied!',
-    stepsTitle: 'Setup with iPhone Shortcuts',
+    copied: 'Copied!',
+    stepsTitle: 'Step-by-step setup',
     testTitle: 'Test the connection',
     testDescription:
-      'Send your current location to verify everything is connected correctly.',
+      'Send your current location from this device to verify everything works.',
     testButton: 'Send test location',
     testLoading: 'Sending...',
     testSuccess: 'Connection verified! Location received.',
     tipsTitle: 'Good to know',
-    tip1: 'Create one automation per place you want to track (home, work, gym...)',
-    tip2: 'Tracked places will appear automatically in Places → Usual tab',
-    tip3: 'The system detects new places and sends you a notification to save them',
-    tip4: 'For continuous tracking, use the OwnTracks app (HTTP mode) with the same URL',
+    tip1: '"Arrive" and "Leave" are separate automations — create one for each if you want both',
+    tip2: 'Repeat for each place you want to track (home, work, gym...)',
+    tip3: 'Tracked places will appear automatically in Places → Usual tab',
+    tip4: 'For continuous tracking, use OwnTracks app (HTTP mode) with the same URL',
     _lang: 'en',
   },
   pt: {
     title: 'Track Mode',
     valueProp:
-      'Detete automaticamente os lugares que visita, como se move entre eles, e dispare automações na chegada ou partida.',
+      'Detete automaticamente os lugares que visita e dispare automações na chegada ou partida.',
     urlLabel: 'A sua URL de rastreamento (mantenha privada):',
-    copied: 'URL copiada!',
-    stepsTitle: 'Configurar com Atalhos do iPhone',
+    copied: 'Copiado!',
+    stepsTitle: 'Configuração passo a passo',
     testTitle: 'Testar a conexão',
     testDescription:
-      'Envie a sua localização atual para verificar se está tudo conectado.',
+      'Envie a sua localização atual deste dispositivo para verificar se funciona.',
     testButton: 'Enviar localização de teste',
     testLoading: 'A enviar...',
     testSuccess: 'Conexão verificada! Localização recebida.',
     tipsTitle: 'Bom saber',
-    tip1: 'Crie uma automação por lugar que quer rastrear (casa, trabalho, ginásio...)',
-    tip2: 'Lugares detetados aparecerão automaticamente em Lugares → aba Habituais',
-    tip3: 'O sistema deteta novos lugares e envia-lhe uma notificação para os guardar',
+    tip1: '"Chegar" e "Sair" são automações separadas — crie uma para cada se quiser ambos',
+    tip2: 'Repita para cada lugar que quer rastrear (casa, trabalho, ginásio...)',
+    tip3: 'Lugares detetados aparecerão automaticamente em Lugares → aba Habituais',
     tip4: 'Para rastreamento contínuo, use o app OwnTracks (modo HTTP) com a mesma URL',
     _lang: 'pt',
   },

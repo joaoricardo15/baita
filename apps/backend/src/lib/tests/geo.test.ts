@@ -29,17 +29,6 @@ describe('geo utilities', () => {
   })
 
   describe('filterNoise', () => {
-    it('removes points with accuracy above threshold', () => {
-      const points: IGpsPoint[] = [
-        { lat: 38.72, lng: -9.13, timestamp: 0, accuracy: 10 },
-        { lat: 38.72001, lng: -9.13, timestamp: 60000, accuracy: 100 },
-        { lat: 38.72002, lng: -9.13, timestamp: 120000, accuracy: 5 },
-      ]
-      const filtered = filterNoise(points, 65)
-      expect(filtered).toHaveLength(2)
-      expect(filtered[1].accuracy).toBe(5)
-    })
-
     it('removes points implying impossible speed', () => {
       const points: IGpsPoint[] = [
         { lat: 38.72, lng: -9.13, timestamp: 0 },

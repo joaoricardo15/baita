@@ -4,7 +4,7 @@ import {
   Error as ErrorIcon,
   MyLocation as LocationIcon,
 } from '@mui/icons-material'
-import { Button, CircularProgress } from '@mui/material'
+import { Button, CircularProgress, IconButton } from '@mui/material'
 import { FC, useContext, useState } from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 
@@ -20,8 +20,6 @@ const LocationSetupGuide: FC<{
   const { showSnack } = useContext(NotificationContext)
   const [testStatus, setTestStatus] = useState<TestStatus>('idle')
   const [testMessage, setTestMessage] = useState('')
-
-  const steps = labels._lang === 'pt' ? STEPS_PT : STEPS_EN
 
   const handleTest = async () => {
     setTestStatus('testing')
@@ -61,28 +59,41 @@ const LocationSetupGuide: FC<{
         {labels.valueProp}
       </p>
 
+      {/* URL */}
+      {ingestUrl && (
+        <div
+          className="p-2 rounded mb-3 d-flex align-items-center gap-2"
+          style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}
+        >
+          <code
+            style={{
+              fontSize: '0.65rem',
+              wordBreak: 'break-all',
+              flex: 1,
+              color: '#166534',
+            }}
+          >
+            {ingestUrl}
+          </code>
+          <CopyToClipboard
+            text={ingestUrl}
+            onCopy={() => showSnack(labels.copied, 'success')}
+          >
+            <IconButton size="small" color="primary">
+              <CopyIcon style={{ fontSize: 14 }} />
+            </IconButton>
+          </CopyToClipboard>
+        </div>
+      )}
+
       {/* Setup steps */}
       <p className="mb-1 fw-bold" style={{ fontSize: '0.8rem', color: '#333' }}>
         {labels.stepsTitle}
       </p>
       <ol className="ps-3 mb-3" style={{ fontSize: '0.8rem' }}>
-        {steps.map((step, i) => (
+        {(labels._lang === 'pt' ? STEPS_PT : STEPS_EN).map((step, i) => (
           <li key={i} className="mb-1" style={{ color: '#444' }}>
             {step}
-            {i === 3 && ingestUrl && (
-              <CopyToClipboard
-                text={ingestUrl}
-                onCopy={() => showSnack(labels.copied, 'success')}
-              >
-                <span
-                  className="text-primary fw-bold d-inline-flex align-items-center"
-                  style={{ cursor: 'pointer', marginLeft: 4, gap: 3 }}
-                >
-                  <CopyIcon style={{ fontSize: 13 }} />
-                  {labels.tapToCopy}
-                </span>
-              </CopyToClipboard>
-            )}
           </li>
         ))}
       </ol>
@@ -136,23 +147,27 @@ const LocationSetupGuide: FC<{
 export default LocationSetupGuide
 
 const STEPS_EN = [
-  'Open the iPhone Shortcuts app → Automation tab',
-  'Tap "+" → choose "Arrive" (or "Leave") → select a location on the map',
-  'Adjust the radius circle to cover the area',
-  'Tap "New Blank Automation" → add "Get Current Location" → then add "Get Contents of URL" and paste this URL:',
-  'Expand the action → set Method to "POST" → add Body as JSON',
-  'In JSON body: {"points":[{"lat": insert Latitude, "lng": insert Longitude, "timestamp": insert Current Date}],"source":"shortcuts"}',
-  'Tap Done → in Automation list, select "Run Immediately"',
+  'Open iPhone Shortcuts → Automation tab',
+  'Tap "+" → "Arrive" (or "Leave") → pick a location',
+  'Select "Run Immediately" → "New Blank Automation"',
+  'Add action: "Get Current Location"',
+  'Add action: "Get Contents of URL" → paste the URL above',
+  'Tap ▸ to expand → Method: "POST" → Body: "JSON"',
+  'Add field: Key "lat" → tap Value → select "Current Location" → "Latitude"',
+  'Add field: Key "lng" → tap Value → select "Current Location" → "Longitude"',
+  'Done!',
 ]
 
 const STEPS_PT = [
-  'Abra Atalhos no iPhone → aba Automação',
-  'Toque "+" → escolha "Chegar" (ou "Sair") → selecione um local no mapa',
-  'Ajuste o raio do círculo para cobrir a área desejada',
-  'Toque "Nova Automação" → adicione "Obter Localização" → depois "Obter Conteúdo do URL" e cole esta URL:',
-  'Expanda a ação → mude Método para "POST" → adicione Corpo como JSON',
-  'No corpo JSON: {"points":[{"lat": insira Latitude, "lng": insira Longitude, "timestamp": insira Data Atual}],"source":"shortcuts"}',
-  'Toque OK → na lista de Automações, selecione "Executar Imediatamente"',
+  'Abra Atalhos do iPhone → aba Automação',
+  'Toque "+" → "Chegar" (ou "Sair") → escolha local',
+  'Selecione "Executar Imediatamente" → "Nova Automação"',
+  'Adicione ação: "Obter Localização Atual"',
+  'Adicione ação: "Obter Conteúdo do URL" → cole a URL acima',
+  'Toque ▸ para expandir → Método: "POST" → Corpo: "JSON"',
+  'Adicione campo: Chave "lat" → toque Valor → selecione "Localização Atual" → "Latitude"',
+  'Adicione campo: Chave "lng" → toque Valor → selecione "Localização Atual" → "Longitude"',
+  'Pronto!',
 ]
 
 const ERROR_MESSAGES_EN: Record<string, string> = {
@@ -180,34 +195,32 @@ const LABELS: Labels = {
   en: {
     title: 'Track Mode Setup',
     valueProp:
-      'Track Mode detects places you visit, how you move between them, and triggers your bots on arrival or departure.',
+      'Track Mode detects places you visit and triggers your bots on arrival or departure.',
     stepsTitle: 'iPhone Shortcuts setup:',
-    copied: 'URL copied!',
-    tapToCopy: 'Copy URL',
+    copied: 'Copied!',
     testButton: 'Test',
     testHint: 'Verify the connection works from this device',
     testLoading: 'Sending location...',
     testSuccess: 'Connection working! Point received.',
     tipsTitle: 'Tips:',
-    tip1: 'Create one automation per place you want to track',
-    tip2: 'Tracked places appear in Places → Usual tab',
+    tip1: '"Arrive" and "Leave" are separate — create one for each direction',
+    tip2: 'Repeat for each place you want to track',
     tip3: 'You can also use OwnTracks app for continuous tracking',
     _lang: 'en',
   },
   pt: {
     title: 'Configuração do Track Mode',
     valueProp:
-      'O Track Mode detecta os lugares que visita, como se move entre eles, e dispara os seus bots na chegada ou partida.',
+      'O Track Mode deteta os lugares que visita e dispara os seus bots na chegada ou partida.',
     stepsTitle: 'Configurar Atalhos do iPhone:',
-    copied: 'URL copiada!',
-    tapToCopy: 'Copiar URL',
+    copied: 'Copiado!',
     testButton: 'Testar',
     testHint: 'Verifique se a conexão funciona a partir deste dispositivo',
     testLoading: 'A enviar localização...',
     testSuccess: 'Conexão a funcionar! Ponto recebido.',
     tipsTitle: 'Dicas:',
-    tip1: 'Crie uma automação por lugar que quer rastrear',
-    tip2: 'Lugares detetados aparecem em Lugares → aba Habituais',
+    tip1: '"Chegar" e "Sair" são separados — crie um para cada direção',
+    tip2: 'Repita para cada lugar que quer rastrear',
     tip3: 'Também pode usar o app OwnTracks para rastreamento contínuo',
     _lang: 'pt',
   },

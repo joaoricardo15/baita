@@ -1,6 +1,7 @@
 import { decodeTriggerToken } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
+import { IGpsPoint } from '@/lib/geo'
 import Api, { ApiRequestStatus } from '@/utils/api'
 
 import { processLocationBatch } from './processor'
@@ -32,7 +33,14 @@ export const handler = async (
     }
 
     const { points, source } = parsed.data
-    const result = await processLocationBatch(userId, points)
+    const now = Date.now()
+    const gpsPoints: IGpsPoint[] = points.map((p) => ({
+      lat: p.lat,
+      lng: p.lng,
+      timestamp: now,
+    }))
+
+    const result = await processLocationBatch(userId, gpsPoints)
 
     api.httpResponse(callback, ApiRequestStatus.success, undefined, {
       pointsStored: points.length,
@@ -53,6 +61,10 @@ function normalizePayload(body: Record<string, unknown>): unknown {
     return normalizeOverland(body)
   }
 
+  if (typeof body.lat === 'number' && typeof body.lng === 'number') {
+    return normalizeShortcuts(body)
+  }
+
   return body
 }
 
@@ -60,11 +72,6 @@ function normalizeOwnTracks(body: Record<string, unknown>): ILocationIngest {
   const point: ILocationPoint = {
     lat: body.lat as number,
     lng: (body.lon as number) ?? (body.lng as number),
-    timestamp: ((body.tst as number) || 0) * 1000,
-    accuracy: body.acc as number | undefined,
-    altitude: body.alt as number | undefined,
-    speed: body.vel as number | undefined,
-    course: body.cog as number | undefined,
   }
   return { points: [point], source: 'owntracks' }
 }
@@ -72,7 +79,6 @@ function normalizeOwnTracks(body: Record<string, unknown>): ILocationIngest {
 function normalizeOverland(body: Record<string, unknown>): ILocationIngest {
   const locations = body.locations as Array<{
     geometry?: { coordinates?: number[] }
-    properties?: Record<string, unknown>
   }>
 
   const points: ILocationPoint[] = locations
@@ -80,14 +86,15 @@ function normalizeOverland(body: Record<string, unknown>): ILocationIngest {
     .map((l) => ({
       lng: l.geometry!.coordinates![0],
       lat: l.geometry!.coordinates![1],
-      timestamp: new Date(
-        (l.properties?.timestamp as string) || Date.now()
-      ).getTime(),
-      accuracy: l.properties?.horizontal_accuracy as number | undefined,
-      altitude: l.geometry!.coordinates![2],
-      speed: l.properties?.speed as number | undefined,
-      course: l.properties?.course as number | undefined,
     }))
 
   return { points, source: 'overland' }
+}
+
+function normalizeShortcuts(body: Record<string, unknown>): ILocationIngest {
+  const point: ILocationPoint = {
+    lat: body.lat as number,
+    lng: body.lng as number,
+  }
+  return { points: [point], source: 'shortcuts' }
 }

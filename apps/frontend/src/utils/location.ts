@@ -33,16 +33,8 @@ export async function testLocationConnection(ingestUrl: string): Promise<{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        points: [
-          {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            timestamp: Date.now(),
-            accuracy: position.coords.accuracy,
-            speed: position.coords.speed,
-          },
-        ],
-        source: 'app',
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
       }),
     })
 

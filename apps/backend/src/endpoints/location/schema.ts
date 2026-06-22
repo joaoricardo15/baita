@@ -1,11 +1,6 @@
 export interface ILocationPoint {
   lat: number
   lng: number
-  timestamp: number
-  accuracy?: number
-  altitude?: number
-  speed?: number
-  course?: number
 }
 
 export interface ILocationIngest {
@@ -43,9 +38,6 @@ export function validateLocationIngest(
         valid: false,
         error: `points[${i}].lng must be between -180 and 180`,
       }
-    }
-    if (typeof p.timestamp !== 'number') {
-      return { valid: false, error: `points[${i}].timestamp must be a number` }
     }
   }
 

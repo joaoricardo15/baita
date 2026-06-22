@@ -15,8 +15,6 @@ import {
   segmentActivities,
 } from '@/lib/geo'
 
-import { ILocationPoint } from './schema'
-
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || ''
 const SERVICE_SITE_URL = process.env.SERVICE_SITE_URL || ''
@@ -38,18 +36,9 @@ export interface IProcessingResult {
 
 export async function processLocationBatch(
   userId: string,
-  points: ILocationPoint[]
+  points: IGpsPoint[]
 ): Promise<IProcessingResult> {
-  const gpsPoints: IGpsPoint[] = points.map((p) => ({
-    lat: p.lat,
-    lng: p.lng,
-    timestamp: p.timestamp,
-    accuracy: p.accuracy,
-    speed: p.speed,
-    course: p.course,
-  }))
-
-  const filtered = filterNoise(gpsPoints)
+  const filtered = filterNoise(points)
   if (filtered.length < 2) {
     return {
       staysDetected: 0,

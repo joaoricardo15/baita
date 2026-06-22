@@ -4,9 +4,6 @@ export interface IGpsPoint {
   lat: number
   lng: number
   timestamp: number
-  accuracy?: number
-  speed?: number
-  course?: number
 }
 
 export interface IStayPoint {
@@ -52,7 +49,6 @@ export function haversineMeters(
 
 export function filterNoise(
   points: IGpsPoint[],
-  maxAccuracyM = 65,
   maxSpeedKmh = 200
 ): IGpsPoint[] {
   const maxSpeedMs = maxSpeedKmh / 3.6
@@ -60,7 +56,6 @@ export function filterNoise(
 
   for (let i = 0; i < points.length; i++) {
     const p = points[i]
-    if (p.accuracy && p.accuracy > maxAccuracyM) continue
 
     if (filtered.length > 0) {
       const prev = filtered[filtered.length - 1]

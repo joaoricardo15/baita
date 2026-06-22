@@ -7,21 +7,14 @@ import {
   MyLocation as MyLocationIcon,
   Send as SendIcon,
 } from '@mui/icons-material'
-import {
-  Button,
-  CircularProgress,
-  Fab,
-  SwipeableDrawer,
-  Tab,
-  Tabs,
-} from '@mui/material'
+import { Button, CircularProgress, Fab, Tab, Tabs } from '@mui/material'
 import {
   AdvancedMarker,
   APIProvider,
   Map,
   useMap,
 } from '@vis.gl/react-google-maps'
-import { FC, useContext, useEffect, useState } from 'react'
+import { FC, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { EmptyState, ListItem, Loading, Skeleton } from '@/components'
@@ -42,8 +35,10 @@ import PlaceModal from './components/placeModal'
 import TrackModeSetup from './components/trackModeSetup'
 import UsualPlaceCard from './components/usualPlaceCard'
 
-const SHEET_HANDLE = 32
-const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+const HANDLE_HEIGHT = 32
+const COLLAPSED_HEIGHT = 120
+const EXPANDED_RATIO = 0.7
+const SNAP_THRESHOLD = 40
 
 type SheetTab = 'places' | 'guides' | 'usual'
 
@@ -100,9 +95,50 @@ export const Places: FC = () => {
 
   const [place, setPlace] = useState<IPlace>()
   const [guide, setGuide] = useState<IGuide>()
-  const [sheetOpen, setSheetOpen] = useState(true)
+  const [sheetHeight, setSheetHeight] = useState(COLLAPSED_HEIGHT)
+  const [dragging, setDragging] = useState(false)
   const [tab, setTab] = useState<SheetTab>('places')
   const [trackSetupOpen, setTrackSetupOpen] = useState(false)
+  const startY = useRef(0)
+  const startH = useRef(0)
+
+  const expandedHeight = Math.round(window.innerHeight * EXPANDED_RATIO)
+
+  const snapToNearest = useCallback(
+    (h: number) => {
+      const mid = (COLLAPSED_HEIGHT + expandedHeight) / 2
+      setSheetHeight(h > mid ? expandedHeight : COLLAPSED_HEIGHT)
+    },
+    [expandedHeight]
+  )
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    startY.current = e.clientY
+    startH.current = sheetHeight
+    setDragging(true)
+  }
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragging) return
+    const delta = startY.current - e.clientY
+    const next = Math.max(
+      COLLAPSED_HEIGHT,
+      Math.min(expandedHeight, startH.current + delta)
+    )
+    setSheetHeight(next)
+  }
+
+  const onPointerUp = () => {
+    if (!dragging) return
+    setDragging(false)
+    const delta = sheetHeight - startH.current
+    if (Math.abs(delta) < SNAP_THRESHOLD) {
+      setSheetHeight(startH.current)
+    } else {
+      snapToNearest(sheetHeight)
+    }
+  }
 
   const loading = placesLoading || guidesLoading || usualLoading
 
@@ -281,49 +317,62 @@ export const Places: FC = () => {
         </APIProvider>
       </div>
 
-      {/* Bottom Sheet */}
-      <SwipeableDrawer
-        anchor="bottom"
-        open={true}
-        onOpen={() => setSheetOpen(true)}
-        onClose={() => setSheetOpen(false)}
-        disableBackdropTransition
-        disableDiscovery={IS_IOS}
-        disableSwipeToOpen={IS_IOS}
-        swipeAreaWidth={IS_IOS ? 0 : SHEET_HANDLE}
-        variant="permanent"
-        ModalProps={{ keepMounted: true }}
-        PaperProps={{
-          sx: {
-            height: sheetOpen ? 'calc(70dvh)' : '120px',
-            maxHeight: '70dvh',
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            overflow: 'visible',
-            transition: 'height 0.3s ease',
-          },
-        }}
-        sx={{
-          '& .MuiDrawer-paper': {
-            boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
-          },
+      {/* Bottom Sheet — pointer-event swipeable panel */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: sheetHeight,
+          maxHeight: `${Math.round(window.innerHeight * EXPANDED_RATIO)}px`,
+          zIndex: 1200,
+          background: '#fff',
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.1)',
+          transition: dragging
+            ? 'none'
+            : 'height 0.3s cubic-bezier(0.32,0.72,0,1)',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        {/* Drag Handle — tap to toggle */}
+        {/* Drag Handle — swipe or tap to toggle */}
         <div
           role="button"
           tabIndex={0}
-          aria-label={sheetOpen ? 'Collapse' : 'Expand'}
-          onClick={() => setSheetOpen(!sheetOpen)}
+          aria-label={sheetHeight > COLLAPSED_HEIGHT ? 'Collapse' : 'Expand'}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          onClick={() => {
+            if (!dragging) {
+              setSheetHeight(
+                sheetHeight > COLLAPSED_HEIGHT
+                  ? COLLAPSED_HEIGHT
+                  : expandedHeight
+              )
+            }
+          }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') setSheetOpen(!sheetOpen)
+            if (e.key === 'Enter' || e.key === ' ')
+              setSheetHeight(
+                sheetHeight > COLLAPSED_HEIGHT
+                  ? COLLAPSED_HEIGHT
+                  : expandedHeight
+              )
           }}
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            height: SHEET_HANDLE,
-            cursor: 'pointer',
+            height: HANDLE_HEIGHT,
+            cursor: 'grab',
+            flexShrink: 0,
+            touchAction: 'none',
           }}
         >
           <div
@@ -341,7 +390,11 @@ export const Places: FC = () => {
           value={tab}
           onChange={(_, v) => setTab(v)}
           variant="fullWidth"
-          sx={{ minHeight: 40, borderBottom: '1px solid #f0f0f0' }}
+          sx={{
+            minHeight: 40,
+            borderBottom: '1px solid #f0f0f0',
+            flexShrink: 0,
+          }}
         >
           <Tab label={labels.tabPlaces} value="places" sx={{ minHeight: 40 }} />
           <Tab label={labels.tabGuides} value="guides" sx={{ minHeight: 40 }} />
@@ -354,6 +407,9 @@ export const Places: FC = () => {
             overflow: 'auto',
             flex: 1,
             padding: '8px 12px 80px',
+            overscrollBehavior: 'contain',
+            WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
           }}
         >
           {tab === 'places' ? (
@@ -439,7 +495,7 @@ export const Places: FC = () => {
             </>
           )}
         </div>
-      </SwipeableDrawer>
+      </div>
 
       {/* FAB */}
       <Fab
