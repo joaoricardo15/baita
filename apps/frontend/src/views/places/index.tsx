@@ -43,6 +43,7 @@ import TrackModeSetup from './components/trackModeSetup'
 import UsualPlaceCard from './components/usualPlaceCard'
 
 const SHEET_HANDLE = 32
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
 
 type SheetTab = 'places' | 'guides' | 'usual'
 
@@ -283,20 +284,23 @@ export const Places: FC = () => {
       {/* Bottom Sheet */}
       <SwipeableDrawer
         anchor="bottom"
-        open={sheetOpen}
+        open={true}
         onOpen={() => setSheetOpen(true)}
         onClose={() => setSheetOpen(false)}
         disableBackdropTransition
-        disableSwipeToOpen={false}
-        swipeAreaWidth={SHEET_HANDLE}
+        disableDiscovery={IS_IOS}
+        disableSwipeToOpen={IS_IOS}
+        swipeAreaWidth={IS_IOS ? 0 : SHEET_HANDLE}
+        variant="permanent"
         ModalProps={{ keepMounted: true }}
         PaperProps={{
           sx: {
-            height: 'calc(70dvh)',
+            height: sheetOpen ? 'calc(70dvh)' : '120px',
             maxHeight: '70dvh',
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
             overflow: 'visible',
+            transition: 'height 0.3s ease',
           },
         }}
         sx={{
@@ -305,15 +309,21 @@ export const Places: FC = () => {
           },
         }}
       >
-        {/* Drag Handle */}
+        {/* Drag Handle — tap to toggle */}
         <div
-          aria-hidden="true"
+          role="button"
+          tabIndex={0}
+          aria-label={sheetOpen ? 'Collapse' : 'Expand'}
+          onClick={() => setSheetOpen(!sheetOpen)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') setSheetOpen(!sheetOpen)
+          }}
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             height: SHEET_HANDLE,
-            cursor: 'grab',
+            cursor: 'pointer',
           }}
         >
           <div
