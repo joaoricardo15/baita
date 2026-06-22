@@ -1,12 +1,16 @@
 import { withAuthenticationRequired } from '@auth0/auth0-react'
-import { Add as AddIcon } from '@mui/icons-material'
+import {
+  Add as AddIcon,
+  SmartToyOutlined as SmartToyIcon,
+} from '@mui/icons-material'
 import { Fab } from '@mui/material'
 import { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { ListItem, Loading, Skeleton } from '@/components'
+import { EmptyState, ListItem, Loading, Skeleton } from '@/components'
 import { useBots, useBotTemplates, useCreateBot } from '@/hooks/useBots'
 import { LINKS } from '@/router'
+import { getLabels, Labels } from '@/utils/labels'
 
 import Bot from './components/bot'
 import BotTemplate from './components/botTemplate'
@@ -22,10 +26,19 @@ export const Bots: FC = () => {
     createBot.mutateAsync().then((bot) => navigate(LINKS.bot(bot.botId)))
   }
 
+  const hasNoBots = bots && bots.length === 0
+  const hasNoTemplates = !botTemplates || botTemplates.length === 0
+
   return (
     <>
       {botsLoading || !bots ? (
         <Skeleton elements={3} height={100} />
+      ) : hasNoBots && hasNoTemplates ? (
+        <EmptyState
+          icon={<SmartToyIcon style={{ fontSize: 48 }} />}
+          title={labels.emptyTitle}
+          description={labels.emptyDescription}
+        />
       ) : (
         <>
           {bots
@@ -84,3 +97,18 @@ export const Bots: FC = () => {
 export default withAuthenticationRequired(Bots, {
   onRedirecting: () => <Loading />,
 })
+
+const LABELS: Labels = {
+  en: {
+    emptyTitle: 'No bots yet',
+    emptyDescription:
+      'Create your first bot to automate tasks — tap + to get started.',
+  },
+  pt: {
+    emptyTitle: 'Nenhum bot ainda',
+    emptyDescription:
+      'Crie o seu primeiro bot para automatizar tarefas — toque + para começar.',
+  },
+}
+
+const labels = getLabels(LABELS)

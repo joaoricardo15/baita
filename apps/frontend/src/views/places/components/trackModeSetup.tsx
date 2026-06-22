@@ -188,6 +188,7 @@ const TrackModeSetup: FC<{
           <li className="mb-1">{labels.tip2}</li>
           <li className="mb-1">{labels.tip3}</li>
           <li className="mb-1">{labels.tip4}</li>
+          <li className="mb-1">{labels.tip5}</li>
         </ul>
       </div>
     </Dialog>
@@ -259,6 +260,7 @@ const LABELS: Labels = {
     tip2: 'Repeat for each place you want to track (home, work, gym...)',
     tip3: 'Tracked places will appear automatically in Places → Usual tab',
     tip4: 'For continuous tracking, use OwnTracks app (HTTP mode) with the same URL',
+    tip5: 'To automate actions on arrival/departure, create a bot with the "Location Event" trigger',
     _lang: 'en',
   },
   pt: {
@@ -279,6 +281,7 @@ const LABELS: Labels = {
     tip2: 'Repita para cada lugar que quer rastrear (casa, trabalho, ginásio...)',
     tip3: 'Lugares detetados aparecerão automaticamente em Lugares → aba Habituais',
     tip4: 'Para rastreamento contínuo, use o app OwnTracks (modo HTTP) com a mesma URL',
+    tip5: 'Para automatizar ações na chegada/partida, crie um bot com o gatilho "Evento de Localização"',
     _lang: 'pt',
   },
 }
