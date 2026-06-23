@@ -5,8 +5,8 @@ export const TodoTaskSchema = z.object({
   title: z.string(),
   body: z.string().optional(),
   done: z.boolean(),
-  createdAt: z.number(),
-  updatedAt: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 })
 export type ITodoTask = z.infer<typeof TodoTaskSchema>
 

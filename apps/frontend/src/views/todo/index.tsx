@@ -22,12 +22,12 @@ export const ToDo: FC = () => {
       const doneTasks = todoTasks.filter((t) => t.done)
       const unDoneTasks = todoTasks.filter((t) => !t.done)
 
-      const now = Date.now()
+      const now = new Date().toISOString()
 
       const updatedTasks = [
         ...unDoneTasks,
         {
-          taskId: now.toString(),
+          taskId: Date.now().toString(),
           done: false,
           title: newTaskTitle,
           createdAt: now,

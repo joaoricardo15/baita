@@ -74,7 +74,7 @@ const ToDoTask: FC<{
     if (todoTasks && !task.done) {
       const updatedTasks = todoTasks.map((t) =>
         t.taskId === task.taskId
-          ? { ...t, done: true, updatedAt: Date.now() }
+          ? { ...t, done: true, updatedAt: new Date().toISOString() }
           : t
       )
       updateTodo.mutate(updatedTasks)
