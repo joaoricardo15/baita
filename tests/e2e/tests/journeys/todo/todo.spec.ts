@@ -68,8 +68,8 @@ test.describe('To-Do Lifecycle', () => {
       taskId,
       title: `E2E task ${i + 1}`,
       done: false,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }))
 
     const updateRes = await request.put(`${API_URL}/data/todo`, {
@@ -100,7 +100,7 @@ test.describe('To-Do Lifecycle', () => {
     const body = await res.json()
     const tasks = body.data.tasks.map((t: { taskId: string; done: boolean }) =>
       taskIds.slice(0, 2).includes(t.taskId)
-        ? { ...t, done: true, updatedAt: Date.now() }
+        ? { ...t, done: true, updatedAt: new Date().toISOString() }
         : t
     )
 

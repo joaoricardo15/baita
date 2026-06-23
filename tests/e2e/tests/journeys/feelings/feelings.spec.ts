@@ -54,8 +54,8 @@ test.describe('Feelings Lifecycle', () => {
         content: 'E2E Test Feeling — had a vivid dream about flying',
         mood: 'joyful',
         tags: ['dream'],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
     })
     const body = await res.json()
@@ -85,7 +85,7 @@ test.describe('Feelings Lifecycle', () => {
         feelingId,
         content: 'E2E Test Feeling (Updated) — the dream was about mountains',
         mood: 'calm',
-        updatedAt: Date.now(),
+        updatedAt: new Date().toISOString(),
       },
     })
     const body = await res.json()

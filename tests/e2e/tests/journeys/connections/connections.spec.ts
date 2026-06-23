@@ -145,7 +145,7 @@ test.describe('Connections Management', () => {
         name: 'Details Test',
         email: 'details@e2e.test',
         credentials: { access_token: 'token' },
-        createdAt: Date.now(),
+        createdAt: new Date().toISOString(),
       },
     })
 
