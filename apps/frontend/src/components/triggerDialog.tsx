@@ -4,9 +4,9 @@ import {
   DialogContent,
   DialogTitle,
 } from '@mui/material'
-import Axios from 'axios'
 import { FC, useContext, useState } from 'react'
 
+import * as mutations from '@/api/mutations'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { computeRunUrl } from '@/utils/bot'
@@ -54,7 +54,8 @@ const TriggerDialog: FC<{
     const runUrl = computeRunUrl(botId, userId)
 
     showLoading(true)
-    Axios.post(runUrl, parsed)
+    mutations
+      .triggerBotRun(runUrl, parsed)
       .then((result) => {
         if (result.data.success) {
           showSnack(labels.triggerSuccess, 'success')

@@ -20,10 +20,10 @@ export function useSaveGuide() {
   return useMutation({
     mutationFn: (guide: IGuide) => {
       if (guide.guideId) {
-        return mutations.updateGuide(guide.guideId, guide)
+        return mutations.saveGuide(guide.guideId, guide)
       }
       const guideId = crypto.randomUUID()
-      return mutations.createGuide(guideId, { ...guide, guideId })
+      return mutations.saveGuide(guideId, { ...guide, guideId })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guides'] })

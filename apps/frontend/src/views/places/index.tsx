@@ -14,16 +14,18 @@ import {
   Map,
   useMap,
 } from '@vis.gl/react-google-maps'
-import { FC, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { FC, useContext, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 import { EmptyState, ListItem, Loading, Skeleton } from '@/components'
+import { useBottomSheet } from '@/hooks/useBottomSheet'
 import { useDeleteGuide, useGuides } from '@/hooks/useGuides'
 import { useDeletePlace, usePlaces } from '@/hooks/usePlaces'
 import { useDeleteUsualPlace, useUsualPlaces } from '@/hooks/useUsualPlaces'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { GOOGLE_MAPS_API_KEY, GOOGLE_MAPS_MAP_ID } from '@/utils/config'
+import { sortByDateDesc } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 import { getIngestUrl, testLocationConnection } from '@/utils/location'
 import { buildGoogleMapsUrl, shareGuide } from '@/utils/maps'
@@ -36,9 +38,6 @@ import TrackModeSetup from './components/trackModeSetup'
 import UsualPlaceCard from './components/usualPlaceCard'
 
 const HANDLE_HEIGHT = 32
-const COLLAPSED_HEIGHT = 120
-const EXPANDED_RATIO = 0.7
-const SNAP_THRESHOLD = 40
 
 type SheetTab = 'places' | 'guides' | 'usual'
 
@@ -95,68 +94,24 @@ export const Places: FC = () => {
 
   const [place, setPlace] = useState<IPlace>()
   const [guide, setGuide] = useState<IGuide>()
-  const [sheetHeight, setSheetHeight] = useState(COLLAPSED_HEIGHT)
-  const [dragging, setDragging] = useState(false)
   const [tab, setTab] = useState<SheetTab>('places')
   const [trackSetupOpen, setTrackSetupOpen] = useState(false)
-  const startY = useRef(0)
-  const startH = useRef(0)
-
-  const expandedHeight = Math.round(window.innerHeight * EXPANDED_RATIO)
-
-  const snapToNearest = useCallback(
-    (h: number) => {
-      const mid = (COLLAPSED_HEIGHT + expandedHeight) / 2
-      setSheetHeight(h > mid ? expandedHeight : COLLAPSED_HEIGHT)
-    },
-    [expandedHeight]
-  )
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
-    startY.current = e.clientY
-    startH.current = sheetHeight
-    setDragging(true)
-  }
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragging) return
-    const delta = startY.current - e.clientY
-    const next = Math.max(
-      COLLAPSED_HEIGHT,
-      Math.min(expandedHeight, startH.current + delta)
-    )
-    setSheetHeight(next)
-  }
-
-  const onPointerUp = () => {
-    if (!dragging) return
-    setDragging(false)
-    const delta = sheetHeight - startH.current
-    if (Math.abs(delta) < SNAP_THRESHOLD) {
-      setSheetHeight(startH.current)
-    } else {
-      snapToNearest(sheetHeight)
-    }
-  }
+  const {
+    sheetHeight,
+    dragging,
+    expandedHeight,
+    collapsedHeight,
+    toggle,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+  } = useBottomSheet()
 
   const loading = placesLoading || guidesLoading || usualLoading
 
-  const sorted = places
-    ? [...places].sort(
-        (a, b) =>
-          new Date(b.createdAt || 0).getTime() -
-          new Date(a.createdAt || 0).getTime()
-      )
-    : []
+  const sorted = places ? sortByDateDesc(places) : []
 
-  const sortedGuides = guides
-    ? [...guides].sort(
-        (a, b) =>
-          new Date(b.createdAt || 0).getTime() -
-          new Date(a.createdAt || 0).getTime()
-      )
-    : []
+  const sortedGuides = guides ? sortByDateDesc(guides) : []
 
   const sortedUsual = usualPlaces
     ? [...usualPlaces].sort((a, b) => b.score - a.score)
@@ -325,7 +280,7 @@ export const Places: FC = () => {
           left: 0,
           right: 0,
           height: sheetHeight,
-          maxHeight: `${Math.round(window.innerHeight * EXPANDED_RATIO)}px`,
+          maxHeight: `${expandedHeight}px`,
           zIndex: 1200,
           background: '#fff',
           borderTopLeftRadius: 16,
@@ -343,27 +298,16 @@ export const Places: FC = () => {
         <div
           role="button"
           tabIndex={0}
-          aria-label={sheetHeight > COLLAPSED_HEIGHT ? 'Collapse' : 'Expand'}
+          aria-label={sheetHeight > collapsedHeight ? 'Collapse' : 'Expand'}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
           onClick={() => {
-            if (!dragging) {
-              setSheetHeight(
-                sheetHeight > COLLAPSED_HEIGHT
-                  ? COLLAPSED_HEIGHT
-                  : expandedHeight
-              )
-            }
+            if (!dragging) toggle()
           }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ')
-              setSheetHeight(
-                sheetHeight > COLLAPSED_HEIGHT
-                  ? COLLAPSED_HEIGHT
-                  : expandedHeight
-              )
+            if (e.key === 'Enter' || e.key === ' ') toggle()
           }}
           style={{
             display: 'flex',

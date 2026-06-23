@@ -79,9 +79,6 @@ importers:
       qs:
         specifier: ^6.14.0
         version: 6.15.2
-      uuid:
-        specifier: ^13.0.0
-        version: 13.0.2
       web-push:
         specifier: ^3.6.7
         version: 3.6.7
@@ -13046,13 +13043,6 @@ packages:
         integrity: sha512-kZf/K6hEIrWHI6XqOFUiiMa+79wE/D8Q+NCNAWclkyg3b4d2k7s0QGepNjiABc+aR3N1PAyHL7p6UcLY6LmrnA==,
       }
 
-  uuid@13.0.2:
-    resolution:
-      {
-        integrity: sha512-vzi9uRZ926x4XV73S/4qQaTwPXM2JBj6/6lI/byHH1jOpCzb0zDbfytgA9LcN/hzb2l7WQSQnxITOVx5un/wGw==,
-      }
-    hasBin: true
-
   uuid@8.0.0:
     resolution:
       {
@@ -23002,8 +22992,6 @@ snapshots:
       is-generator-function: 1.1.2
       is-typed-array: 1.1.15
       which-typed-array: 1.1.20
-
-  uuid@13.0.2: {}
 
   uuid@8.0.0: {}
 

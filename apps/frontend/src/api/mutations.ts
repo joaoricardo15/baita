@@ -9,6 +9,7 @@ import {
   ITaskExecutionResult,
   ITodoTask,
 } from '@baita/shared'
+import axios from 'axios'
 
 import { getApiResponse } from './client'
 
@@ -36,6 +37,12 @@ export const testBotTask = (botId: string, task: ITask, taskIndex: number) =>
     taskIndex,
   })
 
+export const triggerBotRun = (url: string, payload: unknown) =>
+  axios.post(url, payload)
+
+export const uploadToPresignedUrl = (url: string, file: File) =>
+  axios.put(url, file)
+
 export const updateTodo = (tasks: ITodoTask[]) =>
   getApiResponse<ITodoTask[]>('put', 'data/todo', {
     tasks,
@@ -61,10 +68,7 @@ export const createFeeling = (feelingId: string, feeling: IFeeling) =>
 export const deleteFeeling = (feelingId: string) =>
   getApiResponse<IFeeling>('delete', `data/feeling/${feelingId}`)
 
-export const createPlace = (placeId: string, place: IPlace) =>
-  getApiResponse<IPlace>('put', `data/place/${placeId}`, place)
-
-export const updatePlace = (placeId: string, place: IPlace) =>
+export const savePlace = (placeId: string, place: IPlace) =>
   getApiResponse<IPlace>('put', `data/place/${placeId}`, place)
 
 export const deletePlace = (placeId: string) =>
@@ -76,10 +80,7 @@ export const removeImage = (imageId: string) =>
     `data/image/_/files/${encodeURIComponent(imageId)}`
   )
 
-export const createGuide = (guideId: string, guide: IGuide) =>
-  getApiResponse<IGuide>('put', `data/guide/${guideId}`, guide)
-
-export const updateGuide = (guideId: string, guide: IGuide) =>
+export const saveGuide = (guideId: string, guide: IGuide) =>
   getApiResponse<IGuide>('put', `data/guide/${guideId}`, guide)
 
 export const deleteGuide = (guideId: string) =>

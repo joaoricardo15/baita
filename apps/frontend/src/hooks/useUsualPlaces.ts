@@ -3,13 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useContext } from 'react'
 
 import { getApiResponse } from '@/api/client'
+import { fetchUsualPlaces } from '@/api/queries'
 import { AuthContext } from '@/providers/auth'
 
 export function useUsualPlaces() {
   const { user } = useContext(AuthContext)
   return useQuery({
     queryKey: ['usual-places'],
-    queryFn: () => getApiResponse<IUsualPlace[]>('get', 'data/usual-place'),
+    queryFn: fetchUsualPlaces,
     enabled: !!user,
   })
 }

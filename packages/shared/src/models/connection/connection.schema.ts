@@ -8,8 +8,8 @@ export const ConnectionSchema = z.object({
   email: z.string(),
   name: z.string(),
   credentials: CredentialSchema,
-  connectionId: z.union([z.string(), z.number()]),
+  connectionId: z.string(),
   connectorId: z.string().optional(),
-  createdAt: z.number().optional(),
+  createdAt: z.string().optional(),
 })
 export type IConnection = z.infer<typeof ConnectionSchema>

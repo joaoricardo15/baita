@@ -64,3 +64,12 @@ const LABELS: Labels = {
 }
 
 const labels = getLabels(LABELS)
+
+export const sortByDateDesc = <T extends { createdAt?: string }>(
+  items: T[]
+): T[] =>
+  [...items].sort(
+    (a, b) =>
+      new Date(b.createdAt || 0).getTime() -
+      new Date(a.createdAt || 0).getTime()
+  )

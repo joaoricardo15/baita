@@ -1,16 +1,12 @@
 import { IFeeling } from './feeling.schema'
 
-const NOW = Date.now()
-const HOUR = 3600000
-const DAY = 86400000
-
 export const exampleFeeling: IFeeling = {
   feelingId: 'feeling-abc123',
   content: 'Had the most vivid dream about flying over mountains',
   mood: 'joyful',
   tags: ['dream'],
-  createdAt: NOW - 2 * HOUR,
-  updatedAt: NOW - 2 * HOUR,
+  createdAt: '2025-06-15T08:30:00.000Z',
+  updatedAt: '2025-06-15T08:30:00.000Z',
 }
 
 export const exampleFeelingList: IFeeling[] = [
@@ -20,16 +16,16 @@ export const exampleFeelingList: IFeeling[] = [
     content: 'Grateful for the quiet morning and a good cup of coffee',
     mood: 'grateful',
     tags: ['gratitude', 'family'],
-    createdAt: NOW - 5 * HOUR,
-    updatedAt: NOW - 5 * HOUR,
+    createdAt: '2025-06-15T05:30:00.000Z',
+    updatedAt: '2025-06-15T05:30:00.000Z',
   },
   {
     feelingId: 'feeling-ghi789',
     content: 'Woke up from a chase dream, heart still racing',
     mood: 'anxious',
     tags: ['dream'],
-    createdAt: NOW - DAY - 3 * HOUR,
-    updatedAt: NOW - DAY - 3 * HOUR,
+    createdAt: '2025-06-14T07:30:00.000Z',
+    updatedAt: '2025-06-14T07:30:00.000Z',
   },
   {
     feelingId: 'feeling-jkl012',
@@ -37,15 +33,15 @@ export const exampleFeelingList: IFeeling[] = [
       'Feeling drained after a long day, but also accomplished. Managed to finish the project presentation and got positive feedback from the team.',
     mood: 'drained',
     tags: ['work', 'reflection'],
-    createdAt: NOW - DAY - 8 * HOUR,
-    updatedAt: NOW - DAY - 8 * HOUR,
+    createdAt: '2025-06-14T02:30:00.000Z',
+    updatedAt: '2025-06-14T02:30:00.000Z',
   },
   {
     feelingId: 'feeling-mno345',
     content: 'Suddenly inspired by that podcast episode about creativity',
     mood: 'inspired',
     tags: ['creative'],
-    createdAt: NOW - 2 * DAY - 4 * HOUR,
-    updatedAt: NOW - 2 * DAY - 4 * HOUR,
+    createdAt: '2025-06-13T06:30:00.000Z',
+    updatedAt: '2025-06-13T06:30:00.000Z',
   },
 ]

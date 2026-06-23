@@ -5,7 +5,6 @@ import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 export enum ApiRequestStatus {
   fail = 'fail',
   timeout = 'timeout',
-  filtered = 'filtered',
   success = 'success',
 }
 

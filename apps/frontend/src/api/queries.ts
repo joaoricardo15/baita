@@ -8,6 +8,7 @@ import {
   IGuide,
   IPlace,
   ITodo,
+  IUsualPlace,
 } from '@baita/shared'
 
 import { getApiResponse } from './client'
@@ -45,3 +46,6 @@ export const fetchGuides = () => getApiResponse<IGuide[]>('get', 'data/guide')
 
 export const fetchImageUploadUrl = (imageId: string) =>
   getApiResponse<string>('post', `data/image/${imageId}/upload`)
+
+export const fetchUsualPlaces = () =>
+  getApiResponse<IUsualPlace[]>('get', 'data/usual-place')

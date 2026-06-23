@@ -21,7 +21,7 @@ import { useOauthPopup } from '@/utils/useOauthPopup'
 const NewConnection: FC<{
   botId: string
   appId: string
-  connectionId?: string | number
+  connectionId?: string
   taskIndex: number
   onNewConnectionAttempt: () => void
   onSelectConnection: (appConnection: IConnection) => void

@@ -86,7 +86,7 @@ export const TaskSchema = z.object({
   sampleResult: TaskExecutionResultSchema.optional(),
   sampleConfigHash: z.string().optional(),
   conditions: z.array(z.array(TaskConditionSchema)).optional(),
-  connectionId: z.union([z.string(), z.number()]).optional(),
+  connectionId: z.string().optional(),
   retryPolicy: RetryPolicySchema.optional(),
 })
 export type ITask = z.infer<typeof TaskSchema>
@@ -119,7 +119,7 @@ export type IStepExecution = z.infer<typeof StepExecutionSchema>
 export const TaskExecutionInputSchema = z.object({
   userId: z.string(),
   botId: z.string(),
-  connectionId: z.union([z.string(), z.number()]).nullable().optional(),
+  connectionId: z.string().nullable().optional(),
   appConfig: AppConfigSchema,
   serviceConfig: ServiceConfigSchema,
   inputData: DataTypeSchema.optional(),
@@ -130,7 +130,7 @@ export interface ITaskExecutionInput<T = unknown> {
   botId: string
   appConfig: import('./app').IAppConfig
   serviceConfig: import('./service').IServiceConfig
-  connectionId?: string | number
+  connectionId?: string
   inputData: T
 }
 

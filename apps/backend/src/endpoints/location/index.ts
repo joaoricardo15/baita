@@ -1,10 +1,10 @@
 import { decodeTriggerToken } from '@baita/shared'
 import { APIGatewayProxyEvent, Callback, Context } from 'aws-lambda'
 
+import Location from '@/controllers/location'
 import { IGpsPoint } from '@/lib/geo'
 import Api, { ApiRequestStatus } from '@/utils/api'
 
-import { processLocationBatch } from './processor'
 import {
   ILocationIngest,
   ILocationPoint,
@@ -40,7 +40,8 @@ export const handler = async (
       timestamp: now,
     }))
 
-    const result = await processLocationBatch(userId, gpsPoints)
+    const location = new Location()
+    const result = await location.processLocationBatch(userId, gpsPoints)
 
     api.httpResponse(callback, ApiRequestStatus.success, undefined, {
       pointsStored: points.length,

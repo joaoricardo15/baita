@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom'
 import { EmptyState, ListItem, Loading, Skeleton } from '@/components'
 import { useDeleteFeeling, useFeelings } from '@/hooks/useFeelings'
 import { LINKS } from '@/router'
+import { sortByDateDesc } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 
 import FeelingCard from './components/feelingCard'
@@ -83,9 +84,7 @@ export const Feelings: FC = () => {
     deleteFeeling.mutate(feelingId)
   }
 
-  const sorted = feelings
-    ? [...feelings].sort((a, b) => b.createdAt - a.createdAt)
-    : []
+  const sorted = feelings ? sortByDateDesc(feelings) : []
 
   const dateGroups = groupByDate(sorted, labels)
 

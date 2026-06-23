@@ -14,7 +14,7 @@ import { executeMethod } from './methods'
 export interface IExecuteTaskParams {
   botId: string
   userId: string
-  connectionId?: string | number
+  connectionId?: string
   appConfig: DataType
   serviceConfig: DataType
   inputData: DataType

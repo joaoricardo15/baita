@@ -10,7 +10,7 @@ import { FC } from 'react'
 
 import { Text } from '@/components'
 import Menu from '@/components/menu'
-import { FILES_BASE_URL } from '@/utils/config'
+import { getImageUrl } from '@/utils/files'
 import { getLabels, Labels } from '@/utils/labels'
 
 const PlaceCard: FC<{
@@ -30,7 +30,7 @@ const PlaceCard: FC<{
           >
             {thumbnail ? (
               <img
-                src={`${FILES_BASE_URL}/${encodeURIComponent(thumbnail)}`}
+                src={getImageUrl(thumbnail)}
                 alt={place.name}
                 style={{
                   width: 48,

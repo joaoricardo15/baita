@@ -13,7 +13,7 @@ export const exampleConnectionGoogle: IConnection = {
     expires_in: 3599,
     scope: 'https://mail.google.com/ openid',
   },
-  createdAt: 1718000000000,
+  createdAt: '2024-06-10T10:13:20.000Z',
 }
 
 export const exampleConnectionNewsapi: IConnection = {
@@ -25,7 +25,7 @@ export const exampleConnectionNewsapi: IConnection = {
   credentials: {
     apiKey: 'abc123def456ghi789',
   },
-  createdAt: 1717900000000,
+  createdAt: '2024-06-09T06:26:40.000Z',
 }
 
 export const exampleConnectionPipedrive: IConnection = {
@@ -41,7 +41,7 @@ export const exampleConnectionPipedrive: IConnection = {
     token_type: 'Bearer',
     expires_in: 3599,
   },
-  createdAt: 1717800000000,
+  createdAt: '2024-06-08T02:40:00.000Z',
 }
 
 export const exampleConnectionList: IConnection[] = [

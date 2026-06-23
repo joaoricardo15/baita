@@ -7,8 +7,8 @@ export const FeelingSchema = z.object({
   content: z.string(),
   mood: z.enum(MOOD_VALUES).optional(),
   tags: z.array(z.string()).optional(),
-  createdAt: z.number(),
-  updatedAt: z.number(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
 })
 
 export type IFeeling = z.infer<typeof FeelingSchema>

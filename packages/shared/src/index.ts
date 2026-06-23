@@ -23,7 +23,7 @@ export * from './schemas/app'
 export * from './schemas/connector'
 export * from './schemas/service'
 export * from './schemas/task'
-export { generateId } from './utils/id'
+export { generateId, generatePrefixedId } from './utils/id'
 export {
   computeRunUrl,
   computeTriggerToken,

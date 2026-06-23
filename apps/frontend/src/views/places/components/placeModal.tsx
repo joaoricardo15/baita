@@ -16,14 +16,14 @@ import {
   IconButton,
   Toolbar,
 } from '@mui/material'
-import axios from 'axios'
 import { FC, useContext, useEffect, useState } from 'react'
 
+import * as mutations from '@/api/mutations'
 import * as queries from '@/api/queries'
 import { Button, Text, TextInput } from '@/components'
 import { useDeletePlace, useSavePlace } from '@/hooks/usePlaces'
 import { NotificationContext } from '@/providers/notification'
-import { FILES_BASE_URL } from '@/utils/config'
+import { getImageUrl } from '@/utils/files'
 import { getLabels, Labels } from '@/utils/labels'
 
 const PlaceModal: FC<{
@@ -101,7 +101,7 @@ const PlaceModal: FC<{
           const fileKey = `${localPlace.placeId || '_new'}-${crypto.randomUUID()}.${ext}`
           try {
             const presignedUrl = await queries.fetchImageUploadUrl(fileKey)
-            await axios.put(presignedUrl, file)
+            await mutations.uploadToPresignedUrl(presignedUrl, file)
             newPictures.push(fileKey)
           } catch {
             showSnack(labels.uploadError, 'error')
@@ -198,7 +198,7 @@ const PlaceModal: FC<{
               {/* Active Photo (hero) */}
               <div style={{ position: 'relative' }}>
                 <img
-                  src={`${FILES_BASE_URL}/${encodeURIComponent(localPlace.pictures[activePhoto])}`}
+                  src={getImageUrl(localPlace.pictures[activePhoto])}
                   alt={`${localPlace.name} photo ${activePhoto + 1}`}
                   style={{
                     width: '100%',
@@ -235,7 +235,7 @@ const PlaceModal: FC<{
                   {localPlace.pictures.map((pic, index) => (
                     <img
                       key={pic}
-                      src={`${FILES_BASE_URL}/${encodeURIComponent(pic)}`}
+                      src={getImageUrl(pic)}
                       alt={`Thumbnail ${index + 1}`}
                       onClick={() => setActivePhoto(index)}
                       style={{

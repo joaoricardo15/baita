@@ -562,7 +562,7 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 ### Data (generic CRUD)
 
 - `GET /data/{type}` — List records
-- `POST /data/{type}` — Create record
+- `PUT /data/{type}` — Create record
 - `GET /data/{type}/{id}` — Read record
 - `PATCH /data/{type}/{id}` — Update record
 - `DELETE /data/{type}/{id}` — Delete record
@@ -739,25 +739,25 @@ cd tests/e2e && npm test
 
 ### Test Coverage
 
-| Page/Feature        | Endpoint                                  | Tested | Notes                                     |
-| ------------------- | ----------------------------------------- | ------ | ----------------------------------------- |
-| Home (Content Feed) | GET /content                              | Yes    | DynamoDB query + filter                   |
-| Todo                | GET /data/todo                            | Yes    | DynamoDB query                            |
-| Bots List           | GET /bots                                 | Yes    | DynamoDB query                            |
-| Connections         | GET /connections                          | Yes    | DynamoDB query                            |
-| Data CRUD           | GET/POST/PATCH/DELETE /data/smoke-note/\* | Yes    | Full create/read/update/list/delete cycle |
-| Bot Lifecycle       | POST /bots + GET logs + DELETE            | Yes    | EventBridge Scheduler                     |
-| Bot Deploy          | POST /bots/{botId}/deploy                 | Yes    | Enable/disable Scheduler                  |
-| Bot Test            | POST /bots/{botId}/test                   | Yes    | Task execution via engine resolver        |
-| Connector Services  | POST /bots/{botId}/test                   | Yes    | Baita, Google, NewsAPI, OpenAI, Pipedrive |
-| Connection Health   | POST /connections/{connectionId}/health   | Yes    | OAuth token refresh + API probe           |
-| Connection Details  | GET /connections/{connectionId}           | Yes    | Linked bots lookup                        |
-| User Deletion       | DELETE /user                              | Yes    | Full cleanup (DDB, Auth0, bots)           |
-| Auth Rejection      | GET without token                         | Yes    | Security — 401 returned                   |
-| CORS on Errors      | GET with Origin header                    | Yes    | CORS headers on 4XX                       |
-| Error Handling      | Invalid operations                        | Yes    | Structured error response                 |
-| File Upload         | POST /data/\*/upload                      | Future | S3 presigned URL flow                     |
-| Push Notifications  | —                                         | N/A    | Frontend-only feature                     |
+| Page/Feature        | Endpoint                                 | Tested | Notes                                     |
+| ------------------- | ---------------------------------------- | ------ | ----------------------------------------- |
+| Home (Content Feed) | GET /content                             | Yes    | DynamoDB query + filter                   |
+| Todo                | GET /data/todo                           | Yes    | DynamoDB query                            |
+| Bots List           | GET /bots                                | Yes    | DynamoDB query                            |
+| Connections         | GET /connections                         | Yes    | DynamoDB query                            |
+| Data CRUD           | GET/PUT/PATCH/DELETE /data/smoke-note/\* | Yes    | Full create/read/update/list/delete cycle |
+| Bot Lifecycle       | POST /bots + GET logs + DELETE           | Yes    | EventBridge Scheduler                     |
+| Bot Deploy          | POST /bots/{botId}/deploy                | Yes    | Enable/disable Scheduler                  |
+| Bot Test            | POST /bots/{botId}/test                  | Yes    | Task execution via engine resolver        |
+| Connector Services  | POST /bots/{botId}/test                  | Yes    | Baita, Google, NewsAPI, OpenAI, Pipedrive |
+| Connection Health   | POST /connections/{connectionId}/health  | Yes    | OAuth token refresh + API probe           |
+| Connection Details  | GET /connections/{connectionId}          | Yes    | Linked bots lookup                        |
+| User Deletion       | DELETE /user                             | Yes    | Full cleanup (DDB, Auth0, bots)           |
+| Auth Rejection      | GET without token                        | Yes    | Security — 401 returned                   |
+| CORS on Errors      | GET with Origin header                   | Yes    | CORS headers on 4XX                       |
+| Error Handling      | Invalid operations                       | Yes    | Structured error response                 |
+| File Upload         | POST /data/\*/upload                     | Future | S3 presigned URL flow                     |
+| Push Notifications  | —                                        | N/A    | Frontend-only feature                     |
 
 ### Adding New Tests
 

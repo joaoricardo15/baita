@@ -14,7 +14,7 @@ export const examplePlaceList: IPlace[] = [
   {
     placeId: 'place-002',
     name: 'Central Park',
-    pictures: ['place-002/a1b2c3d4.jpg'],
+    pictures: ['place-002-a1b2c3d4.jpg'],
     position: { lat: 40.7829, lng: -73.9654 },
     createdAt: '2025-02-20T14:00:00Z',
   },

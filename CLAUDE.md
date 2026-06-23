@@ -91,7 +91,7 @@ Background location tracking with automatic place detection, activity recognitio
 **Architecture:**
 
 - **Ingestion**: `POST /location/ingest/{token}` — accepts GPS point batches (OwnTracks/Overland/Shortcuts compatible), token-based auth (same as bot run endpoint)
-- **Processing pipeline** (`src/endpoints/location/processor.ts`): Noise filter → stay-point detection (Li et al. 2008) → place matching → new place detection → activity segmentation → bot triggering
+- **Processing pipeline** (`src/controllers/location.ts`): Noise filter → stay-point detection (Li et al. 2008) → place matching → new place detection → activity segmentation → bot triggering
 - **Geo utilities** (`src/lib/geo.ts`): Haversine distance, stay-point detection, speed-based activity classification, place matching, importance scoring
 
 **Entity types:**
@@ -114,7 +114,7 @@ Background location tracking with automatic place detection, activity recognitio
 
 ### Runtime Data Patterns (Not Visible in Static Code)
 
-The generic Data controller (`src/controllers/data.ts`) constructs DynamoDB sortKeys dynamically as `#{type}#{id}`. This means some data records **cannot be found by grepping the codebase** — they are written at runtime via `POST /data/{type}`. Key examples:
+The generic Data controller (`src/controllers/data.ts`) constructs DynamoDB sortKeys dynamically as `#{type}#{id}`. This means some data records **cannot be found by grepping the codebase** — they are written at runtime via `PUT /data/{type}`. Key examples:
 
 - `#CONTENT#{contentId}` — Written by the frontend when user reacts to feed content (swipe). Used by `publishContent()` for deduplication. The dedup query in `controllers/user.ts` references `#CONTENT` but the write happens through the generic Data CRUD path.
 - `#CONNECTION#{connectionId}` — OAuth connections
@@ -135,6 +135,25 @@ All connector/service icons live in `apps/frontend/public/icons/` and are refere
 5. **Never hotlink external CDNs** — they can 404, require auth, or change without notice
 6. **Style consistency**: Icons render at 20x20px with `border-radius: 4px` and `object-fit: contain`
 7. **Source**: Get official logomarks from the service's brand/press page, or create a clean SVG representation
+
+### Data Formats (Canonical — No Exceptions)
+
+| Concern                                | Format                                  | Example                                |
+| -------------------------------------- | --------------------------------------- | -------------------------------------- |
+| Place ID                               | UUID v4                                 | `00ab5797-5242-4adc-944c-55c70046bbd3` |
+| Usual-Place ID                         | `up-{timestamp}-{random}`               | `up-1719043200000-abc123`              |
+| Bot/Connection ID                      | `generateId()` (12-char alphanumeric)   | `aBcDeFgHiJkL`                         |
+| S3 image key                           | `{placeId}-{uuid}.{ext}` (flat, no `/`) | `00ab5797-...-f47ac10b-....jpg`        |
+| Date fields (`createdAt`, `updatedAt`) | ISO 8601 string                         | `2025-06-15T10:30:00.000Z`             |
+| Connection ID type                     | `string` only                           | Never `number`                         |
+
+**Rules:**
+
+- **No numeric timestamps** — always `new Date().toISOString()` for date fields
+- **No slashes in S3 keys** — flat keys only, use `-` as separator
+- **No `_new-` prefix** — generate placeId before upload (use `crypto.randomUUID()`)
+- **Connection IDs are always strings** — no `z.union([z.string(), z.number()])`
+- **Image URLs** — always `${FILES_BASE_URL}/${encodeURIComponent(key)}` (safe because keys have no `/`)
 
 ## CI/CD Pipeline
 

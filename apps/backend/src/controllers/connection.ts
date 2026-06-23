@@ -28,10 +28,8 @@ class Connection {
     const bots = (await botStore.list()) || []
 
     return bots.filter((bot: Record<string, unknown>) => {
-      const tasks = bot.tasks as Array<{ connectionId?: string | number }>
-      return tasks?.some(
-        (task) => String(task.connectionId) === String(connectionId)
-      )
+      const tasks = bot.tasks as Array<{ connectionId?: string }>
+      return tasks?.some((task) => task.connectionId === connectionId)
     })
   }
 
@@ -59,7 +57,7 @@ class Connection {
       credentials: { apiKey },
       name: connector.name,
       email: '',
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
     }
 
     await this.store(userId).create(connectionId, connection)
@@ -88,11 +86,9 @@ class Connection {
     const linkedBots = await this.getLinkedBots(userId, connectionId)
     const botStore = new Data(userId, 'bot')
     for (const bot of linkedBots) {
-      const tasks = bot.tasks as Array<{ connectionId?: string | number }>
+      const tasks = bot.tasks as Array<{ connectionId?: string }>
       const cleaned = tasks.map((t) =>
-        String(t.connectionId) === String(connectionId)
-          ? { ...t, connectionId: undefined }
-          : t
+        t.connectionId === connectionId ? { ...t, connectionId: undefined } : t
       )
       await botStore.update(bot.botId as string, { tasks: cleaned })
     }
@@ -208,7 +204,7 @@ class Connection {
       credentials,
       name,
       email,
-      createdAt: Date.now(),
+      createdAt: new Date().toISOString(),
     }
 
     await this.store(userId).create(connectionId, newConnection)

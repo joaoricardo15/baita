@@ -75,8 +75,8 @@ describe('Entity Type Registry', () => {
     const validFeeling = {
       feelingId: 'test-1',
       content: 'Feeling great today',
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
     expect(() => feelingConfig.schema!.parse(validFeeling)).not.toThrow()
 

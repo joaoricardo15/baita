@@ -27,7 +27,6 @@ const App: FC = () => {
     <ThemeProvider theme={theme}>
       <ErrorProvider>
         <AuthProvider>
-          {/* <InstallCard /> TODO add this later on */}
           <NotificationProvider>
             <BrowserRouter>
               <Router />

@@ -129,8 +129,8 @@ describe('Feeling Constants', () => {
         content: 'Feeling good',
         mood: 'joyful',
         tags: ['dream', 'work'],
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })
       expect(result.success).toBe(true)
     })
@@ -139,8 +139,8 @@ describe('Feeling Constants', () => {
       const result = FeelingSchema.safeParse({
         feelingId: 'test-456',
         content: 'Just a thought',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })
       expect(result.success).toBe(true)
     })
@@ -150,8 +150,8 @@ describe('Feeling Constants', () => {
         feelingId: 'test-789',
         content: 'Test',
         mood: 'invalid-mood',
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       })
       expect(result.success).toBe(false)
     })

@@ -20,10 +20,10 @@ export function useSavePlace() {
   return useMutation({
     mutationFn: (place: IPlace) => {
       if (place.placeId) {
-        return mutations.updatePlace(place.placeId, place)
+        return mutations.savePlace(place.placeId, place)
       }
       const placeId = crypto.randomUUID()
-      return mutations.createPlace(placeId, { ...place, placeId })
+      return mutations.savePlace(placeId, { ...place, placeId })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['places'] })
