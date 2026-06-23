@@ -138,7 +138,6 @@ class Location {
       durationMinutes: Math.round(stay.durationMs / 60000),
       position: { lat: stay.lat, lng: stay.lng },
       source: 'gps',
-      createdAt: new Date().toISOString(),
     })
   }
 
@@ -205,7 +204,6 @@ class Location {
       avgDwellMinutes: Math.round(stay.durationMs / 60000),
       score: 0.1,
       centroid: { sumLat: stay.lat, sumLng: stay.lng, sampleCount: 1 },
-      createdAt: new Date().toISOString(),
     })
 
     const visitId = generatePrefixedId('v')
@@ -217,7 +215,6 @@ class Location {
       durationMinutes: Math.round(stay.durationMs / 60000),
       position: { lat: stay.lat, lng: stay.lng },
       source: 'gps',
-      createdAt: new Date().toISOString(),
     })
 
     return placeId
@@ -262,7 +259,6 @@ class Location {
       distanceM: Math.round(segment.distanceM),
       durationMinutes: Math.round(segment.durationMinutes * 10) / 10,
       confidence: Math.round(segment.confidence * 100) / 100,
-      createdAt: new Date().toISOString(),
     })
   }
 

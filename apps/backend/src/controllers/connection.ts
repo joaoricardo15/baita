@@ -57,7 +57,6 @@ class Connection {
       credentials: { apiKey },
       name: connector.name,
       email: '',
-      createdAt: new Date().toISOString(),
     }
 
     await this.store(userId).create(connectionId, connection)
@@ -204,7 +203,6 @@ class Connection {
       credentials,
       name,
       email,
-      createdAt: new Date().toISOString(),
     }
 
     await this.store(userId).create(connectionId, newConnection)

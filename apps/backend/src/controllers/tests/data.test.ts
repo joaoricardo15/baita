@@ -125,6 +125,7 @@ describe('Resource', () => {
         Item: {
           userId: TEST_USER,
           sortKey: '#FEELING#feeling-1',
+          createdAt: expect.any(String),
           content: 'New Feeling',
         },
       })

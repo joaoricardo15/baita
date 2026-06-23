@@ -135,7 +135,7 @@ const PlaceModal: FC<{
       description,
       pictures,
       position,
-      createdAt: createdAt || new Date().toISOString(),
+      createdAt,
     }
     savePlace.mutate(payload, { onSuccess: onClose })
   }

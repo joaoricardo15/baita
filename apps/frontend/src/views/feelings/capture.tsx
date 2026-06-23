@@ -58,14 +58,13 @@ const FeelingCapture: FC = () => {
   const handleSave = () => {
     if (!content.trim()) return
 
-    const now = new Date().toISOString()
     const feeling: IFeeling = {
-      feelingId: feelingId || Date.now().toString(),
+      feelingId: feelingId || '',
       content: content.trim(),
       mood,
       tags: tags.length > 0 ? tags : undefined,
-      createdAt: existingFeeling?.createdAt || now,
-      updatedAt: now,
+      createdAt: existingFeeling?.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
 
     saveFeeling.mutate(feeling)

@@ -87,6 +87,7 @@ class Data {
         Item: {
           userId: this.userId,
           sortKey: this.sortKey(id),
+          createdAt: new Date().toISOString(),
           ...record,
         },
       })

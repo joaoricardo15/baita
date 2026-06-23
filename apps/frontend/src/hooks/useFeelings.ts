@@ -18,8 +18,13 @@ export function useFeelings() {
 export function useSaveFeeling() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (feeling: IFeeling) =>
-      mutations.createFeeling(feeling.feelingId, feeling),
+    mutationFn: (feeling: IFeeling) => {
+      if (feeling.feelingId) {
+        return mutations.createFeeling(feeling.feelingId, feeling)
+      }
+      const feelingId = Date.now().toString()
+      return mutations.createFeeling(feelingId, { ...feeling, feelingId })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feelings'] })
     },

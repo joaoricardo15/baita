@@ -156,7 +156,7 @@ const GuideModal: FC<{
       name: localGuide.name,
       description: localGuide.description,
       placeIds: localGuide.placeIds,
-      createdAt: localGuide.createdAt || new Date().toISOString(),
+      createdAt: localGuide.createdAt,
     }
     saveGuide.mutate(payload, { onSuccess: onClose })
   }

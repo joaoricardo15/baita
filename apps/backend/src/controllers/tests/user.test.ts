@@ -54,6 +54,7 @@ describe('User', () => {
         email: 'test@example.com',
         name: 'Test User',
         sortKey: '#USER',
+        createdAt: expect.any(String),
       })
     })
 
