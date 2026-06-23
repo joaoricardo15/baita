@@ -2,7 +2,13 @@ import { IBot } from '@baita/shared'
 import { QueryClient } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { flush, getStatus, reset, save, subscribe } from '../botSaveManager'
+import {
+  flush,
+  getStatus,
+  reset,
+  save,
+  subscribe,
+} from '@/utils/botSaveManager'
 
 vi.mock('@/api/mutations', () => ({
   updateBot: vi.fn(),

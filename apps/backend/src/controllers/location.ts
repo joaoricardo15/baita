@@ -32,7 +32,7 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   )
 }
 
-export interface IProcessingResult {
+interface IProcessingResult {
   staysDetected: number
   activitiesDetected: number
   newPlacesDetected: number

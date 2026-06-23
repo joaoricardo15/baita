@@ -12,9 +12,8 @@ import { useCallback, useContext } from 'react'
 import * as mutations from '@/api/mutations'
 import * as queries from '@/api/queries'
 import { AuthContext } from '@/providers/auth'
+import { flush, save } from '@/utils/botSaveManager'
 import { getExistingSubscription } from '@/utils/push'
-
-import { flush, save } from './botSaveManager'
 
 export function useBots() {
   const { user } = useContext(AuthContext)

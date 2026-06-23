@@ -4,9 +4,9 @@ import { FC, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { EmptyState, Loading } from '@/components'
-import { flush } from '@/hooks/botSaveManager'
 import { useBot } from '@/hooks/useBots'
 import { getAiService } from '@/utils/ai'
+import { flush } from '@/utils/botSaveManager'
 import { getLabels, Labels } from '@/utils/labels'
 
 import BotAssistant from './components/assistant'

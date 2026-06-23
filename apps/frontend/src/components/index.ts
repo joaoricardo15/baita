@@ -9,6 +9,7 @@ import Highlight from './highlight'
 import ListItem from './listItem'
 import Loading from './loading'
 import Logo from './logo'
+import Menu from './menu'
 import OptionsInput from './optionsInput'
 import Skeleton from './skeleton'
 import StatusChip from './statusChip'
@@ -32,6 +33,7 @@ export {
   ListItem,
   Loading,
   Logo,
+  Menu,
   OptionsInput,
   Skeleton,
   StatusChip,

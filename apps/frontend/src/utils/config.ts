@@ -37,7 +37,7 @@ export interface Labels {
   [key: string]: { [key: string]: string }
 }
 
-export const configMapping: { [key in Environment]: EnvConfig } = {
+const configMapping: { [key in Environment]: EnvConfig } = {
   [Environment.local]: {
     isProduction: false,
     apiUrl: ApiUrl.local,
