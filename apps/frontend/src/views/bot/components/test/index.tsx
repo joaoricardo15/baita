@@ -58,7 +58,9 @@ const TaskTest: FC<{ taskIndex: number }> = ({ taskIndex }) => {
               <div className="d-flex align-items-center">
                 <StatusChip status={task.sampleResult.status} />
                 <Text className="fw-bold text-primary mx-2">
-                  {getTimeDiffLabel(task.sampleResult.timestamp)}
+                  {getTimeDiffLabel(
+                    new Date(task.sampleResult.timestamp).toISOString()
+                  )}
                 </Text>
               </div>
             ) : (

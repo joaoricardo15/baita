@@ -14,7 +14,7 @@ import { FC, useContext, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { Button, TextInput } from '@/components'
-import Menu from '@/components/menu'
+import { Menu } from '@/components'
 import TriggerDialog from '@/components/triggerDialog'
 import {
   useBot,

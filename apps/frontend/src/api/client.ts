@@ -2,7 +2,7 @@ import Axios from 'axios'
 
 import appConfig from '@/utils/config'
 
-export const apiClient = Axios.create({
+const apiClient = Axios.create({
   baseURL: appConfig.apiUrl,
   headers: {
     Accept: 'application/json',

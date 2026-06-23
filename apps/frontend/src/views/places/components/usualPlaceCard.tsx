@@ -9,7 +9,7 @@ import { Card, Chip } from '@mui/material'
 import { FC } from 'react'
 
 import { Text } from '@/components'
-import Menu from '@/components/menu'
+import { Menu } from '@/components'
 import { getLabels, Labels } from '@/utils/labels'
 
 function formatRelativeTime(isoDate: string): string {

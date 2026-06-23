@@ -20,10 +20,10 @@ export function useSaveFeeling() {
   return useMutation({
     mutationFn: (feeling: IFeeling) => {
       if (feeling.feelingId) {
-        return mutations.createFeeling(feeling.feelingId, feeling)
+        return mutations.saveFeeling(feeling.feelingId, feeling)
       }
       const feelingId = Date.now().toString()
-      return mutations.createFeeling(feelingId, { ...feeling, feelingId })
+      return mutations.saveFeeling(feelingId, { ...feeling, feelingId })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feelings'] })

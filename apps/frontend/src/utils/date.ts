@@ -1,6 +1,6 @@
 import { getLabels, Labels } from './labels'
 
-export const getTimeDiffLabel = (date: string | number) => {
+export const getTimeDiffLabel = (date: string) => {
   const timeDiff = new Date().getTime() - new Date(date).getTime()
 
   const secondsDiff = timeDiff / 1000
@@ -34,7 +34,7 @@ export const getTimeDiffLabel = (date: string | number) => {
   } ${labels.later}`
 }
 
-export const isToday = (input: number | string) => {
+export const isToday = (input: string) => {
   const today = new Date()
   const date = new Date(input)
   return (

@@ -62,7 +62,7 @@ export const createConnection = (connectorId: string, apiKey: string) =>
 export const deleteConnection = (connectionId: string) =>
   getApiResponse<void>('delete', `connections/${connectionId}`)
 
-export const createFeeling = (feelingId: string, feeling: IFeeling) =>
+export const saveFeeling = (feelingId: string, feeling: IFeeling) =>
   getApiResponse<IFeeling>('put', `data/feeling/${feelingId}`, feeling)
 
 export const deleteFeeling = (feelingId: string) =>

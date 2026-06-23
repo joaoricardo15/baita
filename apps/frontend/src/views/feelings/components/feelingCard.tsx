@@ -14,7 +14,7 @@ import {
 import { Card } from '@mui/material'
 import { FC } from 'react'
 
-import Menu from '@/components/menu'
+import { Menu } from '@/components'
 import { getTimeDiffLabel } from '@/utils/date'
 import { getLabels, Labels } from '@/utils/labels'
 

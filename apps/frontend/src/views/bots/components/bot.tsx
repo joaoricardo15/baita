@@ -16,7 +16,7 @@ import {
 import { FC, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Menu from '@/components/menu'
+import { Menu } from '@/components'
 import TriggerDialog from '@/components/triggerDialog'
 import {
   useDeleteBot,

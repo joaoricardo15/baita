@@ -8,7 +8,7 @@ import { Card, Chip } from '@mui/material'
 import { FC, useContext } from 'react'
 
 import { Text } from '@/components'
-import Menu from '@/components/menu'
+import { Menu } from '@/components'
 import {
   useConnectionHealth,
   useDeleteConnection,

@@ -10,7 +10,7 @@ import { Card } from '@mui/material'
 import { FC } from 'react'
 
 import { Text } from '@/components'
-import Menu from '@/components/menu'
+import { Menu } from '@/components'
 import { getLabels, Labels } from '@/utils/labels'
 
 const GuideCard: FC<{
