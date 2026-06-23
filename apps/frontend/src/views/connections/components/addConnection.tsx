@@ -15,11 +15,11 @@ import { FC, useContext, useState } from 'react'
 
 import { Button } from '@/components'
 import { useCreateConnection } from '@/hooks/useConnections'
+import { useOauthPopup } from '@/hooks/useOauthPopup'
 import { AuthContext } from '@/providers/auth'
 import { NotificationContext } from '@/providers/notification'
 import { getLabels, Labels } from '@/utils/labels'
 import { buildOAuthUrl } from '@/utils/oauth'
-import { useOauthPopup } from '@/utils/useOauthPopup'
 
 const AddConnection: FC<{ open: boolean; onClose: () => void }> = ({
   open,

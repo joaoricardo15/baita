@@ -39,12 +39,8 @@ async function generateAndValidate(
   messages: AiMessage[],
   taskIndex: number
 ): Promise<GenerateResult> {
-  console.warn('[AI Assistant] Sending messages to LLM:', messages)
   const rawResponse = await service.generate(messages)
-  console.warn('[AI Assistant] Raw LLM response:', rawResponse)
-
   const task = parseTaskFromResponse(rawResponse)
-  console.warn('[AI Assistant] Parsed task:', task)
 
   if (!task) {
     return {
@@ -115,12 +111,6 @@ const BotAssistant: FC<{ bot: IBot; task: ITask; taskIndex: number }> = ({
           service,
           currentMessages,
           taskIndex
-        )
-
-        console.warn(
-          `[AI Assistant] Attempt ${i + 1}/${MAX_ATTEMPTS}`,
-          lastResult.success ? 'SUCCESS' : 'FAILED',
-          { errors: lastResult.errors }
         )
 
         if (lastResult.success && lastResult.task) {
