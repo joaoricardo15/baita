@@ -14,8 +14,9 @@ import { OptionsInput } from '@/components'
 import { useBot, useUpdateBot } from '@/hooks/useBots'
 import { AppsContext } from '@/providers/apps'
 import { AuthContext } from '@/providers/auth'
-import { computeIngestUrl, computeRunUrl } from '@/utils/bot'
+import { computeRunUrl } from '@/utils/bot'
 import { getLabels, Labels } from '@/utils/labels'
+import { getIngestUrl } from '@/utils/location'
 
 import IPhoneSetupGuide from './iphoneSetupGuide'
 import LocationSetupGuide from './locationSetupGuide'
@@ -201,7 +202,7 @@ const TaskService: FC<{
 
           {/***** Location event setup guide *****/}
           {task.service?.name === ServiceName.locationEvent && (
-            <LocationSetupGuide ingestUrl={computeIngestUrl(userId)} />
+            <LocationSetupGuide ingestUrl={getIngestUrl(userId)} />
           )}
 
           {/***** Push notification specific display *****/}
