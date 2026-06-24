@@ -20,9 +20,10 @@ import { getLabels, Labels } from '@/utils/labels'
 
 const FeelingCard: FC<{
   feeling: IFeeling
+  placeName?: string
   onEdit: () => void
   onDelete: () => void
-}> = ({ feeling, onEdit, onDelete }) => {
+}> = ({ feeling, placeName, onEdit, onDelete }) => {
   const moodEmoji = feeling.mood ? getMoodEmoji(feeling.mood) : undefined
   const moodDef = feeling.mood ? getMoodDefinition(feeling.mood) : undefined
 
@@ -48,6 +49,11 @@ const FeelingCard: FC<{
             </p>
             <div className="feeling-card__meta">
               <div className="feeling-card__tags">
+                {placeName && (
+                  <span className="feeling-card__place-chip">
+                    📍 {placeName}
+                  </span>
+                )}
                 {feeling.tags?.map((tag) => {
                   const icon = TAG_ICONS[tag]
                   return (

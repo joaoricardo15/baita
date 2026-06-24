@@ -573,15 +573,20 @@ All authenticated endpoints extract userId from the JWT token (via Lambda author
 
 - `GET /oauth/callback` — Generic OAuth provider callback (public, no auth)
 
-### Location (Track Mode)
+### Geo (Location Intelligence)
 
-- `POST /location/ingest/{token}` — Ingest GPS location points (public, token-based auth)
+- `POST /geo/ingest/{token}` — Ingest GPS location points (public, token-based auth)
+- `GET /geo/places` — List user's usual places
+- `GET /geo/places/{id}` — Get a usual place
+- `PATCH /geo/places/{id}` — Update a usual place
+- `DELETE /geo/places/{id}` — Delete a usual place
+- `GET /geo/match?lat=X&lng=Y` — Match coordinates to nearest known place
 
 ## Track Mode Architecture
 
 Location intelligence feature: background GPS tracking → place detection → activity recognition → bot triggers.
 
-### Endpoint: `POST /location/ingest/{token}`
+### Endpoint: `POST /geo/ingest/{token}`
 
 **Auth**: Token-based (same `decodeTriggerToken` as bot run endpoint). No Lambda authorizer — the token IS the secret.
 
@@ -613,51 +618,43 @@ Location intelligence feature: background GPS tracking → place detection → a
     "pointsStored": 5,
     "source": "shortcuts",
     "staysDetected": 1,
-    "activitiesDetected": 1,
-    "newPlacesDetected": 0,
-    "visitsRecorded": 1
+    "newPlacesDetected": 0
   }
 }
 ```
 
-### Processing Pipeline (`src/endpoints/location/processor.ts`)
+### Processing Pipeline (`src/controllers/geo.ts`)
 
 Runs synchronously within the endpoint Lambda:
 
 ```
-1. Noise filter → reject points with accuracy > 65m or speed > 200 km/h
+1. Noise filter → reject points with speed > 200 km/h
 2. Stay-point detection (Li et al. 2008) → radius=50m, dwell=5min
 3. For each detected stay:
-   a. Load user's usual-places
+   a. Load user's usual-places + regular places
    b. Haversine match to known places (within place.radiusM)
-   c. If matched → record visit + update place stats + trigger 'arrive' bots
+   c. If matched → update place stats + trigger 'arrive' bots
    d. If new (>150m from all known) → create usual-place + trigger 'new_place' bots + send push
-4. Detect activities between stays (speed-based: walk/cycle/drive/run/transit)
-5. Store activity records
 ```
 
 ### Geo Utilities (`src/lib/geo.ts`)
 
-Core algorithms (22 unit tests):
+Core algorithms:
 
-| Function                                                 | Purpose                                      |
-| -------------------------------------------------------- | -------------------------------------------- |
-| `haversineMeters(lat1, lng1, lat2, lng2)`                | Great-circle distance between two points     |
-| `filterNoise(points, maxAccuracy, maxSpeed)`             | Remove GPS outliers                          |
-| `detectStayPoints(points, distThreshold, timeThreshold)` | Li et al. 2008 algorithm                     |
-| `classifyActivity(points)`                               | Speed-based: walking/running/cycling/driving |
-| `segmentActivities(points, windowSize)`                  | Split trace into activity legs               |
-| `matchToPlace(lat, lng, places)`                         | Find nearest known place within radius       |
-| `isNewPlace(lat, lng, places, threshold)`                | Check if >150m from all known                |
-| `computePlaceScore(visits, daysSince, avgDwell)`         | Importance score (0-1)                       |
+| Function                                                 | Purpose                                  |
+| -------------------------------------------------------- | ---------------------------------------- |
+| `haversineMeters(lat1, lng1, lat2, lng2)`                | Great-circle distance between two points |
+| `filterNoise(points, maxSpeed)`                          | Remove GPS outliers                      |
+| `detectStayPoints(points, distThreshold, timeThreshold)` | Li et al. 2008 algorithm                 |
+| `matchToPlace(lat, lng, places)`                         | Find nearest known place within radius   |
+| `isNewPlace(lat, lng, places, threshold)`                | Check if >150m from all known            |
+| `computePlaceScore(visits, daysSince, avgDwell)`         | Importance score (0-1)                   |
 
 ### Entity Types (DynamoDB)
 
 | Sort Key Pattern    | Entity      | Description                           |
 | ------------------- | ----------- | ------------------------------------- |
 | `#USUAL-PLACE#{id}` | IUsualPlace | Auto-detected places with visit stats |
-| `#VISIT#{id}`       | IVisit      | Individual visit records              |
-| `#ACTIVITY#{id}`    | IActivity   | Detected movement segments            |
 
 ### Bot Trigger Integration
 

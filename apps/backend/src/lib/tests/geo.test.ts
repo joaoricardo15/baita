@@ -1,5 +1,4 @@
 import {
-  classifyActivity,
   computePlaceScore,
   detectStayPoints,
   filterNoise,
@@ -7,7 +6,6 @@ import {
   IGpsPoint,
   isNewPlace,
   matchToPlace,
-  segmentActivities,
 } from '../geo'
 
 describe('geo utilities', () => {
@@ -85,43 +83,6 @@ describe('geo utilities', () => {
     })
   })
 
-  describe('classifyActivity', () => {
-    function makeTrace(speedKmh: number, count = 10): IGpsPoint[] {
-      const speedMs = speedKmh / 3.6
-      const points: IGpsPoint[] = []
-      for (let i = 0; i < count; i++) {
-        points.push({
-          lat: 38.72 + (speedMs * i * 10) / 111320,
-          lng: -9.13,
-          timestamp: i * 10000,
-        })
-      }
-      return points
-    }
-
-    it('classifies slow movement as walking', () => {
-      const result = classifyActivity(makeTrace(4.5))
-      expect(result.type).toBe('walking')
-      expect(result.confidence).toBeGreaterThan(0.5)
-    })
-
-    it('classifies moderate speed as cycling', () => {
-      const result = classifyActivity(makeTrace(18))
-      expect(result.type).toBe('cycling')
-    })
-
-    it('classifies high speed as driving', () => {
-      const result = classifyActivity(makeTrace(60))
-      expect(result.type).toBe('driving')
-      expect(result.confidence).toBeGreaterThan(0.7)
-    })
-
-    it('classifies running speed correctly', () => {
-      const result = classifyActivity(makeTrace(9))
-      expect(result.type).toBe('running')
-    })
-  })
-
   describe('matchToPlace', () => {
     const places = [
       { id: 'home', lat: 38.722, lng: -9.139, radiusM: 50 },
@@ -178,22 +139,6 @@ describe('geo utilities', () => {
       const recent = computePlaceScore(10, 1, 30)
       const old = computePlaceScore(10, 60, 30)
       expect(recent).toBeGreaterThan(old)
-    })
-  })
-
-  describe('segmentActivities', () => {
-    it('returns a single segment for consistent speed trace', () => {
-      const points: IGpsPoint[] = []
-      for (let i = 0; i < 20; i++) {
-        points.push({
-          lat: 38.72 + i * 0.00004,
-          lng: -9.13,
-          timestamp: i * 10000,
-        })
-      }
-      const segments = segmentActivities(points)
-      expect(segments.length).toBeGreaterThanOrEqual(1)
-      expect(segments[0].distanceM).toBeGreaterThan(0)
     })
   })
 })

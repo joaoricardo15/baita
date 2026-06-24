@@ -95,8 +95,6 @@ describe('Resource', () => {
       const result = await resource.read('abc')
 
       expect(result).toEqual({
-        userId: TEST_USER,
-        sortKey: '#FEELING#abc',
         title: 'My Feeling',
       })
     })

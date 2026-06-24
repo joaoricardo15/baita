@@ -27,6 +27,7 @@ export function useSaveFeeling() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['feelings'] })
+      queryClient.invalidateQueries({ queryKey: ['usual-places'] })
     },
   })
 }

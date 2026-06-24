@@ -15,6 +15,22 @@ export function useUsualPlaces() {
   })
 }
 
+export function useCreateUsualPlace() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      placeId,
+      data,
+    }: {
+      placeId: string
+      data: Partial<IUsualPlace>
+    }) => getApiResponse('put', `data/usual-place/${placeId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['usual-places'] })
+    },
+  })
+}
+
 export function useDeleteUsualPlace() {
   const queryClient = useQueryClient()
   return useMutation({

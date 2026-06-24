@@ -308,14 +308,39 @@ functions:
           cors: ${self:custom.cors}
           authorizer: ${self:custom.authorizer}
 
-  # ─── Location (Track Mode) ────────────────────────────────
-  endpoint-location:
-    handler: src/endpoints/location/index.handler
+  # ─── Geo (unified location intelligence) ──────────────────
+  endpoint-geo:
+    handler: src/endpoints/geo/index.handler
     events:
       - http:
-          path: location/ingest/{token}
+          path: geo/ingest/{token}
           method: post
           cors: true
+      - http:
+          path: geo/places
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: geo/places/{id}
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: geo/places/{id}
+          method: patch
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: geo/places/{id}
+          method: delete
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
+      - http:
+          path: geo/match
+          method: get
+          cors: ${self:custom.cors}
+          authorizer: ${self:custom.authorizer}
 
   # ─── Bot Engine (direct invoke only — no HTTP) ─────────────
   bot-engine:

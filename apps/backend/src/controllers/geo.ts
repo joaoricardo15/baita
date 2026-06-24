@@ -2,6 +2,7 @@ import {
   generatePrefixedId,
   IBot,
   IUsualPlace,
+  matchPositionToPlace,
   ServiceName,
 } from '@baita/shared'
 import webpush from 'web-push'
@@ -12,12 +13,10 @@ import {
   computePlaceScore,
   detectStayPoints,
   filterNoise,
-  IActivitySegment,
   IGpsPoint,
   isNewPlace,
   IStayPoint,
   matchToPlace,
-  segmentActivities,
 } from '@/lib/geo'
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || ''
@@ -34,28 +33,33 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
 
 interface IProcessingResult {
   staysDetected: number
-  activitiesDetected: number
   newPlacesDetected: number
-  visitsRecorded: number
+  matchedPlace?: { placeId: string; name: string }
 }
 
-class Location {
+interface IPlaceMatch {
+  usualPlaceId: string
+  name: string
+  distance: number
+}
+
+class Geo {
   async processLocationBatch(
     userId: string,
-    points: IGpsPoint[]
+    points: IGpsPoint[],
+    source: string = 'gps'
   ): Promise<IProcessingResult> {
     const filtered = filterNoise(points)
+
+    if (filtered.length === 1) {
+      return this.handleSinglePoint(userId, filtered[0], source)
+    }
+
     if (filtered.length < 2) {
-      return {
-        staysDetected: 0,
-        activitiesDetected: 0,
-        newPlacesDetected: 0,
-        visitsRecorded: 0,
-      }
+      return { staysDetected: 0, newPlacesDetected: 0 }
     }
 
     const usualPlaceStore = new Data(userId, 'usual-place')
-    const visitStore = new Data(userId, 'visit')
     const botStore = new Data(userId, 'bot')
     const userStore = new Data(userId, 'user')
 
@@ -64,7 +68,6 @@ class Location {
     const isFirstUse = usualPlaces.length === 0
 
     let newPlacesDetected = 0
-    let visitsRecorded = 0
 
     for (const stay of stays) {
       const placeList = usualPlaces.map((p) => ({
@@ -77,7 +80,6 @@ class Location {
       const match = matchToPlace(stay.lat, stay.lng, placeList)
 
       if (match) {
-        await this.recordVisit(visitStore, match.placeId, stay)
         await this.updatePlaceStats(usualPlaceStore, match.placeId, stay)
         await this.triggerLocationBots(
           botStore,
@@ -86,13 +88,8 @@ class Location {
           match.placeId,
           stay
         )
-        visitsRecorded++
       } else if (isNewPlace(stay.lat, stay.lng, placeList)) {
-        const newPlaceId = await this.createNewUsualPlace(
-          usualPlaceStore,
-          visitStore,
-          stay
-        )
+        const newPlaceId = await this.createNewUsualPlace(usualPlaceStore, stay)
         if (!isFirstUse) {
           await this.triggerLocationBots(
             botStore,
@@ -104,41 +101,158 @@ class Location {
           await this.sendNewPlaceNotification(userStore, stay)
         }
         newPlacesDetected++
-        visitsRecorded++
       }
     }
 
-    const activities = this.detectActivitiesBetweenStays(filtered, stays)
-    const activityStore = new Data(userId, 'activity')
+    return { staysDetected: stays.length, newPlacesDetected }
+  }
 
-    for (const activity of activities) {
-      await this.storeActivity(activityStore, activity)
+  private async handleSinglePoint(
+    userId: string,
+    point: IGpsPoint,
+    source: string
+  ): Promise<IProcessingResult> {
+    const usualPlaceStore = new Data(userId, 'usual-place')
+    const placeStore = new Data(userId, 'place')
+    const botStore = new Data(userId, 'bot')
+    const userStore = new Data(userId, 'user')
+
+    const usualPlaces = (await usualPlaceStore.list()) as IUsualPlace[]
+    const regularPlaces =
+      ((await placeStore.list()) as Array<{
+        placeId: string
+        name: string
+        position: { lat: number; lng: number }
+      }>) ?? []
+
+    const placeList = [
+      ...usualPlaces.map((p) => ({
+        id: p.usualPlaceId,
+        lat: p.position.lat,
+        lng: p.position.lng,
+        radiusM: p.radiusM,
+      })),
+      ...regularPlaces.map((p) => ({
+        id: p.placeId,
+        lat: p.position.lat,
+        lng: p.position.lng,
+        radiusM: 50,
+      })),
+    ]
+
+    const now = point.timestamp || Date.now()
+    const stay: IStayPoint = {
+      lat: point.lat,
+      lng: point.lng,
+      startTime: now,
+      endTime: now,
+      durationMs: 0,
+      pointCount: 1,
     }
 
+    const match = matchToPlace(point.lat, point.lng, placeList)
+
+    if (match) {
+      const matchedUsualPlace = usualPlaces.find(
+        (p) => p.usualPlaceId === match.placeId
+      )
+      const matchedRegularPlace = regularPlaces.find(
+        (p) => p.placeId === match.placeId
+      )
+      const matchedName =
+        matchedUsualPlace?.name ?? matchedRegularPlace?.name ?? ''
+
+      if (matchedUsualPlace) {
+        await this.updatePlaceStats(usualPlaceStore, match.placeId, stay)
+      }
+
+      await this.triggerLocationBots(
+        botStore,
+        userId,
+        'arrive',
+        match.placeId,
+        stay
+      )
+
+      return {
+        staysDetected: 0,
+        newPlacesDetected: 0,
+        matchedPlace: { placeId: match.placeId, name: matchedName },
+      }
+    }
+
+    if (source !== 'app' && isNewPlace(point.lat, point.lng, placeList)) {
+      const isFirstUse = usualPlaces.length === 0
+      const newPlaceId = await this.createNewUsualPlace(usualPlaceStore, stay)
+      if (!isFirstUse) {
+        await this.triggerLocationBots(
+          botStore,
+          userId,
+          'new_place',
+          newPlaceId,
+          stay
+        )
+        await this.sendNewPlaceNotification(userStore, stay)
+      }
+      return { staysDetected: 0, newPlacesDetected: 1 }
+    }
+
+    return { staysDetected: 0, newPlacesDetected: 0 }
+  }
+
+  async matchPosition(
+    userId: string,
+    lat: number,
+    lng: number
+  ): Promise<IPlaceMatch | null> {
+    const usualPlaceStore = new Data(userId, 'usual-place')
+    const usualPlaces = (await usualPlaceStore.list()) as IUsualPlace[]
+
+    const candidates = usualPlaces.map((p) => ({
+      id: p.usualPlaceId,
+      lat: p.position.lat,
+      lng: p.position.lng,
+      radiusM: p.radiusM,
+    }))
+
+    const match = matchPositionToPlace({ lat, lng }, candidates)
+    if (!match) return null
+
+    const place = usualPlaces.find((p) => p.usualPlaceId === match.placeId)
+    if (!place) return null
+
     return {
-      staysDetected: stays.length,
-      activitiesDetected: activities.length,
-      newPlacesDetected,
-      visitsRecorded,
+      usualPlaceId: place.usualPlaceId,
+      name: place.name,
+      distance: Math.round(match.distance),
     }
   }
 
-  private async recordVisit(
-    visitStore: Data,
-    placeId: string,
-    stay: IStayPoint
-  ): Promise<void> {
-    const visitId = generatePrefixedId('v')
+  async listUsualPlaces(userId: string): Promise<IUsualPlace[]> {
+    const store = new Data(userId, 'usual-place')
+    return ((await store.list()) as IUsualPlace[] | undefined) ?? []
+  }
 
-    await visitStore.create(visitId, {
-      visitId,
-      usualPlaceId: placeId,
-      arrivedAt: new Date(stay.startTime).toISOString(),
-      departedAt: new Date(stay.endTime).toISOString(),
-      durationMinutes: Math.round(stay.durationMs / 60000),
-      position: { lat: stay.lat, lng: stay.lng },
-      source: 'gps',
-    })
+  async getUsualPlace(
+    userId: string,
+    placeId: string
+  ): Promise<IUsualPlace | null> {
+    const store = new Data(userId, 'usual-place')
+    return (await store.read(placeId)) as IUsualPlace | null
+  }
+
+  async updateUsualPlace(
+    userId: string,
+    placeId: string,
+    data: Partial<IUsualPlace>
+  ): Promise<void> {
+    const store = new Data(userId, 'usual-place')
+    await store.update(placeId, data)
+  }
+
+  async deleteUsualPlace(userId: string, placeId: string): Promise<void> {
+    const store = new Data(userId, 'usual-place')
+    await store.delete(placeId)
   }
 
   private async updatePlaceStats(
@@ -188,7 +302,6 @@ class Location {
 
   private async createNewUsualPlace(
     usualPlaceStore: Data,
-    visitStore: Data,
     stay: IStayPoint
   ): Promise<string> {
     const placeId = generatePrefixedId('up')
@@ -206,60 +319,7 @@ class Location {
       centroid: { sumLat: stay.lat, sumLng: stay.lng, sampleCount: 1 },
     })
 
-    const visitId = generatePrefixedId('v')
-    await visitStore.create(visitId, {
-      visitId,
-      usualPlaceId: placeId,
-      arrivedAt: new Date(stay.startTime).toISOString(),
-      departedAt: new Date(stay.endTime).toISOString(),
-      durationMinutes: Math.round(stay.durationMs / 60000),
-      position: { lat: stay.lat, lng: stay.lng },
-      source: 'gps',
-    })
-
     return placeId
-  }
-
-  private detectActivitiesBetweenStays(
-    points: IGpsPoint[],
-    stays: IStayPoint[]
-  ): IActivitySegment[] {
-    if (stays.length < 2) return []
-
-    const activities: IActivitySegment[] = []
-
-    for (let i = 0; i < stays.length - 1; i++) {
-      const gapStart = stays[i].endTime
-      const gapEnd = stays[i + 1].startTime
-
-      const movementPoints = points.filter(
-        (p) => p.timestamp > gapStart && p.timestamp < gapEnd
-      )
-
-      if (movementPoints.length >= 2) {
-        const segments = segmentActivities(movementPoints)
-        activities.push(...segments)
-      }
-    }
-
-    return activities
-  }
-
-  private async storeActivity(
-    activityStore: Data,
-    segment: IActivitySegment
-  ): Promise<void> {
-    const activityId = generatePrefixedId('a')
-
-    await activityStore.create(activityId, {
-      activityId,
-      type: segment.type,
-      startedAt: new Date(segment.startTime).toISOString(),
-      endedAt: new Date(segment.endTime).toISOString(),
-      distanceM: Math.round(segment.distanceM),
-      durationMinutes: Math.round(segment.durationMinutes * 10) / 10,
-      confidence: Math.round(segment.confidence * 100) / 100,
-    })
   }
 
   private async triggerLocationBots(
@@ -327,9 +387,9 @@ class Location {
         urgency: 'normal',
       })
     } catch {
-      // Subscription expired or invalid — ignore silently
+      // Subscription expired or invalid
     }
   }
 }
 
-export default Location
+export default Geo

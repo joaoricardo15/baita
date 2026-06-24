@@ -86,19 +86,17 @@ A trigger type for bots activated by iPhone Shortcuts automations. Functionally 
 
 ### Track Mode (Location Intelligence)
 
-Background location tracking with automatic place detection, activity recognition, and bot triggers.
+Background location tracking with automatic place detection and bot triggers.
 
 **Architecture:**
 
-- **Ingestion**: `POST /location/ingest/{token}` — accepts GPS point batches (OwnTracks/Overland/Shortcuts compatible), token-based auth (same as bot run endpoint)
-- **Processing pipeline** (`src/controllers/location.ts`): Noise filter → stay-point detection (Li et al. 2008) → place matching → new place detection → activity segmentation → bot triggering
-- **Geo utilities** (`src/lib/geo.ts`): Haversine distance, stay-point detection, speed-based activity classification, place matching, importance scoring
+- **Ingestion**: `POST /geo/ingest/{token}` — accepts GPS point batches (OwnTracks/Overland/Shortcuts compatible), token-based auth (same as bot run endpoint)
+- **Processing pipeline** (`src/controllers/geo.ts`): Noise filter → stay-point detection (Li et al. 2008) → place matching → new place detection → bot triggering
+- **Geo utilities** (`src/lib/geo.ts`): Haversine distance, stay-point detection, place matching, importance scoring
 
 **Entity types:**
 
 - `usual-place` — Auto-detected places with adaptive radius, visit count, importance score, centroid tracking
-- `visit` — Individual visit records (arrival/departure/duration per place)
-- `activity` — Detected movement segments (walking/running/cycling/driving/transit with confidence)
 
 **Bot trigger**: `ServiceName.locationEvent` — fires when arriving at/leaving a place, or when a new place is detected. Same async Lambda invocation as webhooks/schedules.
 

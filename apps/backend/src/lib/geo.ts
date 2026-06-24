@@ -1,4 +1,6 @@
-import { IActivityType } from '@baita/shared'
+import { haversineMeters } from '@baita/shared'
+
+export { haversineMeters }
 
 export interface IGpsPoint {
   lat: number
@@ -13,38 +15,6 @@ export interface IStayPoint {
   endTime: number
   durationMs: number
   pointCount: number
-}
-
-export interface IActivitySegment {
-  type: IActivityType
-  startTime: number
-  endTime: number
-  distanceM: number
-  durationMinutes: number
-  confidence: number
-  points: IGpsPoint[]
-}
-
-const EARTH_RADIUS_M = 6_371_008.8
-
-function toRadians(degrees: number): number {
-  return (degrees * Math.PI) / 180
-}
-
-export function haversineMeters(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number
-): number {
-  const dLat = toRadians(lat2 - lat1)
-  const dLng = toRadians(lng2 - lng1)
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLng / 2) ** 2
-  return 2 * EARTH_RADIUS_M * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 export function filterNoise(
@@ -121,150 +91,6 @@ export function detectStayPoints(
   }
 
   return stays
-}
-
-/**
- * Speed-based activity classification.
- * Classifies a segment of GPS points by median speed.
- */
-export function classifyActivity(points: IGpsPoint[]): {
-  type: IActivityType
-  confidence: number
-} {
-  if (points.length < 2) return { type: 'walking', confidence: 0.3 }
-
-  const speeds: number[] = []
-  for (let i = 1; i < points.length; i++) {
-    const dist = haversineMeters(
-      points[i - 1].lat,
-      points[i - 1].lng,
-      points[i].lat,
-      points[i].lng
-    )
-    const dt = (points[i].timestamp - points[i - 1].timestamp) / 1000
-    if (dt > 0) speeds.push((dist / dt) * 3.6)
-  }
-
-  if (speeds.length === 0) return { type: 'walking', confidence: 0.3 }
-
-  speeds.sort((a, b) => a - b)
-  const median = speeds[Math.floor(speeds.length / 2)]
-  const p95 = speeds[Math.floor(speeds.length * 0.95)]
-
-  if (p95 > 50) return { type: 'driving', confidence: 0.9 }
-  if (median > 30) return { type: 'driving', confidence: 0.8 }
-  if (median >= 10 && median <= 30) return { type: 'cycling', confidence: 0.7 }
-  if (median >= 7 && median < 10) return { type: 'running', confidence: 0.65 }
-  if (median >= 2) return { type: 'walking', confidence: 0.85 }
-
-  return { type: 'walking', confidence: 0.5 }
-}
-
-/**
- * Segments a movement trace (between two stays) into activity legs.
- * Uses a sliding window with mode change detection.
- */
-export function segmentActivities(
-  points: IGpsPoint[],
-  windowSize = 5
-): IActivitySegment[] {
-  if (points.length < 3) {
-    const { type, confidence } = classifyActivity(points)
-    const dist =
-      points.length >= 2
-        ? haversineMeters(
-            points[0].lat,
-            points[0].lng,
-            points[points.length - 1].lat,
-            points[points.length - 1].lng
-          )
-        : 0
-    return [
-      {
-        type,
-        startTime: points[0]?.timestamp ?? 0,
-        endTime: points[points.length - 1]?.timestamp ?? 0,
-        distanceM: dist,
-        durationMinutes:
-          points.length >= 2
-            ? (points[points.length - 1].timestamp - points[0].timestamp) /
-              60000
-            : 0,
-        confidence,
-        points,
-      },
-    ]
-  }
-
-  const segments: IActivitySegment[] = []
-  let segStart = 0
-  let currentType = classifyActivity(
-    points.slice(0, Math.min(windowSize, points.length))
-  ).type
-
-  for (let i = windowSize; i < points.length; i += windowSize) {
-    const window = points.slice(i, Math.min(i + windowSize, points.length))
-    if (window.length < 2) break
-
-    const { type: windowType } = classifyActivity(window)
-
-    if (windowType !== currentType) {
-      const segPoints = points.slice(segStart, i)
-      const { confidence } = classifyActivity(segPoints)
-      let dist = 0
-      for (let k = 1; k < segPoints.length; k++) {
-        dist += haversineMeters(
-          segPoints[k - 1].lat,
-          segPoints[k - 1].lng,
-          segPoints[k].lat,
-          segPoints[k].lng
-        )
-      }
-
-      segments.push({
-        type: currentType,
-        startTime: segPoints[0].timestamp,
-        endTime: segPoints[segPoints.length - 1].timestamp,
-        distanceM: dist,
-        durationMinutes:
-          (segPoints[segPoints.length - 1].timestamp - segPoints[0].timestamp) /
-          60000,
-        confidence,
-        points: segPoints,
-      })
-
-      segStart = i
-      currentType = windowType
-    }
-  }
-
-  const remaining = points.slice(segStart)
-  if (remaining.length >= 2) {
-    const { confidence } = classifyActivity(remaining)
-    let dist = 0
-    for (let k = 1; k < remaining.length; k++) {
-      dist += haversineMeters(
-        remaining[k - 1].lat,
-        remaining[k - 1].lng,
-        remaining[k].lat,
-        remaining[k].lng
-      )
-    }
-
-    segments.push({
-      type: currentType,
-      startTime: remaining[0].timestamp,
-      endTime: remaining[remaining.length - 1].timestamp,
-      distanceM: dist,
-      durationMinutes:
-        (remaining[remaining.length - 1].timestamp - remaining[0].timestamp) /
-        60000,
-      confidence: confidence,
-      points: remaining,
-    })
-  }
-
-  return segments
 }
 
 /**

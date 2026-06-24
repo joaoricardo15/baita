@@ -32,6 +32,12 @@ class Data {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private strip(item: Record<string, any>): Record<string, any> {
+    const { userId: _u, sortKey: _s, ...rest } = item
+    return rest
+  }
+
   async list() {
     try {
       const result = await ddb.query({
@@ -44,7 +50,7 @@ class Data {
         },
       })
 
-      return result.Items
+      return result.Items?.map((item) => this.strip(item))
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }
@@ -60,7 +66,7 @@ class Data {
         },
       })
 
-      return result.Item
+      return result.Item ? this.strip(result.Item) : undefined
     } catch (err: unknown) {
       throw err instanceof Error ? err : new Error(String(err))
     }

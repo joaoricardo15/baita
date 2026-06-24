@@ -7,6 +7,14 @@ export const FeelingSchema = z.object({
   content: z.string(),
   mood: z.enum(MOOD_VALUES).optional(),
   tags: z.array(z.string()).optional(),
+  position: z
+    .object({
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180),
+    })
+    .optional(),
+  placeId: z.string().optional(),
+  placeName: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 })

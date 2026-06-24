@@ -23,6 +23,8 @@ export * from './schemas/app'
 export * from './schemas/connector'
 export * from './schemas/service'
 export * from './schemas/task'
+export type { IPlaceCandidate } from './utils/geo'
+export { haversineMeters, matchPositionToPlace } from './utils/geo'
 export { generateId, generatePrefixedId } from './utils/id'
 export {
   computeRunUrl,

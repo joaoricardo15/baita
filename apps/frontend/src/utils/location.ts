@@ -4,10 +4,12 @@ import appConfig from './config'
 
 export function getIngestUrl(userId: string): string {
   const token = computeTriggerToken(userId)
-  return `${appConfig.apiUrl}/location/ingest/${token}`
+  return `${appConfig.apiUrl}/geo/ingest/${token}`
 }
 
-function getCurrentPosition(): Promise<GeolocationPosition> {
+export function getCurrentPosition(
+  timeoutMs = 5000
+): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('Geolocation not supported'))
@@ -15,10 +17,31 @@ function getCurrentPosition(): Promise<GeolocationPosition> {
     }
     navigator.geolocation.getCurrentPosition(resolve, reject, {
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: timeoutMs,
       maximumAge: 30000,
     })
   })
+}
+
+export interface IIngestResult {
+  matchedPlace?: { placeId: string; name: string }
+}
+
+export async function publishLocationPoint(
+  userId: string,
+  position: { lat: number; lng: number }
+): Promise<IIngestResult> {
+  const ingestUrl = getIngestUrl(userId)
+  const response = await fetch(ingestUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      points: [{ lat: position.lat, lng: position.lng }],
+      source: 'app',
+    }),
+  })
+  const result = await response.json()
+  return { matchedPlace: result?.data?.matchedPlace }
 }
 
 export async function testLocationConnection(ingestUrl: string): Promise<{
@@ -27,7 +50,7 @@ export async function testLocationConnection(ingestUrl: string): Promise<{
   data?: Record<string, unknown>
 }> {
   try {
-    const position = await getCurrentPosition()
+    const position = await getCurrentPosition(10000)
 
     const response = await fetch(ingestUrl, {
       method: 'POST',

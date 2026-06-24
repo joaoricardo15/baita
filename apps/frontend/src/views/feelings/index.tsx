@@ -107,6 +107,7 @@ export const Feelings: FC = () => {
                 <ListItem key={feeling.feelingId} index={index}>
                   <FeelingCard
                     feeling={feeling}
+                    placeName={feeling.placeName}
                     onEdit={() => onEditFeeling(feeling)}
                     onDelete={() => onDeleteFeeling(feeling.feelingId)}
                   />
