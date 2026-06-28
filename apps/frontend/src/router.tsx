@@ -66,7 +66,7 @@ const Router: FC = () => {
                   <PushHealthCheck />
                   <Routes>
                     {publicRoutes()}
-                    <Route path={LINKS.home} element={<ToDo />} />
+                    <Route path={LINKS.home} element={<FeelingCapture />} />
                     <Route path={LINKS.todo} element={<ToDo />} />
                     <Route path={LINKS.feed} element={<Feed />} />
                     <Route path={LINKS.bots} element={<Bots />} />
